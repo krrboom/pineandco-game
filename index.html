@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>PINE &amp; CO — COCKTAIL DEFENSE</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -106,10 +109,12 @@
   #hud .right{ text-align:right; display:flex; flex-direction:column; gap:clamp(5px,1.6vw,10px); }
   .hud-stat{ font-size:clamp(12px,3.6vw,22px); text-shadow:2px 2px 0 #000; line-height:1; letter-spacing:1px; }
   #hud b{ color:var(--amber); } .hud-stat b{ color:#ffd76a; }
-  #weaponsRow{ position:absolute; top:8px; left:50%; transform:translateX(-50%);
-    display:flex; gap:5px; z-index:5; pointer-events:none; flex-wrap:wrap; justify-content:center; max-width:54%; }
-  .wchip{ display:flex; flex-direction:column; align-items:center; gap:2px;
-    background:rgba(0,0,0,.62); border:2px solid #333; padding:4px 5px; min-width:36px; border-radius:3px; box-shadow:0 2px 0 rgba(0,0,0,.4); }
+  /* 스킬칩: 좌측 구석에 세로 한 줄로 나열 (HP/XP 블록 아래) — 피통·경험치통과 안 겹침 */
+  #weaponsRow{ position:absolute; top:clamp(94px,26vw,132px); left:10px; transform:none;
+    display:flex; flex-direction:column; gap:4px; align-items:flex-start;
+    flex-wrap:nowrap; max-width:none; z-index:5; pointer-events:none; }
+  .wchip{ display:flex; flex-direction:row; align-items:center; gap:4px;
+    background:rgba(0,0,0,.62); border:2px solid #333; padding:3px 6px 3px 4px; min-width:0; border-radius:3px; box-shadow:0 2px 0 rgba(0,0,0,.4); }
   .wchip.base{ border-color:#5a5e52; }
   .wchip .wic{ width:26px; height:26px; object-fit:contain; image-rendering:pixelated; font-size:21px;
     line-height:1; display:flex; align-items:center; justify-content:center; }
@@ -156,6 +161,8 @@
   @keyframes flicker{ 0%,100%{opacity:.92} 47%{opacity:.84} 50%{opacity:1} 53%{opacity:.86} }
 
   /* 타이틀: 제목로고 + 부제 + 태그라인 + 이미지버튼 (전부 직접 만든 PNG) */
+  .ver-badge{ position:absolute; bottom:6px; right:8px; z-index:30; font-size:9px; letter-spacing:1px;
+    color:rgba(201,154,60,.8); background:rgba(0,0,0,.45); padding:3px 6px; border-radius:4px; pointer-events:none; }
   #titleScreen{ gap:11px; background-color:#0d0f0c;
     background-image:linear-gradient(rgba(13,15,12,.9), rgba(11,13,10,.93)), url('assets/bg_logo.png');
     background-size:cover, 76px auto; background-repeat:no-repeat, repeat; image-rendering:pixelated; }
@@ -279,6 +286,7 @@
   </div>
 
   <div class="screen crt" id="titleScreen">
+    <div class="ver-badge">BUILD 8 · buffer-audio</div>
     <img class="title-logo" src="assets/title_logo.png" alt="Welcome to Pine & Co">
     <img class="title-sub-img" src="assets/subtitle_cd.png" alt="COCKTAIL DEFENSE">
     <div class="title-art">
@@ -579,9 +587,9 @@ function loadSfx(name,url,mode){
   try{ if(typeof SFX_B64!=='undefined' && SFX_B64[name]){ onBuf(b64ToBuf(SFX_B64[name])); return; } }catch(e){}
   fetch(url).then(r=>r.arrayBuffer()).then(onBuf).catch(()=>{});
 }
-let sfxBus=null;
+let sfxBus=null, musicBus=null;
 function initAudio(){
-  if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume(); return; }
+  if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume(); loadMusicBuffers(); reconcileMusic(); return; }
   try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; }
   // 효과음 마스터: 부드러운 리미터(겹쳐 칠 때만 살짝) + 메이크업 게인으로 전체 크게
   try{ const comp=audioCtx.createDynamicsCompressor();
@@ -590,6 +598,10 @@ function initAudio(){
     comp.connect(makeup); makeup.connect(audioCtx.destination);
     sfxBus=comp;
   }catch(e){ sfxBus=null; }
+  // 음악 마스터 게인(설정 음량). iOS는 <audio>.volume을 무시하므로 Web Audio 게인으로 제어해야 함.
+  try{ musicBus=audioCtx.createGain(); musicBus.gain.value=musicVol; musicBus.connect(audioCtx.destination); }catch(e){ musicBus=null; }
+  loadMusicBuffers();
+  if(audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} }   // iOS: 첫 제스처에서 컨텍스트 깨우기
   loadSfx('hit','assets/hit.mp3','first');      // 타격음 3번 중 첫 1번만
   loadSfx('coin','assets/sfx_coin.mp3','onset'); // 코인 획득
   loadSfx('select','assets/sfx_select.mp3','onset'); // 선택
@@ -613,47 +625,61 @@ function playBossAlarm(){ const s=SFX.boss; if(!audioCtx||!s) return;
   for(let i=0;i<6;i++) playSfx('boss',1.0,i*step); // 같은 음 6번 연속(알람)
 }
 
-/* ===== 배경 음악 (HTML5 Audio + 볼륨 페이드) ===== */
-const MUSIC={}; let musicUnlocked=false, musicMode=null, curPlay=null;
-const MVOL=0.3, MFADE=0.03;   // 음악 볼륨(효과음에 안 묻히게 낮춤) + 페이드 스텝(100ms당)≈1.7s 크로스페이드
-function loadMusic(){
-  const mk=(src,loop)=>{ const a=new Audio(src); a.loop=loop; a.volume=0; a.preload='auto'; a._t=0; a._sw=false; return a; };
-  MUSIC.title =mk('assets/music_title.mp3', true);
-  MUSIC.select=mk('assets/music_select.mp3', true);
-  MUSIC.play1 =mk('assets/music_play1.mp3', false);
-  MUSIC.play2 =mk('assets/music_play2.mp3', false);
-  MUSIC.play3 =mk('assets/music_play3.mp3', false);
-}
-function musicTick(){
-  if(!musicUnlocked) return;
-  for(const k in MUSIC){ const a=MUSIC[k], tgt=a._t*musicVol, d=tgt-a.volume;   // 설정 음량 반영
-    if(Math.abs(d)<=MFADE){ a.volume=Math.max(0,Math.min(1,tgt)); if(a._t<=0 && !a.paused) a.pause(); }
-    else a.volume=Math.max(0,Math.min(1, a.volume+(d>0?MFADE:-MFADE))); }
-  // 플레이 모드: 곡 끝나기 ~2초 전 다음 곡으로 크로스페이드 (무한 반복)
-  if(musicMode==='play' && curPlay){ const a=MUSIC[curPlay];
-    if(!a._sw && ((a.duration && a.currentTime>=a.duration-2.0) || a.ended)){ a._sw=true; nextPlay(); } }
-}
-function nextPlay(){
-  const opts=['play1','play2','play3'].filter(n=>n!==curPlay);
-  const nx=opts[Math.floor(Math.random()*opts.length)];
-  if(curPlay) MUSIC[curPlay]._t=0;                 // 이전 곡 페이드아웃
-  const a=MUSIC[nx]; a._sw=false; try{ a.currentTime=0; a.play(); }catch(e){} a._t=MVOL; // 새 곡 페이드인
-  curPlay=nx;
-}
-function applyMusic(){
-  if(musicMode==='play'){
-    MUSIC.title._t=0; MUSIC.select._t=0;
-    if(!curPlay) nextPlay(); else { MUSIC[curPlay]._t=MVOL; if(MUSIC[curPlay].paused){ try{MUSIC[curPlay].play();}catch(e){} } }
-  } else {
-    if(curPlay){ MUSIC[curPlay]._t=0; } curPlay=null;
-    MUSIC.play1._t=0; MUSIC.play2._t=0; MUSIC.play3._t=0;
-    if(musicMode==='title'){ MUSIC.select._t=0; MUSIC.title._t=MVOL; if(MUSIC.title.paused){ try{MUSIC.title.play();}catch(e){} } }
-    else if(musicMode==='select'){ MUSIC.title._t=0; MUSIC.select._t=MVOL; if(MUSIC.select.paused){ try{MUSIC.select.play();}catch(e){} } }
-    else { MUSIC.title._t=0; MUSIC.select._t=0; }
+/* ===== 배경 음악 — 효과음과 동일하게 Web Audio 버퍼로 재생.
+   iOS는 <audio>.volume과 페이드를 무시하므로, 디코드한 AudioBuffer를 BufferSource로 틀고
+   src.stop()으로 확실히 끊는다(겹침 원천 차단). 음량은 게인으로 제어(iOS도 적용됨). ===== */
+const MUSIC_SRC={ title:'assets/music_title.mp3', select:'assets/music_select.mp3',
+  play1:'assets/music_play1.mp3', play2:'assets/music_play2.mp3', play3:'assets/music_play3.mp3' };
+const MUSICBUF={};            // name -> AudioBuffer
+const MVOL=0.3, MXF=0.3;      // 음악 기준 음량 + 전환 페이드(초)
+let musicUnlocked=false, musicMode=null, curPlay=null, musicVoice=null;  // musicVoice = 현재 한 곡만
+function loadMusic(){}        // (구버전 호환 스텁: 실제 로딩은 initAudio→loadMusicBuffers)
+function loadMusicBuffers(){
+  if(!audioCtx) return;
+  for(const name in MUSIC_SRC){ if(MUSICBUF[name]||MUSICBUF['_l_'+name]) continue;
+    MUSICBUF['_l_'+name]=1;   // 중복 로딩 방지 플래그
+    fetch(MUSIC_SRC[name]).then(r=>r.arrayBuffer()).then(b=>audioCtx.decodeAudioData(b))
+      .then(buf=>{ MUSICBUF[name]=buf; reconcileMusic(); }).catch(()=>{ MUSICBUF['_l_'+name]=0; });
   }
 }
-function setMusic(mode){ if(mode===musicMode) return; musicMode=mode; if(musicUnlocked) applyMusic(); }
-function unlockMusic(){ if(musicUnlocked) return; musicUnlocked=true; initAudio(); applyMusic(); }
+function pickPlay(){ const o=['play1','play2','play3'].filter(n=>n!==curPlay); return o[Math.floor(Math.random()*o.length)]; }
+function desiredName(){
+  if(musicMode==='title') return 'title';
+  if(musicMode==='select') return 'select';
+  if(musicMode==='play'){ if(!curPlay) curPlay=pickPlay(); return curPlay; }
+  return null;
+}
+function stopVoice(v){
+  if(!v||!audioCtx) return;
+  try{ const now=audioCtx.currentTime, g=v.gain.gain;
+    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0, now+MXF);
+    v.src.stop(now+MXF+0.03);
+  }catch(e){ try{ v.src.stop(); }catch(_){} }
+}
+function startVoice(name){
+  if(!audioCtx||!musicBus||!MUSICBUF[name]) return null;
+  const loop=(name==='title'||name==='select');
+  const src=audioCtx.createBufferSource(); src.buffer=MUSICBUF[name]; src.loop=loop;
+  const g=audioCtx.createGain(); const now=audioCtx.currentTime;
+  g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(MVOL, now+MXF);
+  src.connect(g); g.connect(musicBus);
+  const voice={ name, src, gain:g };
+  if(!loop) src.onended=()=>{ if(musicVoice===voice && musicMode==='play'){ curPlay=pickPlay(); reconcileMusic(); } };
+  try{ src.start(now); }catch(e){ return null; }
+  return voice;
+}
+/* 항상 "원하는 한 곡"만 재생되도록 맞춘다. 버퍼가 아직 디코드 안 됐으면 디코드 완료 시 다시 호출됨. */
+function reconcileMusic(){
+  if(!musicUnlocked||!audioCtx) return;
+  const want=desiredName();
+  if(musicVoice && musicVoice.name===want) return;
+  if(musicVoice){ stopVoice(musicVoice); musicVoice=null; }   // 다른 곡 확실히 정지
+  if(want && MUSICBUF[want]) musicVoice=startVoice(want);
+}
+function musicTick(){ if(musicUnlocked) reconcileMusic(); }   // 보조 reconcile(버퍼 늦게 와도 반영)
+function applyMusic(){ reconcileMusic(); }
+function setMusic(mode){ if(mode===musicMode) return; musicMode=mode; if(mode!=='play') curPlay=null; reconcileMusic(); }
+function unlockMusic(){ if(musicUnlocked) return; musicUnlocked=true; initAudio(); reconcileMusic(); }
 
 /* ===== 설정(음량) + 일시정지 ===== */
 let paused=false, musicVol=1, sfxVol=1;
@@ -665,6 +691,7 @@ function openSettings(){ initAudio(); unlockMusic(); paused=true;
   document.getElementById('settingsPanel').classList.remove('hidden'); }
 function closeSettings(){ paused=false; document.getElementById('settingsPanel').classList.add('hidden'); playSelect(); }
 function setMusicVol(v){ musicVol=Math.max(0,Math.min(1,v/100)); document.getElementById('musicVal').textContent=Math.round(musicVol*100);
+  if(musicBus){ try{ musicBus.gain.value=musicVol; }catch(e){} }   // iOS 포함 실제 음량 반영
   try{ localStorage.setItem('paco_mvol',musicVol); }catch(e){} }
 function setSfxVol(v){ sfxVol=Math.max(0,Math.min(1,v/100)); document.getElementById('sfxVal').textContent=Math.round(sfxVol*100);
   try{ localStorage.setItem('paco_svol',sfxVol); }catch(e){} if(sfxVol>0) playSfx('select',0.6); }   // 미리듣기
