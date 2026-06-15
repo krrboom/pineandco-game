@@ -109,16 +109,16 @@
   #hud .right{ text-align:right; display:flex; flex-direction:column; gap:clamp(5px,1.6vw,10px); }
   .hud-stat{ font-size:clamp(12px,3.6vw,22px); text-shadow:2px 2px 0 #000; line-height:1; letter-spacing:1px; }
   #hud b{ color:var(--amber); } .hud-stat b{ color:#ffd76a; }
-  /* 스킬칩: 좌측 구석에 세로 한 줄로 나열 (HP/XP 블록 아래) — 피통·경험치통과 안 겹침 */
-  #weaponsRow{ position:absolute; top:clamp(94px,26vw,132px); left:10px; transform:none;
-    display:flex; flex-direction:column; gap:4px; align-items:flex-start;
-    flex-wrap:nowrap; max-width:none; z-index:5; pointer-events:none; }
-  .wchip{ display:flex; flex-direction:row; align-items:center; gap:4px;
-    background:rgba(0,0,0,.62); border:2px solid #333; padding:3px 6px 3px 4px; min-width:0; border-radius:3px; box-shadow:0 2px 0 rgba(0,0,0,.4); }
+  /* 스킬칩: 오른쪽 아래 구석에 작게 — 시야 방해 최소화(피통·조이스틱·스탯과 안 겹침) */
+  #weaponsRow{ position:absolute; right:7px; bottom:12px; left:auto; top:auto; transform:none;
+    display:flex; flex-direction:column-reverse; gap:3px; align-items:flex-end;
+    flex-wrap:nowrap; max-width:none; z-index:5; pointer-events:none; opacity:.85; }
+  .wchip{ display:flex; flex-direction:row; align-items:center; gap:3px;
+    background:rgba(0,0,0,.5); border:1px solid #333; padding:2px 4px; min-width:0; border-radius:3px; box-shadow:0 1px 0 rgba(0,0,0,.35); }
   .wchip.base{ border-color:#5a5e52; }
-  .wchip .wic{ width:26px; height:26px; object-fit:contain; image-rendering:pixelated; font-size:21px;
+  .wchip .wic{ width:16px; height:16px; object-fit:contain; image-rendering:pixelated; font-size:13px;
     line-height:1; display:flex; align-items:center; justify-content:center; }
-  .wchip .wlv{ font-size:10px; color:var(--amber); line-height:1; font-weight:bold; }
+  .wchip .wlv{ font-size:8px; color:var(--amber); line-height:1; font-weight:bold; }
   .wchip.max .wlv{ color:var(--pine-light); }
   #stick{ position:absolute; bottom:30px; left:30px; width:120px; height:120px; border-radius:50%;
     background:rgba(58,125,79,.16); border:2px solid rgba(111,207,143,.4); z-index:15; display:block;
@@ -150,6 +150,9 @@
   .drop-banner.spirit{ color:#ffd24a; font-size:clamp(15px,4.3vw,19px); font-weight:bold;
     text-shadow:2px 2px 0 #000, 0 0 10px rgba(255,205,70,.95), 0 0 22px rgba(255,180,40,.65);
     animation:spiritGlow 1s ease-in-out infinite; }
+  /* 스피릿 이름은 크게, 설명은 그보다 작게 */
+  .drop-banner.spirit .bn-name{ font-size:clamp(24px,7.5vw,38px); font-weight:bold; letter-spacing:1px; line-height:1.1; }
+  .drop-banner.spirit .bn-desc{ font-size:clamp(12px,3.4vw,16px); font-weight:normal; margin-top:8px; opacity:.95; line-height:1.3; padding:0 14px; }
   @keyframes spiritGlow{ 0%,100%{ filter:brightness(1.08) } 50%{ filter:brightness(1.5) } }
 
   /* ===== 레트로 CRT 화면 (타이틀 / 캐릭터 선택) ===== */
@@ -432,6 +435,10 @@ function loadBd(k){ try{ const a=JSON.parse(localStorage.getItem(k)||'[]'); retu
 let BOARDS={ time:loadBd(BD_KEYS.time), kills:loadBd(BD_KEYS.kills), sales:loadBd(BD_KEYS.sales) };
 let HI_SCORE = BOARDS.time.length ? BOARDS.time[0].v : 0;
 let pendingRun={time:0,kills:0,sales:0}, curBoardMetric='time', lastSavedName='';
+/* ===== 공유 랭킹 (구글 시트 + Apps Script) — 모든 기기가 같은 순위, 영구 보관 ===== */
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbxcEzIduBwEaccJ-bOmSA7ZTGfasbSW7-Pz6OLyFWs2rOfeK6EtzyvxNVBh82C6ReER/exec';
+const CLOUD_SECRET='pine-2026';
+let CLOUD_BOARDS={ time:null, kills:null, sales:null };   // null=아직 못 받음 → 그동안은 로컬 표시
 /* 성적/욕설 이름 → "I'M IDIOT" */
 const PROFANITY=['DICK','SEX','COCK','PUSSY','FUCK','SHIT','PENIS','VAGINA','BOOBS','PORN','SLUT','WHORE','BITCH','NIGGER','FAGGOT','FAG','CUM','HORNY','NUDE','XXX','SUCKMY','BLOWJOB','ANAL','TITS'];
 function isProfane(nm){ const s=nm.replace(/[^A-Z]/g,''); return PROFANITY.some(w=>s.includes(w)); }
@@ -444,9 +451,39 @@ function addRun(name, run){
   HI_SCORE = BOARDS.time.length ? BOARDS.time[0].v : 0;
 }
 function fmtMetric(m,v){ if(m==='time') return fmtTime(v); if(m==='sales') return '₩'+(v||0).toLocaleString(); return (v||0)+''; }
-function showBoard(m){ curBoardMetric=m; document.querySelectorAll('.bt-tab').forEach(t=>t.classList.toggle('active', t.dataset.m===m)); renderBoard(); }
+function showBoard(m){ curBoardMetric=m; document.querySelectorAll('.bt-tab').forEach(t=>t.classList.toggle('active', t.dataset.m===m)); renderBoard(); cloudFetch(m); }
+/* 점수 전송 (fire-and-forget, no-cors) */
+function cloudSubmit(name, run){
+  if(!CLOUD_URL) return;
+  try{
+    fetch(CLOUD_URL, { method:'POST', mode:'no-cors',
+      body: JSON.stringify({ secret:CLOUD_SECRET, name:name, time:run.time, kills:run.kills, sales:run.sales }) })
+      .then(()=>{ setTimeout(()=>{ cloudFetch('time'); cloudFetch('kills'); cloudFetch('sales'); }, 900); }).catch(()=>{});
+  }catch(e){}
+}
+/* Top10 가져오기 (JSONP — CORS 우회) */
+let _cloudCbN=0;
+function cloudFetch(metric){
+  if(!CLOUD_URL) return;
+  const cb='__pineCb'+(_cloudCbN++), s=document.createElement('script'); let done=false;
+  window[cb]=(data)=>{ done=true;
+    try{ if(data && data.ok && Array.isArray(data.top)){
+      CLOUD_BOARDS[metric]=data.top.map(e=>({ name:String(e.name||'---'), v:Number(e[metric])||0 }));
+      if(metric==='time' && CLOUD_BOARDS.time.length){ HI_SCORE=Math.max(HI_SCORE, CLOUD_BOARDS.time[0].v);
+        const h=document.getElementById('hiTitle'); if(h) h.textContent=fmtTime(HI_SCORE); }
+      if(curBoardMetric===metric) renderBoard();
+    } }catch(e){}
+    try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove();
+  };
+  s.onerror=()=>{ try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); };
+  s.src=CLOUD_URL+'?metric='+encodeURIComponent(metric)+'&callback='+cb+'&t='+Date.now();
+  document.body.appendChild(s);
+  setTimeout(()=>{ if(!done){ try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); } }, 8000);
+}
 function renderBoard(){
-  const b=BOARDS[curBoardMetric]||[]; let html='';
+  const cloud=CLOUD_BOARDS[curBoardMetric];
+  const b=(cloud!==null) ? cloud : (BOARDS[curBoardMetric]||[]);   // 클라우드 받았으면 그걸로(공유 순위), 아니면 로컬
+  let html='';
   for(let i=0;i<10;i++){ const e=b[i];
     const me = e && e.name===lastSavedName && e.v===pendingRun[curBoardMetric];
     html += `<div class="brow ${me?'me':''} ${i===0&&e?'gold':''}"><span><span class="brank">${i===0&&e?'👑':(i+1)+'.'}</span> ${e?e.name:'---'}</span><span>${e?fmtMetric(curBoardMetric,e.v):'-'}</span></div>`; }
@@ -454,7 +491,8 @@ function renderBoard(){
 }
 function saveScore(){
   const nm=cleanName(document.getElementById('nameInput').value); lastSavedName=nm;
-  addRun(nm, pendingRun);
+  addRun(nm, pendingRun);                 // 로컬(오프라인 백업)
+  cloudSubmit(nm, pendingRun);            // 구글 시트(공유 순위)
   document.getElementById('nameInput').value=nm;
   document.getElementById('nameEntry').classList.add('hidden');
   renderBoard(); playSelect();
@@ -700,7 +738,7 @@ const CHARACTERS = {
          base:'shaker', projKind:'martini', fireCd:49, dmg:34, projSpeed:4.6, projR:8, splash:34, pierce:0 },
   // Joe: 닉앤노라 글라스를 던진다 — 빠르고 관통 (한 줄로 여러 마리 꿰뚫음)
   joe: { name:'JOE', color:'#e6b450', moveSpeed:3.0, maxHp:85,
-         base:'barspoon', projKind:'nicknora', fireCd:22, dmg:8, projSpeed:8.5, projR:4, splash:0, pierce:4 }
+         base:'barspoon', projKind:'nicknora', fireCd:16, dmg:8, projSpeed:8.5, projR:4, splash:0, pierce:4 }
 };
 
 /* ===== 6대 기주 무기 (보스가 떨어뜨림) =====
@@ -813,7 +851,7 @@ function renderIndex(){
     </div>`).join('');
 }
 function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('stick'); hide('weaponsRow');
-  document.getElementById('hiTitle').textContent=fmtTime(HI_SCORE); show('titleScreen'); }
+  document.getElementById('hiTitle').textContent=fmtTime(HI_SCORE); cloudFetch('time'); show('titleScreen'); }
 function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('stick'); hide('weaponsRow'); show('selectScreen'); }
 function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens();
   document.getElementById('menuList').innerHTML = MENU_DATA.map(cat=>`
@@ -831,7 +869,7 @@ function startGame(charKey){
     // 기본기 레벨 시스템 (원본값 보관 → applyBaseLevel에서 재계산)
     baseLv:1, baseDmg0:c.dmg, baseCd0:c.fireCd, baseSplash0:c.splash,
     dmg:c.dmg, fireCd:c.fireCd, splash:c.splash, projCount:1,
-    xp:0, xpNeed:5, level:1, invuln:0,
+    xp:0, xpNeed:xpForLevel(1), level:1, invuln:0,
     weapons:{}, wt:{} };  // weapons: 보유 기주, wt: 무기별 타이머
   applyBaseLevel();
   enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[];
@@ -1083,6 +1121,16 @@ function banner(txt, kind){
   bannerText=txt; bannerTimer = boss?150:(spirit?130:110);
   const b=document.getElementById('dropBanner'); b.textContent=txt; b.classList.remove('hidden');
   b.classList.toggle('boss', boss); b.classList.toggle('spirit', spirit); }
+/* 스피릿 획득 배너: 이름(큰 글씨) + 설명(작은 글씨), 표시시간 길게(읽을 시간 확보) */
+function spiritBanner(key, up){
+  const s=SPIRITS[key], name=s.ic+' '+s.name+(up?' UP!':'');
+  let desc='';
+  if(!up){ const f=SPIRIT_FLAVOR[key]||''; const i=f.indexOf('—'); desc=(i>=0?f.slice(i+1):s.desc||'').trim(); }
+  const b=document.getElementById('dropBanner');
+  b.className='drop-banner spirit';
+  b.innerHTML='<div class="bn-name">'+name+'</div>'+(desc?'<div class="bn-desc">'+desc+'</div>':'');
+  bannerTimer = up?200:320;   // GET≈5.3초 / UP≈3.3초 (기존 130프레임 대비 충분히 길게)
+}
 
 /* ===== 업데이트 ===== */
 function update(){
@@ -1125,6 +1173,10 @@ function update(){
   player.x=Math.max(player.r,Math.min(W-player.r,player.x+dx*player.speed*player.slowMul*moveScale));
   player.y=Math.max(player.r,Math.min(H-player.r,player.y+dy*player.speed*player.slowMul*moveScale));
   if(player.throwTimer>0) player.throwTimer--;                     // 던지기 모션 타이머
+  // Joe 패시브 체력 회복: 레벨이 오를수록 회복 속도가 빨라짐 (Joe 약함 보완)
+  if(player.key==='joe' && player.hp>0 && player.hp<player.maxHp){
+    player.hp = Math.min(player.maxHp, player.hp + (0.25 + (player.level-1)*0.18)/60);
+  }
 
   // 기본 무기
   player.fireTimer--; if(player.fireTimer<=0){ fireBase(); player.fireTimer=player.fireCd*player.cdMul; }   // 공속 업그레이드
@@ -1262,14 +1314,21 @@ function update(){
     if(dead||p.life<=0||p.x<-40||p.x>W+40||p.y<-40||p.y>H+40) projectiles.splice(i,1);
   }
 
-  // 픽업 (돈 + 병). g.pull = 자석에 빨려 들어오는 중(반경 무시하고 가속해 모임)
+  // 픽업: 끌어당김/이동은 모두 처리하되 획득은 2단계.
+  // 1) 돈/체력/자석 먼저 — 여기서 경험치가 차면 레벨업(스킬 선택창)이 뜬다.
   for(let i=pickups.length-1;i>=0;i--){ const g=pickups[i];
     if(g.remove){ pickups.splice(i,1); continue; }
     const d=Math.hypot(g.x-player.x,g.y-player.y);
     if(g.pull || d<player.pickupR){
       const k = g.pull ? 0.18 : 0.34;
       g.x+=(player.x-g.x)*k; g.y+=(player.y-g.y)*k;
-      if(d<12){ collectPickup(g); pickups.splice(i,1); } }
+      if(d<12 && g.kind!=='bottle'){ collectPickup(g); pickups.splice(i,1); } }
+  }
+  // 2) 스피릿 병은 레벨업이 끝난(=playing) 상태에서만 획득 → 레벨업 먼저, 그 다음에 스피릿 설명창
+  if(state==='playing'){
+    for(let i=pickups.length-1;i>=0;i--){ const g=pickups[i];
+      if(g.kind!=='bottle') continue;
+      if(Math.hypot(g.x-player.x,g.y-player.y)<12){ collectPickup(g); pickups.splice(i,1); } }
   }
 
   // 파티클
@@ -1328,8 +1387,8 @@ function collectPickup(g){
   if(g.kind==='bottle'){
     const key=g.spirit;
     if(!player.weapons[key]){ player.weapons[key]=1; player.wt[key]=0;
-      banner(SPIRIT_FLAVOR[key]||(SPIRITS[key].name+' GET!'), 'spirit'); playSelect(); updateWeaponChips(); }
-    else if(player.weapons[key]<MAX_WLV){ player.weapons[key]++; banner(SPIRITS[key].ic+' '+SPIRITS[key].name+' UP!', 'spirit'); updateWeaponChips(); }
+      spiritBanner(key, false); playSelect(); updateWeaponChips(); }
+    else if(player.weapons[key]<MAX_WLV){ player.weapons[key]++; spiritBanner(key, true); updateWeaponChips(); }
     return;
   }
   if(g.kind==='health'){             // 데킬라샷: 체력 +20
@@ -1350,9 +1409,11 @@ function collectPickup(g){
   if(player.xp>=player.xpNeed) levelUp();
 }
 
+/* 레벨 L→L+1에 필요한 경험치. 기존 ×1.4 복리는 후반에 폭발적으로 커져서 완만한 곡선으로 교체. */
+function xpForLevel(L){ return Math.round(5 + (L-1)*4 + (L-1)*(L-1)*0.35); }
 /* ===== 레벨업 ===== */
 function levelUp(){
-  player.xp-=player.xpNeed; player.level++; player.xpNeed=Math.round(player.xpNeed*1.4+3);
+  player.xp-=player.xpNeed; player.level++; player.xpNeed=xpForLevel(player.level);
   state='levelup';
   const pool=[];
   // 일반(유틸) 강화 — 공격력에 직접 영향 적음
@@ -1399,6 +1460,7 @@ function pickUpgrade(i){
   else player.weapons[u.key]++;
   updateWeaponChips();
   hide('levelScreen'); state='playing';
+  if(player.xp>=player.xpNeed) levelUp();   // 남은 경험치로 연속 레벨업(보스 지폐 등 큰 경험치 대응)
 }
 
 /* ===== HUD ===== */
@@ -1799,6 +1861,7 @@ loadMusic();
 setInterval(musicTick, 100);          // 볼륨 페이드 + 플레이곡 크로스페이드 티커
 setMusic('title');                    // 시작은 타이틀 음악(잠금 풀리면 재생)
 try{ initAudio(); }catch(e){}         // SFX 미리 디코드 (첫 클릭에 바로 선택음)
+try{ cloudFetch('time'); }catch(e){}  // 시작화면 최고기록을 공유 시트에서 불러오기
 // 브라우저 자동재생 정책: 첫 사용자 입력에 오디오/음악 잠금 해제
 ['pointerdown','keydown','touchstart'].forEach(ev=> addEventListener(ev, unlockMusic));
 
