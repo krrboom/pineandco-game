@@ -153,7 +153,31 @@
   /* 스피릿 이름은 크게, 설명은 그보다 작게 */
   .drop-banner.spirit .bn-name{ font-size:clamp(24px,7.5vw,38px); font-weight:bold; letter-spacing:1px; line-height:1.1; }
   .drop-banner.spirit .bn-desc{ font-size:clamp(12px,3.4vw,16px); font-weight:normal; margin-top:8px; opacity:.95; line-height:1.3; padding:0 14px; }
+  /* 팁 보상 칩: 스킬/스피릿 이미지 + 이름 */
+  .drop-banner.spirit .tip-rewards{ display:flex; flex-wrap:wrap; gap:6px 9px; justify-content:center; margin-top:10px; padding:0 10px; }
+  .drop-banner.spirit .tip-rw{ display:inline-flex; align-items:center; gap:5px; background:rgba(0,0,0,.5); border:1px solid rgba(255,205,70,.55); border-radius:6px; padding:3px 9px 3px 5px; }
+  .drop-banner.spirit .tip-rw img{ width:24px; height:24px; object-fit:contain; image-rendering:pixelated; }
+  .drop-banner.spirit .tip-rw .tip-emo{ font-size:19px; line-height:1; }
+  .drop-banner.spirit .tip-rw b{ font-size:clamp(11px,3vw,14px); color:#fff; font-weight:bold; }
+  /* 팁 보상 화면 (레벨업 프레임과 같은 룩) */
+  #tipScreen .tip-title{ color:var(--amber); text-shadow:2px 2px 0 #000, 0 0 16px rgba(230,180,80,.6); margin-bottom:4px; }
+  #tipScreen .tip-go{ margin-top:6px; }
+  /* 게임패드(하드웨어 조이스틱) 선택 하이라이트 */
+  .char.gp-sel{ outline:3px solid var(--amber); outline-offset:4px; border-radius:8px; box-shadow:0 0 22px rgba(230,180,80,.75); }
+  .up-card.gp-sel{ outline:3px solid var(--amber); outline-offset:2px; box-shadow:0 0 20px rgba(230,180,80,.8); border-radius:6px; }
   @keyframes spiritGlow{ 0%,100%{ filter:brightness(1.08) } 50%{ filter:brightness(1.5) } }
+  /* 보스 등장: 별명 크게 + 재치 멘트 작게 */
+  .drop-banner.boss .bn-name{ font-size:clamp(17px,5vw,26px); font-weight:bold; letter-spacing:1px; line-height:1.1; }
+  .drop-banner.boss .bn-desc{ font-size:clamp(11px,3.1vw,15px); font-weight:normal; margin-top:6px; opacity:.96; line-height:1.3; padding:0 16px; color:#ffd0c0; }
+  /* 필살기 버튼: 오른쪽 아래. 충전되면 채워지고, 다 차면 빛나며 누를 수 있음 */
+  #ultBtn{ position:absolute; right:14px; bottom:18px; z-index:16; width:62px; height:62px; border-radius:50%;
+    border:3px solid #5a5e52; color:#888; font-size:26px; cursor:pointer; padding:0; line-height:1;
+    display:flex; align-items:center; justify-content:center; touch-action:manipulation;
+    background:conic-gradient(rgba(200,154,60,.9) var(--ult,0deg), rgba(0,0,0,.55) 0deg); box-shadow:0 2px 0 #000; }
+  #ultBtn.ready{ color:#fff; border-color:#ffd76a; text-shadow:0 0 8px #ffcf3c;
+    box-shadow:0 0 16px rgba(255,210,80,.95), 0 2px 0 #000; animation:ultPulse .7s ease-in-out infinite; }
+  @keyframes ultPulse{ 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.09) } }
+  #ultBtn:active{ transform:translateY(2px); }
 
   /* ===== 레트로 CRT 화면 (타이틀 / 캐릭터 선택) ===== */
   .crt::after{ content:''; position:absolute; inset:0; pointer-events:none; z-index:8;
@@ -274,6 +298,7 @@
   <div id="dropBanner" class="drop-banner hidden"></div>
 
   <div id="stick" class="hidden"><div id="knob"></div></div>
+  <button id="ultBtn" class="hidden" onclick="useUltimate()" aria-label="ultimate">⚡</button>
 
   <!-- 설정 버튼(왼쪽) + 음량조절 패널 -->
   <button id="gearBtn" onclick="openSettings()" aria-label="settings">⚙</button>
@@ -306,7 +331,7 @@
     </div>
     <div class="row sub-btn-row">
       <button class="imgbtn subbtn" onclick="openHighscore()"><img src="assets/btn_highscore.png" alt="HIGHSCORE"></button>
-      <button class="imgbtn subbtn" onclick="openIndex()"><img src="assets/btn_index.png" alt="MONSTER INDEX"></button>
+      <button class="imgbtn subbtn" onclick="openIndex()"><img src="assets/btn_index.png" alt="PINE&CO INDEX"></button>
     </div>
     <div class="hint">PC: WASD / ARROWS · MOBILE: DRAG SCREEN</div>
     <div class="hint">HI-SCORE &nbsp; <span id="hiTitle" style="color:var(--amber)">0:00</span></div>
@@ -324,7 +349,12 @@
   </div>
 
   <div class="screen crt hidden" id="indexScreen">
-    <h2 class="title" style="color:var(--pine-light)">MONSTER INDEX</h2>
+    <h2 class="title" style="color:var(--pine-light)">PINE&CO INDEX</h2>
+    <div class="board-tabs">
+      <button class="bt-tab active" data-it="monsters" onclick="showIndexTab('monsters')">MONSTERS</button>
+      <button class="bt-tab" data-it="chars" onclick="showIndexTab('chars')">BARTENDERS</button>
+      <button class="bt-tab" data-it="skills" onclick="showIndexTab('skills')">SKILLS</button>
+    </div>
     <div class="scrollbox"><div class="mindex" id="mindexList"></div></div>
     <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
@@ -377,6 +407,12 @@
   <div class="screen hidden" id="levelScreen">
     <img class="levelup-banner" src="assets/levelup_banner.png" alt="LEVEL UP">
     <div class="up-row" id="upRow"></div>
+  </div>
+
+  <div class="screen hidden" id="tipScreen">
+    <h2 class="title tip-title">🧾 GOT A TIP!</h2>
+    <div class="up-row" id="tipRow"></div>
+    <button class="btn tip-go" onclick="closeTip()">CHEERS! 🍻</button>
   </div>
 
   <div class="screen hidden" id="overScreen">
@@ -551,6 +587,7 @@ const ASSET_MANIFEST = {
   bill_10000:'assets/bill_10000.png', bill_50000:'assets/bill_50000.png',
   bill_stack:'assets/bill_stack.png', bill_stack2:'assets/bill_stack2.png',
   item_tequila:'assets/item_tequila.png',  // 체력회복 아이템(데킬라샷)
+  tip:'assets/tip.png',                     // 보스 드랍: 팁(랜덤 스킬 보상)
   bottle:'assets/bottle.png',
   proj_shaker:'assets/proj_shaker.png', proj_barspoon:'assets/proj_barspoon.png',
   // 각 기주의 대표 칵테일 스프라이트 (공격 피사체로 사용, 실제 이미지)
@@ -642,6 +679,8 @@ function initAudio(){
   loadSfx('select','assets/sfx_select.mp3','onset'); // 선택
   loadSfx('boss','assets/sfx_boss.mp3','first'); // 보스: 한 음만 잘라 반복용
   loadSfx('hurt','assets/sfx_hurt.mp3','onset'); // 플레이어 피격
+  loadSfx('tipcoin','assets/sfx_tipcoin.mp3','onset'); // 팁: 동전소리
+  loadSfx('whistle','assets/sfx_whistle.mp3','onset'); // 팁: 휘파람소리
 }
 function playSfx(name,gain,when){
   const s=SFX[name]; if(!audioCtx||!s) return;
@@ -668,6 +707,7 @@ const MUSIC_SRC={ title:'assets/music_title.mp3', select:'assets/music_select.mp
 const MUSICBUF={};            // name -> AudioBuffer
 const MVOL=0.3, MXF=0.3;      // 음악 기준 음량 + 전환 페이드(초)
 let musicUnlocked=false, musicMode=null, curPlay=null, musicVoice=null;  // musicVoice = 현재 한 곡만
+let musicDuckUntil=0;   // 이 frame 전까지는 음악을 살짝 줄임(팁 등). 시간 기반이라 자동 복구됨(끼임 방지)
 function loadMusic(){}        // (구버전 호환 스텁: 실제 로딩은 initAudio→loadMusicBuffers)
 function loadMusicBuffers(){
   if(!audioCtx) return;
@@ -711,7 +751,12 @@ function reconcileMusic(){
   if(musicVoice){ stopVoice(musicVoice); musicVoice=null; }   // 다른 곡 확실히 정지
   if(want && MUSICBUF[want]) musicVoice=startVoice(want);
 }
-function musicTick(){ if(musicUnlocked) reconcileMusic(); }   // 보조 reconcile(버퍼 늦게 와도 반영)
+function musicTick(){
+  if(!musicUnlocked) return;
+  reconcileMusic();   // 보조 reconcile(버퍼 늦게 와도 반영)
+  // 음악 마스터 음량 = 설정값 × 덕킹(팁 중에만 살짝 줄임). 시간 기반이라 항상 자동 복구 → 음악 끼임 없음.
+  if(musicBus){ const target = musicVol * (frame < musicDuckUntil ? 0.32 : 1); try{ musicBus.gain.value = target; }catch(e){} }
+}
 function applyMusic(){ reconcileMusic(); }
 function setMusic(mode){ if(mode===musicMode) return; musicMode=mode; if(mode!=='play') curPlay=null; reconcileMusic(); }
 function unlockMusic(){ if(musicUnlocked) return; musicUnlocked=true; initAudio(); reconcileMusic(); }
@@ -769,6 +814,8 @@ const SPIRIT_FLAVOR = {
   whiskey:"🍺 WHISKEY — Crack skulls with an ice-cold highball!",
 };
 const MAX_WLV = 8;
+const MAX_ULT_LV = 6;   // 필살기 강화 최대 레벨
+const ULT_CD = 80;      // 필살기 쿨타임(초) — 경험치 무관, 무조건 80초마다 1번
 /* 기본기(지거/바스푼)는 6레벨까지만 강화 가능 — 한계가 있어서
    진짜 강해지려면 보스 잡고 기주 무기를 먹어야 함. */
 const MAX_BASE_LV = 6;
@@ -828,8 +875,8 @@ document.querySelectorAll('.ava').forEach(av=> drawSprite(av.getContext('2d'), a
 function show(id){ document.getElementById(id).classList.remove('hidden'); }
 function hide(id){ document.getElementById(id).classList.add('hidden'); }
 function hideAllScreens(){ ['titleScreen','selectScreen','menuScreen','levelScreen','overScreen','highscoreScreen','indexScreen'].forEach(hide); }
-function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('weaponsRow'); curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
-function openIndex(){ initAudio(); playSelect(); state='index'; hideAllScreens(); hide('hud'); hide('weaponsRow'); renderIndex(); show('indexScreen'); }
+function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('weaponsRow'); hide('ultBtn'); curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
+function openIndex(){ initAudio(); playSelect(); state='index'; hideAllScreens(); hide('hud'); hide('weaponsRow'); hide('ultBtn'); showIndexTab('monsters'); show('indexScreen'); }
 /* 몬스터 족보 */
 const MONSTER_INDEX=[
   { img:'enemy_drunk_stand',   name:'TIPSY PATRON',    t:'Basic stumbler, comes in two looks. Weak but endless.' },
@@ -843,16 +890,44 @@ const MONSTER_INDEX=[
   { img:'boss_woman_stand',    name:'BOSS · MADAME SEND-IT-BACK', t:'Cocktail snob, sends it all back.', boss:1 },
   { img:'boss_sprinter_stand', name:'BOSS · LAST-CALL LINEBACKER',t:'Closing-time rush. Drops the fattest stacks.', boss:1 },
 ];
+/* 바텐더(캐릭터) 사전 */
+const CHAR_INDEX=[
+  { img:'char_pat', name:'PAT · THE SHAKER', t:'Heavy, splashy Martini-glass throws that hit a whole cluster. Tanky (130 HP) but slow. ULTIMATE — Shaker Tornado: a spinning vortex that keeps flinging glasses out in every direction. Upgrade it for more, wilder arms.' },
+  { img:'char_joe', name:'JOE · THE STIRRER', t:'Fast Nick & Nora throws that pierce a line of up to 4 enemies. Fragile (85 HP) but quick, with passive HP regen that gets faster every level. ULTIMATE — Untouchable: full invincibility. Upgrade it for a longer duration.' },
+];
+/* 스킬 사전 — 기본공격(최대 Lv6) / 기주 6종(최대 Lv8) / 일반 강화 / 필살기 */
+const SKILL_INDEX=[
+  { img:'icon_shaker',     name:'SHAKING · Pat base · max Lv6',  t:'Martini-glass throw with splash AoE. Each level adds damage, fires faster, widens splash. +1 projectile at Lv3 and Lv5.' },
+  { img:'icon_barspoon',   name:'STIRRING · Joe base · max Lv6', t:'Nick & Nora throw that pierces a line. Each level adds damage and fires faster. +1 projectile at Lv3 and Lv5.' },
+  { img:'cocktail_vodka',  name:'VODKA · Cosmopolitan · max Lv8', t:'Rapid straight piercing knives. +damage and +pierce per level, +1 knife every 2 levels.' },
+  { img:'cocktail_gin',    name:'GIN · Dry Martini · max Lv8',    t:'Fan of fizzy pellets. +damage per level, +1 pellet each level.' },
+  { img:'cocktail_rum',    name:'RUM · Mojito · max Lv8',         t:'Minty fireball with a big blast. +damage and +blast radius per level.' },
+  { img:'cocktail_whiskey',name:'WHISKEY · Highball · max Lv8',   t:'Arcing smash that pierces everything. +damage per level, +1 bomb every 2 levels.' },
+  { img:'cocktail_tequila',name:'TEQUILA · Margarita · max Lv8',  t:'Spinning boomerangs that orbit and pierce. +damage per level, +1 boomerang every 2 levels (max 4).' },
+  { img:'cocktail_brandy', name:'BRANDY · Sidecar · max Lv8',     t:'Homing shots that chase the nearest target. +damage per level, +1 shot every 3 levels.' },
+  { ic:'✚', name:'EXTRA SHOT',       t:'+1 projectile on your BASE attack (spirits grow their own projectiles as you level them). Stacks.' },
+  { ic:'💪', name:'POWER UP',         t:'+14% damage to everything — base attack and all spirits.' },
+  { ic:'⚡', name:'ATTACK SPEED UP',  t:'Everything fires faster (lower cooldown).' },
+  { ic:'🍺', name:'BIGGER DRINKS',    t:'Larger projectiles, more reach.' },
+  { ic:'👟', name:'MOVE SPEED UP',    t:'+14% movement speed.' },
+  { ic:'❤️', name:'HEAL + MAX HP',   t:'+25 max HP, heal 50, plus a small permanent HP-regen boost.' },
+  { ic:'🧲', name:'PICKUP RANGE UP',  t:'Wider cash pickup radius.' },
+  { ic:'🌀', name:'ULTIMATE UP · max Lv6', t:'Strengthens your ultimate. Pat: more tornado arms. Joe: longer invincibility. The ultimate is ready once every 80s — tap the ⚡ button when it lights up.' },
+];
+let curIndexTab='monsters';
+function showIndexTab(t){ curIndexTab=t;
+  document.querySelectorAll('#indexScreen .bt-tab').forEach(b=>b.classList.toggle('active', b.dataset.it===t)); renderIndex(); }
 function renderIndex(){
-  document.getElementById('mindexList').innerHTML = MONSTER_INDEX.map(mo=>`
+  const list = curIndexTab==='chars'?CHAR_INDEX : curIndexTab==='skills'?SKILL_INDEX : MONSTER_INDEX;
+  document.getElementById('mindexList').innerHTML = list.map(mo=>`
     <div class="mrow ${mo.boss?'boss':''}">
-      <div class="mpic"><img src="assets/${mo.img}.png" alt=""></div>
+      <div class="mpic">${mo.img?`<img src="assets/${mo.img}.png" alt="">`:`<span style="font-size:26px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${mo.ic||''}</span>`}</div>
       <div class="minfo"><div class="mname">${mo.name}</div><div class="mtrait">${mo.t}</div></div>
     </div>`).join('');
 }
-function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('stick'); hide('weaponsRow');
+function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('stick'); hide('weaponsRow'); hide('ultBtn');
   document.getElementById('hiTitle').textContent=fmtTime(HI_SCORE); cloudFetch('time'); show('titleScreen'); }
-function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('stick'); hide('weaponsRow'); show('selectScreen'); }
+function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('stick'); hide('weaponsRow'); hide('ultBtn'); show('selectScreen'); selIndex=0; updateSelectHighlight(); }
 function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens();
   document.getElementById('menuList').innerHTML = MENU_DATA.map(cat=>`
     <div class="menu-cat">${cat.cat}</div>
@@ -870,20 +945,23 @@ function startGame(charKey){
     baseLv:1, baseDmg0:c.dmg, baseCd0:c.fireCd, baseSplash0:c.splash,
     dmg:c.dmg, fireCd:c.fireCd, splash:c.splash, projCount:1,
     xp:0, xpNeed:xpForLevel(1), level:1, invuln:0,
+    ultReadyAt:ULT_CD, ultUntil:0, ultFxUntil:0, ultLevel:1, ultSpiralUntil:0, ultSpiralAng:0,   // 필살기: 80초 쿨타임(레벨업으로 위력만 강화)
+    regenBonus:0,                                  // HEAL 강화로 쌓이는 패시브 회복(둘 다)
     weapons:{}, wt:{} };  // weapons: 보유 기주, wt: 무기별 타이머
   applyBaseLevel();
   enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[];
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bossAlertUntil=0; keys={};
   bossCount=0; nextBoss=BOSS_FIRST;
-  state='playing'; hideAllScreens(); show('hud'); show('weaponsRow');
+  state='playing'; hideAllScreens(); show('hud'); show('weaponsRow'); show('ultBtn');
   document.getElementById('hudCharImg').src='assets/name_'+charKey+'.png';
   updateWeaponChips();
-  if(IS_TOUCH) show('stick');
+  hide('stick');   // 조이스틱은 화면을 누를 때 그 자리에 나타남(고정 위치 없음)
 }
 
 /* ===== 입력 ===== */
-addEventListener('keydown', e=>{ keys[e.key.toLowerCase()]=true; });
+addEventListener('keydown', e=>{ const k=e.key.toLowerCase(); keys[k]=true;
+  if(k===' '||k==='spacebar'){ e.preventDefault(); useUltimate(); } });   // 스페이스 = 필살기
 addEventListener('keyup',   e=>{ keys[e.key.toLowerCase()]=false; });
 /* 모바일 터치 조이스틱 — 다이내믹(손가락 닿는 자리에 생겨 따라옴) + 손가락 ID 추적(멀티터치 안전) */
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
@@ -901,8 +979,10 @@ function stickFrom(cx,cy){
 }
 function onTouchStart(e){
   if(state!=='playing' || stickId!==null) return;     // 이미 조이스틱 잡은 손가락이 있으면 무시
+  if(e.target && e.target.closest && e.target.closest('button')) return;   // 버튼(필살기/설정) 위 터치는 제외
   const t=e.changedTouches[0]; stickId=t.identifier;
-  stick.classList.add('on'); placeStick(t.clientX,t.clientY); stickFrom(t.clientX,t.clientY);
+  stick.classList.remove('hidden'); stick.classList.add('on');             // 누른 자리에 조이스틱 표시
+  placeStick(t.clientX,t.clientY); stickFrom(t.clientX,t.clientY);
 }
 function onTouchMove(e){
   if(stickId===null) return;
@@ -911,14 +991,70 @@ function onTouchMove(e){
 function onTouchEnd(e){
   if(stickId===null) return;
   for(const t of e.changedTouches){ if(t.identifier===stickId){
-    stickId=null; stickDx=stickDy=0; stick.classList.remove('on'); homeStick(); break; } }
+    stickId=null; stickDx=stickDy=0; stick.classList.remove('on'); stick.classList.add('hidden'); break; } }   // 떼면 숨김
 }
-// 조이스틱 자체와 캔버스(맵) 어디를 눌러도 시작. 이동/해제는 전역에서 받아 손가락이 밖으로 나가도 추적.
-stick.addEventListener('touchstart', onTouchStart, {passive:true});
-canvas.addEventListener('touchstart', onTouchStart, {passive:true});
+// 화면 어디를 눌러도(버튼 제외) 그 자리에 조이스틱 생성. 전역에서 받아 손가락이 밖으로 나가도 추적.
+addEventListener('touchstart', onTouchStart, {passive:true});
 addEventListener('touchmove', onTouchMove, {passive:true});
 addEventListener('touchend', onTouchEnd, {passive:true});
 addEventListener('touchcancel', onTouchEnd, {passive:true});
+
+/* ===== 하드웨어 조이스틱(게임패드/아케이드 스틱) 지원 — Gamepad API =====
+   이동: 좌스틱 축 + D-pad / 발동: 버튼 / 메뉴·선택화면 탐색: 좌우 + 확인 버튼 */
+let padDx=0, padDy=0, gpConnected=false, selIndex=0, lvSel=0;
+let gpBtnPrev={}, gpLatchX=false;
+addEventListener('gamepadconnected', ()=>{ gpConnected=true; });
+function gpHeld(gp,i){ return gp.buttons[i] && gp.buttons[i].pressed; }
+function gpEdge(gp,i){ const now=gpHeld(gp,i), was=gpBtnPrev[i]; gpBtnPrev[i]=now; return now && !was; }
+function pollGamepad(){
+  padDx=0; padDy=0;
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let gp=null; for(const p of pads){ if(p){ gp=p; break; } }
+  if(!gp) return;
+  gpConnected=true;
+  const ax=gp.axes[0]||0, ay=gp.axes[1]||0, dead=0.35;
+  let dx = Math.abs(ax)>dead?ax:0, dy = Math.abs(ay)>dead?ay:0;
+  if(gpHeld(gp,14)) dx=-1; else if(gpHeld(gp,15)) dx=1;   // D-pad 좌/우
+  if(gpHeld(gp,12)) dy=-1; else if(gpHeld(gp,13)) dy=1;   // D-pad 상/하
+  if(state==='playing'){
+    padDx=dx; padDy=dy;
+    if(gpEdge(gp,0)||gpEdge(gp,1)||gpEdge(gp,2)||gpEdge(gp,3)||gpEdge(gp,7)) useUltimate();   // 아무 버튼/트리거 = 필살기
+    gpEdge(gp,9);   // start 소비
+  } else {
+    // 메뉴/선택 탐색: 좌우 이산 + 확인 버튼
+    const confirm = gpEdge(gp,0)||gpEdge(gp,1)||gpEdge(gp,9);
+    let navX=0;
+    if(gpEdge(gp,14)) navX=-1; else if(gpEdge(gp,15)) navX=1;
+    if(!gpLatchX){ if(dx<-0.5){ navX=-1; gpLatchX=true; } else if(dx>0.5){ navX=1; gpLatchX=true; } }
+    if(Math.abs(dx)<0.3) gpLatchX=false;
+    gpEdge(gp,12); gpEdge(gp,13);   // 위/아래 엣지 소비
+    if(state==='select'){
+      const chars=document.querySelectorAll('#selectScreen .char');
+      if(!chars.length) return;
+      updateSelectHighlight();
+      if(navX){ selIndex=(selIndex+navX+chars.length)%chars.length; updateSelectHighlight(); playSelect(); }
+      if(confirm && chars[selIndex]) chars[selIndex].click();
+    } else if(state==='levelup'){
+      const cards=document.querySelectorAll('#upRow .up-card');
+      if(!cards.length) return;
+      updateCardHighlight();
+      if(navX){ lvSel=(lvSel+navX+cards.length)%cards.length; updateCardHighlight(); playSelect(); }
+      if(confirm) pickUpgrade(lvSel);
+    } else if(state==='title'){
+      if(confirm) goSelect();
+    } else if(state==='tipreward'){
+      if(confirm) closeTip();
+    } else if(state==='over'){
+      if(confirm) backToTitle();
+    }
+  }
+}
+function updateSelectHighlight(){
+  document.querySelectorAll('#selectScreen .char').forEach((c,i)=> c.classList.toggle('gp-sel', gpConnected && i===selIndex));
+}
+function updateCardHighlight(){
+  document.querySelectorAll('#upRow .up-card').forEach((c,i)=> c.classList.toggle('gp-sel', gpConnected && i===lvSel));
+}
 
 /* =====================================================================
    난이도 곡선 — 여기가 "계속 빡세지는" 핵심.
@@ -1010,10 +1146,15 @@ function billXP(won){ return Math.min(60, 12 + Math.round(won/20000)); }
 
 /* 보스 4종 — 등장 순서대로 순환, 각자 재치있는 영어 별명 */
 const BOSS_CHARS=[
-  { sprite:'boss_couple',   nick:'GET-A-ROOM GANG' },      // 과도한 애정행각
-  { sprite:'boss_pickup',   nick:'THE SMOOTH OPERATOR' },  // 여미새
-  { sprite:'boss_woman',    nick:'MADAME SEND-IT-BACK' },  // 칵테일 감별사
-  { sprite:'boss_sprinter', nick:'LAST-CALL LINEBACKER' }, // 라스트 오더 러쉬남
+  // 멘트는 \n 으로 줄바꿈 → 2~3줄. 톤은 좀 더 쎄게.
+  { sprite:'boss_couple',   nick:'GET-A-ROOM GANG',
+    intro:"These two didn't book a bar.\nThey booked a film set for an\nadults-only feature on stool #3." },                 // 과도한 애정행각
+  { sprite:'boss_pickup',   nick:'THE SMOOTH OPERATOR',
+    intro:"Hasn't ordered a single drink.\nHe's here to farm phone numbers,\nthen leave every one on read." },               // 여미새
+  { sprite:'boss_woman',    nick:'MADAME SEND-IT-BACK',
+    intro:"Sent back every cocktail. Twice.\nReturned the ice for being too cold\nand the water for being too wet." },       // 칵테일 감별사
+  { sprite:'boss_sprinter', nick:'LAST-CALL LINEBACKER',
+    intro:"The bell rings LAST CALL and he loses it,\ntrucking through three tables and a stool\nlike the bar owes him one last shot." }, // 라스트 오더 러쉬남
 ];
 /* ===== 보스 스폰 (3분 스케줄, 매번 강해짐) ===== */
 function spawnBoss(){
@@ -1032,7 +1173,7 @@ function spawnBoss(){
     r: (tier===1?16:tier===2?22:30) * sizeGrow,
     hp:d.hp*strength, maxHp:d.hp*strength,
     speed:d.speed*(tier===3?0.7:0.55), wobble:Math.random()*6.28, dmgCd:0 });
-  banner('⚠ '+bc.nick+' ⚠', true);   // 별명 등장
+  bossBanner(bc.nick, bc.intro);     // 별명(크게) + 재치 멘트(작게)
   bossAlertUntil = gameTime + 2.2;   // 긴박한 빨간 플래시
   playBossAlarm();                    // 같은 알람음 6번 연속
 }
@@ -1069,7 +1210,7 @@ function fireSpirit(key, lv){
       projectiles.push({ x:player.x, y:player.y, vx:Math.cos(ang)*9, vy:Math.sin(ang)*9,
         dmg:(8+lv*5)*player.dmgMul, r:4, splash:0, pierce:1+lv, hit:new Set(), life:70, life0:70, kind:'vodka' }); }
   }
-  else if(key==='rum'){            // 모히또: 화염탄 광역폭발
+  else if(key==='rum'){            // 모히또: 화염탄 광역폭발 (레벨업 = 폭발 반경↑)
     const t=randomEnemy(); if(!t) return;
     const a=Math.atan2(t.y-player.y, t.x-player.x);
     projectiles.push({ x:player.x, y:player.y, vx:Math.cos(a)*4, vy:Math.sin(a)*4,
@@ -1131,10 +1272,19 @@ function spiritBanner(key, up){
   b.innerHTML='<div class="bn-name">'+name+'</div>'+(desc?'<div class="bn-desc">'+desc+'</div>':'');
   bannerTimer = up?200:320;   // GET≈5.3초 / UP≈3.3초 (기존 130프레임 대비 충분히 길게)
 }
+/* 보스 등장 배너: 별명(큰 글씨, 흔들림) + 진상 멘트(작은 글씨) */
+function bossBanner(nick, intro){
+  const b=document.getElementById('dropBanner');
+  b.className='drop-banner boss';
+  const desc = intro ? '<div class="bn-desc">'+intro.replace(/\n/g,'<br>')+'</div>' : '';
+  b.innerHTML='<div class="bn-name">⚠ '+nick+' ⚠</div>'+desc;
+  bannerTimer = 320;   // ~5.3초 (2~3줄 읽을 시간)
+}
 
 /* ===== 업데이트 ===== */
 function update(){
   frame++;
+  if(state==='tip'){ tipTick(); return; }   // 팁 스핀 연출 중
   if(state!=='playing' || paused) return;   // 설정창 열려있으면 일시정지
   gameTime += 1/60;
 
@@ -1163,19 +1313,20 @@ function update(){
   if(keys['w']||keys['arrowup'])dy--; if(keys['s']||keys['arrowdown'])dy++;
   if(keys['a']||keys['arrowleft'])dx--; if(keys['d']||keys['arrowright'])dx++;
   const kbActive = (dx!==0||dy!==0);                              // 키보드는 항상 풀스피드
-  dx+=stickDx; dy+=stickDy; const mag=Math.hypot(dx,dy); if(mag>0){dx/=mag;dy/=mag;}
-  // 조이스틱 아날로그 속도 3단계: 살짝 당기면 느리게, 중간이면 보통, 끝까지 당기면 빠르게
+  dx+=stickDx+padDx; dy+=stickDy+padDy; const mag=Math.hypot(dx,dy); if(mag>0){dx/=mag;dy/=mag;}
+  // 조이스틱/게임패드 아날로그 속도 3단계: 살짝=느리게, 중간=보통, 끝까지=빠르게
   let moveScale=1;
-  if(!kbActive){ const sm=Math.hypot(stickDx,stickDy);
+  if(!kbActive){ const sm=Math.max(Math.hypot(stickDx,stickDy), Math.hypot(padDx,padDy));
     if(sm>0.001) moveScale = sm<0.4 ? 0.5 : (sm<0.78 ? 0.75 : 1.0); }
   player.moving = mag>0.05;                                        // 걷기 애니메이션 판단
   if(dx>0.05) player.facing=1; else if(dx<-0.05) player.facing=-1; // 좌우 바라보기 (방향키마다 반전)
   player.x=Math.max(player.r,Math.min(W-player.r,player.x+dx*player.speed*player.slowMul*moveScale));
   player.y=Math.max(player.r,Math.min(H-player.r,player.y+dy*player.speed*player.slowMul*moveScale));
   if(player.throwTimer>0) player.throwTimer--;                     // 던지기 모션 타이머
-  // Joe 패시브 체력 회복: 레벨이 오를수록 회복 속도가 빨라짐 (Joe 약함 보완)
-  if(player.key==='joe' && player.hp>0 && player.hp<player.maxHp){
-    player.hp = Math.min(player.maxHp, player.hp + (0.25 + (player.level-1)*0.18)/60);
+  // 패시브 체력 회복: Joe는 기본 회복(레벨 스케일) + HEAL 강화 보너스 / Pat은 HEAL 강화로만 회복
+  const regenPerSec = (player.key==='joe' ? 0.25 + (player.level-1)*0.18 : 0) + (player.regenBonus||0);
+  if(regenPerSec>0 && player.hp>0 && player.hp<player.maxHp){
+    player.hp = Math.min(player.maxHp, player.hp + regenPerSec/60);
   }
 
   // 기본 무기
@@ -1188,6 +1339,18 @@ function update(){
     if(player.wt[key]<=0){ const n0=projectiles.length; fireSpirit(key,lv);
       if(player.sizeMul!==1) for(let pi=n0;pi<projectiles.length;pi++) projectiles[pi].r*=player.sizeMul;  // 피사체 크게
       player.wt[key]=spiritCd(key,lv)*player.cdMul; }
+  }
+
+  // Pat 필살기 회오리: 활성 동안 회전하는 여러 팔에서 피사체를 계속 뿜어냄
+  if(player.key==='pat' && frame < (player.ultSpiralUntil||0)){
+    player.ultSpiralAng += 0.40;                          // 회전 속도
+    if(frame % 3 === 0){
+      const arms = 2 + (player.ultLevel||1);              // 레벨업으로 팔(갈래) 증가
+      for(let a=0;a<arms;a++){ const ang = player.ultSpiralAng + a*(6.28/arms);
+        projectiles.push({ x:player.x, y:player.y, vx:Math.cos(ang)*5.6, vy:Math.sin(ang)*5.6,
+          dmg:player.dmg*player.dmgMul*1.25, r:8*player.sizeMul, splash:32*player.sizeMul, splashMax:5,
+          pierce:0, hit:new Set(), life:82, kind:player.projKind }); }
+    }
   }
 
   // 스폰
@@ -1238,7 +1401,7 @@ function update(){
       if(pd>28){ e.x+=pdx/pd*e.speed*0.55; e.y+=pdy/pd*e.speed*0.55; }
     }
     // 접촉 데미지
-    if(player.invuln<=0 && Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r){
+    if(!isInvuln() && Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r){
       const dmg = e.type==='boss'? D.dmg*2.2 : e.bomb? D.dmg*1.4 : D.dmg;
       hurtPlayer(dmg); if(player.hp<=0){ gameOver(); return; }
     }
@@ -1258,7 +1421,7 @@ function update(){
   // 적 침(미사일)
   for(let i=eprojectiles.length-1;i>=0;i--){ const p=eprojectiles[i];
     p.x+=p.vx; p.y+=p.vy; p.life--;
-    if(player.invuln<=0 && Math.hypot(p.x-player.x,p.y-player.y)<p.r+player.r){
+    if(!isInvuln() && Math.hypot(p.x-player.x,p.y-player.y)<p.r+player.r){
       hurtPlayer(D.dmg*0.55); eprojectiles.splice(i,1); if(player.hp<=0){ gameOver(); return; } continue; }
     if(p.life<=0||p.x<-30||p.x>W+30||p.y<-30||p.y>H+30) eprojectiles.splice(i,1);
   }
@@ -1322,7 +1485,7 @@ function update(){
     if(g.pull || d<player.pickupR){
       const k = g.pull ? 0.18 : 0.34;
       g.x+=(player.x-g.x)*k; g.y+=(player.y-g.y)*k;
-      if(d<12 && g.kind!=='bottle'){ collectPickup(g); pickups.splice(i,1); } }
+      if(d<12 && g.kind!=='bottle'){ collectPickup(g); pickups.splice(i,1); if(state!=='playing') break; } }
   }
   // 2) 스피릿 병은 레벨업이 끝난(=playing) 상태에서만 획득 → 레벨업 먼저, 그 다음에 스피릿 설명창
   if(state==='playing'){
@@ -1340,13 +1503,38 @@ function update(){
 }
 
 function hurtPlayer(d){ player.hp-=d; player.invuln=38; burst(player.x,player.y,'#ff4444',8); playHurt(); }
+/* 무적 판정: 피격 직후(invuln) 또는 Joe 필살기(ultUntil) 중 */
+function isInvuln(){ return player.invuln>0 || frame < (player.ultUntil||0); }
+/* ===== 필살기 ===== */
+function useUltimate(){
+  if(!player || state!=='playing' || paused) return;
+  if(gameTime < player.ultReadyAt) return;      // 아직 쿨타임 (80초마다 1번)
+  player.ultReadyAt = gameTime + ULT_CD;        // 다음 사용까지 80초
+  player.ultFxUntil = frame + 70;               // 반짝 이펙트(공통)
+  playSelect();
+  if(player.key==='pat'){
+    // 더블 쉐이킹: 사방으로 대량의 피사체를 한꺼번에 뿌림
+    // 회오리: 한 번에 안 나가고, 활성 동안 회전하는 팔에서 계속 뿜어져 나감(update에서 발사)
+    const dur = 78 + (player.ultLevel||1)*8;     // 레벨업으로 회오리 길어짐
+    player.ultSpiralUntil = frame + dur; player.ultSpiralAng = Math.random()*6.28;
+    player.ultFxUntil = frame + dur + 8;
+    burst(player.x,player.y,'#ffe08a',26);
+    banner('🍸 SHAKER TORNADO!', true);
+  } else {
+    // Joe: 일정 시간 무적으로 마음껏 휘젓고 다님
+    const dur = 300 + (player.ultLevel||1)*45;   // 레벨업으로 무적 길어짐 (Lv1 ~6초)
+    player.ultUntil = frame + dur; player.ultFxUntil = frame + dur;
+    burst(player.x,player.y,'#ffe08a',26);
+    banner('🥄 UNTOUCHABLE!', true);
+  }
+}
 
 /* 폭탄몹 폭발: 화면에 보이는 폭발 이펙트(원) + 반경 안 데미지(플레이어·적) */
 function explodeBomber(e){
   const D=DIFF(), R=e.blast||52;
   explosions.push({ x:e.x, y:e.y, r:R, life:26, max:26 });
   burst(e.x,e.y,'#ff6b3d',26); burst(e.x,e.y,'#ffd28a',14);
-  if(player.invuln<=0 && Math.hypot(e.x-player.x,e.y-player.y) < R+player.r){ hurtPlayer(D.dmg*2.2); }
+  if(!isInvuln() && Math.hypot(e.x-player.x,e.y-player.y) < R+player.r){ hurtPlayer(D.dmg*2.2); }
   for(const o of enemies){ if(o!==e && Math.hypot(o.x-e.x,o.y-e.y) < R) o.hp -= D.hp*0.6; }
 }
 /* ===== 적 사망 ===== */
@@ -1360,7 +1548,7 @@ function killEnemy(idx){
   // 드롭
   if(e.type==='boss'){
     pickups.push({ x:e.x, y:e.y, kind:'bill', won:e.won, sprite:e.billSprite });
-    dropSpirit(e.x+10, e.y);     // 기주 병 드롭
+    pickups.push({ x:e.x+12, y:e.y, kind:'tip' });   // 팁 봉투 드롭(랜덤 스킬 보상)
   } else {
     const rr=Math.random();
     if(rr<0.003) pickups.push({ x:e.x, y:e.y, kind:'magnet' });   // 0.3% 자석(전체 동전 즉시 흡수)
@@ -1401,10 +1589,13 @@ function collectPickup(g){
       if(o.kind==='coin'||o.kind==='bill'){ o.pull=true; n++; } }   // 즉시 흡수 대신 끌어당김 표시 → 매 프레임 모여서 도착할 때 획득
     burst(player.x,player.y,'#ffe08a',20); banner('🧲 MAGNET  pulling '+n+' cash', true); playCoin(); return;
   }
+  if(g.kind==='tip'){ startTip(); return; }   // 팁: 스핀 연출 후 랜덤 스킬 지급
+
+  let gained=0;
   if(g.kind==='bill'){               // 보스 지폐/뭉치: 금액(won)만큼 매출 + 경험치
-    money += g.won; player.xp += billXP(g.won); playCoin();
+    money += g.won; gained = billXP(g.won); player.xp += gained; playCoin();
   } else {                            // 황금동전
-    money += 500; player.xp += 1; playCoin();
+    money += 500; gained = 1; player.xp += 1; playCoin();
   }
   if(player.xp>=player.xpNeed) levelUp();
 }
@@ -1415,22 +1606,7 @@ function xpForLevel(L){ return Math.round(5 + (L-1)*4 + (L-1)*(L-1)*0.35); }
 function levelUp(){
   player.xp-=player.xpNeed; player.level++; player.xpNeed=xpForLevel(player.level);
   state='levelup';
-  const pool=[];
-  // 일반(유틸) 강화 — 공격력에 직접 영향 적음
-  GENERIC.forEach(g=> pool.push({type:'gen', ...g}));
-  // 기본기 강화 — Pat=쉐이킹 / Joe=스터링, 6레벨까지만 (한계 있음)
-  if(player.baseLv < MAX_BASE_LV){
-    const isShaker = player.base==='shaker';
-    pool.push({ type:'base', ic: isShaker?'🍸':'🥄', img: isShaker?'icon_shaker':'icon_barspoon',
-      n: isShaker?'SHAKING UP':'STIRRING UP',
-      d: isShaker?"Shake 'em harder":'Stir with sass',
-      lv:player.baseLv, maxlv:MAX_BASE_LV });
-  }
-  // 보유 기주(스피릿) 강화 — 진짜 성장의 핵심. 아이콘은 업로드한 칵테일 이미지.
-  for(const key in player.weapons){ if(player.weapons[key]<MAX_WLV){
-    pool.push({ type:'spirit', key, ic:SPIRITS[key].ic, img:'cocktail_'+key,
-      n:SPIRITS[key].name+' UP', d:SPIRITS[key].desc, lv:player.weapons[key], maxlv:MAX_WLV }); } }
-  const pick = pool.sort(()=>Math.random()-0.5).slice(0,4);   // 선택지 4개
+  const pick = buildUpgradePool().sort(()=>Math.random()-0.5).slice(0,4);   // 선택지 4개
   document.getElementById('upRow').innerHTML = pick.map((u,i)=>`
     <div class="up-card ${u.type==='spirit'?'new':''}" onclick="pickUpgrade(${i})">
       <div class="up-inner">
@@ -1441,27 +1617,100 @@ function levelUp(){
       </div>
       <img class="upframe-img" src="assets/levelup_frame.png" alt="">
     </div>`).join('');
-  window._pool=pick; show('levelScreen');
+  window._pool=pick; show('levelScreen'); lvSel=0; updateCardHighlight();
 }
 const GENERIC=[
   { ic:'👟', img:'icon_sneaker', n:'MOVE SPEED UP',   d:'Fresh kicks, quick feet', fn:p=>{ p.speed*=1.14; } },
-  { ic:'❤️', img:'icon_heart',   n:'HEAL + MAX HP',   d:'Liver of steel',          fn:p=>{ p.maxHp+=25; p.hp=Math.min(p.maxHp,p.hp+50); } },
+  { ic:'❤️', img:'icon_heart',   n:'HEAL + MAX HP',   d:'Liver of steel, +regen',  fn:p=>{ p.maxHp+=25; p.hp=Math.min(p.maxHp,p.hp+50); p.regenBonus=(p.regenBonus||0)+0.2; } },
   { ic:'🧲', img:'icon_magnet',  n:'PICKUP RANGE UP', d:'Cash magnet',             fn:p=>{ p.pickupR+=20; } },
   { ic:'💪', img:'icon_bicep',   n:'POWER UP',        d:'Swole = damage',          fn:p=>{ p.dmgMul*=1.14; } },
   { ic:'⚡', n:'ATTACK SPEED UP', d:'Pour faster',       fn:p=>{ p.cdMul=Math.max(0.35, p.cdMul*0.86); } },
   { ic:'🍺', n:'BIGGER DRINKS',   d:'Chunkier glasses',  fn:p=>{ p.sizeMul=Math.min(2.4, p.sizeMul*1.2); } },
   { ic:'✚', n:'EXTRA SHOT',      d:'One more for the road', fn:p=>{ p.extraProj=(p.extraProj||0)+1; } },
 ];
-function pickUpgrade(i){
-  playSelect();
-  const u=window._pool[i];
+/* 업그레이드 풀 빌드 + 적용 — 레벨업 화면과 팁 보상이 공유 */
+function buildUpgradePool(){
+  const pool=[];
+  GENERIC.forEach(g=> pool.push({type:'gen', ...g}));
+  if(player.baseLv < MAX_BASE_LV){
+    const isShaker = player.base==='shaker';
+    pool.push({ type:'base', ic: isShaker?'🍸':'🥄', img: isShaker?'icon_shaker':'icon_barspoon',
+      n: isShaker?'SHAKING UP':'STIRRING UP', d: isShaker?"Shake 'em harder":'Stir with sass',
+      lv:player.baseLv, maxlv:MAX_BASE_LV });
+  }
+  for(const key in player.weapons){ if(player.weapons[key]<MAX_WLV){
+    pool.push({ type:'spirit', key, ic:SPIRITS[key].ic, img:'cocktail_'+key,
+      n:SPIRITS[key].name+' UP', d:SPIRITS[key].desc, lv:player.weapons[key], maxlv:MAX_WLV }); } }
+  // 필살기 강화 — Pat=회오리 갈래↑ / Joe=무적 시간↑
+  if(player.ultLevel < MAX_ULT_LV){
+    pool.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP',
+      d: player.key==='pat'?'Wilder shaker tornado':'Longer invincibility',
+      lv:player.ultLevel, maxlv:MAX_ULT_LV });
+  }
+  return pool;
+}
+function applyUpgrade(u){
+  if(!u) return;
   if(u.type==='gen') u.fn(player);
   else if(u.type==='base'){ player.baseLv++; applyBaseLevel(); }
-  else player.weapons[u.key]++;
+  else if(u.type==='spirit') player.weapons[u.key]++;
+  else if(u.type==='ult') player.ultLevel++;
+}
+function pickUpgrade(i){
+  playSelect();
+  applyUpgrade(window._pool[i]);
   updateWeaponChips();
   hide('levelScreen'); state='playing';
   if(player.xp>=player.xpNeed) levelUp();   // 남은 경험치로 연속 레벨업(보스 지폐 등 큰 경험치 대응)
 }
+
+/* ===== 팁(보스 보상 봉투) ===== */
+let tipFx={ until:0, rewards:[], granted:true };
+function startTip(){
+  const r=Math.random();
+  const n = r<0.60?1 : r<0.85?2 : r<0.97?3 : 4;   // 1개60% / 2개25% / 3개12% / 4개3%
+  tipFx.rewards=[]; for(let i=0;i<n;i++) tipFx.rewards.push(Math.random()<0.15?'spirit':'skill');  // 스피릿15% / 스킬85%
+  tipFx.until = frame + 110; tipFx.granted=false;
+  state='tip';
+  banner('🧾 A TIP FROM A CUSTOMER!', true);
+  // 기분 좋은 효과음: 동전 + 휘파람 동시에, 음악은 스핀 동안만 살짝 줄임(시간 기반 → 자동 복구)
+  musicDuckUntil = frame + 115;
+  playSfx('tipcoin',2.2,0); playSfx('whistle',2.0,0.04);   // 팁 효과음 크게
+}
+function applyTipReward(type){   // 반환: {label, img, ic, sub}
+  if(type==='spirit'){
+    const missing=SPIRIT_KEYS.filter(k=>!player.weapons[k]);
+    if(missing.length){ const key=missing[Math.floor(Math.random()*missing.length)]; player.weapons[key]=1; player.wt[key]=0; return {label:SPIRITS[key].name, img:'cocktail_'+key, sub:'NEW WEAPON!'}; }
+    const owned=SPIRIT_KEYS.filter(k=>player.weapons[k]<MAX_WLV);
+    if(owned.length){ const key=owned[Math.floor(Math.random()*owned.length)]; player.weapons[key]++; return {label:SPIRITS[key].name, img:'cocktail_'+key, sub:'Lv '+player.weapons[key]}; }
+  }
+  const pool=buildUpgradePool();
+  if(pool.length){ const u=pool[Math.floor(Math.random()*pool.length)]; applyUpgrade(u);
+    const sub = u.lv!==undefined ? 'Lv '+(u.lv+1) : 'UPGRADE';
+    return {label:u.n, img:u.img, ic:u.ic, sub}; }
+  money+=20000; return {label:'₩20,000', ic:'💵', sub:'BONUS CASH'};   // 다 만렙이면 보너스 돈
+}
+function tipTick(){   // 스핀 연출이 끝나면 → 보상 화면(레벨업 프레임처럼 크게)
+  if(tipFx.granted || frame < tipFx.until) return;
+  tipFx.granted=true;
+  const got=tipFx.rewards.map(applyTipReward);
+  updateWeaponChips();
+  musicDuckUntil = 0;   // 보상 화면에서는 음악 정상 음량
+  bannerTimer=0; hide('dropBanner');   // 가운데 "A TIP FROM A CUSTOMER!" 배너 치워서 카드와 안 겹치게
+  playCoin();
+  document.getElementById('tipRow').innerHTML = got.map(g=>`
+    <div class="up-card ${g.sub==='NEW WEAPON!'?'new':''}" onclick="closeTip()">
+      <div class="up-inner">
+        <div class="ic">${g.img?`<img class="up-ic" src="assets/${g.img}.png" alt="">`:`<span>${g.ic||'✨'}</span>`}</div>
+        <h4>${g.label}</h4>
+        ${g.sub?`<div class="lv">${g.sub}</div>`:''}
+      </div>
+      <img class="upframe-img" src="assets/levelup_frame.png" alt="">
+    </div>`).join('');
+  state='tipreward';
+  show('tipScreen');
+}
+function closeTip(){ playSelect(); hide('tipScreen'); state='playing'; }
 
 /* ===== HUD ===== */
 function wicImg(imgKey, emoji){
@@ -1486,6 +1735,11 @@ function updateHUD(){
   document.getElementById('moneyText').textContent=money.toLocaleString();
   document.getElementById('timeText').textContent=fmtTime(Math.floor(gameTime));
   document.getElementById('killText').textContent=killCount;
+  const ub=document.getElementById('ultBtn');
+  if(ub){ const pct = gameTime>=player.ultReadyAt ? 1 : Math.max(0, 1-(player.ultReadyAt-gameTime)/ULT_CD);  // 쿨타임 진행도
+    ub.style.setProperty('--ult', (pct*360)+'deg');
+    ub.classList.toggle('ready', pct>=1);
+  }
 }
 function fmtTime(s){ return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
 
@@ -1500,7 +1754,7 @@ function gameOver(){ state='over'; setMusic('title'); const secs=Math.floor(game
     setTimeout(()=>inp.focus(),50); }
   else ne.classList.add('hidden');
   curBoardMetric='time'; showBoard('time');
-  hide('hud'); hide('stick'); hide('weaponsRow'); hide('dropBanner'); show('overScreen'); }
+  hide('hud'); hide('stick'); hide('weaponsRow'); hide('ultBtn'); hide('dropBanner'); show('overScreen'); }
 
 /* 플레이어 애니메이션 프레임 선택: 던지기 > 걷기(A/B 교대) > 서기 */
 function playerFrameKey(){
@@ -1530,7 +1784,7 @@ function draw(){
     ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
   }
 
-  if(state==='playing'||state==='levelup'||state==='over'){
+  if(state==='playing'||state==='levelup'||state==='over'||state==='tip'){
     // 픽업 (돈/병)
     for(const g of pickups){ drawPickup(g); }
 
@@ -1608,8 +1862,20 @@ function draw(){
     for(const pt of particles){ ctx.globalAlpha=pt.life/18; ctx.fillStyle=pt.color;
       ctx.fillRect(pt.x-2,pt.y-2,4,4); ctx.globalAlpha=1; }
 
+    // 필살기 반짝임: 충전 완료(대기) 또는 사용 중일 때 플레이어 주위 금빛 반짝
+    if(player){
+      const ultReady = gameTime>=player.ultReadyAt, ultActive = frame < (player.ultFxUntil||0);
+      if(ultReady || ultActive){
+        const pulse = 0.5+0.5*Math.sin(frame*(ultActive?0.45:0.16));
+        ctx.globalAlpha = ultActive?0.75:(0.3*pulse+0.12); ctx.strokeStyle='#ffe08a'; ctx.lineWidth=ultActive?3:2;
+        ctx.beginPath(); ctx.arc(player.x, player.y-4, 19+pulse*6, 0, 6.28); ctx.stroke(); ctx.globalAlpha=1;
+        const n = ultActive?5:2;
+        for(let i=0;i<n;i++){ const a=Math.random()*6.28, rr=13+Math.random()*13;
+          ctx.fillStyle='#fff4c0'; ctx.fillRect(player.x+Math.cos(a)*rr-1, player.y-4+Math.sin(a)*rr-1, 2, 2); }
+      }
+    }
     // 플레이어 (서기 / 걷기 A·B / 던지기 프레임 + 좌우반전)
-    if(player && !(player.invuln>0 && frame%6<3)){
+    if(player && state!=='tip' && !(player.invuln>0 && frame%6<3)){
       const pim=spr(playerFrameKey()) || spr(player.key);
       if(pim){
         const DH=44, aspect=pim.width/pim.height;       // 캐릭터 크게 (높이 44px, 비율 유지)
@@ -1617,6 +1883,24 @@ function draw(){
       }
       else { ctx.save(); ctx.translate(player.x-8,player.y-8); drawSprite(ctx,player.key,1); ctx.restore(); }
       ctx.strokeStyle='rgba(111,207,143,.1)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.pickupR,0,6.28); ctx.stroke();
+    }
+
+    // 팁 연출: 화면 어둡게 + 후광 + 가운데서 뱅글뱅글 도는 플레이어
+    if(state==='tip' && player){
+      ctx.fillStyle='rgba(8,10,8,.55)'; ctx.fillRect(0,0,W,H);
+      const cx=W/2, cy=H/2+34;   // 위쪽 "A TIP!" 배너와 안 겹치게 살짝 아래
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(frame*0.05);   // 회전하는 후광 레이
+      for(let i=0;i<12;i++){ ctx.rotate(6.28/12); ctx.fillStyle='rgba(255,210,90,'+(0.10+0.07*Math.sin(frame*0.2+i))+')';
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(15,-95); ctx.lineTo(-15,-95); ctx.closePath(); ctx.fill(); }
+      ctx.restore();
+      const gd=ctx.createRadialGradient(cx,cy,8,cx,cy,72);       // 글로우 원
+      gd.addColorStop(0,'rgba(255,228,150,.6)'); gd.addColorStop(1,'rgba(255,210,90,0)');
+      ctx.fillStyle=gd; ctx.beginPath(); ctx.arc(cx,cy,72,0,6.28); ctx.fill();
+      const pim=spr(player.key)||spr(playerFrameKey());          // 뱅글뱅글 도는 플레이어
+      if(pim){ const DH=64, aspect=pim.width/pim.height; ctx.save(); ctx.translate(cx,cy); ctx.rotate(frame*0.16);
+        ctx.imageSmoothingEnabled=false; ctx.drawImage(pim, -DH*aspect/2, -DH/2, DH*aspect, DH); ctx.restore(); }
+      for(let i=0;i<3;i++){ const a=Math.random()*6.28, rr=42+Math.random()*32;   // 반짝이
+        ctx.fillStyle='#fff4c0'; ctx.fillRect(cx+Math.cos(a)*rr-1.5, cy+Math.sin(a)*rr-1.5, 3, 3); }
     }
   }
 }
@@ -1805,6 +2089,14 @@ function drawPickup(g){
     // 폴백: U자석
     ctx.fillStyle='#d9544d'; ctx.fillRect(g.x-7,g.y-9,5,13); ctx.fillRect(g.x+2,g.y-9,5,13);
     ctx.fillStyle='#eaeaea'; ctx.fillRect(g.x-7,g.y+4,5,4); ctx.fillRect(g.x+2,g.y+4,5,4); return; }
+  // 팁 봉투(보스 보상) — 금빛 글로우 + 둥실
+  if(g.kind==='tip'){ const tim=spr('tip');
+    ctx.globalAlpha=0.36; ctx.fillStyle='#ffe08a';
+    ctx.beginPath(); ctx.arc(g.x,g.y,16+Math.sin(frame*0.12),0,6.28); ctx.fill(); ctx.globalAlpha=1;
+    if(tim){ const h=32, w=h*tim.width/tim.height; drawImgC(tim, g.x, g.y+Math.sin(frame*0.1)*1.5, w, h); }
+    else { ctx.fillStyle='#efe6c4'; ctx.fillRect(g.x-11,g.y-7,22,14); ctx.strokeStyle='#9a7b2a'; ctx.strokeRect(g.x-11,g.y-7,22,14);
+      ctx.fillStyle='#2a7d4f'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('TIP',g.x,g.y); }
+    sparkle(g.x,g.y,18,g.x); return; }
   // 데킬라샷(체력 회복) — 초록 하트 글로우 + 둥실
   if(g.kind==='health'){ const tim=spr('item_tequila');
     ctx.globalAlpha=0.32; ctx.fillStyle='#7ac74f';
@@ -1853,7 +2145,7 @@ function drawPickup(g){
 }
 
 /* ===== 루프 ===== */
-function loop(){ update(); draw(); requestAnimationFrame(loop); }
+function loop(){ pollGamepad(); update(); draw(); requestAnimationFrame(loop); }
 loop();
 
 /* ===== 오디오/음악 초기화 ===== */
