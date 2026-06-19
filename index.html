@@ -367,6 +367,7 @@
 <div id="wrap">
   <div id="stage">
   <canvas id="game" width="540" height="540"></canvas>
+  </div><!-- /stage : 정사각형은 캔버스(게임)만. 피통·스탯·버튼·조합법·설정은 전부 정사각형 밖(뷰포트) -->
 
   <div id="hud" class="hidden">
     <div class="left">
@@ -394,7 +395,6 @@
   <!-- 설정 버튼(왼쪽) + 음량조절 패널 -->
   <button id="gearBtn" onclick="openSettings()" aria-label="settings">⚙</button>
   <button id="recipeBtn" onclick="openRecipe()" aria-label="recipes">📖</button>
-  </div><!-- /stage -->
   <!-- 재료/스킬/칵테일/6칸 칩: 정사각형 '밖' 여백에 표시(뷰포트 기준) -->
   <div id="hudChips" class="hidden">
     <div id="ingRow" class="hudchips"></div>
@@ -1253,6 +1253,7 @@ const COCKTAIL_INDEX=[
   { img:'cocktail_tequila',       name:'MARGARITA',       t:'Tequila · Cointreau · lime · salt rim. Sunshine with a kick.' },
   { img:'cocktail_gin',           name:'DRY MARTINI',     t:'Gin · a whisper of dry vermouth · olive. However you order it, you still look serious.' },
   { img:'cocktail_vodkamartini',  name:'VODKA MARTINI',   t:'Vodka · dry vermouth · twist. Shaken, stirred, debated forever.' },
+  { img:'rainbow_icon', name:'RAINBOW GUN · ENDGAME FUSION', t:'Not on the menu. Max every spirit (Lv8) and every cocktail (Lv4) and they all fuse into one weapon: the Rainbow Gun. Absurd damage and fire rate, every other weapon vanishes, and the bosses never stop scaling. The last drink you ever pour.' },
 ];
 let curIndexTab='monsters';
 function showIndexTab(t){ curIndexTab=t;

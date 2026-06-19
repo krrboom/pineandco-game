@@ -8,7 +8,12 @@ index.html + 이미지(assets/boss_nobook_stand.png) 를 같이 올려야 합니
 [들어있는 것]
   index.html                      ← 게임 본체(최신)
   sandbox.html                    ← 테스트 모드(안 바뀜, 처음이면 같이)
-  assets/boss_nobook_stand.png    ← ★ 새 보스 이미지 (노부킹 무리). 이게 빠지면 보스가 그림 없이 네모로만 나옴.
+  assets/boss_nobook_stand.png    ← ★ 노부킹 보스 가로 이미지. 빠지면 보스가 네모로만 나옴.
+  assets/boss_nobook_icon.png     ← ★ 인덱스(도감)용 노부킹 썸네일.
+  assets/rainbow_gun.png          ← ★ 레인보우건(플레이어가 든 총).
+  assets/rainbow_icon.png         ← ★ 레인보우건 아이콘(인덱스/HUD).
+  assets/rainbow_proj.png         ← ★ 레인보우건 발사체.
+  * 이 assets 5개가 다 올라가야 노부킹 보스/레인보우건이 그림 제대로 나옴.
 
 [이번 업데이트 내용]
   1) 노부킹 무리(가로 벽 보스) 추가  ← 새 이미지 필요
