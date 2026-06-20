@@ -100,13 +100,17 @@
   .bt-tab{ font-family:inherit; font-size:clamp(7px,2vw,10px); padding:6px 11px; cursor:pointer;
     background:var(--panel); color:var(--dim); border:2px solid #333; box-shadow:2px 2px 0 #000; }
   .bt-tab.active{ color:var(--pine-light); border-color:var(--pine); background:#1c241a; }
-  .board{ font-size:clamp(8px,2.2vw,11px); color:var(--dim); line-height:1.55; min-width:clamp(196px,58vw,270px); }
-  .board .brow{ display:flex; justify-content:space-between; gap:16px; padding:1px 5px; }
+  .board{ font-size:clamp(8px,2.2vw,11px); color:var(--dim); line-height:1.5; min-width:clamp(236px,92vw,360px); }
+  /* 한 행에 이름 + 시간/제압/매출 3개 컬럼을 한꺼번에 */
+  .board .brow{ display:grid; grid-template-columns:minmax(46px,1fr) auto auto auto; gap:6px; padding:1px 5px; align-items:center; }
+  .board .brow > span:not(.bn){ text-align:right; min-width:32px; font-variant-numeric:tabular-nums; }
+  .board .brow.bhead{ color:var(--pine-light); font-weight:bold; border-bottom:1px solid #2a3a2a; margin-bottom:2px; }
+  .board .brow .hot{ color:var(--amber); }
   .board .brow.me{ color:var(--amber); background:rgba(230,180,80,.16); }
   .board .brow.gold{ color:#ffe9a0; font-weight:bold; text-shadow:0 0 7px rgba(255,205,80,.95), 0 0 14px rgba(255,180,40,.6);
     background:linear-gradient(90deg, rgba(255,200,70,.18), rgba(255,200,70,.04)); animation:goldPulse 1.3s ease-in-out infinite; }
   @keyframes goldPulse{ 0%,100%{ filter:brightness(1) } 50%{ filter:brightness(1.4) } }
-  .board .brank{ color:var(--pine-light); display:inline-block; min-width:20px; }
+  .board .brank{ color:var(--pine-light); display:inline-block; min-width:18px; }
   #hud{ position:absolute; top:10px; left:12px; right:12px; display:flex;
     justify-content:space-between; align-items:flex-start; pointer-events:none; z-index:5; }
   .hud-name{ height:clamp(24px,7vw,40px); width:auto; image-rendering:pixelated; display:block;
@@ -132,6 +136,9 @@
   #statPanel .strow b{ font-size:8px; color:var(--amber); min-width:24px; letter-spacing:.5px; }
   #statPanel .sbar{ display:inline-flex; gap:2px; }
   #statPanel .sbar i{ width:6px; height:6px; background:var(--pine-light); border-radius:1px; box-shadow:0 0 0 1px #000; }
+  #statPanel .stn{ font-size:8px; color:#ffd76a; font-style:normal; margin-left:2px; min-width:15px; letter-spacing:.3px; }
+  .craft-btns{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .btn.craft-no{ background:#2a2a2a; color:#d8cdbb; border-color:#5a5a5a; }
   #statPanel .sbar i.bs{ background:var(--amber); }   /* 캐릭터 기본 스탯(선택창과 동일) */
   /* 무기/아이템 HUD: 재료·스킬·칵테일·6칸 칩은 정사각형 '밖' 여백에 표시(피통/스탯만 화면 안).
      resize()가 --sq(정사각형 크기) / --mx,--my(좌우·상하 여백) 변수와 portrait/landscape 클래스를 세팅. */
@@ -385,9 +392,11 @@
   </div>
   <div id="statPanel" class="hidden">
     <div class="strow"><b>SPD</b><span class="sbar" id="stSpeed"></span></div>
-    <div class="strow"><b>PWR</b><span class="sbar" id="stPower"></span></div>
-    <div class="strow"><b>HP</b><span class="sbar" id="stHealth"></span></div>
-    <div class="strow"><b>RPD</b><span class="sbar" id="stRapid"></span></div>
+    <div class="strow"><b>PWR</b><span class="sbar" id="stPower"></span><i class="stn" id="nPower"></i></div>
+    <div class="strow"><b>ATK</b><span class="sbar" id="stRapid"></span><i class="stn" id="nRapid"></i></div>
+    <div class="strow"><b>HP</b><span class="sbar" id="stHealth"></span><i class="stn" id="nHealth"></i></div>
+    <div class="strow"><b>REG</b><span class="sbar" id="stRegen"></span><i class="stn" id="nRegen"></i></div>
+    <div class="strow"><b>DEF</b><span class="sbar" id="stDef"></span><i class="stn" id="nDef"></i></div>
   </div>
   <div id="dropBanner" class="drop-banner hidden"></div>
 
@@ -530,13 +539,17 @@
     <h2 class="title" style="color:#c89a3c">✦ CRAFT ✦</h2>
     <div class="craft-eq" id="craftEq"></div>
     <p class="craft-desc" id="craftDesc"></p>
-    <button class="btn tip-go" id="craftBtn" onclick="confirmCraft()">MAKE IT</button>
+    <div class="craft-btns">
+      <button class="btn tip-go" id="craftBtn" onclick="confirmCraft()">MAKE IT</button>
+      <button class="btn craft-no" onclick="cancelCraft()">NOT NOW</button>
+    </div>
   </div>
 
   <div class="screen hidden" id="craftChoiceScreen">
     <h2 class="title" style="color:#c89a3c">✦ CHOOSE A COCKTAIL ✦</h2>
     <p class="craft-desc">Several are ready. Pick one to craft now — you can make the others next.</p>
     <div class="craft-choices" id="craftChoices"></div>
+    <button class="btn craft-no" onclick="skipCraftChoice()">NOT NOW</button>
   </div>
 
   <div class="screen hidden" id="noticeScreen">
@@ -600,10 +613,10 @@ const BD_KEYS={ time:'paco_bd_time', kills:'paco_bd_kills', sales:'paco_bd_sales
 const BD_LABEL={ time:'TIME', kills:'DOWNS', sales:'SALES' };
 function loadBd(k){ try{ const a=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 // 최고기록 1회 초기화 (브라우저당 한 번만). 다시 초기화하려면 아래 버전 문자열을 올리면 됨.
-// v2(2026-06-19): 시즌 리셋 — 모든 기기의 로컬 기록을 한 번 더 비움. (공유 순위=구글 시트는 시트에서 따로 비워야 함)
-try{ if(localStorage.getItem('paco_reset')!=='v2'){ localStorage.removeItem(BD_KEYS.time); localStorage.removeItem(BD_KEYS.kills); localStorage.removeItem(BD_KEYS.sales); localStorage.setItem('paco_reset','v2'); } }catch(e){}
+// v3(2026-06-20): 리더보드 행에 시간/제압/매출을 함께 저장하는 새 포맷 → 옛 포맷 로컬 기록 1회 비움
+try{ if(localStorage.getItem('paco_reset')!=='v3'){ localStorage.removeItem(BD_KEYS.time); localStorage.removeItem(BD_KEYS.kills); localStorage.removeItem(BD_KEYS.sales); localStorage.setItem('paco_reset','v3'); } }catch(e){}
 let BOARDS={ time:loadBd(BD_KEYS.time), kills:loadBd(BD_KEYS.kills), sales:loadBd(BD_KEYS.sales) };
-let HI_SCORE = BOARDS.time.length ? BOARDS.time[0].v : 0;
+let HI_SCORE = BOARDS.time.length ? (BOARDS.time[0].time||0) : 0;
 let pendingRun={time:0,kills:0,sales:0}, curBoardMetric='time', lastSavedName='';
 /* ===== 공유 랭킹 (구글 시트 + Apps Script) — 모든 기기가 같은 순위, 영구 보관 ===== */
 const CLOUD_URL='https://script.google.com/macros/s/AKfycbxcEzIduBwEaccJ-bOmSA7ZTGfasbSW7-Pz6OLyFWs2rOfeK6EtzyvxNVBh82C6ReER/exec';
@@ -614,13 +627,22 @@ const PROFANITY=['DICK','SEX','COCK','PUSSY','FUCK','SHIT','PENIS','VAGINA','BOO
 function isProfane(nm){ const s=nm.replace(/[^A-Z]/g,''); return PROFANITY.some(w=>s.includes(w)); }
 function cleanName(raw){ let nm=(raw||'').trim().toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').slice(0,8);
   if(!nm) nm='BUME'; if(isProfane(nm)) nm="I'M IDIOT"; return nm; }
-function qualifiesAny(run){ return ['time','kills','sales'].some(m=>{ const b=BOARDS[m]; return run[m]>0 && (b.length<10 || run[m]>b[b.length-1].v); }); }
+function qualifiesAny(run){ return ['time','kills','sales'].some(m=>{ const b=BOARDS[m]; return run[m]>0 && (b.length<10 || run[m]>(b[b.length-1][m]||0)); }); }
 function addRun(name, run){
-  for(const m of ['time','kills','sales']){ const b=BOARDS[m]; b.push({ name, v:run[m] }); b.sort((a,c)=>c.v-a.v); BOARDS[m]=b.slice(0,10);
+  // 각 지표 순위마다 행 전체(시간/제압/매출)를 저장 → 한 화면에 3개 다 보여줄 수 있게
+  for(const m of ['time','kills','sales']){ const b=BOARDS[m];
+    b.push({ name, time:run.time||0, kills:run.kills||0, sales:run.sales||0 });
+    b.sort((a,c)=>(c[m]||0)-(a[m]||0)); BOARDS[m]=b.slice(0,10);
     try{ localStorage.setItem(BD_KEYS[m], JSON.stringify(BOARDS[m])); }catch(e){} }
-  HI_SCORE = BOARDS.time.length ? BOARDS.time[0].v : 0;
+  HI_SCORE = BOARDS.time.length ? (BOARDS.time[0].time||0) : 0;
 }
 function fmtMetric(m,v){ if(m==='time') return fmtTime(v); if(m==='sales') return '₩'+(v||0).toLocaleString(); return (v||0)+''; }
+// 컴팩트 표기(3컬럼이 한 줄에 들어가게): 시간 M:SS / 매출 ₩1.2M·₩340k / 제압 14.4k
+function fmtCell(m,v){ v=v||0;
+  if(m==='time') return fmtTime(v);
+  if(m==='sales'){ if(v>=1e6) return '₩'+(v/1e6).toFixed(1)+'M'; if(v>=1e3) return '₩'+Math.round(v/1e3)+'k'; return '₩'+v; }
+  return v>=1e4 ? (v/1e3).toFixed(1)+'k' : ''+v;   // kills/downs
+}
 function showBoard(m){ curBoardMetric=m; document.querySelectorAll('.bt-tab').forEach(t=>t.classList.toggle('active', t.dataset.m===m)); renderBoard(); cloudFetch(m); }
 /* 점수 전송 (fire-and-forget, no-cors) */
 function cloudSubmit(name, run){
@@ -638,8 +660,8 @@ function cloudFetch(metric){
   const cb='__pineCb'+(_cloudCbN++), s=document.createElement('script'); let done=false;
   window[cb]=(data)=>{ done=true;
     try{ if(data && data.ok && Array.isArray(data.top)){
-      CLOUD_BOARDS[metric]=data.top.map(e=>({ name:String(e.name||'---'), v:Number(e[metric])||0 }));
-      if(metric==='time' && CLOUD_BOARDS.time.length){ HI_SCORE=Math.max(HI_SCORE, CLOUD_BOARDS.time[0].v);
+      CLOUD_BOARDS[metric]=data.top.map(e=>({ name:String(e.name||'---'), time:Number(e.time)||0, kills:Number(e.kills)||0, sales:Number(e.sales)||0 }));
+      if(metric==='time' && CLOUD_BOARDS.time.length){ HI_SCORE=Math.max(HI_SCORE, CLOUD_BOARDS.time[0].time);
         const h=document.getElementById('hiTitle'); if(h) h.textContent=fmtTime(HI_SCORE); }
       if(curBoardMetric===metric) renderBoard();
     } }catch(e){}
@@ -652,11 +674,20 @@ function cloudFetch(metric){
 }
 function renderBoard(){
   const cloud=CLOUD_BOARDS[curBoardMetric];
-  const b=(cloud!==null) ? cloud : (BOARDS[curBoardMetric]||[]);   // 클라우드 받았으면 그걸로(공유 순위), 아니면 로컬
-  let html='';
+  const b=(cloud!==null) ? cloud : (BOARDS[curBoardMetric]||[]);   // 선택한 지표로 정렬된 Top10(클라우드 우선, 없으면 로컬)
+  const hot = m => curBoardMetric===m ? ' hot' : '';               // 정렬 중인 컬럼 강조
+  // 헤더: 탭으로 정렬해도 시간/제압/매출 3개 컬럼은 항상 함께 보임
+  let html = `<div class="brow bhead"><span class="bn">RANK</span><span class="${hot('time').trim()}">TIME</span><span class="${hot('kills').trim()}">DOWNS</span><span class="${hot('sales').trim()}">SALES</span></div>`;
   for(let i=0;i<10;i++){ const e=b[i];
-    const me = e && e.name===lastSavedName && e.v===pendingRun[curBoardMetric];
-    html += `<div class="brow ${me?'me':''} ${i===0&&e?'gold':''}"><span><span class="brank">${i===0&&e?'👑':(i+1)+'.'}</span> ${e?e.name:'---'}</span><span>${e?fmtMetric(curBoardMetric,e.v):'-'}</span></div>`; }
+    const me = e && e.name===lastSavedName && (e[curBoardMetric]===pendingRun[curBoardMetric]);
+    const rank = (i===0&&e) ? '👑' : (i+1)+'.';
+    html += `<div class="brow ${me?'me':''} ${i===0&&e?'gold':''}">`
+      + `<span class="bn"><span class="brank">${rank}</span> ${e?e.name:'---'}</span>`
+      + `<span class="${hot('time').trim()}">${e?fmtCell('time',e.time):'-'}</span>`
+      + `<span class="${hot('kills').trim()}">${e?fmtCell('kills',e.kills):'-'}</span>`
+      + `<span class="${hot('sales').trim()}">${e?fmtCell('sales',e.sales):'-'}</span>`
+      + `</div>`;
+  }
   document.querySelectorAll('.board-out').forEach(el=> el.innerHTML=html);
 }
 function saveScore(){
@@ -1301,7 +1332,7 @@ function startGame(charKey){
   enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[];
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bossAlertUntil=0; keys={};
-  nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set();
+  nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set(); declinedCraft=new Set(); pendingCraft=null; pendingFromTip=false;
   bossCount=0; nextBoss=BOSS_FIRST; nextWall=WALL_FIRST; bossBag=[]; bossRecent=[];
   state='playing'; hideAllScreens(); show('hud'); show('hudChips'); show('ultBtn'); show('statPanel');
   document.getElementById('hudCharImg').src='assets/name_'+charKey+'.png';
@@ -1629,10 +1660,15 @@ function dealDmg(e, base){ let dmg=base; if(player.crit && Math.random()<player.
 /* 스피릿별 명중 효과: vodka=빙결 / gin=독 / whiskey·rum=폭발 / tequila=라임 궤도 추가타 */
 function onHit(p, e){
   // 칵테일 범용 명중 효과(플래그)
-  if(p.cFreeze){ e.frozenUntil = Math.max(e.frozenUntil||0, frame + p.cFreeze); }
+  if(p.cFreeze){ e.frozenUntil = Math.max(e.frozenUntil||0, frame + p.cFreeze);
+    if(!p._frzFx){ p._frzFx=1; icyBoom(p.x, p.y, Math.max(30, p.cExplode||0)); } }   // 빙결 폭발 이펙트(피사체당 1번)
   if(p.cSlow){ e.frozenUntil = Math.max(e.frozenUntil||0, frame + p.cSlow); }
   if(p.cPoison){ e.poison = { dmg: Math.max(3, p.dmg*0.3), until: frame + p.cPoison }; }
   if(p.cExplode){ explodeAt(p.x, p.y, p.dmg*0.7, p.cExplode); }
+  // 모히또: 맞은 부위에서 민트잎 3개가 흩어져 날아감
+  if(p.cMint){ const b=Math.atan2(p.vy,p.vx);
+    for(let i=0;i<p.cMint;i++){ const ang=b+(i-(p.cMint-1)/2)*0.7;
+      projectiles.push({ x:p.x, y:p.y, vx:Math.cos(ang)*5.5, vy:Math.sin(ang)*5.5, dmg:p.dmg*0.3, r:6, splash:0, pierce:2, hit:new Set(), life:55, kind:'ing_mint', slow:true }); } }
   if(p.kind==='vodka'){ e.frozenUntil = frame + 80; }                                  // 빙결(슬로우)
   else if(p.kind==='gin'){ e.poison = { dmg: Math.max(2, p.dmg*0.35), until: frame+150 }; }  // 독 DoT
   else if(p.kind==='whiskey' || p.kind==='rum'){ explodeAt(p.x, p.y, p.dmg*0.7, 34); }   // 폭발 스플래시
@@ -1648,9 +1684,16 @@ function syrupBurst(x,y,dmg){
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
 }
 function explodeAt(x,y,dmg,R){
-  explosions.push({ x, y, r:R, life:16, max:16, col:'#ffb347' });
+  // 눈에 확 띄는 폭발: 큰 폭발 링 + 하얀 코어 플래시 + 불똥 파티클
+  explosions.push({ x, y, r:R, life:24, max:24, col:'#ff7a2a', ring:'#fff2c0', flash:true });
+  burst(x,y,'#ffd24a',12); burst(x,y,'#ff7a3d',8);
   for(const e of enemies){ if(Math.hypot(e.x-x,e.y-y) < R+e.r) e.hp-=dmg; }
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
+}
+// 빙결 폭발 이펙트(데미지 없음, 시각): 얼음빛 링 + 하얀 플래시 + 푸른 파티클
+function icyBoom(x,y,R){
+  explosions.push({ x, y, r:Math.max(28,R), life:22, max:22, col:'#7fc8ff', ring:'#ffffff', flash:true });
+  burst(x,y,'#bfe6ff',10);
 }
 
 /* ===== 6대 기주 무기 발사/유지 =====
@@ -1659,6 +1702,15 @@ function explodeAt(x,y,dmg,R){
 function nearestEnemy(){ let n=null,nd=1e9; for(const e of enemies){ const dd=(e.x-player.x)**2+(e.y-player.y)**2; if(dd<nd){nd=dd;n=e;} } return n; }
 function randomEnemy(){ return enemies.length? enemies[Math.floor(Math.random()*enemies.length)] : null; }
 
+// EXTRA SHOT: 직전에 무기가 쏜 피사체(projectiles[n0..])를 각도만 살짝 틀어 extraProj번 복제 → 모든 스킬에 +피사체
+function addExtraShots(n0){
+  const ex=player.extraProj||0; if(ex<=0) return;
+  const added=projectiles.slice(n0); if(!added.length) return;
+  for(let c=1;c<=ex;c++){ const off=(c%2?1:-1)*0.17*Math.ceil(c/2);
+    for(const p of added){ const sp=Math.hypot(p.vx,p.vy); if(sp<0.01) continue;
+      const ang=Math.atan2(p.vy,p.vx)+off;
+      projectiles.push(Object.assign({}, p, { vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, hit:new Set() })); } }
+}
 function fireSpirit(key, lv){
   if(key==='vodka'){               // 마티니: 직선 관통 단검 연사
     const t=nearestEnemy(); if(!t) return;
@@ -1788,14 +1840,14 @@ function fireCocktail(key, lv){
   const a = Math.atan2(t.y-player.y, t.x-player.x);
   const img = COCKTAILS[key].img;
   const S = 1.45 * (1 + (lv-1)*0.2);   // 칵테일 피사체: 기본부터 크게(×1.45) + 레벨업마다 +20%
-  const add = (o)=>{ const p=Object.assign({ x:player.x, y:player.y, vx:0, vy:0, dmg:0, r:12, splash:0, pierce:1, hit:new Set(), life:90, kind:img }, o); p.r*=S; projectiles.push(p); };
+  const add = (o)=>{ const p=Object.assign({ x:player.x, y:player.y, vx:0, vy:0, dmg:0, r:12, splash:0, pierce:1, hit:new Set(), life:90, kind:img }, o); p.r *= (o.noScale?1:S); projectiles.push(p); };
   const fan = (n,spd,spread,o)=>{ for(let i=0;i<n;i++){ const ang=a+(i-(n-1)/2)*spread; add(Object.assign({ vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd }, o)); } };
   switch(key){
-    case 'gimlet':         add({ vx:Math.cos(a)*6, vy:Math.sin(a)*6, dmg:42*P, r:14, pierce:99, life:95, cPoison:160 }); break;          // 라임 사이클론(관통+독)
-    case 'manhattan':      add({ vx:Math.cos(a)*4, vy:Math.sin(a)*4, dmg:72*P, r:13, pierce:0, life:80, cExplode:62 }); break;            // 체리 폭탄(대폭발)
-    case 'oldfashioned':   add({ vx:Math.cos(a)*3, vy:Math.sin(a)*3, dmg:78*P, r:16, pierce:0, life:80, cExplode:68, cFreeze:55 }); break;// 얼음바위(광역+빙결)
+    case 'gimlet':         fan(2+lv, 6, 0.16, { dmg:42*P, r:14, pierce:99, life:95, cPoison:160 }); break;                               // 라임 사이클론: Lv1=3발, 레벨마다 +1
+    case 'manhattan':      add({ vx:Math.cos(a)*4, vy:Math.sin(a)*4, dmg:72*P, r:24, noScale:true, pierce:0, life:80, cExplode:62 }); break;  // 체리 폭탄: 크고(고정 크기) 대폭발
+    case 'oldfashioned':   add({ vx:Math.cos(a)*3, vy:Math.sin(a)*3, dmg:150*P, r:16, pierce:0, life:80, cExplode:68, cFreeze:55 }); break;// 얼음바위(광역+빙결)
     case 'sidecar':        add({ vx:Math.cos(a)*4.5, vy:Math.sin(a)*4.5, dmg:50*P, r:12, pierce:3, life:130, homing:true, cExplode:42 }); break; // 유도+파편
-    case 'mojito':         add({ vx:Math.cos(a)*4, vy:Math.sin(a)*4, dmg:56*P, r:14, pierce:0, life:85, cExplode:54, cSlow:120 }); break;  // 화염+민트 슬로우
+    case 'mojito':         add({ vx:Math.cos(a)*4, vy:Math.sin(a)*4, dmg:70*P, r:14, pierce:0, life:85, cExplode:54, cSlow:120, cMint:3 }); break;  // 화염+민트 슬로우, 맞으면 민트잎 3개 발사
     case 'cosmopolitan':   fan(3,5,0.4,{ dmg:40*P, r:12, pierce:5, life:90, cFreeze:70 }); break;                                          // 핑크 빙결 다발
     case 'gintonic':       fan(5,7,0.16,{ dmg:24*P, r:9, pierce:2, life:70, cPoison:120 }); break;                                         // 탄산 독 산탄
     case 'highball':       fan(4,8,0.1,{ dmg:30*P, r:10, pierce:1, life:65, cExplode:28 }); break;                                         // 하이볼 난사(소폭발)
@@ -1803,7 +1855,9 @@ function fireCocktail(key, lv){
     case 'vodkacranberry': add({ vx:Math.cos(a)*7, vy:Math.sin(a)*7, dmg:62*P, r:15, pierce:99, life:100, cFreeze:60 }); break;            // 붉은 혜성(라인 관통+빙결)
     case 'southside':      fan(6,6,0.17,{ dmg:28*P, r:10, pierce:3, life:80, cSlow:80, cPoison:90 }); break;                               // 민트 초승달(슬로우+독)
     case 'margarita':      for(let i=0;i<3;i++){ const ang=a+i*(6.28/3); add({ vx:Math.cos(ang)*6, vy:Math.sin(ang)*6, dmg:48*P, r:13, pierce:99, life:90, life0:90, boom:true }); } break; // 소금 부메랑
-    case 'drymartini':     add({ vx:Math.cos(a)*7, vy:Math.sin(a)*7, dmg:66*P, r:13, pierce:99, life:95 }); break;                          // 올리브 관통 창
+    case 'drymartini':     add({ vx:Math.cos(a)*7, vy:Math.sin(a)*7, dmg:66*P, r:13, pierce:99, life:95 });
+                           fan(3, 6, 0.42, { dmg:30*P, r:9, pierce:2, life:90, kind:'ing_olive' }); break;                                 // 올리브 관통 창 + 올리브 3개 부채꼴
+
     case 'vodkamartini':   explodeAt(player.x, player.y, 28*P, 76); for(const e of enemies){ if(Math.hypot(e.x-player.x,e.y-player.y)<82) e.frozenUntil=frame+80; }
                            add({ vx:Math.cos(a)*7, vy:Math.sin(a)*7, dmg:52*P, r:13, pierce:6, life:90, cFreeze:70 }); break;              // 셰이큰: 빙결 충격파+관통
   }
@@ -1832,6 +1886,15 @@ function updateOrbits(){
       orbBodies.push({ x:ox, y:oy, color:o.color, key });
       for(const e of enemies){ if(Math.hypot(e.x-ox,e.y-oy) < 11+e.r){
         if(frame >= (e.orbNext||0)){ dealDmg(e, dmg); e.orbNext=frame+12; burst(e.x,e.y,o.color,3); } } }
+    }
+  }
+  // 보드카 크랜베리 칵테일: 붉은 혜성 발사 외에, 플레이어 주위를 도는 크랜베리 6개 추가
+  if(player.weapons.vodkacranberry){
+    const lv=player.weapons.vodkacranberry, n=6, R=62, dmg=(11 + (lv-1)*7)*player.dmgMul, ang0=frame*0.06;
+    for(let i=0;i<n;i++){ const a=ang0 + i*(6.28/n), ox=player.x+Math.cos(a)*R, oy=player.y+Math.sin(a)*R;
+      orbBodies.push({ x:ox, y:oy, color:'#c0392b', key:'cranberry' });
+      for(const e of enemies){ if(Math.hypot(e.x-ox,e.y-oy) < 11+e.r){
+        if(frame >= (e.orbNext||0)){ dealDmg(e, dmg); e.orbNext=frame+12; burst(e.x,e.y,'#c0392b',3); } } }
     }
   }
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
@@ -1984,8 +2047,8 @@ function update(){
   if(player.throwTimer>0) player.throwTimer--;                     // 던지기 모션 타이머
   // 패시브 체력 회복: Joe는 기본 회복(레벨 스케일) + HEAL 강화 보너스 / Pat은 HEAL 강화로만 회복
   // 회복력: Joe가 가장 높고, Pat도 약간(조 보다 낮게). + HEAL 강화 보너스
-  const regenPerSec = (player.key==='joe' ? 0.25 + (player.level-1)*0.18
-                     : player.key==='pat' ? 0.10 + (player.level-1)*0.07 : 0) + (player.regenBonus||0);
+  const regenPerSec = (player.key==='joe' ? 0.20 + (player.level-1)*0.15
+                     : player.key==='pat' ? 0.07 + (player.level-1)*0.05 : 0) + (player.regenBonus||0);
   if(regenPerSec>0 && player.hp>0 && player.hp<player.maxHp){
     player.hp = Math.min(player.maxHp, player.hp + regenPerSec/60);
   }
@@ -2000,7 +2063,9 @@ function update(){
     const lv=player.weapons[key];
     player.wt[key]=(player.wt[key]||0)-1;
     if(player.wt[key]<=0){
+      const n0=projectiles.length;
       if(COCKTAILS[key]) fireCocktail(key,lv); else if(SPIRITS[key]) fireSpirit(key,lv); else if(INGREDIENTS[key]) fireIngredient(key,lv);
+      addExtraShots(n0);   // EXTRA SHOT: 이 무기가 쏜 피사체를 각도 틀어 복제(모든 스킬에 적용)
       player.wt[key]=weaponCd(key,lv); }   // 비기본공격: 캐릭터·업그레이드 무관 고정 공속/크기/속도
   }
   updateOrbits();   // 크랜베리/코스모 궤도무기
@@ -2019,7 +2084,7 @@ function update(){
   }
   // Joe 필살기 가시: 무적 동안 몸 주위 근접 적에게 주기적 데미지(기본공격의 ~2배, 레벨업마다↑)
   if(player.key==='joe' && gameTime < (player.ultUntil||0) && frame % 14 === 0){
-    const R = player.r + 30, spikeDmg = player.dmg*player.dmgMul * (2 + (player.ultLevel-1)*0.4);
+    const R = player.r + 30, spikeDmg = player.dmg*player.dmgMul * (2 + (player.ultLevel-1)*0.4) * 1.3;   // 가시 공격력 +30%
     for(const e of enemies){ if(Math.hypot(e.x-player.x,e.y-player.y) < R + e.r){
       dealDmg(e, spikeDmg); burst(e.x,e.y,'#ffe08a',3); } }
     for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
@@ -2188,9 +2253,9 @@ function update(){
   updateHUD();
 }
 
-function hurtPlayer(d){ if(sbGod) return; player.hp-=d; player.invuln=38; burst(player.x,player.y,'#ff4444',8); playHurt(); }
+function hurtPlayer(d){ if(sbGod) return; d=Math.max(1, d-(player.defense||0)); player.hp-=d; player.invuln=38; burst(player.x,player.y,'#ff4444',8); playHurt(); }   // 방어력만큼 경감(최소 1)
 /* 무적 판정: 피격 직후(invuln) 또는 Joe 필살기(ultUntil) 중 */
-function isInvuln(){ return player.invuln>0 || gameTime < (player.ultUntil||0); }   // ultUntil은 gameTime(초) → 레벨업 일시정지에도 안 닳음
+function isInvuln(){ return player.invuln>0 || gameTime < (player.ultUntil||0) || gameTime < (player.ultSpiralUntil||0); }   // Joe 무적(ultUntil) + Pat 회오리(ultSpiralUntil) 동안 무적. gameTime(초) 기반
 function ultActiveNow(){ if(!player) return false; return player.key==='joe' ? gameTime<(player.ultUntil||0) : gameTime<(player.ultSpiralUntil||0); }
 /* ===== 필살기 ===== */
 function useUltimate(){
@@ -2237,10 +2302,10 @@ function killEnemy(idx){
     pickups.push({ x:e.x+12, y:e.y, kind:'tip' });   // 팁 봉투 드롭(랜덤 스킬 보상)
   } else {
     const rr=Math.random();
-    if(rr<0.003) pickups.push({ x:e.x, y:e.y, kind:'magnet' });        // 0.3% 자석
-    else if(rr<0.012) pickups.push({ x:e.x, y:e.y, kind:'health' });   // 0.9% 데킬라샷(체력+20)
-    else if(rr<0.0126) dropSpirit(e.x, e.y);                           // 0.06% 스피릿(칵테일 기주 = 완전 희박)
-    else if(rr<0.016) dropIngredient(e.x, e.y);                        // 0.34% 재료(더 줄임 → 칵테일 더 신중히)
+    if(rr<0.003) pickups.push({ x:e.x, y:e.y, kind:'magnet' });        // 0.3% 자석(그대로)
+    else if(rr<0.012) pickups.push({ x:e.x, y:e.y, kind:'health' });   // 0.9% 데킬라샷(체력+20)(그대로)
+    else if(rr<0.0125) dropSpirit(e.x, e.y);                           // 0.05% 스피릿(더 희박)
+    else if(rr<0.0145) dropIngredient(e.x, e.y);                       // 0.2% 재료(더 줄임)
     else pickups.push({ x:e.x, y:e.y, kind:'coin' });
   }
   enemies.splice(idx,1);
@@ -2273,7 +2338,8 @@ function dropIngredient(x,y){
 /* ===== 픽업 획득 ===== */
 /* 조합 레시피: 재료를 일정 레벨까지 모으면 화면을 멈추고 선택창을 띄워 결과 무기로 합침.
    ok=조건, consume=소진할 재료들, eq=아이콘들(마지막이 결과), result=결과 무기 키. */
-let pendingCraft=null;
+let pendingCraft=null, pendingFromTip=false;   // 조합 확인창 대기 / 팁(칵테일)에서 온 건지
+let declinedCraft=new Set();                    // 이번 판에 "NOT NOW"로 거절한 융합(다시 안 물어봄)
 const RECIPES = [
   { result:'syrup', consume:['sugar','water'], eq:['ing_water','ing_sugar','ing_syrup'],
     ok:()=> (player.weapons.sugar||0)>=3 && (player.weapons.water||0)>=3,
@@ -2338,7 +2404,7 @@ function tryCrafts(){
     const lv=applyCraft(rc); banner(weaponInfo(rc.result).name+' Lv'+lv+'! ✦', false);
   }
   const slotsFull = craftedSlotsUsed() >= CRAFT_SLOTS;
-  const firsts = RECIPES.filter(rc=> !rc.cocktail && (player.weapons[rc.result]||0) < weaponInfo(rc.result).max && !everCrafted.has(rc.result) && rc.ok()
+  const firsts = RECIPES.filter(rc=> !rc.cocktail && (player.weapons[rc.result]||0) < weaponInfo(rc.result).max && !everCrafted.has(rc.result) && !declinedCraft.has(rc.result) && rc.ok()
     && !(slotsFull && SLOT_KEYS.includes(rc.result) && !player.weapons[rc.result]));
   if(firsts.length===1) openCraft(firsts[0]);
   else if(firsts.length>1) openCraftChoice(firsts);
@@ -2360,9 +2426,16 @@ function openCraftChoice(recipes, mode){
   state='craft'; show('craftChoiceScreen'); playSelect();
 }
 function pickCraftChoice(i){ const rc=craftChoiceList[i]; if(!rc) return; playSelect(); hide('craftChoiceScreen');
-  if(craftChoiceMode==='tip') startCocktailTip(rc); else openCraft(rc); }
-function openCraft(rc){
-  pendingCraft=rc;
+  openCraft(rc, craftChoiceMode==='tip'); }     // 고른 뒤에도 만들래?/말래? 확인창
+// 융합/칵테일 모두 거절(NOT NOW). 융합은 이번 판 다시 안 물어보고, 칵테일(팁)이면 일반 팁 보상으로.
+function skipCraftChoice(){ playSelect(); hide('craftChoiceScreen');
+  const wasTip = craftChoiceMode==='tip';
+  if(!wasTip) for(const rc of craftChoiceList){ if(rc && !rc.cocktail) declinedCraft.add(rc.result); }
+  state='playing';
+  if(wasTip) startTip();
+}
+function openCraft(rc, fromTip){
+  pendingCraft=rc; pendingFromTip=!!fromTip;
   document.getElementById('craftEq').innerHTML = rc.eq.map((img,i)=>{
     const last=i===rc.eq.length-1;
     const sep = i===0 ? '' : (last ? '<span class="craft-plus">=</span>' : '<span class="craft-plus">+</span>');
@@ -2377,9 +2450,21 @@ function openCraft(rc){
 function confirmCraft(){
   if(!pendingCraft){ hide('craftScreen'); state='playing'; return; }
   playSelect();
-  applyCraft(pendingCraft);                          // 재료 소진(칩에서 사라짐) + 결과 무기 생성
-  pendingCraft=null; hide('craftScreen'); state='playing';
-  tryCrafts();                                      // 다른 조합 대기 중이면 이어서(자동 레벨업은 안 멈춤)
+  const rc=pendingCraft; pendingCraft=null; pendingFromTip=false; hide('craftScreen');
+  if(rc.cocktail){ startCocktailTip(rc); return; }   // 칵테일은 가운데서 뱅글뱅글 도는 스핀 연출로 완성
+  applyCraft(rc);                                    // 융합: 재료 소진 + 결과 무기 생성
+  state='playing';
+  tryCrafts();                                       // 다른 조합 대기 중이면 이어서
+  tryRainbow();
+  if(state==='playing' && player.xp>=player.xpNeed) levelUp();
+}
+// NOT NOW: 만들지 않고 닫음. 융합이면 이번 판 다시 안 물어보고, 칵테일(팁)이면 일반 팁 보상으로.
+function cancelCraft(){
+  playSelect();
+  const rc=pendingCraft, wasTip=pendingFromTip;
+  pendingCraft=null; pendingFromTip=false; hide('craftScreen'); state='playing';
+  if(rc && !rc.cocktail) declinedCraft.add(rc.result);
+  if(wasTip){ startTip(); return; }
   tryRainbow();
   if(state==='playing' && player.xp>=player.xpNeed) levelUp();
 }
@@ -2440,9 +2525,9 @@ function collectPickup(g){
       if(o.kind==='coin'||o.kind==='bill'){ o.pull=true; n++; } }   // 즉시 흡수 대신 끌어당김 표시 → 매 프레임 모여서 도착할 때 획득
     burst(player.x,player.y,'#ffe08a',20); banner('🧲 MAGNET  pulling '+n+' cash', true); playCoin(); return;
   }
-  if(g.kind==='tip'){                          // 보스 팁: 만들 수 있는 칵테일이 있으면 그걸 완성, 없으면 랜덤 스킬
+  if(g.kind==='tip'){                          // 보스 팁: 만들 수 있는 칵테일이 있으면 만들래?/말래? 확인, 없으면 랜덤 스킬
     const cc = craftableCocktails();
-    if(cc.length===1) startCocktailTip(cc[0]);
+    if(cc.length===1) openCraft(cc[0], true);   // 1개 → 확인창(MAKE면 스핀, NOT NOW면 일반 팁)
     else if(cc.length>1) openCraftChoice(cc,'tip');
     else startTip();
     return;
@@ -2466,11 +2551,11 @@ function ingredientCard(key){ const info=weaponInfo(key), lv=player.weapons[key]
 // 레벨업 스킬 후보(일반강화 + 기본공격 + 필살기). 재료/조합무기는 별도.
 function buildSkillPool(){
   const pool=[];
-  GENERIC.forEach(g=>{ if(g.n==='EXTRA SHOT') return; if(g.n==='FAST LEARNER' && (player.upXp||0)>=3) return; pool.push({type:'gen', ...g}); });
-  const es=GENERIC.find(g=>g.n==='EXTRA SHOT'); if(es && (player.extraProj||0)<2 && Math.random()<0.12) pool.push({type:'gen', ...es});
+  GENERIC.forEach(g=>{ if(g.n==='EXTRA SHOT') return; if(g.n==='FAST LEARNER' && (player.upXp||0)>=3) return; if(g.n==='DEFENSE UP' && (player.upDefense||0)>=5) return; if(g.n==='REGEN UP' && (player.upRegen||0)>=3) return; if(g.n==='MAX HP UP' && player.maxHp>=350) return; pool.push({type:'gen', ...g}); });
+  const es=GENERIC.find(g=>g.n==='EXTRA SHOT'); if(es && (player.extraProj||0)<2 && Math.random()<0.04) pool.push({type:'gen', ...es});   // 아주 낮은 확률
   if(player.baseLv < MAX_BASE_LV){ const sh=player.base==='shaker';
     pool.push({ type:'base', ic:sh?'🍸':'🥄', img:sh?'icon_shaker':'icon_barspoon', n:sh?'SHAKING UP':'STIRRING UP', d:sh?'Base attack stronger':'Base attack stronger', lv:player.baseLv, maxlv:MAX_BASE_LV }); }
-  if(player.ultLevel < MAX_ULT_LV){ pool.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:player.key==='pat'?'Wilder shaker tornado':'Longer invincibility', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
+  if(player.ultLevel < MAX_ULT_LV){ pool.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:player.key==='pat'?'Bigger tornado + invincible':'Longer invincibility + spikes', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
   return pool;
 }
 // 선택지 4개: 재료 1~2개(스피릿 낮은 확률·원재료 높은 확률) + 스킬업 2~3개. 레인보우면 빈 풀.
@@ -2513,23 +2598,28 @@ function levelUp(){
 }
 const GENERIC=[
   { ic:'👟', img:'icon_sneaker', n:'MOVE SPEED UP',   d:'Move faster (+14%)', fn:p=>{ p.speed*=1.14; p.upSpeed=(p.upSpeed||0)+1; } },
-  { ic:'❤️', img:'icon_heart',   n:'HEAL + MAX HP',   d:'+25 max HP, heal + regen',  fn:p=>{ p.maxHp+=25; p.hp=Math.min(p.maxHp,p.hp+50); p.regenBonus=(p.regenBonus||0)+0.2; p.upHealth=(p.upHealth||0)+1; } },
+  { ic:'❤️', img:'icon_heart',   n:'MAX HP UP',       d:'+25 max HP (cap 350) & heal',  fn:p=>{ p.maxHp=Math.min(350, p.maxHp+25); p.hp=Math.min(p.maxHp,p.hp+50); p.upHealth=(p.upHealth||0)+1; } },
+  { ic:'➕', n:'REGEN UP',        d:'Regen HP faster · max 3', fn:p=>{ p.regenBonus=(p.regenBonus||0)+0.25; p.upRegen=(p.upRegen||0)+1; } },
+  { ic:'🛡️', n:'DEFENSE UP',     d:'+3 armor, less contact dmg · max 5', fn:p=>{ p.defense=Math.min(15,(p.defense||0)+3); p.upDefense=(p.upDefense||0)+1; } },   // 최대 5번(3→15)
   { ic:'🧲', img:'icon_magnet',  n:'PICKUP RANGE UP', d:'Wider pickup range',        fn:p=>{ p.pickupR+=45; } },
   { ic:'💪', img:'icon_bicep',   n:'POWER UP',        d:'+14% damage',          fn:p=>{ p.dmgMul*=1.14; p.upPower=(p.upPower||0)+1; } },
   { ic:'⚡', n:'ATTACK SPEED UP', d:'Base attack fires faster', fn:p=>{ p.cdMul=Math.max(0.35, p.cdMul*0.86); p.upRapid=(p.upRapid||0)+1; } },
   { ic:'📈', n:'FAST LEARNER',    d:'+15% XP gain (max 3)', fn:p=>{ p.xpMul=(p.xpMul||1)*1.15; p.upXp=(p.upXp||0)+1; } },
   { ic:'🎯', n:'CRIT CHANCE',     d:'+1% crit, x2 dmg (max 8%)', fn:p=>{ p.crit=Math.min(0.08,(p.crit||0)+0.01); } },
   { ic:'🍺', n:'BIGGER DRINKS',   d:'Bigger base-attack shots',  fn:p=>{ p.sizeMul=Math.min(2.4, p.sizeMul*1.2); } },
-  { ic:'✚', n:'EXTRA SHOT',      d:'+1 base projectile', fn:p=>{ p.extraProj=(p.extraProj||0)+1; } },
+  { ic:'✚', n:'EXTRA SHOT',      d:'+1 shot to every weapon · max 2', fn:p=>{ p.extraProj=(p.extraProj||0)+1; } },
 ];
 /* 업그레이드 풀 빌드 + 적용 — 레벨업 화면과 팁 보상이 공유 */
 function buildUpgradePool(){
   const pool=[];
   GENERIC.forEach(g=>{ if(g.n==='EXTRA SHOT') return;                                       // EXTRA SHOT은 따로(저빈도)
     if(g.n==='FAST LEARNER' && (player.upXp||0)>=3) return;                                  // 경험치 업은 3번까지만
+    if(g.n==='DEFENSE UP' && (player.upDefense||0)>=5) return;                                // 방어력은 5번(15)까지만
+    if(g.n==='REGEN UP' && (player.upRegen||0)>=3) return;                                    // 회복력은 3번까지만
+    if(g.n==='MAX HP UP' && player.maxHp>=350) return;                                        // 맥스HP는 350까지만
     pool.push({type:'gen', ...g}); });
   const es=GENERIC.find(g=>g.n==='EXTRA SHOT');                                            // 최대 2까지 + 40% 확률로만 등장
-  if(es && (player.extraProj||0)<2 && Math.random()<0.09) pool.push({type:'gen', ...es});   // 다른 스킬보다 훨씬 드물게(9%)
+  if(es && (player.extraProj||0)<2 && Math.random()<0.04) pool.push({type:'gen', ...es});   // 다른 스킬보다 훨씬 드물게(4%)
   if(player.baseLv < MAX_BASE_LV){
     const isShaker = player.base==='shaker';
     pool.push({ type:'base', ic: isShaker?'🍸':'🥄', img: isShaker?'icon_shaker':'icon_barspoon',
@@ -2543,12 +2633,12 @@ function buildUpgradePool(){
   // 필살기 강화 — Pat=회오리 갈래↑ / Joe=무적 시간↑
   if(player.ultLevel < MAX_ULT_LV){
     pool.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP',
-      d: player.key==='pat'?'Wilder shaker tornado':'Longer invincibility',
+      d: player.key==='pat'?'Bigger tornado + invincible':'Longer invincibility + spikes',
       lv:player.ultLevel, maxlv:MAX_ULT_LV });
   }
   return pool;
 }
-const STAT_UP={ 'MOVE SPEED UP':1, 'POWER UP':1, 'HEAL + MAX HP':1, 'ATTACK SPEED UP':1 };  // 스탯패널에 따로 표시 → 아이템칩에선 제외
+const STAT_UP={ 'MOVE SPEED UP':1, 'POWER UP':1, 'MAX HP UP':1, 'REGEN UP':1, 'DEFENSE UP':1, 'ATTACK SPEED UP':1 };  // 스탯패널에 따로 표시 → 아이템칩에선 제외
 function applyUpgrade(u){
   if(!u) return;
   if(u.type==='gen'){ u.fn(player);
@@ -2702,7 +2792,12 @@ function updateHUD(){
   const setP=(id,base,up)=>{ const el=document.getElementById(id); if(!el) return; const n=base+(up||0); let s='';
     for(let i=0;i<Math.min(12,n);i++) s+='<i'+(i<base?' class="bs"':'')+'></i>'; el.innerHTML=s; };
   setP('stSpeed', bs.spd, player.upSpeed); setP('stPower', bs.pwr, player.upPower);
-  setP('stHealth', bs.hp, player.upHealth); setP('stRapid', bs.rpd, player.upRapid);
+  setP('stRapid', bs.rpd, player.upRapid); setP('stHealth', bs.hp, player.upHealth);
+  setP('stRegen', 0, player.upRegen); setP('stDef', 0, player.upDefense);
+  // 업그레이드 횟수 표시 (파워/공속/맥스HP/회복력/방어력)
+  const setN=(id,up)=>{ const el=document.getElementById(id); if(el) el.textContent=(up? 'Lv'+up : ''); };
+  setN('nPower',player.upPower); setN('nRapid',player.upRapid); setN('nHealth',player.upHealth); setN('nRegen',player.upRegen);
+  setN('nDef', player.upDefense);
 }
 function fmtTime(s){ return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
 
@@ -2779,9 +2874,11 @@ function draw(){
 
     // 폭발 이펙트 (확장하는 불꽃 원)
     for(let i=explosions.length-1;i>=0;i--){ const ex=explosions[i]; ex.life--;
-      const t=1-ex.life/ex.max, rr=ex.r*(0.45+0.6*t), al=Math.max(0,ex.life/ex.max);
-      ctx.globalAlpha=al*0.45; ctx.fillStyle=ex.col||'#ff6b3d'; ctx.beginPath(); ctx.arc(ex.x,ex.y,rr,0,6.28); ctx.fill();
-      ctx.globalAlpha=al; ctx.lineWidth=3; ctx.strokeStyle=ex.col?'#ffffff':'#ffe08a'; ctx.beginPath(); ctx.arc(ex.x,ex.y,rr,0,6.28); ctx.stroke();
+      const t=1-ex.life/ex.max, rr=ex.r*(0.4+0.72*t), al=Math.max(0,ex.life/ex.max);
+      ctx.globalAlpha=al*0.5; ctx.fillStyle=ex.col||'#ff6b3d'; ctx.beginPath(); ctx.arc(ex.x,ex.y,rr,0,6.28); ctx.fill();
+      if(ex.flash && t<0.45){ ctx.globalAlpha=al*0.85; ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(ex.x,ex.y,rr*0.55,0,6.28); ctx.fill(); }  // 하얀 코어 플래시
+      ctx.globalAlpha=al; ctx.lineWidth=4; ctx.strokeStyle=ex.ring||(ex.col?'#ffffff':'#ffe08a'); ctx.beginPath(); ctx.arc(ex.x,ex.y,rr,0,6.28); ctx.stroke();
+      ctx.globalAlpha=al*0.55; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(ex.x,ex.y,rr*1.25,0,6.28); ctx.stroke();   // 바깥 충격파 링
       ctx.globalAlpha=1; if(ex.life<=0) explosions.splice(i,1); }
 
     // 적 발사체: 취한 손님이 게워낸 "침" — 진행방향으로 길쭉하고 끈적한 물방울형 + 침줄기 꼬리
@@ -2862,6 +2959,12 @@ function draw(){
           ctx.fillStyle='#cfe0ff'; ctx.beginPath(); ctx.moveTo(R-4,-3); ctx.lineTo(R+8,0); ctx.lineTo(R-4,3); ctx.closePath(); ctx.fill(); }
         ctx.restore();
         ctx.globalAlpha=0.18+0.08*Math.sin(frame*0.3); ctx.strokeStyle='#aecbff'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(player.x,player.y-4,R+6,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
+      }
+      // Pat 회오리 동안 무적 표시(빛나는 방패 링)
+      if(player.key==='pat' && gameTime < (player.ultSpiralUntil||0)){
+        const R=player.r+22;
+        ctx.globalAlpha=0.20+0.10*Math.sin(frame*0.3); ctx.strokeStyle='#ffe08a'; ctx.lineWidth=3;
         ctx.beginPath(); ctx.arc(player.x,player.y-4,R+6,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
       }
     }
