@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>이빨 룰렛 — 술래 뽑기</title>
+<style>
+  :root{ --bg:#f0ebe0; --card:#fafaf7; --green:#2c3e2d; --pine:#5a8a5e;
+    --gold:#c89a3c; --ink:#22201c; --danger:#c0392b; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{ font-family:"Noto Serif KR","Pretendard",system-ui,sans-serif;
+    background:radial-gradient(120% 120% at 50% 0%, #f6f2e8 0%, var(--bg) 70%);
+    color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100%; overflow:hidden; user-select:none; }
+
+  #stage{ position:relative; width:min(96vw,min(96vh,520px)); aspect-ratio:1/1;
+    border-radius:22px; overflow:hidden; background:#1a1a1a;
+    box-shadow:0 14px 40px rgba(0,0,0,.22), inset 0 0 0 3px rgba(255,255,255,.4); }
+  #game{ position:absolute; inset:0; width:100%; height:100%; display:block; cursor:pointer; }
+  /* anger meter: 플레이 중에만 우하단에 */
+  #anger{ position:absolute; right:2.5%; bottom:2.5%; width:31%; height:auto;
+    display:none; z-index:5; pointer-events:none;
+    filter:drop-shadow(0 3px 7px rgba(0,0,0,.45)); }
+  #anger.show{ display:block; }
+
+  .poof{ position:absolute; transform:translate(-50%,-50%); width:10%; aspect-ratio:1;
+    border-radius:50%; pointer-events:none; z-index:4;
+    background:radial-gradient(circle, rgba(255,255,255,.9), rgba(255,255,255,0) 70%);
+    animation:poof .45s ease-out forwards; }
+  @keyframes poof{ from{opacity:.9; transform:translate(-50%,-50%) scale(.4);}
+    to{opacity:0; transform:translate(-50%,-180%) scale(1.1) rotate(30deg);} }
+
+  #stage.shake{ animation:shake .5s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes shake{ 10%,90%{transform:translate(-2px,1px) rotate(-.6deg);}
+    20%,80%{transform:translate(4px,-2px) rotate(1deg);}
+    30%,50%,70%{transform:translate(-7px,3px) rotate(-1.2deg);}
+    40%,60%{transform:translate(7px,-3px) rotate(1.2deg);} }
+  #flash{ position:absolute; inset:0; background:var(--danger); opacity:0; pointer-events:none; z-index:6; }
+  #flash.go{ animation:flash .55s ease; }
+  @keyframes flash{ 0%{opacity:0;} 18%{opacity:.62;} 100%{opacity:0;} }
+
+  .overlay{ position:absolute; inset:0; display:none; z-index:7; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:18px; }
+  .overlay.show{ display:flex; }
+  #verdict{ background:rgba(20,8,8,.5); backdrop-filter:blur(1px); }
+  #verdict.show{ animation:vIn .3s ease; }
+  @keyframes vIn{ from{opacity:0; transform:scale(1.15);} to{opacity:1; transform:scale(1);} }
+  #verdict .big{ font-size:clamp(46px,15vw,84px); font-weight:800; color:#fff;
+    text-shadow:0 3px 0 #7a1410, 0 0 26px rgba(255,80,60,.95); margin:0; }
+  #verdict .sub{ margin:8px 0 0; font-size:clamp(15px,4.5vw,20px); color:var(--gold); font-weight:700; }
+  #gotImg{ display:none; width:86%; height:auto; image-rendering:pixelated;
+    filter:drop-shadow(0 5px 14px rgba(0,0,0,.7)); animation:vIn .3s ease; }
+  #startCard{ background:linear-gradient(rgba(10,8,4,.15) 0%, transparent 28%, rgba(10,8,4,.55)); justify-content:flex-end; padding-bottom:0; }
+  #titleImg{ position:absolute; bottom:23%; left:50%; transform:translateX(-50%);
+    width:90%; height:auto; pointer-events:none;
+    filter:drop-shadow(0 4px 12px rgba(0,0,0,.75)); }
+  /* 이미지 버튼 공통 */
+  .imgbtn{ position:absolute; left:50%; transform:translateX(-50%); cursor:pointer;
+    image-rendering:pixelated; transition:transform .07s; pointer-events:auto;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
+  .imgbtn:active{ transform:translateX(-50%) translateY(3px) scale(.97); }
+  #startBtn{ bottom:4%; width:50%; }
+  #againBtn{ position:static; transform:none; margin-top:20px; width:46%; }
+  #againBtn:active{ transform:translateY(3px) scale(.97); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="600" height="600"></canvas>
+  <canvas id="anger" width="520" height="478"></canvas>
+  <div id="flash"></div>
+
+  <div id="startCard" class="overlay">
+    <img id="titleImg" src="assets/title_logo.png" alt="Joe's Dentist">
+    <img id="startBtn" class="imgbtn" src="assets/btn_start.png" alt="Start">
+  </div>
+
+  <div id="verdict" class="overlay">
+    <img id="gotImg" src="assets/gotyou.png" alt="Got you! You drink!">
+    <p class="big">Phew!</p>
+    <p class="sub">No rotten tooth this round 🎉</p>
+    <img id="againBtn" class="imgbtn" src="assets/btn_retry.png" alt="Try Again">
+  </div>
+</div>
+
+<script src="assets_b64.js"></script>
+<script>
+/* =========================================================
+   이빨 룰렛 (술래 뽑기)
+   - 사진3장: teeth(이빨 벌린 입) / open(이빨 없는 벌린 입) / closed(입 닫음)
+   - 시작·술래 = 입 닫은 Joe.  진행 = 이빨 벌린 입.
+   - 검은 테두리로 둘러싸인 흰 치아 하나하나를 연결요소(4-이웃)로 분리.
+     누르면 그 치아 + 테두리만 open(잇몸)으로 교체 → 딱 한 개씩 사라짐.
+   ========================================================= */
+const CONFIG = {
+  region:{ x0:0.16, x1:0.84, y0:0.27, y1:0.88 }, // 이빨 탐색 영역(눈 제외)
+  bright:142, satMax:0.32, minMix:100,           // 흰 치아 판정
+  minAreaFrac:0.00035,                           // 너무 작은 조각 제거
+  borderGrow:3,                                  // 제거 시 검은 테두리까지 덮는 반경(px)
+  clickRadius:48,
+};
+const W=600,H=600;
+const cv=document.getElementById('game'), ctx=cv.getContext('2d',{willReadFrequently:true});
+const stage=document.getElementById('stage');
+const $=s=>document.querySelector(s);
+
+let teethData=null, baseData=null, closedData=null, displayData=null;
+let isWhite=new Uint8Array(W*H);
+let labelMap=new Int32Array(W*H);
+let teeth=[];            // {id, cx, cy, reveal:[idx...], alive}
+let trapId=-1, state='start', audioOn=false;
+
+/* ---------- 로드 ---------- */
+function loadImg(src){ return new Promise(res=>{ const im=new Image();
+  im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
+function imgToData(img){ const c=document.createElement('canvas'); c.width=W;c.height=H;
+  const x=c.getContext('2d',{willReadFrequently:true});
+  const s=Math.min(img.width,img.height), sx=(img.width-s)/2, sy=(img.height-s)/2;
+  x.drawImage(img,sx,sy,s,s,0,0,W,H); return x.getImageData(0,0,W,H); }
+
+async function init(){
+  // 내장 이미지(assets_b64.js)가 있으면 그걸 우선 사용 → 더블클릭(file://)에서도 동작.
+  const D = window.IMG_DATA || {};
+  const [t,o,c]=await Promise.all([
+    loadImg(D.teeth  || 'assets/face_teeth.png'),
+    loadImg(D.open   || 'assets/face_open.png'),
+    loadImg(D.closed || 'assets/face_closed.png')]);
+  if(t&&o){ teethData=imgToData(t); baseData=imgToData(o); }
+  else{ teethData=ph(true); baseData=ph(false); }
+  closedData = c? imgToData(c) : phClosed();
+  buildTeeth();
+  toStart();
+}
+
+/* ---------- 임시 얼굴(사진 없을 때) ---------- */
+function ph(withTeeth){ const c=document.createElement('canvas');c.width=W;c.height=H;
+  const x=c.getContext('2d',{willReadFrequently:true});
+  x.fillStyle='#d9b18a'; x.fillRect(0,0,W,H);
+  x.fillStyle='#7a2a2f'; x.beginPath(); x.ellipse(W/2,330,150,165,0,0,7); x.fill();
+  x.fillStyle='#5a1f24'; x.beginPath(); x.ellipse(W/2,345,95,95,0,0,7); x.fill();
+  if(withTeeth){ for(let row=0;row<2;row++) for(let i=0;i<12;i++){
+    const t=i/11, a=Math.PI*((row?0.12:1.12)+0.76*t);
+    const cx=W/2+Math.cos(a)*128, cy=330+Math.sin(a)*150;
+    x.fillStyle='#111'; rr(x,cx-13,cy-(row?16:18),26,row?32:36,8);
+    x.fillStyle='#f3efe2'; rr(x,cx-11,cy-(row?14:16),22,row?28:32,7); } }
+  return x.getImageData(0,0,W,H); }
+function phClosed(){ const c=document.createElement('canvas');c.width=W;c.height=H;
+  const x=c.getContext('2d',{willReadFrequently:true}); x.fillStyle='#d9b18a'; x.fillRect(0,0,W,H);
+  x.strokeStyle='#7a4030'; x.lineWidth=8; x.beginPath(); x.moveTo(230,360); x.lineTo(370,360); x.stroke();
+  return x.getImageData(0,0,W,H); }
+function rr(x,a,b,w,h,r){ x.beginPath(); x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r);
+  x.arcTo(a+w,b+h,a,b+h,r); x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath(); x.fill(); }
+
+/* ---------- 치아 분리(연결요소) ---------- */
+function buildTeeth(){
+  const d=teethData.data, R=CONFIG.region;
+  const x0=(R.x0*W)|0,x1=(R.x1*W)|0,y0=(R.y0*H)|0,y1=(R.y1*H)|0;
+  isWhite.fill(0);
+  for(let y=y0;y<y1;y++) for(let x=x0;x<x1;x++){
+    const i=y*W+x,p=i*4,r=d[p],g=d[p+1],b=d[p+2];
+    const mx=Math.max(r,g,b),mn=Math.min(r,g,b),bright=(r+g+b)/3,sat=mx?(mx-mn)/mx:0;
+    if(bright>CONFIG.bright && sat<CONFIG.satMax && mn>CONFIG.minMix) isWhite[i]=1;
+  }
+  // 4-이웃 연결요소 = 검은 테두리로 분리된 개별 치아
+  labelMap.fill(-1);
+  const comps=[]; const st=[]; const minArea=W*H*CONFIG.minAreaFrac;
+  for(let i=0;i<W*H;i++){
+    if(isWhite[i]&&labelMap[i]<0){
+      const idxs=[]; labelMap[i]=comps.length; st.length=0; st.push(i);
+      while(st.length){ const cur=st.pop(); idxs.push(cur);
+        const cx=cur%W, cy=(cur/W)|0;
+        if(cx>0){ const n=cur-1; if(isWhite[n]&&labelMap[n]<0){labelMap[n]=comps.length;st.push(n);} }
+        if(cx<W-1){ const n=cur+1; if(isWhite[n]&&labelMap[n]<0){labelMap[n]=comps.length;st.push(n);} }
+        if(cy>0){ const n=cur-W; if(isWhite[n]&&labelMap[n]<0){labelMap[n]=comps.length;st.push(n);} }
+        if(cy<H-1){ const n=cur+W; if(isWhite[n]&&labelMap[n]<0){labelMap[n]=comps.length;st.push(n);} }
+      }
+      comps.push(idxs);
+    }
+  }
+  const kept=comps.filter(c=>c.length>=minArea);
+  // labelMap을 kept 기준으로 재배정 + reveal(테두리 포함) 계산
+  labelMap.fill(-1); teeth=[];
+  const G=CONFIG.borderGrow;
+  kept.forEach((idxs,id)=>{
+    let sx=0,sy=0; for(const i of idxs){ sx+=i%W; sy+=(i/W)|0; labelMap[i]=id; }
+    teeth.push({id, cx:sx/idxs.length, cy:sy/idxs.length, interior:idxs, reveal:null, alive:true});
+  });
+  // reveal = 치아 흰픽셀 + 주변 비-흰(검은 테두리/잇몸) 픽셀(반경 G). 다른 치아 흰픽셀은 안 건드림.
+  for(const t of teeth){
+    const set=new Set(t.interior);
+    for(const i of t.interior){ const x=i%W,y=(i/W)|0;
+      for(let dy=-G;dy<=G;dy++) for(let dx=-G;dx<=G;dx++){
+        if(dx*dx+dy*dy>G*G) continue; const nx=x+dx,ny=y+dy;
+        if(nx<0||ny<0||nx>=W||ny>=H) continue; const n=ny*W+nx;
+        if(!isWhite[n]) set.add(n);     // 흰 치아가 아닌 픽셀만(=테두리/잇몸)
+      } }
+    t.reveal=[...set];
+  }
+}
+
+/* ---------- 분노 게이지(anger meter) ---------- */
+// 새 게이지(바늘 없음, 가운데 회전축만)에 바늘 이미지를 anger 값대로 허브 기준 회전.
+const ANG = { hubX:0.50, hubY:0.685, aSafe:206, aRage:334 };  // 허브 위치(이미지 비율)·각도 범위
+// 바늘 이미지 메타: 허브 위치(비율)·기준각(화면 deg)·소스 hub→tip 길이/크기 · 그릴 길이(허브~끝, 캔버스폭 비율)
+const NEEDLE = { hubFx:0.118, hubFy:0.871, phi0:-44.3, srcLen:1178, srcW:1036, srcH:1026, lenFrac:0.26 };
+const angerCv=document.getElementById('anger'), aCtx=angerCv.getContext('2d');
+let angerImg=new Image(), needleImg=new Image(), angerReady=false, needleReady=false, anger=0;
+angerImg.onload=()=>{ angerReady=true; drawAnger(); };
+needleImg.onload=()=>{ needleReady=true; drawAnger(); };
+angerImg.src='assets/anger.png'; needleImg.src='assets/needle.png';
+function setAnger(v){ anger=Math.max(0,Math.min(1,v)); drawAnger(); }
+function drawAnger(){
+  const w=angerCv.width,h=angerCv.height; aCtx.clearRect(0,0,w,h);
+  if(angerReady) aCtx.drawImage(angerImg,0,0,w,h);
+  if(needleReady){
+    const hx=w*ANG.hubX, hy=h*ANG.hubY;
+    const phi = ANG.aSafe + (ANG.aRage-ANG.aSafe)*anger;     // 목표 방향(화면 deg)
+    const rot = (phi - NEEDLE.phi0) * Math.PI/180;            // 소스 기준각 보정
+    const L = w*NEEDLE.lenFrac;                               // 그릴 hub→tip 길이
+    const k = L / NEEDLE.srcLen, dw=NEEDLE.srcW*k, dh=NEEDLE.srcH*k;
+    aCtx.save(); aCtx.translate(hx,hy); aCtx.rotate(rot);
+    aCtx.drawImage(needleImg, -NEEDLE.hubFx*dw, -NEEDLE.hubFy*dh, dw, dh);
+    aCtx.restore();
+  }
+}
+
+/* ---------- 렌더 ---------- */
+function put(d){ ctx.putImageData(d,0,0); }
+function liveCount(){ return teeth.filter(t=>t.alive).length; }
+function updateCount(){ /* 화면 표시 제거됨 */ }
+
+/* ---------- 상태 전환 ---------- */
+function toStart(){ state='start'; put(closedData);            // 입 닫은 Joe
+  setAnger(0);
+  angerCv.classList.remove('show');                            // 시작화면엔 anger 숨김
+  $('#verdict').classList.remove('show'); $('#startCard').classList.add('show'); }
+function startPlay(){ state='play';
+  teeth.forEach(t=>t.alive=true);
+  displayData=new ImageData(new Uint8ClampedArray(teethData.data),W,H);
+  trapId = teeth.length? teeth[(Math.random()*teeth.length)|0].id : -1;
+  setAnger(0);
+  angerCv.classList.add('show');                               // 플레이 시작 → anger 우하단 표시
+  $('#startCard').classList.remove('show'); $('#verdict').classList.remove('show');
+  put(displayData); }
+
+/* ---------- 클릭 ---------- */
+cv.addEventListener('click',e=>{
+  if(!audioOn){ ac(); audioOn=true; }
+  if(state!=='play') return;
+  const r=cv.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width*W, y=(e.clientY-r.top)/r.height*H;
+  const ix=x|0, iy=y|0;
+  let t=null;
+  if(ix>=0&&iy>=0&&ix<W&&iy<H){ const id=labelMap[iy*W+ix]; if(id>=0 && teeth[id] && teeth[id].alive) t=teeth[id]; }
+  if(!t){ // 테두리/틈을 눌렀으면 가장 가까운 살아있는 치아
+    let bd=CONFIG.clickRadius*CONFIG.clickRadius;
+    for(const k of teeth){ if(!k.alive)continue; const dx=x-k.cx,dy=y-k.cy,dd=dx*dx+dy*dy; if(dd<bd){bd=dd;t=k;} }
+  }
+  if(!t) return;
+  if(t.id===trapId){ sulle(); return; }
+  pullTooth(t);
+});
+
+function pullTooth(t){
+  const dd=displayData.data, bd=baseData.data;
+  for(const i of t.reveal){ const p=i*4; dd[p]=bd[p]; dd[p+1]=bd[p+1]; dd[p+2]=bd[p+2]; dd[p+3]=bd[p+3]; }
+  put(displayData);
+  t.alive=false;
+  spawnPoof(t.cx/W,t.cy/H); blip(440+Math.random()*120,.06); updateCount();
+  // 썩은 이가 살아남을수록 Joe가 더 화남
+  const total=teeth.length, removed=total-liveCount();
+  setAnger(removed/Math.max(1,total-1));
+  if(liveCount()===0){ state='end'; angerCv.classList.remove('show');
+    $('#gotImg').style.display='none';                 // 클리어는 텍스트로
+    $('#verdict').querySelector('.big').style.display='';
+    $('#verdict').querySelector('.sub').style.display='';
+    $('#verdict').querySelector('.big').textContent='Phew! All clear!';
+    $('#verdict').querySelector('.sub').textContent='No rotten tooth this round 🎉';
+    $('#verdict').classList.add('show'); }
+}
+function sulle(){
+  state='end';
+  put(closedData);                 // 입 닫은 Joe
+  angerCv.classList.remove('show'); // 결과 화면에선 게이지 숨김
+  setAnger(1);                      // 풀 분노
+  $('#gotImg').style.display='block';                  // 술래 = "GOT YOU! YOU DRINK!" 이미지
+  $('#verdict').querySelector('.big').style.display='none';
+  $('#verdict').querySelector('.sub').style.display='none';
+  stage.classList.remove('shake'); void stage.offsetWidth; stage.classList.add('shake');
+  const f=$('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  chompSound(); if(navigator.vibrate) navigator.vibrate([60,40,120]);
+  setTimeout(()=>$('#verdict').classList.add('show'),420);
+}
+function spawnPoof(fx,fy){ const d=document.createElement('div'); d.className='poof';
+  d.style.left=(fx*100)+'%'; d.style.top=(fy*100)+'%'; stage.appendChild(d);
+  setTimeout(()=>d.remove(),460); }
+
+/* ---------- 사운드 ---------- */
+let actx=null;
+function ac(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } return actx; }
+function blip(f,dur){ const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain();
+  o.type='triangle'; o.frequency.value=f; o.connect(g); g.connect(c.destination);
+  g.gain.setValueAtTime(.0001,c.currentTime); g.gain.exponentialRampToValueAtTime(.25,c.currentTime+.01);
+  g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+dur); o.start(); o.stop(c.currentTime+dur); }
+function chompSound(){ const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain();
+  o.type='sawtooth'; o.frequency.setValueAtTime(220,c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(40,c.currentTime+.35); o.connect(g); g.connect(c.destination);
+  g.gain.setValueAtTime(.4,c.currentTime); g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.4);
+  o.start(); o.stop(c.currentTime+.4); }
+
+$('#startBtn').onclick=()=>{ ac(); audioOn=true; startPlay(); };
+$('#againBtn').onclick=()=>toStart();
+init();
+
+/* ---------- 디버그(?debug=1) ---------- */
+if(location.search.includes('debug')){
+  window.__teeth=()=>teeth.map(t=>({id:t.id,x:Math.round(t.cx),y:Math.round(t.cy),px:t.interior.length,trap:t.id===trapId}));
+  window.showMask=()=>{ const out=ctx.createImageData(W,H);
+    const cols=[]; for(let k=0;k<64;k++) cols.push([ (k*53)%200+40,(k*97)%200+40,(k*29)%200+40 ]);
+    for(let i=0;i<W*H;i++){ const id=labelMap[i],p=i*4;
+      if(id>=0){ const c=cols[id%64]; out.data[p]=c[0];out.data[p+1]=c[1];out.data[p+2]=c[2];out.data[p+3]=255; }
+      else{ out.data[p]=20;out.data[p+1]=20;out.data[p+2]=20;out.data[p+3]=255; } }
+    put(out); };
+  console.log('DEBUG: __teeth(), showMask() — 치아 수=', teeth.length);
+  window.__setAnger=(v)=>{ setAnger(v); return anger; };
+  window.__anger=()=>anger;
+}
+</script>
+</body>
+</html>

@@ -325,10 +325,20 @@
   /* 타이틀 듀오 아트 (여백 트리밍됨 → 크게) */
   .title-art{ position:relative; display:flex; flex-direction:column; align-items:center;
     z-index:2; margin:2px 0 0; }
-  .title-art img{ width:clamp(320px,82vw,560px); height:auto; image-rendering:pixelated;
-    filter:drop-shadow(4px 6px 0 rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(111,207,143,.35));
-    animation:bob 3.4s ease-in-out infinite; }
+  .title-art img{ width:clamp(320px,82vw,560px); height:auto; image-rendering:pixelated; display:block;
+    filter:drop-shadow(4px 6px 0 rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(111,207,143,.35)); }
+  .joe-wrap{ position:relative; display:inline-block; line-height:0; animation:bob 3.4s ease-in-out infinite; }
+  /* 히든게임: Joe 입 핫스팟(평소 안 보임) */
+  #joeMouth{ position:absolute; left:58%; top:22%; width:16%; height:18%; cursor:pointer; border-radius:50%; z-index:3; }
   @keyframes bob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+  /* 히든게임 오버레이 */
+  #dentistOverlay{ position:fixed; inset:0; z-index:99999; display:none; background:#0d0f0c; }
+  #dentistOverlay.show{ display:block; }
+  #dentistFrame{ width:100%; height:100%; border:0; display:block; }
+  #dentistClose{ position:fixed; top:10px; right:12px; z-index:100000; width:46px; height:46px;
+    border:none; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; font:700 22px/46px system-ui,sans-serif;
+    text-align:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.55); }
+  #dentistClose:active{ transform:scale(.94); }
   .spotlight{ width:60%; height:18px; margin-top:-6px; border-radius:50%;
     background:radial-gradient(ellipse at center, rgba(111,207,143,.5), transparent 70%);
     filter:blur(3px); animation:glow 3.4s ease-in-out infinite; }
@@ -434,7 +444,10 @@
     <img class="title-logo" src="assets/title_logo.png" alt="Welcome to Pine & Co">
     <img class="title-sub-img" src="assets/subtitle_cd.png" alt="COCKTAIL DEFENSE">
     <div class="title-art">
-      <img src="assets/title_duo.png" alt="PINE & CO BARTENDERS">
+      <div class="joe-wrap">
+        <img src="assets/title_duo.png" alt="PINE & CO BARTENDERS">
+        <div id="joeMouth" onclick="openDentist()" aria-label="?"></div>
+      </div>
       <div class="spotlight"></div>
     </div>
     <img class="tagline" src="assets/txt_last_orders.png" alt="THE LAST ORDERS ARE ROLLING IN...">
@@ -1266,7 +1279,7 @@ const SKILL_INDEX=[
   { img:'icon_bicep',  name:'POWER UP',     t:'+14% damage to everything — base attack, spirits, ingredients.' },
   { ic:'⚡',  name:'ATTACK SPEED UP',       t:'Your BASE attack fires faster. Spirits & ingredients keep a fixed, character-independent fire rate.' },
   { ic:'🎯', name:'CRIT CHANCE · max 8%',   t:'+1% critical hit (x2 damage) each pick, up to 8% over 8 picks.' },
-  { ic:'📈', name:'FAST LEARNER · max 2',   t:'+15% XP gain (level up faster). Offered at most twice.' },
+  { ic:'📈', name:'FAST LEARNER',   t:'+15% XP gain (level up faster). Keeps appearing — no cap, since later levels need more XP.' },
   { ic:'🍺', name:'BIGGER DRINKS',          t:'Bigger BASE-attack projectiles. Spirits & ingredients keep a fixed size.' },
   { img:'icon_sneaker', name:'MOVE SPEED UP', t:'+14% movement speed.' },
   { img:'icon_heart',   name:'HEAL + MAX HP', t:'+25 max HP, heal 50, plus a small permanent HP-regen boost.' },
@@ -2305,7 +2318,7 @@ function killEnemy(idx){
     if(rr<0.003) pickups.push({ x:e.x, y:e.y, kind:'magnet' });        // 0.3% 자석(그대로)
     else if(rr<0.012) pickups.push({ x:e.x, y:e.y, kind:'health' });   // 0.9% 데킬라샷(체력+20)(그대로)
     else if(rr<0.0125) dropSpirit(e.x, e.y);                           // 0.05% 스피릿(더 희박)
-    else if(rr<0.0145) dropIngredient(e.x, e.y);                       // 0.2% 재료(더 줄임)
+    else if(rr<0.0165) dropIngredient(e.x, e.y);                       // 0.4% 재료(업그레이드 쉽게 살짝 ↑, 기초 5종은 가중치로 더 자주)
     else pickups.push({ x:e.x, y:e.y, kind:'coin' });
   }
   enemies.splice(idx,1);
@@ -2327,11 +2340,16 @@ function dropSpirit(x,y){
 /* 루프 재료 드랍 (안 가졌거나 만렙 아닌 것만, 다 차면 동전) */
 const LOOSE_ING = ['lemon','lime','orange','sugar','mint','water','cranberry','cointreau','soda','tonic','olive','sweetver','dryver','angostura'];
 const CITRUS_KEYS = ['lemon','lime','orange'];
+// 기초 재료(많이 필요한 것들)는 드랍 시 가중치 ↑ → 더 자주 나옴
+const ING_WEIGHT = { lemon:2.4, lime:2.4, orange:2.4, sugar:2.4, water:2.4 };
 function dropIngredient(x,y){
   // 안 가졌거나 만렙 아닌 것만 + 이미 필드에 같은 재료가 떨어져 있으면 제외(중복 드랍 방지)
   const avail = LOOSE_ING.filter(k=>{ const mx=weaponInfo(k).max; return (!player.weapons[k] || player.weapons[k]<mx) && !onField('ingredient',k); });
   if(!avail.length){ pickups.push({ x, y, kind:'coin' }); return; }
-  const k = avail[Math.floor(Math.random()*avail.length)];
+  // 가중 랜덤 선택 (레몬·라임·오렌지·설탕·물이 더 잘 나옴)
+  let tot=0; for(const k of avail) tot += (ING_WEIGHT[k]||1);
+  let r=Math.random()*tot, k=avail[avail.length-1];
+  for(const c of avail){ r -= (ING_WEIGHT[c]||1); if(r<=0){ k=c; break; } }
   pickups.push({ x, y, kind:'ingredient', ing:k });
 }
 
@@ -2551,7 +2569,7 @@ function ingredientCard(key){ const info=weaponInfo(key), lv=player.weapons[key]
 // 레벨업 스킬 후보(일반강화 + 기본공격 + 필살기). 재료/조합무기는 별도.
 function buildSkillPool(){
   const pool=[];
-  GENERIC.forEach(g=>{ if(g.n==='EXTRA SHOT') return; if(g.n==='FAST LEARNER' && (player.upXp||0)>=3) return; if(g.n==='DEFENSE UP' && (player.upDefense||0)>=5) return; if(g.n==='REGEN UP' && (player.upRegen||0)>=3) return; if(g.n==='MAX HP UP' && player.maxHp>=350) return; pool.push({type:'gen', ...g}); });
+  GENERIC.forEach(g=>{ if(g.n==='EXTRA SHOT') return; if(g.n==='DEFENSE UP' && (player.upDefense||0)>=5) return; if(g.n==='REGEN UP' && (player.upRegen||0)>=3) return; if(g.n==='MAX HP UP' && player.maxHp>=350) return; pool.push({type:'gen', ...g}); });   // FAST LEARNER는 상한 없이 계속 등장(레벨업 점점 어려워지므로)
   const es=GENERIC.find(g=>g.n==='EXTRA SHOT'); if(es && (player.extraProj||0)<2 && Math.random()<0.04) pool.push({type:'gen', ...es});   // 아주 낮은 확률
   if(player.baseLv < MAX_BASE_LV){ const sh=player.base==='shaker';
     pool.push({ type:'base', ic:sh?'🍸':'🥄', img:sh?'icon_shaker':'icon_barspoon', n:sh?'SHAKING UP':'STIRRING UP', d:sh?'Base attack stronger':'Base attack stronger', lv:player.baseLv, maxlv:MAX_BASE_LV }); }
@@ -2604,7 +2622,7 @@ const GENERIC=[
   { ic:'🧲', img:'icon_magnet',  n:'PICKUP RANGE UP', d:'Wider pickup range',        fn:p=>{ p.pickupR+=45; } },
   { ic:'💪', img:'icon_bicep',   n:'POWER UP',        d:'+14% damage',          fn:p=>{ p.dmgMul*=1.14; p.upPower=(p.upPower||0)+1; } },
   { ic:'⚡', n:'ATTACK SPEED UP', d:'Base attack fires faster', fn:p=>{ p.cdMul=Math.max(0.35, p.cdMul*0.86); p.upRapid=(p.upRapid||0)+1; } },
-  { ic:'📈', n:'FAST LEARNER',    d:'+15% XP gain (max 3)', fn:p=>{ p.xpMul=(p.xpMul||1)*1.15; p.upXp=(p.upXp||0)+1; } },
+  { ic:'📈', n:'FAST LEARNER',    d:'+15% XP gain (no cap)', fn:p=>{ p.xpMul=(p.xpMul||1)*1.15; p.upXp=(p.upXp||0)+1; } },
   { ic:'🎯', n:'CRIT CHANCE',     d:'+1% crit, x2 dmg (max 8%)', fn:p=>{ p.crit=Math.min(0.08,(p.crit||0)+0.01); } },
   { ic:'🍺', n:'BIGGER DRINKS',   d:'Bigger base-attack shots',  fn:p=>{ p.sizeMul=Math.min(2.4, p.sizeMul*1.2); } },
   { ic:'✚', n:'EXTRA SHOT',      d:'+1 shot to every weapon · max 2', fn:p=>{ p.extraProj=(p.extraProj||0)+1; } },
@@ -2613,7 +2631,6 @@ const GENERIC=[
 function buildUpgradePool(){
   const pool=[];
   GENERIC.forEach(g=>{ if(g.n==='EXTRA SHOT') return;                                       // EXTRA SHOT은 따로(저빈도)
-    if(g.n==='FAST LEARNER' && (player.upXp||0)>=3) return;                                  // 경험치 업은 3번까지만
     if(g.n==='DEFENSE UP' && (player.upDefense||0)>=5) return;                                // 방어력은 5번(15)까지만
     if(g.n==='REGEN UP' && (player.upRegen||0)>=3) return;                                    // 회복력은 3번까지만
     if(g.n==='MAX HP UP' && player.maxHp>=350) return;                                        // 맥스HP는 350까지만
@@ -3403,6 +3420,28 @@ function resize(){ const size=Math.min(window.innerWidth,window.innerHeight)-16;
     hc.classList.toggle('portrait', portrait); hc.classList.toggle('landscape', !portrait); }
 }
 addEventListener('resize', resize); resize();
+
+/* ===== 히든게임: Joe 입 클릭 → Joe's Dentist (iframe) ===== */
+function openDentist(){
+  var f=document.getElementById('dentistFrame');
+  if(f.getAttribute('src')!=='dentist/index.html') f.setAttribute('src','dentist/index.html');
+  document.getElementById('dentistOverlay').classList.add('show');
+  try{ if(typeof audioCtx!=='undefined' && audioCtx && audioCtx.suspend) audioCtx.suspend(); }catch(e){}
+}
+function closeDentist(){
+  document.getElementById('dentistOverlay').classList.remove('show');
+  document.getElementById('dentistFrame').setAttribute('src','about:blank'); // 닫으면 초기화
+  try{ if(typeof audioCtx!=='undefined' && audioCtx && audioCtx.resume) audioCtx.resume(); }catch(e){}
+}
+addEventListener('keydown', function(e){
+  if(e.key==='Escape' && document.getElementById('dentistOverlay').classList.contains('show')){
+    e.stopPropagation(); closeDentist();
+  }
+}, true);
 </script>
+<div id="dentistOverlay">
+  <button id="dentistClose" onclick="closeDentist()" aria-label="Close">&#10005;</button>
+  <iframe id="dentistFrame" title="Joe's Dentist" src="about:blank"></iframe>
+</div>
 </body>
 </html>
