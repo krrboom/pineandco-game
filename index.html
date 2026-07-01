@@ -293,7 +293,7 @@
   .imgbtn:hover .btnimg{ filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55)) drop-shadow(0 0 13px rgba(111,207,143,.6)); }
   .cap.blink{ animation:blink 1s steps(1) infinite; }
   .backbtn .btnimg{ width:clamp(120px,32vw,185px); }
-  /* 시작화면 하단 작은 부제목 버튼 (HIGHSCORE / MONSTER INDEX) */
+  /* 시작화면 하단 작은 부제목 버튼 (HIGHSCORE / BOTTOMS UP / MONSTER INDEX) */
   .sub-btn-row{ gap:clamp(8px,3vw,20px); margin-top:0; }
   /* 두 버튼 동일 캔버스(260x94)로 슬라이스됨 → 같은 width면 크기 동일. START/MENU(132~205)보다 작게. */
   .subbtn img{ width:clamp(92px,24vw,138px); height:auto; image-rendering:pixelated; display:block; filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5)); }
@@ -339,6 +339,14 @@
     border:none; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; font:700 22px/46px system-ui,sans-serif;
     text-align:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.55); }
   #dentistClose:active{ transform:scale(.94); }
+  /* BOTTOMS UP 술게임 오버레이 */
+  #bottomsOverlay{ position:fixed; inset:0; z-index:99998; display:none; background:#0d0f0c; }
+  #bottomsOverlay.show{ display:block; }
+  #bottomsFrame{ width:100%; height:100%; border:0; display:block; }
+  #bottomsClose{ position:fixed; top:10px; right:12px; z-index:100000; width:46px; height:46px;
+    border:none; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; font:700 22px/46px system-ui,sans-serif;
+    text-align:center; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.55); }
+  #bottomsClose:active{ transform:scale(.94); }
   .spotlight{ width:60%; height:18px; margin-top:-6px; border-radius:50%;
     background:radial-gradient(ellipse at center, rgba(111,207,143,.5), transparent 70%);
     filter:blur(3px); animation:glow 3.4s ease-in-out infinite; }
@@ -463,6 +471,7 @@
     </div>
     <div class="row sub-btn-row">
       <button class="imgbtn subbtn" onclick="openHighscore()"><img src="assets/btn_highscore.png" alt="HIGHSCORE"></button>
+      <button class="imgbtn subbtn" onclick="openBottomsUp()"><img src="assets/btn_bottomsup.png" alt="BOTTOMS UP"></button>
       <button class="imgbtn subbtn" onclick="openIndex()"><img src="assets/btn_index.png" alt="PINE&CO INDEX"></button>
     </div>
     <div class="hint">PC: WASD / ARROWS · MOBILE: DRAG SCREEN</div>
@@ -3438,10 +3447,33 @@ addEventListener('keydown', function(e){
     e.stopPropagation(); closeDentist();
   }
 }, true);
+
+/* ===== BOTTOMS UP: 술게임 허브 (CHOOSE YOUR GAME → 룰렛 / 병돌리기) ===== */
+function openBottomsUp(){
+  try{ initAudio(); playSelect(); }catch(e){}
+  var f=document.getElementById('bottomsFrame');
+  if(f.getAttribute('src')!=='bottomsup/index.html') f.setAttribute('src','bottomsup/index.html');
+  document.getElementById('bottomsOverlay').classList.add('show');
+  try{ if(typeof audioCtx!=='undefined' && audioCtx && audioCtx.suspend) audioCtx.suspend(); }catch(e){}
+}
+function closeBottomsUp(){
+  document.getElementById('bottomsOverlay').classList.remove('show');
+  document.getElementById('bottomsFrame').setAttribute('src','about:blank');
+  try{ if(typeof audioCtx!=='undefined' && audioCtx && audioCtx.resume) audioCtx.resume(); }catch(e){}
+}
+addEventListener('keydown', function(e){
+  if(e.key==='Escape' && document.getElementById('bottomsOverlay').classList.contains('show')){
+    e.stopPropagation(); closeBottomsUp();
+  }
+}, true);
 </script>
 <div id="dentistOverlay">
   <button id="dentistClose" onclick="closeDentist()" aria-label="Close">&#10005;</button>
   <iframe id="dentistFrame" title="Joe's Dentist" src="about:blank"></iframe>
+</div>
+<div id="bottomsOverlay">
+  <button id="bottomsClose" onclick="closeBottomsUp()" aria-label="Close">&#10005;</button>
+  <iframe id="bottomsFrame" title="Bottoms Up" src="about:blank"></iframe>
 </div>
 </body>
 </html>

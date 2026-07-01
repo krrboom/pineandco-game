@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BOTTLE OF FATE — PINE & CO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; }
+  body{
+    font-family:'Press Start 2P', monospace;
+    background-color:#0d0f0c;
+    background-image:
+      radial-gradient(circle at 50% 40%, rgba(111,207,143,.10), transparent 62%),
+      linear-gradient(rgba(13,15,12,.9), rgba(11,13,10,.93)),
+      url('assets/bg_logo.png');
+    background-size:cover, cover, 76px auto;
+    background-repeat:no-repeat, no-repeat, repeat;
+    image-rendering:pixelated;
+    color:#f4ecdf; height:100vh; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; touch-action:none;
+  }
+  #game{ width:100%; max-width:460px; height:100vh; max-height:920px; position:relative;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+
+  .screen{ display:none; width:100%; flex-direction:column; align-items:center; gap:26px; }
+  .screen.active{ display:flex; }
+
+  .title{ font-size:17px; line-height:1.7; text-align:center; color:#ffcf4a; text-shadow:3px 3px 0 #7a3b12; }
+  .subtitle{ font-size:9px; line-height:1.9; text-align:center; color:#b79b76; letter-spacing:1px; }
+
+  .btn{ font-family:inherit; font-size:12px; color:#241606; background:#e8b94a; border:none;
+    padding:16px 20px; cursor:pointer; box-shadow:4px 4px 0 #7a3b12; transition:transform .05s, box-shadow .05s; letter-spacing:1px; }
+  .btn:active{ transform:translate(4px,4px); box-shadow:0 0 0 #7a3b12; }
+
+  .bof-title{ width:clamp(210px,60vw,340px); height:auto; image-rendering:pixelated;
+    filter:drop-shadow(3px 4px 0 rgba(0,0,0,.5)); }
+  .bof-howmany{ width:clamp(240px,68vw,400px); height:auto; image-rendering:pixelated; margin-top:-2px;
+    filter:drop-shadow(2px 2px 0 rgba(0,0,0,.4)); }
+  .count-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px; width:100%; max-width:370px; }
+  .numbtn{ background:none; border:0; padding:0; cursor:pointer; transition:transform .05s; -webkit-tap-highlight-color:transparent; }
+  .numbtn:active{ transform:translateY(3px) scale(.94); }
+  .numbtn img{ width:clamp(54px,15vw,76px); height:auto; image-rendering:pixelated; display:block;
+    filter:drop-shadow(2px 2px 0 rgba(0,0,0,.45)); }
+  .numbtn:hover img{ filter:drop-shadow(2px 2px 0 rgba(0,0,0,.45)) drop-shadow(0 0 8px rgba(255,190,100,.6)); }
+
+  .color-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(8px,3vw,16px); width:100%; max-width:344px; justify-items:center; }
+  .swatch{ background:none; border:0; padding:0; cursor:pointer; transition:transform .05s; -webkit-tap-highlight-color:transparent; }
+  .swatch img{ width:clamp(56px,17vw,78px); height:auto; image-rendering:pixelated; display:block; filter:drop-shadow(2px 2px 0 rgba(0,0,0,.45)); }
+  .swatch:active{ transform:scale(.9); }
+  .swatch.taken{ opacity:.25; pointer-events:none; filter:grayscale(.4); }
+  .swatch:hover img{ filter:drop-shadow(2px 2px 0 rgba(0,0,0,.45)) drop-shadow(0 0 8px rgba(255,190,100,.6)); }
+  .player-tag{ width:clamp(150px,44vw,232px); height:auto; image-rendering:pixelated; filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5)); }
+
+  /* 돌림판 무대 */
+  #stage{ position:relative; width:min(90vw,420px); aspect-ratio:1; touch-action:none; }
+  #wheel{ position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated;
+    filter:drop-shadow(0 8px 22px rgba(0,0,0,.6)); pointer-events:none; user-select:none; }
+  #canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  #hint{ width:clamp(210px,60vw,320px); height:auto; image-rendering:pixelated;
+    filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5)); animation:hintpulse 1.6s ease-in-out infinite; }
+  @keyframes hintpulse{ 0%,100%{ opacity:.85; } 50%{ opacity:1; } }
+  .result-btns{ display:flex; flex-wrap:wrap; justify-content:center; gap:clamp(10px,3vw,18px); }
+  .imgbtn2{ background:none; border:0; padding:0; cursor:pointer; transition:transform .05s; -webkit-tap-highlight-color:transparent; }
+  .imgbtn2:active{ transform:translateY(3px) scale(.96); }
+  .imgbtn2 img{ width:clamp(120px,34vw,168px); height:auto; image-rendering:pixelated; display:block;
+    filter:drop-shadow(2px 3px 0 rgba(0,0,0,.5)); }
+  .imgbtn2:hover img{ filter:drop-shadow(2px 3px 0 rgba(0,0,0,.5)) drop-shadow(0 0 9px rgba(255,190,100,.65)); }
+
+  #result{ font-size:21px; text-align:center; line-height:1.6; text-shadow:3px 3px 0 #000; }
+  /* 결과: 걸린 사람 색 버튼 팝업 + DRINKS 간판 */
+  .result-color{ width:clamp(120px,34vw,178px); height:auto; image-rendering:pixelated;
+    filter:drop-shadow(3px 5px 0 rgba(0,0,0,.5)) drop-shadow(0 0 16px rgba(255,205,120,.55)); }
+  .result-color.pop{ animation: popin .45s cubic-bezier(.2,1.5,.4,1) both, floaty 1.8s ease-in-out .5s infinite; }
+  @keyframes popin{ 0%{ transform:scale(.2) translateY(24px); opacity:0; } 70%{ transform:scale(1.18) translateY(-10px); } 100%{ transform:scale(1) translateY(0); opacity:1; } }
+  @keyframes floaty{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-11px); } }
+  .result-drinks{ width:clamp(200px,56vw,330px); height:auto; image-rendering:pixelated;
+    filter:drop-shadow(3px 4px 0 rgba(0,0,0,.5)); }
+  .small-btn{ font-size:9px; padding:12px 16px; background:#3a2613; color:#f4ecdf; box-shadow:3px 3px 0 #000; letter-spacing:1px; }
+  .small-btn:active{ transform:translate(3px,3px); box-shadow:0 0 0 #000; }
+</style>
+</head>
+<body>
+<div id="game">
+
+  <!-- 인원수 -->
+  <div class="screen active" id="screen-count">
+    <img class="bof-title" src="assets/title_bof.png" alt="BOTTLE OF FATE">
+    <img class="bof-howmany" src="assets/how_many.png" alt="HOW MANY PLAYERS?">
+    <div class="count-grid" id="countGrid"></div>
+  </div>
+
+  <!-- 색 고르기 -->
+  <div class="screen" id="screen-color">
+    <img class="player-tag" id="playerTag" src="assets/player_1.png" alt="PLAYER 1">
+    <div class="subtitle">CHOOSE YOUR COLOR</div>
+    <div class="color-grid" id="colorGrid"></div>
+  </div>
+
+  <!-- 병 돌리기 -->
+  <div class="screen" id="screen-spin">
+    <div id="stage">
+      <img id="wheel" src="assets/wheel.png" alt="">
+      <canvas id="canvas" width="480" height="480"></canvas>
+    </div>
+    <img id="hint" src="assets/hint_charge.png" alt="HOLD TO CHARGE - RELEASE TO SPIN">
+  </div>
+
+  <!-- 결과 -->
+  <div class="screen" id="screen-result">
+    <img class="result-color" id="resultColor" src="assets/col_red.png" alt="">
+    <img class="result-drinks" src="assets/drinks.png" alt="DRINKS!">
+    <div class="result-btns">
+      <button class="imgbtn2" id="againBtn"><img src="assets/btn_again.png" alt="SPIN AGAIN"></button>
+      <button class="imgbtn2" id="resetBtn"><img src="assets/btn_newgame.png" alt="NEW GAME"></button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ===== 기억하는 정보 ===== */
+let playerCount = 0;
+let players = [];
+
+// 붐이 넣은 8색 버튼 (players and colors.png). hex는 버튼 색 샘플 → 돌림판 칩 색과 일치
+const COLORS = [
+  { name:"RED",     hex:"#d3312d", img:"col_red.png" },
+  { name:"ORANGE",  hex:"#e6781f", img:"col_orange.png" },
+  { name:"YELLOW",  hex:"#f1d41a", img:"col_yellow.png" },
+  { name:"GREEN",   hex:"#4c9a2f", img:"col_green.png" },
+  { name:"CYAN",    hex:"#19b9c1", img:"col_cyan.png" },
+  { name:"BLUE",    hex:"#335ed3", img:"col_blue.png" },
+  { name:"MAGENTA", hex:"#cb2bc3", img:"col_magenta.png" },
+  { name:"BLACK",   hex:"#2a2532", img:"col_black.png" },
+];
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* 인원수 버튼 2~8 */
+const countGrid = document.getElementById('countGrid');
+for(let n=2;n<=8;n++){
+  const b=document.createElement('button');
+  b.className='numbtn';
+  b.innerHTML='<img src="assets/num_'+n+'.png" alt="'+n+'">';
+  b.onclick=()=>chooseCount(n);
+  countGrid.appendChild(b);
+}
+function chooseCount(n){ playerCount=n; players=[]; buildColorScreen(); show('screen-color'); }
+
+/* 색 고르기 */
+const colorGrid = document.getElementById('colorGrid');
+const playerTag = document.getElementById('playerTag');
+function buildColorScreen(){
+  playerTag.src = 'assets/player_' + (players.length+1) + '.png';
+  playerTag.alt = 'PLAYER ' + (players.length+1);
+  colorGrid.innerHTML='';
+  COLORS.forEach(c=>{
+    const sw=document.createElement('button');
+    sw.className='swatch';
+    sw.innerHTML='<img src="assets/'+c.img+'" alt="'+c.name+'">';
+    if(players.find(p=>p.name===c.name)) sw.classList.add('taken');
+    sw.onclick=()=>pickColor(c);
+    colorGrid.appendChild(sw);
+  });
+}
+function pickColor(c){
+  players.push(c);
+  if(players.length<playerCount) buildColorScreen();
+  else startSpinScreen();
+}
+
+/* ===== 돌림판 / 병 ===== */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const SZ = 480, CX = 240, CY = 240;   // 캔버스 = 돌림판 디스크, 중심(240,240)=나침반 중앙
+const SLOTS = 12;                     // 돌림판에 그려진 칸 수 (30도 간격)
+const RING = 158;                     // 슬롯 중심 반지름 (이미지에서 측정: 0.3283*480)
+const SLOT_R = 24;                    // 색 칩 반지름 (그려진 칸 27.5px 안에 딱 들어감)
+const BOTTLE_SCALE = 0.40;            // 술병 크기 (예전의 약 절반)
+
+// 돌릴 술병 사진 (바카디)
+const bottleImg = new Image();
+bottleImg.src = 'assets/bottle.png';
+bottleImg.onload = draw;
+
+let angle = 0, speed = 0, power = 0;
+let charging = false, spinning = false;
+
+function startSpinScreen(){
+  angle = 0; speed = 0; power = 0; charging = false; spinning = false;
+  show('screen-spin'); draw();
+}
+
+/* 슬롯 i (0=12시, 시계방향, 30도 간격)의 캔버스 좌표 */
+function slotPos(i){
+  const a = i * (360/SLOTS) * Math.PI/180;
+  return { x: CX + RING*Math.sin(a), y: CY - RING*Math.cos(a) };
+}
+/* 슬롯 i 에 앉는 플레이어 (색을 모든 칸에 돌려가며 채움 → 2명이면 6:6) */
+function slotPlayer(i){ return players.length ? players[i % players.length] : null; }
+
+function draw(){
+  ctx.clearRect(0,0,SZ,SZ);
+
+  // 1) 12개 칸 전부에 색 칩 (그려진 작은 원 안에 정확히 들어감)
+  for(let i=0;i<SLOTS;i++){
+    const p = slotPlayer(i); if(!p) continue;
+    const {x,y} = slotPos(i);
+    ctx.beginPath(); ctx.arc(x,y,SLOT_R,0,Math.PI*2);
+    ctx.fillStyle = p.hex; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(244,236,223,.9)'; ctx.stroke();
+    // 살짝 하이라이트
+    ctx.beginPath(); ctx.arc(x-SLOT_R*0.3, y-SLOT_R*0.3, SLOT_R*0.32, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fill();
+  }
+
+  // 2) 술병 사진 (목/캡이 가리키는 쪽 = 위, angle 회전)
+  drawBottle();
+
+  // 3) 충전 게이지 (병 위에, 둘레로 차오름)
+  if(charging){
+    ctx.beginPath();
+    ctx.arc(CX,CY,118,-Math.PI/2,-Math.PI/2 + (power/100)*Math.PI*2);
+    ctx.lineWidth = 8; ctx.lineCap='round';
+    ctx.strokeStyle = '#ffcf4a'; ctx.shadowColor='rgba(255,200,80,.8)'; ctx.shadowBlur=10;
+    ctx.stroke();
+    ctx.shadowBlur=0; ctx.lineCap='butt';
+  }
+}
+
+/* 돌림판 가운데서 도는 술병 사진 (이미지 위쪽=캡이 가리키는 쪽) */
+function drawBottle(){
+  if(!bottleImg.complete || !bottleImg.naturalWidth) return;
+  const dh = SZ*BOTTLE_SCALE;
+  const dw = dh * (bottleImg.naturalWidth / bottleImg.naturalHeight);
+  ctx.save();
+  ctx.translate(CX,CY);
+  ctx.rotate(angle*Math.PI/180);
+  ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 14;
+  ctx.drawImage(bottleImg, -dw/2, -dh/2, dw, dh);
+  ctx.restore();
+}
+
+/* ===== 충전 → 발사 ===== */
+function pressStart(e){
+  e.preventDefault();
+  if(spinning) return;
+  charging = true; power = 0; chargeLoop();
+}
+function chargeLoop(){
+  if(!charging) return;
+  power += 1.5; if(power>100) power=100;
+  draw(); requestAnimationFrame(chargeLoop);
+}
+function pressEnd(e){
+  e.preventDefault();
+  if(!charging) return;
+  charging = false; spinBottle(power);
+}
+function spinBottle(p){
+  spinning = true;
+  speed = p*0.5 + 8 + Math.random()*6;   // 파워 + 약간의 랜덤
+  spinLoop();
+}
+function spinLoop(){
+  if(speed>0.25){
+    angle = (angle + speed) % 360;
+    speed *= 0.987;
+    draw(); requestAnimationFrame(spinLoop);
+  } else {
+    speed = 0; spinning = false; whoLost();
+  }
+}
+
+/* 멈춘 각도로 병이 가리키는 칸(12개 중) → 그 칸의 색=걸린 사람 */
+function whoLost(){
+  const slice = 360/SLOTS;
+  const slot = Math.round(((angle % 360) + 360) % 360 / slice) % SLOTS;
+  showResult(slotPlayer(slot));
+}
+
+const stage = document.getElementById('stage');
+stage.addEventListener('touchstart', pressStart, {passive:false});
+stage.addEventListener('touchend', pressEnd, {passive:false});
+stage.addEventListener('mousedown', pressStart);
+addEventListener('mouseup', pressEnd);
+
+/* ===== 결과 ===== */
+function showResult(loser){
+  const rc=document.getElementById('resultColor');
+  rc.src = 'assets/' + loser.img;   // 걸린 사람 색 버튼
+  rc.alt = loser.name;
+  show('screen-result');
+  // 팝업 애니메이션 매번 재시작
+  rc.classList.remove('pop'); void rc.offsetWidth; rc.classList.add('pop');
+}
+document.getElementById('againBtn').onclick = startSpinScreen;
+document.getElementById('resetBtn').onclick = ()=>show('screen-count');
+</script>
+</body>
+</html>

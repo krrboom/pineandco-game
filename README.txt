@@ -1,22 +1,36 @@
-Pine & Co — Cocktail Defense  ·  업데이트 업로드 (staging)
-=========================================================
+Pine & Co — Cocktail Defense  ·  GitHub 업로드 (1차)
+=====================================================
 
-이 폴더 = "지난 업로드 이후 바뀐 파일만" 모아 GitHub에 올리는 곳.
-지금은 마지막 업로드가 끝난 상태라 assets/ 는 비어 있습니다(정상).
+GitHub 웹은 한 번에 100개까지만 올라가서, 에셋을 2번에 나눠 올립니다.
+순서대로 두 폴더를 올리면 됩니다.
 
-[들어있는 것]
-  index.html      ← 현재 게임 본체(최신 빌드). 코드가 바뀌면 이걸 덮어쓰기 업로드.
-  sandbox.html    ← 테스트 모드(거의 안 바뀜)
-  assets/         ← 비어 있음. 다음 업데이트에서 "새로 추가/변경된 이미지·소리"만 여기 들어감.
+[1차 — 이 폴더(github-업로드)]  총 94개
+  index.html      ← 게임 본체
+  sandbox.html    ← 테스트 모드
+  .nojekyll       ← (숨김파일) GitHub Pages용
+  README.txt
+  assets/         ← 이미지·소리 90개 (먼저 올림)
 
-[올리는 법 — GitHub 웹]
-  - 코드만 바뀐 업데이트: index.html 만 덮어쓰기 업로드.
-  - 새 이미지/소리가 있으면: index.html + assets 폴더(그 새 파일들)를 같이 올림
-    → 기존 assets/ 에 합쳐짐(기존 파일은 안 지워짐).
+[2차 — github-업로드-2차 폴더]  총 66개
+  assets/         ← 나머지 이미지·소리 66개
 
-[전체를 새로 올리고 싶을 때]
-  루트의 github-업로드/(1차) + github-업로드-2차/(2차) 를 순서대로 통째 업로드.
-  (GitHub 웹은 한 번에 100개 제한이라 에셋을 둘로 나눠둠)
+────────────────────────────
+올리는 순서 (GitHub 웹)
+────────────────────────────
+1) 저장소 → "Add file" → "Upload files"
+2) 이 폴더(github-업로드)의 index.html + sandbox.html + .nojekyll + assets 폴더를 드래그
+3) Commit changes
+4) 다시 "Add file" → "Upload files"
+5) github-업로드-2차 폴더 안의 assets 폴더를 드래그
+   (같은 assets/ 경로에 나머지 66개가 추가됩니다 — 기존 건 안 지워짐)
+6) Commit changes
+7) (GitHub Pages) Settings → Pages 에서 main 브랜치로 배포
 
-[공유 순위 비우기]
-  하이스코어 공유 랭킹은 구글 시트(scores 탭)에서 직접 비웁니다. 코드 업로드와 별개.
+[중요]
+  - 1차·2차 둘 다 assets 폴더로 올라가서 합쳐집니다(총 156개).
+  - .nojekyll 이 안 보이면 숨김파일이라 그렇습니다. 같이 올라가야 합니다.
+  - 코드만 바뀐 다음 업데이트는 index.html(+sandbox.html)만 다시 올리면 됩니다.
+
+[폰에서 확인]
+  배포 후 캐시 때문에 안 바뀌어 보이면 새로고침 또는
+  Safari 설정 → 방문 기록·웹사이트 데이터 지우기 한 번 해주세요.
