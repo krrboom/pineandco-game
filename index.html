@@ -1001,13 +1001,19 @@ function recRow(outImg, name, parts, desc){
   return `<div class="rec-row"><img class="rec-out" src="assets/${outImg}.png" alt=""><div class="rec-info"><div class="rec-name">${name}</div><div class="rec-need">${need}</div>${desc?`<div class="rec-fx">${desc}</div>`:''}</div></div>`;
 }
 function openRecipe(){ try{ initAudio(); }catch(e){} paused=true; playSelect&&playSelect();
-  let html='<div class="rec-cat">HIDDEN FUSIONS</div>';
-  for(const rc of RECIPES){ if(rc.cocktail) continue;
-    html += recRow(rc.eq[rc.eq.length-1], weaponInfo(rc.result).name, rc.consume.map(k=>({img:weaponInfo(k).img, lv:'max'})), CRAFT_FX[rc.result]); }
-  html += '<div class="rec-cat">COCKTAILS</div>';
+  // WEAPONS(칵테일) — 레벨업에서 직접 선택, Lv8까지
+  let html='<div class="rec-cat">WEAPONS · 칵테일 (pick at level-up · 처음엔 약하게 시작해 Lv8에서 풀파워)</div>';
   for(const ck of COCKTAIL_KEYS){ const c=COCKTAILS[ck];
-    const parts=[{img:'bottle_'+c.spirit, lv:'Lv5'}].concat(c.ing.map(k=>({img:weaponInfo(k).img, lv:'max'})));
-    html += recRow(c.img, c.name, parts, CRAFT_FX[ck]); }
+    html += recRow(c.img, c.name, [], CRAFT_FX[ck]); }
+  // EVOLUTIONS — 칵테일 Lv8 + 기주 스피릿 + 대표 재료 Lv8 → 슈퍼
+  html += '<div class="rec-cat">EVOLUTIONS · 슈퍼 칵테일 (Lv8 + spirit + ingredient Lv8 → 보스 팁에서 진화)</div>';
+  for(const ck of COCKTAIL_KEYS){ const c=COCKTAILS[ck], ei=EVO_ING[ck];
+    const parts=[{img:'bottle_'+c.spirit, lv:'own'},{img:weaponInfo(ei).img, lv:'Lv8'}];
+    html += recRow(c.img, '★ SUPER '+c.name, parts, 'Far stronger version of '+c.name+'.'); }
+  // PASSIVES(재료) — 발사 안 함, 능력만
+  html += '<div class="rec-cat">PASSIVES · 재료 (level-up, boost all weapons)</div>';
+  for(const k of PASSIVE_KEYS){ const info=weaponInfo(k);
+    html += recRow(info.img, info.name, [], INGREDIENTS[k]?INGREDIENTS[k].desc:(ORBIT[k]?'Wider pickup (magnet)':'')); }
   document.getElementById('recipeList').innerHTML = html;
   document.getElementById('recipePanel').classList.remove('hidden'); }
 function closeRecipe(){ paused=false; document.getElementById('recipePanel').classList.add('hidden'); playSelect&&playSelect(); }
@@ -1048,17 +1054,18 @@ const SPIRITS = {
 const SPIRIT_KEYS = Object.keys(SPIRITS);
 /* 궤도 무기(재료/칵테일): 플레이어 주위를 도는 피사체. cranberry=재료, cosmo=칵테일(나중) */
 const ORBIT = {
-  cranberry:{ name:'CRANBERRY', color:'#c0392b', ic:'🔴', img:'cranberry', max:5, dmg:6,  R:52, rotV:0.07 },   // dmg=Joe 기본공격력(6), Lv5까지 1~5개
+  cranberry:{ name:'CRANBERRY', color:'#c0392b', ic:'🔴', img:'cranberry', max:8, dmg:6,  R:52, rotV:0.07, pas:{stat:'magnet',per:18} },   // 이제 패시브(자석). 발사 대신 획득범위↑
   cosmo:    { name:'COSMOPOLITAN', color:'#e8487e', ic:'🍸', img:null, max:4, dmg:16, R:60, rotV:0.085 },
 };
 /* 발사형 재료(루프 재료): 각자 공격 패턴 + 올린 이미지. cranberry는 ORBIT(궤도). */
+/* 재료 = 패시브(VS 스탯). pas가 있으면 발사 안 하고 능력만 부여. Lv1~8. */
 const INGREDIENTS = {
-  lemon: { name:'LEMON', ic:'🍋', img:'ing_lemon', color:'#f4d03f', attack:'citrus', cd:54, max:4, desc:'Piercing citrus wheel' },
-  lime:  { name:'LIME',  ic:'🟢', img:'ing_lime',  color:'#7ac74f', attack:'citrus', cd:54, max:4, desc:'Piercing citrus wheel' },
-  orange:{ name:'ORANGE',ic:'🍊', img:'ing_orange',color:'#f29f3d', attack:'citrus', cd:54, max:4, desc:'Piercing citrus wheel' },
-  sugar: { name:'SUGAR', ic:'🧊', img:'ing_sugar', color:'#eef2f5', attack:'none',   cd:46, max:3, desc:'Craft: +Water → Syrup' },
-  mint:  { name:'MINT',  ic:'🌿', img:'ing_mint',  color:'#3f9a45', attack:'leaf',   cd:96, max:4, desc:'Leaf shot, slows enemies' },
-  water: { name:'WATER', ic:'💧', img:'ing_water', color:'#aee6f5', attack:'none',   cd:50, max:3, desc:'Craft: +Sugar → Syrup' },
+  lemon: { name:'LEMON', ic:'🍋', img:'ing_lemon', color:'#f4d03f', max:8, pas:{stat:'dmg',per:0.08},   desc:'+8% damage / Lv (all weapons)' },
+  lime:  { name:'LIME',  ic:'🟢', img:'ing_lime',  color:'#7ac74f', max:8, pas:{stat:'cd',per:0.03},    desc:'Attacks fire faster' },
+  orange:{ name:'ORANGE',ic:'🍊', img:'ing_orange',color:'#f29f3d', max:8, pas:{stat:'area',per:0.06},  desc:'Bigger attacks (area)' },
+  sugar: { name:'SUGAR', ic:'🧊', img:'ing_sugar', color:'#eef2f5', max:8, pas:{stat:'area',per:0.05},  desc:'Bigger attacks (area)' },
+  mint:  { name:'MINT',  ic:'🌿', img:'ing_mint',  color:'#3f9a45', max:8, pas:{stat:'speed',per:0.05}, desc:'Move faster' },
+  water: { name:'WATER', ic:'💧', img:'ing_water', color:'#aee6f5', max:8, pas:{stat:'regen',per:0.15}, desc:'Regenerate HP' },
   // 심플시럽 = 설탕(Lv3)+물(Lv3) 조합 결과물(공격 무기). 아주 느린 병을 던져 맞으면 터지며 광역 슬로우.
   syrup: { name:'SIMPLE SYRUP', ic:'🍯', img:'ing_syrup', color:'#e9c46a', attack:'syrup', cd:150, max:4, desc:'Lobbed bottle, AoE slow' },
   // 시트러스 트리오 = 레몬·라임·오렌지 셋 다 Lv4 만렙일 때 만들어지는 히든 조합 무기.
@@ -1066,13 +1073,13 @@ const INGREDIENTS = {
   // 소다건 = 소다+토닉 둘 다 Lv4일 때 만들어지는 히든 조합. 물방울을 게틀링처럼 한 타겟에 집중사격.
   sodagun:{ name:'SODA GUN', ic:'🔫', img:'ing_sodagun', color:'#3d7fb0', attack:'sodagun', cd:11, max:4, desc:'Gatling soda, locks a target' },
   // 칵테일 조합 재료들도 시트러스 휠(관통 발사)로 통일. 각자 올린 이미지로 날아감. (조합 시스템 추가 시 재료로도 사용)
-  cointreau:{ name:'COINTREAU', ic:'🍊', img:'ing_cointreau', color:'#c8731f', attack:'orangeball', cd:56, max:4, desc:'Lobs a whole orange' },
-  soda:     { name:'SODA WATER',ic:'🫧', img:'ing_soda',      color:'#7fb5d6', attack:'bubble', cd:50, max:4, desc:'Bubble shot · +Tonic → Soda Gun' },
-  tonic:    { name:'TONIC',     ic:'🟩', img:'ing_tonic',     color:'#4f9a4f', attack:'bubble', cd:50, max:4, desc:'Bubble shot · +Soda → Soda Gun' },
-  olive:    { name:'OLIVE',     ic:'🫒', img:'ing_olive',     color:'#7a8c3a', attack:'olive',  cd:58, max:4, desc:'Lobs a heavy olive' },
-  sweetver: { name:'SWEET VERMOUTH', ic:'🍷', img:'ing_sweetver', color:'#a83b3b', attack:'aura', cd:60, max:4, desc:'Red aura · +Dry → Black Vermouth' },
-  dryver:   { name:'DRY VERMOUTH',   ic:'🍸', img:'ing_dryver',   color:'#cfd6e0', attack:'aura', cd:60, max:4, desc:'White aura · +Sweet → Black Vermouth' },
-  angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', attack:'dash', cd:54, max:4, desc:'Unlocks DASH (double-tap)' },
+  cointreau:{ name:'COINTREAU', ic:'🍊', img:'ing_cointreau', color:'#c8731f', max:8, pas:{stat:'amount',per:0.25}, desc:'+1 projectile per 4 Lv (all weapons)' },
+  soda:     { name:'SODA WATER',ic:'🫧', img:'ing_soda',      color:'#7fb5d6', max:8, pas:{stat:'cd',per:0.025},   desc:'Attacks fire faster' },
+  tonic:    { name:'TONIC',     ic:'🟩', img:'ing_tonic',     color:'#4f9a4f', max:8, pas:{stat:'pierce',per:0.25},desc:'+1 pierce per 4 Lv' },
+  olive:    { name:'OLIVE',     ic:'🫒', img:'ing_olive',     color:'#7a8c3a', max:8, pas:{stat:'armor',per:2},    desc:'Armor: take less contact dmg' },
+  sweetver: { name:'SWEET VERMOUTH', ic:'🍷', img:'ing_sweetver', color:'#a83b3b', max:8, pas:{stat:'hp',per:12},  desc:'+max HP' },
+  dryver:   { name:'DRY VERMOUTH',   ic:'🍸', img:'ing_dryver',   color:'#cfd6e0', max:8, pas:{stat:'crit',per:0.006}, desc:'+crit chance' },
+  angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', max:8, pas:{stat:'xp',per:0.06},   desc:'+XP gain · unlocks DASH' },
   // 검정 버무스 = 드라이+스윗 버무스 둘 다 Lv4일 때 만들어지는 히든 조합. 훨씬 강한 검정 오라.
   blackver: { name:'BLACK VERMOUTH', ic:'🖤', img:'ing_wormwood', color:'#1f1830', attack:'aura', cd:60, max:4, desc:'Huge black damage aura' },
 };
@@ -1094,8 +1101,18 @@ const COCKTAILS = {
   vodkamartini:  { name:'VODKA MARTINI',   img:'cocktail_vodkamartini',   spirit:'vodka',   ing:['dryver'] },
 };
 const COCKTAIL_KEYS = Object.keys(COCKTAILS);
+// VS식: 재료 패시브 키 (발사 안 하고 스탯만) — 6칸 패시브 슬롯 대상
+const PASSIVE_KEYS = Object.keys(INGREDIENTS).filter(k=>INGREDIENTS[k].pas).concat(['cranberry']);
+// 진화(슈퍼 칵테일): 칵테일 Lv8 + 기주 스피릿 보유 + 대표 재료(패시브) Lv8
+const EVO_ING = { gimlet:'lime', margarita:'lime', manhattan:'sweetver', oldfashioned:'sugar', highball:'soda',
+  sidecar:'cointreau', mojito:'mint', southside:'mint', gintonic:'tonic', drymartini:'dryver',
+  cosmopolitan:'cointreau', vodkacranberry:'cranberry', vodkatonic:'tonic', vodkamartini:'dryver' };
+const WEAPON_MAX = 6, PASSIVE_MAX = 6;   // 무기(칵테일) 6칸 + 패시브(재료) 6칸
+// 칵테일별 고유 기본 쿨다운(작을수록 빠름) — VS식으로 무기마다 공속이 다름
+const COCKTAIL_CD = { gimlet:50, gintonic:54, highball:52, sidecar:60, cosmopolitan:68, vodkatonic:68,
+  southside:72, mojito:78, margarita:78, drymartini:74, vodkacranberry:80, oldfashioned:92, vodkamartini:96, manhattan:100 };
 function weaponInfo(key){
-  if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail ultimate — far stronger than your base attack', max:4}; }
+  if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail weapon — unique attack, levels to 8', max:8}; }   // 칵테일=무기, Lv8까지
   if(SPIRITS[key]) return {name:SPIRITS[key].name, ic:SPIRITS[key].ic, img:'bottle_'+key, desc:SPIRITS[key].desc, max:MAX_WLV};  // 칩/카드 = 스피릿 바틀 이미지
   if(ORBIT[key])   return {name:ORBIT[key].name, ic:ORBIT[key].ic, img:ORBIT[key].img||null, desc:'Orbits you, hits all around', max:ORBIT[key].max};
   if(INGREDIENTS[key]){ const g=INGREDIENTS[key]; return {name:g.name, ic:g.ic, img:g.img, desc:g.desc, max:g.max}; }
@@ -1127,6 +1144,32 @@ function applyBaseLevel(){
     : 1 + (lv>=2?1:0)+(lv>=4?1:0)+(lv>=6?1:0);
   // Pat 스플래시: 한 번에 데미지 주는 최대 마릿수. 6마리 시작, 레벨업마다 +2
   player.splashMax = 6 + (lv-1)*2;
+}
+/* ===== 스탯 재계산 (VS식): 캐릭터 기본 × 스킬 카운터 × 재료 패시브 합산 =====
+   재료(INGREDIENTS)와 크랜베리는 이제 발사 대신 이 패시브 스탯을 준다. */
+function recalcStats(){
+  if(!player) return;
+  const c=CHARACTERS[player.key];
+  // 재료 패시브 합산 (보유 레벨 × per)
+  const pas={dmg:0,cd:0,area:0,speed:0,magnet:0,amount:0,armor:0,hp:0,crit:0,regen:0,xp:0,pierce:0};
+  const add=(key)=>{ const g=INGREDIENTS[key]||ORBIT[key]; if(!g||!g.pas) return; const lv=player.weapons[key]||0; if(lv>0) pas[g.pas.stat]+=g.pas.per*lv; };
+  for(const k in INGREDIENTS) add(k); add('cranberry');
+  player.pas=pas;
+  // 파생 스탯 (스킬 카운터 + 패시브)
+  player.speed     = c.moveSpeed * Math.pow(1.14, player.upSpeed||0) * (1+pas.speed);
+  player.dmgMul    = Math.pow(1.14, player.upPower||0) * (1+pas.dmg);
+  player.cdMul     = Math.max(0.28, Math.pow(0.86, player.upRapid||0) * Math.max(0.4, 1-pas.cd));
+  player.sizeMul   = Math.min(2.4, Math.pow(1.2, player.upSize||0)) * (1+pas.area);
+  player.extraProj = Math.min(3, (player.upExtra||0) + Math.floor(pas.amount));
+  player.pickupR   = 72 + 45*(player.upPickup||0) + pas.magnet;
+  player.defense   = Math.min(25, 3*(player.upDefense||0) + pas.armor);
+  player.crit      = Math.min(0.5, Math.min(0.08, 0.01*(player.upCrit||0)) + pas.crit);
+  player.regenBonus= 0.25*(player.upRegen||0) + pas.regen;
+  player.xpMul     = Math.pow(1.15, player.upXp||0) * (1+pas.xp);
+  player.basePierce= (c.pierce||0) + Math.floor(pas.pierce);
+  const newMax = Math.min(350, c.maxHp + 25*(player.upHealth||0) + pas.hp);
+  player.maxHp = newMax; if(player.hp>newMax) player.hp=newMax;
+  if(player.weapons.angostura) player.hasDash=true;   // 앙고스투라 보유 = 대쉬 해금(패시브)
 }
 
 /* ===== 메뉴 (★ 실제 파인앤코 메뉴로 교체) ===== */
@@ -1260,41 +1303,28 @@ const CHAR_INDEX=[
 /* 스킬 사전 — 기본공격 / 기주 6종 / 재료 / 궤도 / 일반 강화 / 필살기. 모든 항목은 붐이 올린 이미지로. */
 const SKILL_INDEX=[
   // ── 기본 공격 ──
-  { img:'icon_shaker',     name:'SHAKING · Pat base · max Lv6',  t:'Cobbler-shaker throw with splash AoE. Each level adds damage, fires faster, widens splash. Projectiles grow to 4 at max (up to 6 with EXTRA SHOT).' },
-  { img:'icon_barspoon',   name:'STIRRING · Joe base · max Lv6', t:'Bar-spoon / mixing-glass throw that pierces a line. Each level adds damage and fires faster. Projectiles grow to 5 at max (up to 7 with EXTRA SHOT).' },
-  { img:'rainbow_icon', name:'RAINBOW GUN · ENDGAME', t:'Max every spirit (Lv8) and every cocktail (Lv4) and it all fuses into the Rainbow Gun. Absurd damage and fire rate; every other weapon vanishes. Bosses never stop scaling, so it is pure survival.' },
-  // ── 공격 재료 (드랍 → 레벨업) ──
-  { img:'ing_lemon',  name:'LEMON · ingredient · max Lv4',  t:'A sliced wheel lobbed slow, pierces up to 6 enemies. Always 1 shot; it grows bigger and hits harder each level.' },
-  { img:'ing_lime',   name:'LIME · ingredient · max Lv4',   t:'A sliced wheel lobbed slow, pierces up to 6 enemies. Always 1 shot; it grows bigger and hits harder each level.' },
-  { img:'ing_orange', name:'ORANGE · ingredient · max Lv4', t:'A sliced wheel lobbed slow, pierces up to 6 enemies. Always 1 shot; it grows bigger and hits harder each level.' },
-  { img:'ing_trio',   name:'CITRUS TRIO · HIDDEN · max Lv4', t:'Max Lemon + Lime + Orange together to fuse them. Hurls all three wheels at once, 8 pierce. By Lv4: 5 wheels, double damage and double fire rate.' },
-  { img:'ing_mint',   name:'MINT · ingredient · max Lv4',   t:'Mint leaf that SLOWS enemies. Always 1 projectile; leveling only speeds it up. Slow fire rate.' },
-  { img:'cranberry',  name:'CRANBERRY · orbit · max Lv5',   t:'Berries that ORBIT around you and hit everything nearby. 1 berry at Lv1, +1 each level up to 5. +damage, +radius & +spin per level.' },
-  // ── 조합 재료 ──
-  { img:'ing_sugar',  name:'SUGAR · crafting · max Lv3',    t:'No attack. Reach Lv3, then meet Water (Lv3) to craft Simple Syrup.' },
-  { img:'ing_water',  name:'WATER · crafting · max Lv3',    t:'No attack. Reach Lv3, then meet Sugar (Lv3) to craft Simple Syrup.' },
-  { img:'ing_syrup',  name:'SIMPLE SYRUP · crafted · max Lv4', t:'Made from Sugar (Lv3) + Water (Lv3). A slow lobbed bottle that bursts into a wide AoE slow. Slow fire rate. Lv4 = ready as a cocktail ingredient.' },
-  { img:'ing_cointreau', name:'COINTREAU · ingredient · max Lv4', t:'Lobs a whole orange that hits a bit harder than plain Orange, growing each level. Also a cocktail ingredient: Sidecar, Cosmopolitan, Margarita.' },
-  { img:'ing_soda',   name:'SODA WATER · ingredient · max Lv4', t:'Fires a fizzy bubble shot. Max it with Tonic to fuse the SODA GUN.' },
-  { img:'ing_tonic',  name:'TONIC · ingredient · max Lv4',     t:'Fires a fizzy bubble shot. Max it with Soda to fuse the SODA GUN.' },
-  { img:'ing_sodagun',name:'SODA GUN · HIDDEN · max Lv4',      t:'Max Soda + Tonic to fuse. Infinite soda! Gatling water droplets that lock one target until it drops, then retarget. 3 shots → 7 at Lv4, fast, low damage per hit.' },
-  { img:'ing_olive',  name:'OLIVE · ingredient · max Lv4',     t:'Lobs a single olive. A Martini and its olive are needle and thread, you can\'t have one without the other. Always 1 shot; grows bigger and harder each level.' },
-  { img:'ing_sweetver', name:'SWEET VERMOUTH · aura · max Lv4', t:'Steeped in wormwood, it haloes you in a reddish aura that gnaws every monster who steps inside, garlic-style. Bigger and nastier each level. Max it with Dry to brew BLACK VERMOUTH.' },
-  { img:'ing_dryver', name:'DRY VERMOUTH · aura · max Lv4', t:'A pale, dry wormwood aura that quietly chews anything nearby. Wider and crueler each level. Max it with Sweet to brew BLACK VERMOUTH.' },
-  { img:'ing_wormwood', name:'BLACK VERMOUTH · HIDDEN · max Lv4', t:'Max Sweet + Dry Vermouth to fuse. The two auras collapse into one black wormwood ring, far bigger and far deadlier. A wormwood sprig floats over your head while it burns.' },
-  { img:'ing_angostura', name:'ANGOSTURA · DASH · max Lv4', t:'A couple of dashes and you DASH. Double-tap a direction to blink forward through the crowd. Cooldown 5s, dropping to 1s at Lv4 (shown next to the ultimate).' },
-  // ── 일반 강화 (이미지 없는 항목만 이모지) ──
-  { ic:'✚',  name:'EXTRA SHOT · max 2',     t:'+1 projectile on your BASE attack (spirits grow their own projectiles as you level them). Rarely offered, max 2.' },
-  { img:'icon_bicep',  name:'POWER UP',     t:'+14% damage to everything — base attack, spirits, ingredients.' },
-  { ic:'⚡',  name:'ATTACK SPEED UP',       t:'Your BASE attack fires faster. Spirits & ingredients keep a fixed, character-independent fire rate.' },
-  { ic:'🎯', name:'CRIT CHANCE · max 8%',   t:'+1% critical hit (x2 damage) each pick, up to 8% over 8 picks.' },
-  { ic:'📈', name:'FAST LEARNER',   t:'+15% XP gain (level up faster). Keeps appearing — no cap, since later levels need more XP.' },
-  { ic:'🍺', name:'BIGGER DRINKS',          t:'Bigger BASE-attack projectiles. Spirits & ingredients keep a fixed size.' },
-  { img:'icon_sneaker', name:'MOVE SPEED UP', t:'+14% movement speed.' },
-  { img:'icon_heart',   name:'HEAL + MAX HP', t:'+25 max HP, heal 50, plus a small permanent HP-regen boost.' },
-  { img:'icon_magnet',  name:'PICKUP RANGE UP', t:'Wider cash & item pickup radius.' },
-  // ── 필살기 ──
-  { ic:'🌀', name:'ULTIMATE UP · max Lv6', t:'Strengthens your ultimate. Pat: more tornado arms. Joe: longer invincibility + spikes. Ready once every 105s — tap the ⚡ button when it lights up.' },
+  { img:'icon_shaker',   name:'SHAKING · Pat base · max Lv6',  t:'Cobbler-shaker throw with splash AoE. Each level adds damage, fires faster, widens splash. Always available; boosted by every passive you own.' },
+  { img:'icon_barspoon', name:'STIRRING · Joe base · max Lv6', t:'Bar-spoon / mixing-glass throw that pierces a line. Each level adds damage and fires faster. Boosted by every passive you own.' },
+  // ── 패시브 (재료) — 발사 안 하고 모든 무기를 강화 ──
+  { ic:'🧪', name:'— PASSIVES · 재료 —', t:'Ingredients no longer fire. They boost ALL your weapons. Pick at level-up (6 passive slots), max Lv8.' },
+  { img:'ing_lemon',     name:'LEMON · +DAMAGE',        t:'+8% damage per level to every weapon.' },
+  { img:'ing_lime',      name:'LIME · ATTACK SPEED',    t:'All attacks fire faster each level.' },
+  { img:'ing_soda',      name:'SODA WATER · ATTACK SPEED', t:'All attacks fire faster each level.' },
+  { img:'ing_orange',    name:'ORANGE · AREA',          t:'Bigger attacks (area/size) each level.' },
+  { img:'ing_sugar',     name:'SUGAR · AREA',           t:'Bigger attacks (area/size) each level.' },
+  { img:'ing_cointreau', name:'COINTREAU · +PROJECTILE',t:'+1 projectile to every weapon per 4 levels.' },
+  { img:'ing_tonic',     name:'TONIC · +PIERCE',        t:'+1 pierce per 4 levels (all weapons).' },
+  { img:'ing_mint',      name:'MINT · MOVE SPEED',      t:'Move faster each level.' },
+  { img:'ing_water',     name:'WATER · REGEN',          t:'Regenerate HP each level.' },
+  { img:'ing_olive',     name:'OLIVE · ARMOR',          t:'Take less contact damage each level.' },
+  { img:'ing_sweetver',  name:'SWEET VERMOUTH · +MAX HP', t:'+max HP each level.' },
+  { img:'ing_dryver',    name:'DRY VERMOUTH · +CRIT',   t:'+crit chance each level.' },
+  { img:'cranberry',     name:'CRANBERRY · MAGNET',     t:'Wider cash & item pickup range each level.' },
+  { img:'ing_angostura', name:'ANGOSTURA · +XP · DASH', t:'+XP gain each level, and unlocks DASH — double-tap a direction to blink forward.' },
+  // ── 촉매 & 진화 & 필살기 ──
+  { ic:'🥃', name:'SPIRITS · evolution catalysts', t:'The 6 spirits drop on the field. They no longer fire — own one to help EVOLVE its cocktail.' },
+  { ic:'✨', name:'EVOLUTION · Super cocktails', t:'Cocktail Lv8 + own its base spirit + max (Lv8) its key ingredient. Then take a BOSS TIP to evolve it into a far stronger SUPER version (gold glow). Level-up cards never offer evolution — only boss tips do.' },
+  { ic:'🌀', name:'ULTIMATE UP · max Lv6', t:'Strengthens your ultimate. Ready once every 105s — tap the ⚡ button when it lights up.' },
 ];
 /* 칵테일 도감 — 새 시트(칵테일 new.png)에서 잘라낸 14종. 기주별 / 재료 표기. */
 const COCKTAIL_INDEX=[
@@ -1341,7 +1371,8 @@ function startGame(charKey){
   player={ key:charKey, x:W/2, y:H/2, r:8, speed:c.moveSpeed, hp:c.maxHp, maxHp:c.maxHp,
     base:c.base, projKind:c.projKind, fireTimer:0, projSpeed:c.projSpeed, projR:c.projR, basePierce:c.pierce||0,
     pickupR:72, color:c.color, dmgMul:1, cdMul:1, sizeMul:1, extraProj:0, facing:1, moving:false, throwTimer:0,
-    upSpeed:0, upPower:0, upHealth:0, upRapid:0, xpMul:1, crit:0, critMul:2, altShot:false,   // 스탯 카운터 + 경험치 + 크리티컬
+    upSpeed:0, upPower:0, upHealth:0, upRapid:0, upSize:0, upPickup:0, upCrit:0, upExtra:0, pas:{},   // 스탯 카운터(VS식 재계산)
+    xpMul:1, crit:0, critMul:2, altShot:false,
     items:[],                                               // 먹은 업그레이드/스피릿 아이콘 기록(HUD 하단)
     // 기본기 레벨 시스템 (원본값 보관 → applyBaseLevel에서 재계산)
     baseLv:1, baseDmg0:c.dmg, baseCd0:c.fireCd, baseSplash0:c.splash,
@@ -1349,8 +1380,8 @@ function startGame(charKey){
     xp:0, xpNeed:xpForLevel(1), level:1, invuln:0,
     ultReadyAt:ULT_CD, ultUntil:0, ultFxUntil:0, ultLevel:1, ultSpiralUntil:0, ultSpiralAng:0,   // 필살기: 80초 쿨타임(레벨업으로 위력만 강화)
     regenBonus:0,                                  // HEAL 강화로 쌓이는 패시브 회복(둘 다)
-    weapons:{}, wt:{} };  // weapons: 보유 기주, wt: 무기별 타이머
-  applyBaseLevel();
+    weapons:{}, wt:{}, evolved:new Set(), hasDash:false };  // weapons: 무기/재료/촉매 레벨, evolved: 진화한 칵테일
+  applyBaseLevel(); recalcStats();
   enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[];
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bossAlertUntil=0; keys={};
@@ -1493,12 +1524,12 @@ function updateCardHighlight(){
    ===================================================================== */
 function DIFF(){
   const m = gameTime/60;                  // 경과 분
-  const step = 1 + Math.floor(gameTime/120)*0.2;   // 2분마다 +20% (HP만 강화 → 점점 단단하게)
+  const hard = Math.pow(1.4, Math.floor(gameTime/180));   // 3분마다 잡몹 체력·공격력 ×1.4 (40%↑, 누적)
   return {
-    hp:    (16 + m*12 + m*m*3.2) * step,  // 적 HP (시간 + 2분당 20%) = 시간 지날수록 훨씬 단단함
+    hp:    (16 + m*12 + m*m*3.2) * hard,  // 적 HP (시간 스케일 + 3분당 40%) = 갈수록 훨씬 단단함
     speed: 0.5 + m*0.05 + m*m*0.006,       // 적 속도 (완만하게만 빨라짐)
     spawn: Math.max(8, 54 - m*6.5),        // 스폰 간격(프레임) ↓ = 더 자주
-    dmg:   6 + m*0.4,                       // 적 접촉 데미지: 진짜 아주 조금씩만(저체력 캐릭터 보호)
+    dmg:   (6 + m*0.4) * hard,              // 적 접촉 데미지도 3분마다 40%↑
   };
 }
 /* 러시(피버) 타임: 2분(120초)에 한 번씩. 18초 지속. */
@@ -1857,12 +1888,14 @@ function fireIngredient(key, lv){
 }
 /* 칵테일 발사 — 각자 베이스 스피릿 특성을 키운 궁극기. 레벨업마다 +20%(P). 기본공격보다 훨씬 강함. */
 function fireCocktail(key, lv){
-  const P = Math.pow(1.2, lv-1) * player.dmgMul;          // 레벨업마다 +20%
+  const evo = !!(player.evolved && player.evolved.has(key));   // 슈퍼 칵테일(진화) = 훨씬 강함
+  const P = 1.05 * Math.pow(1.33, lv-1) * player.dmgMul * (evo?1.9:1);   // 데미지: Lv1 약함 → Lv8에서 풀파워(레벨마다 ×1.33)+패시브+진화
   const t = nearestEnemy(); if(!t) return;
   const a = Math.atan2(t.y-player.y, t.x-player.x);
   const img = COCKTAILS[key].img;
-  const S = 1.45 * (1 + (lv-1)*0.2);   // 칵테일 피사체: 기본부터 크게(×1.45) + 레벨업마다 +20%
-  const add = (o)=>{ const p=Object.assign({ x:player.x, y:player.y, vx:0, vy:0, dmg:0, r:12, splash:0, pierce:1, hit:new Set(), life:90, kind:img }, o); p.r *= (o.noScale?1:S); projectiles.push(p); };
+  const S = 0.8 * Math.pow(1.24, lv-1) * (player.sizeMul||1) * (evo?1.3:1);   // 크기: Lv1 작게 → 레벨오를수록 커짐(×1.24)+area 패시브+진화
+  const pp = Math.floor((player.pas&&player.pas.pierce)||0) + (evo?2:0);   // 관통: tonic 패시브 + 진화
+  const add = (o)=>{ const p=Object.assign({ x:player.x, y:player.y, vx:0, vy:0, dmg:0, r:12, splash:0, pierce:1, hit:new Set(), life:90, kind:img, evo }, o); p.r *= (o.noScale?1:S); if(pp&&p.pierce<99) p.pierce+=pp; projectiles.push(p); };
   const fan = (n,spd,spread,o)=>{ for(let i=0;i<n;i++){ const ang=a+(i-(n-1)/2)*spread; add(Object.assign({ vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd }, o)); } };
   switch(key){
     case 'gimlet':         fan(2+lv, 6, 0.16, { dmg:42*P, r:14, pierce:99, life:95, cPoison:160 }); break;                               // 라임 사이클론: Lv1=3발, 레벨마다 +1
@@ -1885,7 +1918,7 @@ function fireCocktail(key, lv){
   }
 }
 function weaponCd(key, lv){
-  if(COCKTAILS[key]) return Math.max(34, 86 - lv*7);     // 칵테일: 강력한 궁극기 → 느린 편(레벨업마다 약간 빨라짐)
+  if(COCKTAILS[key]) return Math.max(26, (COCKTAIL_CD[key]||80) - lv*4);   // 칵테일: 각자 고유 공속(빠른/느린) + 레벨업마다 −4
   if(SPIRITS[key]) return spiritCd(key,lv);
   if(key==='trio') return Math.round(58*(1-(lv-1)/6));   // 시트러스 트리오: Lv1=58 → Lv4=29(공속 2배)
   if(key==='sodagun') return Math.max(5, 13-lv*2);       // 소다건: 아주 빠른 연사 (Lv1=11 → Lv4=5)
@@ -1897,7 +1930,8 @@ let orbBodies=[];
 function updateOrbits(){
   orbBodies.length=0;
   for(const key in player.weapons){ const o=ORBIT[key]; if(!o) continue;
-    if(suppressedFromFiring(key)) continue;   // 크랜베리로 칵테일 만들었으면 궤도 멈춤(자원으로만)
+    if(o.pas) continue;                        // 크랜베리는 패시브(자석) → 궤도 발사 안 함
+    if(suppressedFromFiring(key)) continue;
     const lv=player.weapons[key];
     const n = Math.min(5, lv);                                   // 크랜베리 Lv1~5 = 1,2,3,4,5개 (EXTRA SHOT 영향 없음)
     const R = o.R + (lv-1)*8;                                     // 레벨업마다 도는 원 크게
@@ -2081,14 +2115,16 @@ function update(){
   // 무기 발사 — 스피릿(샷잔) + 재료(레몬 등). 궤도무기(크랜베리/코스모)는 updateOrbits에서 처리.
   for(const key in player.weapons){
     if(ORBIT[key]) continue;
-    if(suppressedFromFiring(key)) continue;   // 그 기주/재료로 칵테일·조합을 만들었으면 발사 안 함(자원으로만)
+    if(INGREDIENTS[key] && INGREDIENTS[key].pas) continue;   // 재료 패시브는 발사 안 함(스탯만)
+    if(SPIRITS[key]) continue;                               // 스피릿은 진화 촉매 → 발사 안 함
     const lv=player.weapons[key];
     player.wt[key]=(player.wt[key]||0)-1;
     if(player.wt[key]<=0){
       const n0=projectiles.length;
       if(COCKTAILS[key]) fireCocktail(key,lv); else if(SPIRITS[key]) fireSpirit(key,lv); else if(INGREDIENTS[key]) fireIngredient(key,lv);
-      addExtraShots(n0);   // EXTRA SHOT: 이 무기가 쏜 피사체를 각도 틀어 복제(모든 스킬에 적용)
-      player.wt[key]=weaponCd(key,lv); }   // 비기본공격: 캐릭터·업그레이드 무관 고정 공속/크기/속도
+      addExtraShots(n0);   // EXTRA SHOT: 이 무기가 쏜 피사체를 각도 틀어 복제(모든 무기에 적용)
+      const cdm = COCKTAILS[key] ? player.cdMul : 1;   // 칵테일은 공속 패시브(cdMul) 반영
+      player.wt[key]=Math.max(10, weaponCd(key,lv)*cdm); }
   }
   updateOrbits();   // 크랜베리/코스모 궤도무기
   updateAuras();    // 버무스 웜우드 오라
@@ -2100,7 +2136,7 @@ function update(){
       const arms = 2 + (player.ultLevel||1);              // 레벨업으로 팔(갈래) 증가
       for(let a=0;a<arms;a++){ const ang = player.ultSpiralAng + a*(6.28/arms);
         projectiles.push({ x:player.x, y:player.y, vx:Math.cos(ang)*5.6, vy:Math.sin(ang)*5.6,
-          dmg:player.dmg*player.dmgMul*1.25, r:8*player.sizeMul, splash:32*player.sizeMul, splashMax:5,
+          dmg:player.dmg*player.dmgMul*2.4, r:8*player.sizeMul, splash:36*player.sizeMul, splashMax:7,   // 기본공격(player.dmg=베이스 레벨) + POWER(dmgMul) 반영 + 위력↑
           pierce:0, hit:new Set(), life:82, kind:player.projKind }); }
     }
   }
@@ -2167,7 +2203,7 @@ function update(){
     }
     // 접촉 데미지
     if(!isInvuln() && Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r){
-      const dmg = e.wall? D.dmg*3.2 : e.type==='boss'? D.dmg*2.2 : e.bomb? D.dmg*1.4 : D.dmg;   // 벽은 더 쎄게
+      const dmg = e.wall? D.dmg*3.2 : e.type==='boss'? D.dmg*4.4 : e.bomb? D.dmg*1.4 : D.dmg;   // 보스=2배(4.4), 벽은 더 쎄게
       hurtPlayer(dmg); if(player.hp<=0){ gameOver(); return; }
     }
     e.speed=_spd0;   // 빙결 임시 슬로우 복구
@@ -2324,11 +2360,10 @@ function killEnemy(idx){
     pickups.push({ x:e.x+12, y:e.y, kind:'tip' });   // 팁 봉투 드롭(랜덤 스킬 보상)
   } else {
     const rr=Math.random();
-    if(rr<0.003) pickups.push({ x:e.x, y:e.y, kind:'magnet' });        // 0.3% 자석(그대로)
-    else if(rr<0.012) pickups.push({ x:e.x, y:e.y, kind:'health' });   // 0.9% 데킬라샷(체력+20)(그대로)
-    else if(rr<0.0125) dropSpirit(e.x, e.y);                           // 0.05% 스피릿(더 희박)
-    else if(rr<0.0165) dropIngredient(e.x, e.y);                       // 0.4% 재료(업그레이드 쉽게 살짝 ↑, 기초 5종은 가중치로 더 자주)
-    else pickups.push({ x:e.x, y:e.y, kind:'coin' });
+    if(rr<0.003) pickups.push({ x:e.x, y:e.y, kind:'magnet' });        // 0.3% 자석
+    else if(rr<0.012) pickups.push({ x:e.x, y:e.y, kind:'health' });   // 0.9% 데킬라샷(체력+20)
+    else if(rr<0.017) dropSpirit(e.x, e.y);                            // 0.5% 스피릿(진화 촉매 — 필드에서만 수집)
+    else pickups.push({ x:e.x, y:e.y, kind:'coin' });                  // 칵테일/재료는 이제 레벨업에서만
   }
   enemies.splice(idx,1);
 }
@@ -2402,40 +2437,20 @@ const SLOT_KEYS = COCKTAIL_KEYS.concat(['trio','sodagun','blackver']);
 const CRAFT_SLOTS = 6;
 function craftedSlotsUsed(){ return SLOT_KEYS.reduce((n,k)=> n + (player.weapons[k]?1:0), 0); }
 // 그 기주/재료로 칵테일·히든조합을 이미 만들었으면 → 그 기주/재료는 발사 안 함(자원으로만 쌓임). 조합 무기만 발사.
-function suppressedFromFiring(key){
-  for(const rc of RECIPES){
-    if(!player.weapons[rc.result]) continue;
-    if(rc.spirit===key) return true;                          // 이 기주로 만든 칵테일 보유
-    if(rc.consume && rc.consume.indexOf(key)>=0) return true; // 이 재료로 만든 조합 보유
-  }
-  return false;
-}
+function suppressedFromFiring(key){ return false; }   // 크래프팅 제거됨(칵테일=직접 무기) → 억제 없음
 // 재료 소진 + 결과 무기 추가/레벨업. 소진된 재료는 인벤(칩)에서 사라짐.
 let everCrafted = new Set();   // 한 번이라도 만든 조합(소진돼 0이 돼도 재제작은 안 멈춤)
 function applyCraft(rc){
-  for(const k of rc.consume){ delete player.weapons[k]; if(player.wt) delete player.wt[k]; }
+  // 재료는 이제 패시브 → 조합해도 소진하지 않고 그대로 유지(스탯 계속 부여)
   if(!player.weapons[rc.result]){ player.weapons[rc.result]=1; player.wt[rc.result]=0; }
   else player.weapons[rc.result]++;
   everCrafted.add(rc.result);
   burst(player.x, player.y, rc.cocktail?'#e8487e':(rc.result==='trio'?'#e0b84a':'#e9c46a'), 20);
-  updateWeaponChips();
+  recalcStats(); updateWeaponChips();
   return player.weapons[rc.result];
 }
 let craftChoiceList=[];
-// 히든 융합(시럽/트리오/소다건/검정버무스)만 자동 조합. 칵테일은 보스 팁에서만 완성됨.
-function tryCrafts(){
-  if(!player || state!=='playing') return;
-  for(const rc of RECIPES){ if(rc.cocktail) continue;
-    const cur=player.weapons[rc.result]||0, mx=weaponInfo(rc.result).max;
-    if(cur>=mx || !rc.ok() || !everCrafted.has(rc.result)) continue;
-    const lv=applyCraft(rc); banner(weaponInfo(rc.result).name+' Lv'+lv+'! ✦', false);
-  }
-  const slotsFull = craftedSlotsUsed() >= CRAFT_SLOTS;
-  const firsts = RECIPES.filter(rc=> !rc.cocktail && (player.weapons[rc.result]||0) < weaponInfo(rc.result).max && !everCrafted.has(rc.result) && !declinedCraft.has(rc.result) && rc.ok()
-    && !(slotsFull && SLOT_KEYS.includes(rc.result) && !player.weapons[rc.result]));
-  if(firsts.length===1) openCraft(firsts[0]);
-  else if(firsts.length>1) openCraftChoice(firsts);
-}
+function tryCrafts(){ /* 크래프팅 제거됨(VS식: 칵테일=직접 무기, 재료=패시브) */ }
 // 지금 만들/올릴 수 있는 칵테일들(재료 준비됨, 만렙 아님, 슬롯 여유). 보스 팁에서 선택.
 function craftableCocktails(){
   if(!player) return [];
@@ -2552,11 +2567,8 @@ function collectPickup(g){
       if(o.kind==='coin'||o.kind==='bill'){ o.pull=true; n++; } }   // 즉시 흡수 대신 끌어당김 표시 → 매 프레임 모여서 도착할 때 획득
     burst(player.x,player.y,'#ffe08a',20); banner('🧲 MAGNET  pulling '+n+' cash', true); playCoin(); return;
   }
-  if(g.kind==='tip'){                          // 보스 팁: 만들 수 있는 칵테일이 있으면 만들래?/말래? 확인, 없으면 랜덤 스킬
-    const cc = craftableCocktails();
-    if(cc.length===1) openCraft(cc[0], true);   // 1개 → 확인창(MAKE면 스핀, NOT NOW면 일반 팁)
-    else if(cc.length>1) openCraftChoice(cc,'tip');
-    else startTip();
+  if(g.kind==='tip'){                          // 보스 팁: 랜덤 업그레이드 보상(스핀 연출)
+    startTip();
     return;
   }
 
@@ -2573,38 +2585,40 @@ function collectPickup(g){
 function xpForLevel(L){ return Math.round(4 + (L-1)*2.4 + (L-1)*(L-1)*0.16); }   // 레벨업 더 빠르게(필요 경험치↓)
 /* ===== 레벨업 ===== */
 const _shuf = a => a.sort(()=>Math.random()-0.5);
-function ingredientCard(key){ const info=weaponInfo(key), lv=player.weapons[key]||0;
-  return { type:'spirit', key, ic:info.ic, img:info.img, n: lv? info.name+' UP' : info.name, d:info.desc, lv, maxlv:info.max }; }
-// 레벨업 스킬 후보(일반강화 + 기본공격 + 필살기). 재료/조합무기는 별도.
-function buildSkillPool(){
-  const pool=[];
-  GENERIC.forEach(g=>{ if(g.n==='EXTRA SHOT') return; if(g.n==='DEFENSE UP' && (player.upDefense||0)>=5) return; if(g.n==='REGEN UP' && (player.upRegen||0)>=3) return; if(g.n==='MAX HP UP' && player.maxHp>=350) return; pool.push({type:'gen', ...g}); });   // FAST LEARNER는 상한 없이 계속 등장(레벨업 점점 어려워지므로)
-  const es=GENERIC.find(g=>g.n==='EXTRA SHOT'); if(es && (player.extraProj||0)<2 && Math.random()<0.04) pool.push({type:'gen', ...es});   // 아주 낮은 확률
+// ===== VS식 레벨업: 무기(칵테일) / 패시브(재료) / 진화 =====
+function weaponCard(key){ const c=COCKTAILS[key], lv=player.weapons[key]||0;
+  return { type:'weapon', key, ic:'🍸', img:c.img, n: lv?c.name+' UP':c.name, d:(CRAFT_FX[key]||'Cocktail weapon'), lv, maxlv:8, isNew:!lv }; }
+function passiveCard(key){ const info=weaponInfo(key), lv=player.weapons[key]||0;
+  return { type:'passive', key, ic:info.ic, img:info.img, n: lv?info.name+' UP':info.name, d:info.desc, lv, maxlv:8, isNew:!lv }; }
+function canEvolve(ck){ if(player.evolved && player.evolved.has(ck)) return false;
+  if((player.weapons[ck]||0) < 8) return false;
+  if(!player.weapons[COCKTAILS[ck].spirit]) return false;
+  return (player.weapons[EVO_ING[ck]]||0) >= 8; }
+function evolveCard(ck){ const c=COCKTAILS[ck];
+  return { type:'evolve', key:ck, ic:'✨', img:c.img, n:'★ SUPER '+c.name, d:'EVOLVE! '+SPIRITS[c.spirit].name+' + '+weaponInfo(EVO_ING[ck]).name+' → far stronger.', isNew:true, evo:true }; }
+function ownedCount(keys){ let n=0; for(const k of keys) if(player.weapons[k]) n++; return n; }
+function baseUltPool(){ const p=[];
   if(player.baseLv < MAX_BASE_LV){ const sh=player.base==='shaker';
-    pool.push({ type:'base', ic:sh?'🍸':'🥄', img:sh?'icon_shaker':'icon_barspoon', n:sh?'SHAKING UP':'STIRRING UP', d:sh?'Base attack stronger':'Base attack stronger', lv:player.baseLv, maxlv:MAX_BASE_LV }); }
-  if(player.ultLevel < MAX_ULT_LV){ pool.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:player.key==='pat'?'Bigger tornado + invincible':'Longer invincibility + spikes', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
-  return pool;
+    p.push({ type:'base', ic:sh?'🍸':'🥄', img:sh?'icon_shaker':'icon_barspoon', n:sh?'SHAKING UP':'STIRRING UP', d:'Base attack stronger', lv:player.baseLv, maxlv:MAX_BASE_LV }); }
+  if(player.ultLevel < MAX_ULT_LV){ p.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:player.key==='pat'?'Bigger tornado + invincible':'Longer invincibility + spikes', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
+  return p;
 }
-// 선택지 4개: 재료 1~2개(스피릿 낮은 확률·원재료 높은 확률) + 스킬업 2~3개. 레인보우면 빈 풀.
 function buildLevelChoices(){
-  if(player.rainbow) return _shuf(buildSkillPool()).slice(0,4);
-  const rawIng = TOP_ING.filter(k=> (player.weapons[k]||0) < weaponInfo(k).max);
-  const spirits = SPIRIT_KEYS.filter(k=> (player.weapons[k]||0) < MAX_WLV);
-  const skillPool = buildSkillPool();
-  let ingN = Math.random()<0.5 ? 1 : 2;
-  const cards=[], used=new Set();
-  for(let i=0;i<ingN;i++){
-    const raw=rawIng.filter(k=>!used.has(k)), sp=spirits.filter(k=>!used.has(k));
-    let key = (Math.random()<0.12 && sp.length) ? sp[Math.floor(Math.random()*sp.length)]
-            : (raw.length ? raw[Math.floor(Math.random()*raw.length)] : (sp.length? sp[Math.floor(Math.random()*sp.length)] : null));
-    if(!key) break; used.add(key); cards.push(ingredientCard(key));
-  }
-  const skills=_shuf(skillPool.slice()).slice(0, 4-cards.length);
-  cards.push(...skills);
-  // 4개 미만이면 남은 재료/스킬로 채움
-  if(cards.length<4){ const rest=_shuf([...rawIng,...spirits].filter(k=>!used.has(k))).map(ingredientCard).concat(skillPool.filter(s=>!skills.includes(s)));
-    for(const c of rest){ if(cards.length>=4) break; cards.push(c); } }
-  return _shuf(cards).slice(0,4);
+  // ※ 진화(슈퍼 칵테일)는 레벨업에 안 뜸 → 보스 팁에서만.
+  const weaponFull = ownedCount(COCKTAIL_KEYS) >= WEAPON_MAX;
+  const passiveFull= ownedCount(PASSIVE_KEYS)  >= PASSIVE_MAX;
+  const weaponCards=[];   // 새 칵테일 + 보유 칵테일 강화
+  (weaponFull?[]:_shuf(COCKTAIL_KEYS.filter(k=>!player.weapons[k]))).forEach(k=>weaponCards.push(weaponCard(k)));
+  _shuf(COCKTAIL_KEYS.filter(k=>player.weapons[k] && player.weapons[k]<8)).forEach(k=>weaponCards.push(weaponCard(k)));
+  const passiveCards=[];  // 새 재료 + 보유 재료 강화
+  (passiveFull?[]:_shuf(PASSIVE_KEYS.filter(k=>!player.weapons[k]))).forEach(k=>passiveCards.push(passiveCard(k)));
+  _shuf(PASSIVE_KEYS.filter(k=>player.weapons[k] && player.weapons[k]<8)).forEach(k=>passiveCards.push(passiveCard(k)));
+  // 칵테일(무기)은 최대 2개까지만, 나머지는 패시브/기본·필살기로 채워 4개
+  const out=[];
+  weaponCards.slice(0,2).forEach(c=>out.push(c));
+  _shuf(passiveCards.concat(baseUltPool())).forEach(c=>{ if(out.length<4) out.push(c); });
+  if(!out.length) out.push({type:'gold', ic:'💰', n:'CASH', d:'+2000', isNew:false});
+  return _shuf(out).slice(0,4);
 }
 function levelUp(){
   player.xp-=player.xpNeed; player.level++; player.xpNeed=xpForLevel(player.level);
@@ -2612,11 +2626,11 @@ function levelUp(){
   state='levelup';
   const pick = buildLevelChoices();   // 재료 1~2 + 스킬업 2~3
   document.getElementById('upRow').innerHTML = pick.map((u,i)=>`
-    <div class="up-card ${u.type==='spirit'?'new':''}" onclick="pickUpgrade(${i})">
+    <div class="up-card ${u.evo?'evo':(u.isNew?'new':'')}" onclick="pickUpgrade(${i})">
       <div class="up-inner">
         <div class="ic">${u.img?`<img class="up-ic" src="assets/${u.img}.png" alt="">`:`<span>${u.ic}</span>`}</div>
         <h4>${u.n}</h4>
-        ${u.lv!==undefined?`<div class="lv">Lv ${u.lv}→${u.lv+1}/${u.maxlv}</div>`:''}
+        ${(u.lv!==undefined && !u.evo)?`<div class="lv">${u.isNew?'NEW · Lv 1':'Lv '+u.lv+'→'+(u.lv+1)+'/'+u.maxlv}</div>`:(u.evo?'<div class="lv" style="color:#ffd24a">★ EVOLVE ★</div>':'')}
         <p>${u.d}</p>
       </div>
       <img class="upframe-img" src="assets/levelup_frame.png" alt="">
@@ -2624,44 +2638,26 @@ function levelUp(){
   window._pool=pick; show('levelScreen'); lvSel=0; updateCardHighlight();
 }
 const GENERIC=[
-  { ic:'👟', img:'icon_sneaker', n:'MOVE SPEED UP',   d:'Move faster (+14%)', fn:p=>{ p.speed*=1.14; p.upSpeed=(p.upSpeed||0)+1; } },
-  { ic:'❤️', img:'icon_heart',   n:'MAX HP UP',       d:'+25 max HP (cap 350) & heal',  fn:p=>{ p.maxHp=Math.min(350, p.maxHp+25); p.hp=Math.min(p.maxHp,p.hp+50); p.upHealth=(p.upHealth||0)+1; } },
-  { ic:'➕', n:'REGEN UP',        d:'Regen HP faster · max 3', fn:p=>{ p.regenBonus=(p.regenBonus||0)+0.25; p.upRegen=(p.upRegen||0)+1; } },
-  { ic:'🛡️', n:'DEFENSE UP',     d:'+3 armor, less contact dmg · max 5', fn:p=>{ p.defense=Math.min(15,(p.defense||0)+3); p.upDefense=(p.upDefense||0)+1; } },   // 최대 5번(3→15)
-  { ic:'🧲', img:'icon_magnet',  n:'PICKUP RANGE UP', d:'Wider pickup range',        fn:p=>{ p.pickupR+=45; } },
-  { ic:'💪', img:'icon_bicep',   n:'POWER UP',        d:'+14% damage',          fn:p=>{ p.dmgMul*=1.14; p.upPower=(p.upPower||0)+1; } },
-  { ic:'⚡', n:'ATTACK SPEED UP', d:'Base attack fires faster', fn:p=>{ p.cdMul=Math.max(0.35, p.cdMul*0.86); p.upRapid=(p.upRapid||0)+1; } },
-  { ic:'📈', n:'FAST LEARNER',    d:'+15% XP gain (no cap)', fn:p=>{ p.xpMul=(p.xpMul||1)*1.15; p.upXp=(p.upXp||0)+1; } },
-  { ic:'🎯', n:'CRIT CHANCE',     d:'+1% crit, x2 dmg (max 8%)', fn:p=>{ p.crit=Math.min(0.08,(p.crit||0)+0.01); } },
-  { ic:'🍺', n:'BIGGER DRINKS',   d:'Bigger base-attack shots',  fn:p=>{ p.sizeMul=Math.min(2.4, p.sizeMul*1.2); } },
-  { ic:'✚', n:'EXTRA SHOT',      d:'+1 shot to every weapon · max 2', fn:p=>{ p.extraProj=(p.extraProj||0)+1; } },
+  { ic:'👟', img:'icon_sneaker', n:'MOVE SPEED UP',   d:'Move faster (+14%)', fn:p=>{ p.upSpeed=(p.upSpeed||0)+1; } },
+  { ic:'❤️', img:'icon_heart',   n:'MAX HP UP',       d:'+25 max HP (cap 350) & heal',  fn:p=>{ p.upHealth=(p.upHealth||0)+1; recalcStats(); p.hp=Math.min(p.maxHp,p.hp+50); } },
+  { ic:'➕', n:'REGEN UP',        d:'Regen HP faster · max 3', fn:p=>{ p.upRegen=(p.upRegen||0)+1; } },
+  { ic:'🛡️', n:'DEFENSE UP',     d:'+3 armor, less contact dmg · max 5', fn:p=>{ p.upDefense=(p.upDefense||0)+1; } },
+  { ic:'🧲', img:'icon_magnet',  n:'PICKUP RANGE UP', d:'Wider pickup range',        fn:p=>{ p.upPickup=(p.upPickup||0)+1; } },
+  { ic:'💪', img:'icon_bicep',   n:'POWER UP',        d:'+14% damage',          fn:p=>{ p.upPower=(p.upPower||0)+1; } },
+  { ic:'⚡', n:'ATTACK SPEED UP', d:'Attacks fire faster', fn:p=>{ p.upRapid=(p.upRapid||0)+1; } },
+  { ic:'📈', n:'FAST LEARNER',    d:'+15% XP gain (max 3)', fn:p=>{ p.upXp=(p.upXp||0)+1; } },
+  { ic:'🎯', n:'CRIT CHANCE',     d:'+1% crit, x2 dmg (max 8%)', fn:p=>{ p.upCrit=(p.upCrit||0)+1; } },
+  { ic:'🍺', n:'BIGGER DRINKS',   d:'Bigger shots (area)',  fn:p=>{ p.upSize=(p.upSize||0)+1; } },
+  { ic:'✚', n:'EXTRA SHOT',      d:'+1 shot to every weapon · max 2', fn:p=>{ p.upExtra=(p.upExtra||0)+1; } },
 ];
-/* 업그레이드 풀 빌드 + 적용 — 레벨업 화면과 팁 보상이 공유 */
+/* 보스 팁(스핀) 보상 풀 = 보유한 무기/패시브 강화 + 기본·필살기 + 진화 */
 function buildUpgradePool(){
   const pool=[];
-  GENERIC.forEach(g=>{ if(g.n==='EXTRA SHOT') return;                                       // EXTRA SHOT은 따로(저빈도)
-    if(g.n==='DEFENSE UP' && (player.upDefense||0)>=5) return;                                // 방어력은 5번(15)까지만
-    if(g.n==='REGEN UP' && (player.upRegen||0)>=3) return;                                    // 회복력은 3번까지만
-    if(g.n==='MAX HP UP' && player.maxHp>=350) return;                                        // 맥스HP는 350까지만
-    pool.push({type:'gen', ...g}); });
-  const es=GENERIC.find(g=>g.n==='EXTRA SHOT');                                            // 최대 2까지 + 40% 확률로만 등장
-  if(es && (player.extraProj||0)<2 && Math.random()<0.04) pool.push({type:'gen', ...es});   // 다른 스킬보다 훨씬 드물게(4%)
-  if(player.baseLv < MAX_BASE_LV){
-    const isShaker = player.base==='shaker';
-    pool.push({ type:'base', ic: isShaker?'🍸':'🥄', img: isShaker?'icon_shaker':'icon_barspoon',
-      n: isShaker?'SHAKING UP':'STIRRING UP', d: isShaker?'Base attack stronger':'Base attack stronger',
-      lv:player.baseLv, maxlv:MAX_BASE_LV });
-  }
-  for(const key in player.weapons){ if(CRAFTED_KEYS.has(key)) continue;   // 조합 무기(시럽/트리오/소다건/검정버무스/칵테일)는 재료 재수집으로만 레벨업
-    const info=weaponInfo(key); if(player.weapons[key]<info.max){
-    pool.push({ type:'spirit', key, ic:info.ic, img:info.img,
-      n:info.name+' UP', d:info.desc, lv:player.weapons[key], maxlv:info.max }); } }
-  // 필살기 강화 — Pat=회오리 갈래↑ / Joe=무적 시간↑
-  if(player.ultLevel < MAX_ULT_LV){
-    pool.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP',
-      d: player.key==='pat'?'Bigger tornado + invincible':'Longer invincibility + spikes',
-      lv:player.ultLevel, maxlv:MAX_ULT_LV });
-  }
+  for(const ck of COCKTAIL_KEYS){ if(canEvolve(ck)) pool.push(evolveCard(ck)); }
+  for(const k of COCKTAIL_KEYS){ if(player.weapons[k] && player.weapons[k]<8) pool.push(weaponCard(k)); }
+  for(const k of PASSIVE_KEYS){ if(player.weapons[k] && player.weapons[k]<8) pool.push(passiveCard(k)); }
+  pool.push(...baseUltPool());
+  if(!pool.length) pool.push({type:'gold', ic:'💰', n:'CASH', d:'+2000', isNew:false});
   return pool;
 }
 const STAT_UP={ 'MOVE SPEED UP':1, 'POWER UP':1, 'MAX HP UP':1, 'REGEN UP':1, 'DEFENSE UP':1, 'ATTACK SPEED UP':1 };  // 스탯패널에 따로 표시 → 아이템칩에선 제외
@@ -2670,8 +2666,11 @@ function applyUpgrade(u){
   if(u.type==='gen'){ u.fn(player);
     if(!STAT_UP[u.n]){ player.gen=player.gen||{}; player.gen[u.n]=player.gen[u.n]||{n:0,img:u.img,ic:u.ic}; player.gen[u.n].n++; } }
   else if(u.type==='base'){ player.baseLv++; applyBaseLevel(); }
-  else if(u.type==='spirit'){ player.weapons[u.key]=(player.weapons[u.key]||0)+1; if(player.wt[u.key]==null) player.wt[u.key]=0; }
+  else if(u.type==='weapon' || u.type==='passive' || u.type==='spirit'){ player.weapons[u.key]=(player.weapons[u.key]||0)+1; if(player.wt[u.key]==null) player.wt[u.key]=0; }
+  else if(u.type==='evolve'){ player.evolved.add(u.key); burst(player.x,player.y,'#ffd24a',34); banner('★ SUPER '+COCKTAILS[u.key].name+'!', true); }
+  else if(u.type==='gold'){ money += 2000; }
   else if(u.type==='ult') player.ultLevel++;
+  recalcStats();   // 스킬/재료패시브 변화 반영
 }
 function pickUpgrade(i){
   playSelect();
@@ -2763,28 +2762,22 @@ const TOP_ING = ['lemon','lime','orange','sugar','water','mint','cranberry','coi
 function updateWeaponChips(){
   const ingRow=document.getElementById('ingRow'), skillRow=document.getElementById('skillRow');
   if(!ingRow||!player) return;
-  // ── 6칸 슬롯(칵테일+히든조합). 레인보우면 슬롯 대신 레인보우건 1칸 ──
+  // ── 무기 6칸 = 칵테일 (진화하면 금색 ★) ──
   let slotH='<div class="slotbar">';
-  if(player.rainbow){
-    slotH+=`<div class="wslot max filled" style="border-color:#ff66cc">${wicImg('rainbow_icon','🌈')}<div class="wlv">∞</div></div>`;
-  } else {
-    const slots = SLOT_KEYS.filter(k=>player.weapons[k]);
-    for(let i=0;i<CRAFT_SLOTS;i++){
-      if(i<slots.length){ const k=slots[i], info=weaponInfo(k), lv=player.weapons[k], mx=lv>=info.max?'max':'';
-        slotH+=`<div class="wslot filled ${mx}" style="border-color:${COCKTAILS[k]?'#e8487e':'#c89a3c'}">${wicImg(info.img||'_nope', info.ic)}<div class="wlv">Lv${lv}</div></div>`; }
-      else slotH+=`<div class="wslot empty"></div>`;
-    }
+  const weapons = COCKTAIL_KEYS.filter(k=>player.weapons[k]);
+  for(let i=0;i<WEAPON_MAX;i++){
+    if(i<weapons.length){ const k=weapons[i], c=COCKTAILS[k], lv=player.weapons[k], evo=player.evolved&&player.evolved.has(k);
+      slotH+=`<div class="wslot filled ${lv>=8?'max':''}" style="border-color:${evo?'#ffd24a':'#e8487e'}">${wicImg(c.img,'🍸')}<div class="wlv">${evo?'★8':'Lv'+lv}</div></div>`; }
+    else slotH+=`<div class="wslot empty"></div>`;
   }
   slotH+='</div>';
-  // ── 재료(6칸 옆/아래): 재료 개수 + 심플시럽 + 기본공격 + 스피릿 ──
+  // ── 패시브(재료) + 촉매(스피릿) + 기본공격 ──
   let resH='<div class="resbar">';
-  for(const k of TOP_ING.concat(['syrup'])){ const lv=player.weapons[k]; if(!lv) continue; const info=weaponInfo(k);
+  for(const k of PASSIVE_KEYS){ const lv=player.weapons[k]; if(!lv) continue; const info=weaponInfo(k);
     resH+=`<div class="res-c">${wicImg(info.img||'_nope', info.ic)}<b>${lv}</b></div>`; }
-  if(!player.rainbow){
-    resH+=`<div class="res-c">${wicImg(player.base==='shaker'?'icon_shaker':'icon_barspoon', player.base==='shaker'?'🍸':'🥄')}<b>${player.baseLv}</b></div>`;
-    for(const k of SPIRIT_KEYS){ const lv=player.weapons[k]; if(!lv) continue;
-      resH+=`<div class="res-c">${wicImg('bottle_'+k, SPIRITS[k].ic)}<b>${lv}</b></div>`; }
-  }
+  resH+=`<div class="res-c">${wicImg(player.base==='shaker'?'icon_shaker':'icon_barspoon', player.base==='shaker'?'🍸':'🥄')}<b>${player.baseLv}</b></div>`;
+  for(const k of SPIRIT_KEYS){ if(!player.weapons[k]) continue;   // 촉매(스피릿): 보유 표시
+    resH+=`<div class="res-c" style="opacity:.85">${wicImg('bottle_'+k, SPIRITS[k].ic)}<b>✓</b></div>`; }
   resH+='</div>';
   ingRow.innerHTML = slotH + resH;
   // ── 필살기 옆(우측 하단): 일반강화(레벨업) + 필살기 레벨 ──
@@ -3120,7 +3113,10 @@ function drawProj(p){
   if(p.kind==='barspoon' && spr('proj_barspoon')){ const im=spr('proj_barspoon'), H=p.r*5.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 바스푼(올린 이미지)
   if(p.kind==='mixglass' && spr('proj_mixglass')){ const im=spr('proj_mixglass'), H=p.r*5.0, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.16); return; }   // 믹싱글라스(올린 이미지)
   if(p.kind && p.kind.indexOf('ing_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 재료 피사체(올린 이미지)
-  if(p.kind && p.kind.indexOf('cocktail_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*2.6, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.12); return; }   // 칵테일 궁극기 피사체
+  if(p.kind && p.kind.indexOf('cocktail_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*2.6, W=H*im.width/im.height;
+    if(p.evo){ ctx.save(); ctx.globalAlpha=0.5+0.3*Math.sin(frame*0.3); const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,H*0.9);
+      g.addColorStop(0,'rgba(255,215,90,0.9)'); g.addColorStop(1,'rgba(255,215,90,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,H*0.9,0,6.28); ctx.fill(); ctx.restore(); }   // 슈퍼 = 금빛 글로우
+    drawImgC(im, p.x, p.y, W, H, frame*0.12); return; }   // 칵테일 궁극기 피사체
   if(p.kind==='rainbow' && spr('rainbow_proj')){ const im=spr('rainbow_proj'), H=p.r*1.7, W=H*im.width/im.height, ang=Math.atan2(p.vy,p.vx); drawImgC(im, p.x, p.y, W, H, ang); return; }   // 레인보우 탄(진행방향으로 회전)
   // 스피릿 = 각자 전용 샷잔 이미지 (gin=허브/vodka=얼음/tequila=라임/whiskey=노징/brandy=스니프터, rum=브라운).
   if(SPIRITS[p.kind]){
@@ -3324,8 +3320,20 @@ function drawPickup(g){
 }
 
 /* ===== 루프 ===== */
-function loop(){ pollGamepad(); update(); draw(); requestAnimationFrame(loop); }
-loop();
+// 고정 타임스텝(60fps). 기기 주사율(60/90/120/144Hz)에 상관없이 실시간 기준으로 항상 같은 속도.
+let _lastTs=0, _acc=0; const _STEP=1000/60;
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!_lastTs){ _lastTs=ts; }
+  let dt=ts-_lastTs; _lastTs=ts;
+  if(dt>250) dt=250;                 // 백그라운드 복귀 등 큰 점프 방지
+  _acc+=dt;
+  pollGamepad();
+  let steps=0;
+  while(_acc>=_STEP && steps<5){ update(); _acc-=_STEP; steps++; }   // 실시간 기준 초당 60번만 업데이트
+  draw();                            // 그리기는 매 프레임(부드럽게)
+}
+requestAnimationFrame(loop);
 
 /* ===== 오디오/음악 초기화 ===== */
 loadMusic();
@@ -3349,11 +3357,10 @@ function sbGrant(k){ if(!player) return;
   const info=weaponInfo(k);
   if(!player.weapons[k]){ player.weapons[k]=1; player.wt[k]=0; }
   else if(player.weapons[k]<info.max) player.weapons[k]++;
-  updateWeaponChips(); sbRefresh();
-  try{ tryCrafts(); }catch(e){} }   // 샌드박스에서도 조합(트리오/시럽 등) 트리거
+  recalcStats(); updateWeaponChips(); sbRefresh(); }   // 재료=패시브 즉시 반영
 function sbBaseUp(){ if(player&&player.baseLv<MAX_BASE_LV){ player.baseLv++; applyBaseLevel(); } sbRefresh(); }
 function sbClear(){ if(!player) return; player.weapons={}; player.wt={}; updateWeaponChips(); sbRefresh(); }
-function sbMaxAll(){ if(!player) return; for(const w of sbWeaponList()){ player.weapons[w.k]=w.max; if(player.wt[w.k]==null) player.wt[w.k]=0; } player.baseLv=MAX_BASE_LV; applyBaseLevel(); updateWeaponChips(); sbRefresh(); }
+function sbMaxAll(){ if(!player) return; for(const w of sbWeaponList()){ player.weapons[w.k]=w.max; if(player.wt[w.k]==null) player.wt[w.k]=0; } player.baseLv=MAX_BASE_LV; applyBaseLevel(); recalcStats(); updateWeaponChips(); sbRefresh(); }
 function sbSpawn(n){ for(let i=0;i<n;i++) try{ spawnEnemy(); }catch(e){} }
 function sbBoss(){ try{ spawnBoss(); }catch(e){} }
 function sbWall(){ try{ spawnWall(); }catch(e){} }   // 노부킹 무리(가로 벽) 즉시 소환
