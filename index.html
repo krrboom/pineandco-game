@@ -998,7 +998,7 @@ const CRAFT_FX = {
   highball:'A rapid highball volley, each a small blast.',
   vodkatonic:'A wide spread of freezing darts.',
   vodkacranberry:'A crimson comet that pierces a whole line and freezes it.',
-  southside:'Mint rain: bombs fall one by one across a wide random area, each bursting with slow + poison. Slower fire rate. Higher level = more bombs, landing tighter around you.',
+  southside:'Mint rain: bombs fall one by one across a wide random area, each bursting with slow + poison. Slower fire rate. Even levels add a bomb, odd levels widen each blast; lands tighter around you as you level.',
   margarita:'Giant salt boomerangs that fly out and back.',
   drymartini:'A powerful olive-tipped spear that pierces all.',
   vodkamartini:'A freezing shockwave plus a piercing shot.',
@@ -1968,10 +1968,11 @@ function fireCocktail(key, lv){
     case 'vodkacranberry': { const n=1+(lv>=5?1:0);
       fanAt(a, n, 11, 0.14, { dmg:60*P, r:13, pierce:99, life:100, cFreeze:55 }); break; }
     // ── 성수(재해석): 무공격 병이 포물선으로 날아가 랜덤 착지 → 그 자리에 민트 장판. Lv1=1개 → 2레벨마다 +1 ──
-    case 'southside': {   // ★민트 레인(다른 컴퓨터 버전): 하늘에서 한 발씩 시간차로 떨어져 랜덤 착지(레벨↑ 플레이어 주위로 좁게)
-      const count = 3 + lv;                                     // 레벨업마다 +1발 (동시 X, 한발씩)
-      const R = Math.max(80, 240 - (lv-1)*22);                  // Lv1 넓게 흩뿌림 → 레벨 오를수록 좁게
-      for(let i=0;i<count;i++) mintRain.push({ at: frame + i*7, R, dmg:30*P, landR:40+lv*3, cSlow:80, cPoison:90 });
+    case 'southside': {   // ★민트 레인: 하늘에서 한 발씩 시간차로 떨어져 랜덤 착지. 업글 교대 → 짝수레벨=피사체+1 / 홀수레벨(3,5,7)=공격범위+
+      const count = 3 + Math.floor(lv/2);                       // Lv1=3발, 짝수레벨마다 +1 (Lv2 4·Lv4 5·Lv6 6·Lv8 7)
+      const landR = 40 + Math.floor((lv-1)/2)*7;                // 홀수레벨(3,5,7)마다 폭발 공격범위↑ (Lv1 40 → Lv8 61)
+      const R = Math.max(80, 240 - (lv-1)*22);                  // 착지 흩뿌림: 레벨 오를수록 플레이어 주위로 좁게(기존 유지)
+      for(let i=0;i<count;i++) mintRain.push({ at: frame + i*7, R, dmg:30*P, landR, cSlow:80, cPoison:90 });
       break; }
     // ── 비둘기→소다건식: 코스모 = 크랜베리 연사(빙결). Lv1=1발 → Lv8=5발 ──
     case 'cosmopolitan':
