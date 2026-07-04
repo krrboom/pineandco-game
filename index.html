@@ -1252,6 +1252,7 @@ const SEC_PACO = { cat:'PACO SHOP', items:[
   { n:'🎰 Gacha Cocktail', p:'₩23,000', d:'Can’t decide? Spin the gacha for a surprise cocktail.' },
 ]};
 const SEC_FOOD = { cat:'FOOD', items:[
+  { n:'Bloody Mary Chips', p:'₩15,000', d:'french fries · Bloody Mary seasoning · celery mayo' },
   { n:'Charcuterie & Bruschetta', p:'₩25,000', d:'mortadella · tuna pâté · herbs · olive tapenade · carrot rape · rye cracker' },
   { n:'Samgyupsal', p:'₩30,000', d:'caramelized pork belly · namul chimichurri · basil yuzu olive oil · red pepper oil' },
   { n:'Ddeok-Galbi', p:'₩25,000', d:'minced pork & beef · homemade galbi sauce · cinnamon · mayo · shichimi' },
@@ -1275,7 +1276,7 @@ const SEC_WINE = { cat:'WINE  (bottle / glass)', items:[
 ]};
 const SEC_BEER = { cat:'BEER & SOFT', items:[
   { n:'Guinness', p:'₩15,000', d:'' },
-  { n:'Smithwick’s Pale Ale', p:'₩15,000', d:'' },
+  { n:'Smimm Pale Ale', p:'₩15,000', d:'' },
   { n:'Perrier', p:'₩5,000', d:'' },
   { n:'Fever-Tree Ginger / Tonic', p:'₩5,000', d:'' },
   { n:'Sprite · Coke · Zero Coke · Red Bull', p:'₩5,000', d:'' },
@@ -1568,7 +1569,7 @@ function showMenuTab(t){ curMenuTab=t; try{ playSelect(); }catch(e){} renderMenu
 function menuSection(sec){ return `<div class="menu-cat">${sec.cat}</div>`+
   sec.items.map(it=>`<div class="menu-item"><span>${it.n}${it.d?`<small>${it.d}</small>`:''}</span><span>${it.p}</span></div>`).join(''); }
 function renderMenu(){
-  const tabs=[['cocktails','🍸 COCKTAILS'],['food','🍽 FOOD'],['bottles','🍾 BOTTLES'],['whisky','🥃 WHISKY']];
+  const tabs=[['cocktails','🍸 COCKTAILS'],['food','🍽 FOOD'],['whisky','🥃 WHISKY'],['bottles','🍾 BUBBLES & WINE']];
   document.getElementById('menuNav').innerHTML = tabs.map(([k,l])=>
     `<button class="${curMenuTab===k?'active':''}" onclick="showMenuTab('${k}')">${l}</button>`).join('');
   let html='';
