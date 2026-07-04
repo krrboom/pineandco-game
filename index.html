@@ -1110,14 +1110,14 @@ function recRow(outImg, name, parts, desc){
 }
 function openRecipe(){ try{ initAudio(); }catch(e){} paused=true; playSelect&&playSelect();
   // WEAPONS(칵테일) — 레벨업에서 직접 선택, Lv8까지
-  let html='<div class="rec-cat">WEAPONS · COCKTAILS (pick at level-up · weak at first, full power at Lv8)</div>';
+  let html='<div class="rec-cat">WEAPONS · COCKTAILS (pick at level-up · weak at first, full power at Lv6)</div>';
   for(const ck of COCKTAIL_KEYS){ const c=COCKTAILS[ck];
     html += recRow(c.img, c.name, [], CRAFT_FX[ck]); }
   // EVOLUTIONS — 칵테일 Lv8 + 기주 스피릿 + 대표 재료 Lv8 → 슈퍼
-  html += '<div class="rec-cat">EVOLUTIONS · SUPER COCKTAILS (base attack MAX + cocktail Lv8 + key ingredient MAX → evolve at a BOSS TIP)</div>';
+  html += '<div class="rec-cat">EVOLUTIONS · SUPER COCKTAILS (base attack MAX + cocktail Lv6 + key ingredient MAX → evolve at a BOSS TIP)</div>';
   const baseIcon = (typeof player!=='undefined' && player && player.base==='barspoon') ? 'icon_barspoon' : 'icon_shaker';
   for(const ck of COCKTAIL_KEYS){ const c=COCKTAILS[ck], ei=EVO_ING[ck];
-    const parts=[{img:baseIcon, lv:'MAX'},{img:c.img, lv:'Lv8'},{img:weaponInfo(ei).img, lv:'MAX'}];   // 기주 제거: 기본공격 풀업 + 칵테일 Lv8 + 대표 재료 만렙
+    const parts=[{img:baseIcon, lv:'MAX'},{img:c.img, lv:'Lv6'},{img:weaponInfo(ei).img, lv:'MAX'}];   // 기주 제거: 기본공격 풀업 + 칵테일 Lv8 + 대표 재료 만렙
     html += recRow(c.img, '★ SUPER '+c.name, parts, 'Far stronger version of '+c.name+'. No spirit needed.'); }
   // PASSIVES(재료) — 발사 안 함, 능력만
   html += '<div class="rec-cat">PASSIVES · INGREDIENTS (level-up, boost all weapons)</div>';
@@ -1163,18 +1163,18 @@ const SPIRITS = {
 const SPIRIT_KEYS = Object.keys(SPIRITS);
 /* 궤도 무기(재료/칵테일): 플레이어 주위를 도는 피사체. cranberry=재료, cosmo=칵테일(나중) */
 const ORBIT = {
-  cranberry:{ name:'CRANBERRY', color:'#c0392b', ic:'🔴', img:'cranberry', max:8, dmg:6,  R:52, rotV:0.07, pas:{stat:'magnet',per:18} },   // 이제 패시브(자석). 발사 대신 획득범위↑
+  cranberry:{ name:'CRANBERRY', color:'#c0392b', ic:'🔴', img:'cranberry', max:6, dmg:6,  R:52, rotV:0.07, pas:{stat:'magnet',per:18} },   // 이제 패시브(자석). 발사 대신 획득범위↑
   cosmo:    { name:'COSMOPOLITAN', color:'#e8487e', ic:'🍸', img:null, max:4, dmg:16, R:60, rotV:0.085 },
 };
 /* 발사형 재료(루프 재료): 각자 공격 패턴 + 올린 이미지. cranberry는 ORBIT(궤도). */
 /* 재료 = 패시브(VS 스탯). pas가 있으면 발사 안 하고 능력만 부여. Lv1~8. */
 const INGREDIENTS = {
-  lemon: { name:'LEMON', ic:'🍋', img:'ing_lemon', color:'#f4d03f', max:8, pas:{stat:'dmg',per:0.08},   desc:'+8% damage / Lv (all weapons)' },
-  lime:  { name:'LIME',  ic:'🟢', img:'ing_lime',  color:'#7ac74f', max:8, pas:{stat:'cd',per:0.03},    desc:'Attacks fire faster' },
-  orange:{ name:'ORANGE',ic:'🍊', img:'ing_orange',color:'#f29f3d', max:8, pas:{stat:'area',per:0.06},  desc:'Bigger attacks (area)' },
-  sugar: { name:'SUGAR', ic:'🧊', img:'ing_sugar', color:'#eef2f5', max:8, pas:{stat:'luck',per:0.002}, desc:'+0.2% item drop rate per level (LUCK)' },
-  mint:  { name:'MINT',  ic:'🌿', img:'ing_mint',  color:'#3f9a45', max:8, pas:{stat:'speed',per:0.05}, desc:'Move faster' },
-  water: { name:'WATER', ic:'💧', img:'ing_water', color:'#aee6f5', max:8, pas:{stat:'regen',per:0.15}, desc:'Regenerate HP' },
+  lemon: { name:'LEMON', ic:'🍋', img:'ing_lemon', color:'#f4d03f', max:6, pas:{stat:'dmg',per:0.08},   desc:'+8% damage / Lv (all weapons)' },
+  lime:  { name:'LIME',  ic:'🟢', img:'ing_lime',  color:'#7ac74f', max:6, pas:{stat:'cd',per:0.03},    desc:'Attacks fire faster' },
+  orange:{ name:'ORANGE',ic:'🍊', img:'ing_orange',color:'#f29f3d', max:6, pas:{stat:'area',per:0.06},  desc:'Bigger attacks (area)' },
+  sugar: { name:'SUGAR', ic:'🧊', img:'ing_sugar', color:'#eef2f5', max:6, pas:{stat:'luck',per:0.002}, desc:'+0.2% item drop rate per level (LUCK)' },
+  mint:  { name:'MINT',  ic:'🌿', img:'ing_mint',  color:'#3f9a45', max:6, pas:{stat:'speed',per:0.05}, desc:'Move faster' },
+  water: { name:'WATER', ic:'💧', img:'ing_water', color:'#aee6f5', max:6, pas:{stat:'regen',per:0.15}, desc:'Regenerate HP' },
   // 심플시럽 = 설탕(Lv3)+물(Lv3) 조합 결과물(공격 무기). 아주 느린 병을 던져 맞으면 터지며 광역 슬로우.
   syrup: { name:'SIMPLE SYRUP', ic:'🍯', img:'ing_syrup', color:'#e9c46a', attack:'syrup', cd:150, max:4, desc:'Lobbed bottle, AoE slow' },
   // 시트러스 트리오 = 레몬·라임·오렌지 셋 다 Lv4 만렙일 때 만들어지는 히든 조합 무기.
@@ -1183,12 +1183,12 @@ const INGREDIENTS = {
   sodagun:{ name:'SODA GUN', ic:'🔫', img:'ing_sodagun', color:'#3d7fb0', attack:'sodagun', cd:11, max:4, desc:'Gatling soda, locks a target' },
   // 칵테일 조합 재료들도 시트러스 휠(관통 발사)로 통일. 각자 올린 이미지로 날아감. (조합 시스템 추가 시 재료로도 사용)
   cointreau:{ name:'COINTREAU', ic:'🍊', img:'ing_cointreau', color:'#c8731f', max:3, pas:{stat:'amount',per:1}, desc:'+1 projectile per level, added one at a time (max 3, every weapon)' },
-  soda:     { name:'SODA WATER',ic:'🫧', img:'ing_soda',      color:'#7fb5d6', max:8, pas:{stat:'cd',per:0.025},   desc:'Attacks fire faster' },
-  tonic:    { name:'TONIC',     ic:'🟩', img:'ing_tonic',     color:'#4f9a4f', max:8, pas:{stat:'pierce',per:0.25},desc:'+1 pierce per 4 Lv' },
-  olive:    { name:'OLIVE',     ic:'🫒', img:'ing_olive',     color:'#7a8c3a', max:8, pas:{stat:'armor',per:2},    desc:'Armor: take less contact dmg' },
-  sweetver: { name:'SWEET VERMOUTH', ic:'🍷', img:'ing_sweetver', color:'#a83b3b', max:8, pas:{stat:'hp',per:12},  desc:'+max HP' },
-  dryver:   { name:'DRY VERMOUTH',   ic:'🍸', img:'ing_dryver',   color:'#cfd6e0', max:8, pas:{stat:'crit',per:0.006}, desc:'+crit chance · crit = ×2 damage' },
-  angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', max:8, pas:{stat:'xp',per:0.06},   desc:'+XP gain · unlocks DASH' },
+  soda:     { name:'SODA WATER',ic:'🫧', img:'ing_soda',      color:'#7fb5d6', max:6, pas:{stat:'cd',per:0.025},   desc:'Attacks fire faster' },
+  tonic:    { name:'TONIC',     ic:'🟩', img:'ing_tonic',     color:'#4f9a4f', max:6, pas:{stat:'pierce',per:0.25},desc:'+1 pierce per 4 Lv' },
+  olive:    { name:'OLIVE',     ic:'🫒', img:'ing_olive',     color:'#7a8c3a', max:6, pas:{stat:'armor',per:2},    desc:'Armor: take less contact dmg' },
+  sweetver: { name:'SWEET VERMOUTH', ic:'🍷', img:'ing_sweetver', color:'#a83b3b', max:6, pas:{stat:'hp',per:12},  desc:'+max HP' },
+  dryver:   { name:'DRY VERMOUTH',   ic:'🍸', img:'ing_dryver',   color:'#cfd6e0', max:6, pas:{stat:'crit',per:0.01}, desc:'+crit chance & crit dmg (×2 base, +50%/lv → Lv6 ×4.5)' },
+  angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', max:6, pas:{stat:'xp',per:0.06},   desc:'+XP gain · unlocks DASH' },
   // 검정 버무스 = 드라이+스윗 버무스 둘 다 Lv4일 때 만들어지는 히든 조합. 훨씬 강한 검정 오라.
   blackver: { name:'BLACK VERMOUTH', ic:'🖤', img:'ing_wormwood', color:'#1f1830', attack:'aura', cd:60, max:4, desc:'Huge black damage aura' },
 };
@@ -1222,7 +1222,7 @@ const WEAPON_MAX = 6, PASSIVE_MAX = 6;   // 무기(칵테일) 6칸 + 패시브(�
 const COCKTAIL_CD = { gimlet:37, highball:39, mojito:55, vodkatonic:51, sidecar:90, margarita:67,   // ★공격속도 ~15%↓(쿨다운 ×1.15). sidecar 공속 너프 64→90
   manhattan:76, vodkacranberry:83, southside:130, oldfashioned:120, drymartini:115, gintonic:46 };   // southside=민트레인(느린 공속 130) · oldfashioned 공속 너프 92→120
 function weaponInfo(key){
-  if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail weapon — unique attack, levels to 8', max:8}; }   // 칵테일=무기, Lv8까지
+  if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail weapon — unique attack, levels to 6', max:6}; }   // 칵테일=무기, Lv6까지
   if(SPIRITS[key]) return {name:SPIRITS[key].name, ic:SPIRITS[key].ic, img:'bottle_'+key, desc:SPIRITS[key].desc, max:MAX_WLV};  // 칩/카드 = 스피릿 바틀 이미지
   if(ORBIT[key])   return {name:ORBIT[key].name, ic:ORBIT[key].ic, img:ORBIT[key].img||null, desc:'Orbits you, hits all around', max:ORBIT[key].max};
   if(INGREDIENTS[key]){ const g=INGREDIENTS[key]; return {name:g.name, ic:g.ic, img:g.img, desc:g.desc, max:g.max}; }
@@ -1274,6 +1274,7 @@ function recalcStats(){
   player.pickupR   = 72 + 45*(player.upPickup||0) + pas.magnet;
   player.defense   = Math.min(25, 3*(player.upDefense||0) + pas.armor);
   player.crit      = Math.min(0.5, Math.min(0.08, 0.01*(player.upCrit||0)) + pas.crit);
+  player.critMul   = 2 + 0.5*Math.max(0,(player.weapons.dryver||0)-1);   // 크리 데미지: 드라이버무스 레벨당 +50%(0.5배) → Lv1 ×2, Lv6 ×4.5
   player.regenBonus= 0.25*(player.upRegen||0) + pas.regen;
   player.xpMul     = Math.pow(1.15, player.upXp||0) * (1+pas.xp);
   player.basePierce= (c.pierce||0) + Math.floor(pas.pierce);
@@ -1579,7 +1580,7 @@ const SKILL_INDEX=[
   { img:'icon_shaker',   name:'SHAKING · Pat base · max Lv6',  t:'Cobbler-shaker throw with splash AoE. Each level adds damage, fires faster, widens splash. Always available; boosted by every passive you own.' },
   { img:'icon_barspoon', name:'STIRRING · Joe base · max Lv6', t:'Bar-spoon / mixing-glass throw that pierces a line. Each level adds damage and fires faster. Boosted by every passive you own.' },
   // ── 패시브 (재료) — 발사 안 하고 모든 무기를 강화 ──
-  { ic:'🧪', name:'— PASSIVES · INGREDIENTS —', t:'Ingredients no longer fire. They boost ALL your weapons. Pick at level-up (6 passive slots), max Lv8.' },
+  { ic:'🧪', name:'— PASSIVES · INGREDIENTS —', t:'Ingredients no longer fire. They boost ALL your weapons. Pick at level-up (6 passive slots), max Lv6.' },
   { img:'ing_lemon',     name:'LEMON · +DAMAGE',        t:'+8% damage per level to every weapon.' },
   { img:'ing_lime',      name:'LIME · ATTACK SPEED',    t:'All attacks fire faster each level.' },
   { img:'ing_soda',      name:'SODA WATER · ATTACK SPEED', t:'All attacks fire faster each level.' },
@@ -1591,12 +1592,12 @@ const SKILL_INDEX=[
   { img:'ing_water',     name:'WATER · REGEN',          t:'Regenerate HP each level.' },
   { img:'ing_olive',     name:'OLIVE · ARMOR',          t:'Take less contact damage each level.' },
   { img:'ing_sweetver',  name:'SWEET VERMOUTH · +MAX HP', t:'+max HP each level.' },
-  { img:'ing_dryver',    name:'DRY VERMOUTH · +CRIT',   t:'+crit chance each level. A critical hit deals ×2 damage (double).' },
+  { img:'ing_dryver',    name:'DRY VERMOUTH · +CRIT',   t:'Crit chance rises each level, AND crit damage grows +50%/level: ×2 at Lv1 up to ×4.5 at Lv6.' },
   { img:'cranberry',     name:'CRANBERRY · MAGNET',     t:'Wider cash & item pickup range each level.' },
   { img:'ing_angostura', name:'ANGOSTURA · +XP · DASH', t:'+XP gain each level, and unlocks DASH — double-tap a direction to blink forward.' },
   // ── 촉매 & 진화 & 필살기 ──
   { ic:'🥃', name:'SPIRITS · field drops', t:'The 6 spirits still drop on the field but they are NOT needed to evolve cocktails anymore. They only feed the secret endgame RAINBOW GUN.' },
-  { ic:'✨', name:'EVOLUTION · Super cocktails', t:'Fully upgrade your BASE ATTACK (max level) + get the cocktail to Lv8 + max its ONE key ingredient. No spirits needed. Then take a BOSS TIP to evolve it into a far stronger SUPER version (gold glow) that levels 1→8 far beyond the base. Only boss tips offer evolution.' },
+  { ic:'✨', name:'EVOLUTION · Super cocktails', t:'Fully upgrade your BASE ATTACK (max level) + get the cocktail to Lv6 + max its ONE key ingredient. No spirits needed. Then take a BOSS TIP to evolve it into a far stronger SUPER version (gold glow) that levels 1→8 far beyond the base. Only boss tips offer evolution.' },
   { ic:'🌀', name:'ULTIMATE UP · max Lv6', t:'Strengthens your ultimate. Ready once every 105s — tap the ⚡ button when it lights up.' },
 ];
 /* 칵테일 도감 — 새 시트(칵테일 new.png)에서 잘라낸 14종. 기주별 / 재료 표기. */
@@ -3268,12 +3269,12 @@ function xpForLevel(L){ return Math.round((4 + (L-1)*2.4 + (L-1)*(L-1)*0.16) * 5
 const _shuf = a => a.sort(()=>Math.random()-0.5);
 // ===== VS식 레벨업: 무기(칵테일) / 패시브(재료) / 진화 =====
 function weaponCard(key){ const c=COCKTAILS[key], lv=player.weapons[key]||0;
-  return { type:'weapon', key, ic:'🍸', img:c.img, n: lv?c.name+' UP':c.name, d:(CRAFT_FX[key]||'Cocktail weapon'), lv, maxlv:8, isNew:!lv }; }
+  return { type:'weapon', key, ic:'🍸', img:c.img, n: lv?c.name+' UP':c.name, d:(CRAFT_FX[key]||'Cocktail weapon'), lv, maxlv:6, isNew:!lv }; }
 function passiveCard(key){ const info=weaponInfo(key), lv=player.weapons[key]||0;
   return { type:'passive', key, ic:info.ic, img:info.img, n: lv?info.name+' UP':info.name, d:info.desc, lv, maxlv:info.max||8, isNew:!lv }; }
 function canEvolve(ck){ if(player.evolved && player.evolved.has(ck)) return false;
   if(player.baseLv < MAX_BASE_LV) return false;   // ★슈퍼 진화 = 기본공격 풀업(Lv6) 필수
-  if((player.weapons[ck]||0) < 8) return false;
+  if((player.weapons[ck]||0) < 6) return false;
   const ing=EVO_ING[ck], g=INGREDIENTS[ing]||ORBIT[ing], need=(g&&g.max)||8;   // 진화재료를 재료별 max로(코인트로는 Lv3)
   return (player.weapons[ing]||0) >= need; }   // 기본공격 풀업 + 칵테일 Lv8 + 진화재료 만렙이면 팁에서 진화
 function evolveCard(ck){ const c=COCKTAILS[ck];
@@ -3293,11 +3294,11 @@ function buildLevelChoices(){
   const passiveFull= ownedCount(PASSIVE_KEYS)  >= PASSIVE_MAX;
   const weaponCards=[];   // 새 칵테일 + 보유 칵테일 강화 + 슈퍼 레벨업
   (weaponFull?[]:_shuf(COCKTAIL_KEYS.filter(k=>!player.weapons[k]))).forEach(k=>weaponCards.push(weaponCard(k)));
-  _shuf(COCKTAIL_KEYS.filter(k=>player.weapons[k] && !(player.evolved&&player.evolved.has(k)) && player.weapons[k]<8)).forEach(k=>weaponCards.push(weaponCard(k)));
+  _shuf(COCKTAIL_KEYS.filter(k=>player.weapons[k] && !(player.evolved&&player.evolved.has(k)) && player.weapons[k]<6)).forEach(k=>weaponCards.push(weaponCard(k)));
   _shuf(COCKTAIL_KEYS.filter(k=>player.evolved && player.evolved.has(k) && ((player.superLv&&player.superLv[k])||1)<8)).forEach(k=>weaponCards.push(superCard(k)));
   const passiveCards=[];  // 새 재료 + 보유 재료 강화
   (passiveFull?[]:_shuf(PASSIVE_KEYS.filter(k=>!player.weapons[k]))).forEach(k=>passiveCards.push(passiveCard(k)));
-  _shuf(PASSIVE_KEYS.filter(k=>player.weapons[k] && player.weapons[k]<(weaponInfo(k).max||8))).forEach(k=>passiveCards.push(passiveCard(k)));
+  _shuf(PASSIVE_KEYS.filter(k=>player.weapons[k] && player.weapons[k]<(weaponInfo(k).max||6))).forEach(k=>passiveCards.push(passiveCard(k)));
   // 칵테일(무기)은 최대 2개까지만, 나머지는 패시브/기본·필살기로 채워 4개
   const out=[];
   weaponCards.slice(0,2).forEach(c=>out.push(c));
@@ -3336,8 +3337,8 @@ function buildUpgradePool(){
   const pool=[];
   for(const ck of COCKTAIL_KEYS){ if(canEvolve(ck)) pool.push(evolveCard(ck)); }                                                        // 슈퍼 칵테일 진화
   for(const ck of COCKTAIL_KEYS){ if(player.evolved && player.evolved.has(ck) && ((player.superLv&&player.superLv[ck])||1)<8) pool.push(superCard(ck)); }   // 슈퍼 레벨업 1→8
-  for(const k of COCKTAIL_KEYS){ if(player.weapons[k] && !(player.evolved&&player.evolved.has(k)) && player.weapons[k]<8) pool.push(weaponCard(k)); }        // 보유 칵테일 강화
-  for(const k of PASSIVE_KEYS){ if(player.weapons[k] && player.weapons[k]<(weaponInfo(k).max||8)) pool.push(passiveCard(k)); }          // 보유 재료(능력치) 강화(재료별 max까지)
+  for(const k of COCKTAIL_KEYS){ if(player.weapons[k] && !(player.evolved&&player.evolved.has(k)) && player.weapons[k]<6) pool.push(weaponCard(k)); }        // 보유 칵테일 강화
+  for(const k of PASSIVE_KEYS){ if(player.weapons[k] && player.weapons[k]<(weaponInfo(k).max||6)) pool.push(passiveCard(k)); }          // 보유 재료(능력치) 강화(재료별 max까지)
   if(!pool.length) pool.push({type:'gold', ic:'💰', n:'CASH', d:'+2000', isNew:false});
   return pool;
 }
