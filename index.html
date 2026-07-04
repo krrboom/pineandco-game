@@ -991,7 +991,7 @@ const CRAFT_FX = {
   gimlet:'A big lime blade that pierces everything and poisons.',
   manhattan:'A heavy cherry bomb with a huge explosion.',
   oldfashioned:'A giant ice rock: wide blast + freeze.',
-  sidecar:'A homing shot that bursts on impact.',
+  sidecar:'A shot that ricochets off the walls, piercing and bursting on impact. Slower fire rate, fewer bounces.',
   mojito:'A rum fireball that bursts into a slowing mint cloud.',
   cosmopolitan:'A spread of pink darts that freeze.',
   gintonic:'A wide fan of poison fizz.',
@@ -1118,7 +1118,7 @@ const EVO_ING = { gimlet:'lime', margarita:'lime', manhattan:'sweetver', oldfash
 const WEAPON_MAX = 6, PASSIVE_MAX = 6;   // 무기(칵테일) 6칸 + 패시브(재료) 6칸
 // 칵테일별 고유 기본 쿨다운(작을수록 빠름) — VS식으로 무기마다 공속이 다름
 // 뱀서식 개편: 방향형·연사형은 빠르게, 궤도(상시유지)/한방형은 느리게. 코스모·보드카마티니는 소다건식 연사(weaponCd 특수처리)
-const COCKTAIL_CD = { gimlet:37, highball:39, mojito:55, vodkatonic:51, sidecar:64, margarita:67,   // ★공격속도 ~15%↓(쿨다운 ×1.15)
+const COCKTAIL_CD = { gimlet:37, highball:39, mojito:55, vodkatonic:51, sidecar:90, margarita:67,   // ★공격속도 ~15%↓(쿨다운 ×1.15). sidecar 공속 너프 64→90
   manhattan:76, vodkacranberry:83, southside:130, oldfashioned:92, drymartini:115, gintonic:46 };   // southside=민트레인(느린 공속 130)
 function weaponInfo(key){
   if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail weapon — unique attack, levels to 8', max:8}; }   // 칵테일=무기, Lv8까지
@@ -1961,9 +1961,9 @@ function fireCocktail(key, lv){
       for(let i=0;i<n;i++){ const ang=a+(i-(n-1)/2)*0.45;
         add({ vx:Math.cos(ang)*7, vy:Math.sin(ang)*7, dmg:40*P, r:12, pierce:99, life:100, life0:100, boom:true, cSlow:60 }); } break; }
     // ── 룬트레이서: 벽 튕김. Lv1=1발·2튕김 → 레벨업마다 튕김↑, 4레벨마다 +1발 ──
-    case 'sidecar': { const n=1+Math.floor((lv-1)/4);
+    case 'sidecar': { const n=1+Math.floor((lv-1)/5);   // 발수 완화: Lv1~5=1발, Lv6~8=2발
       for(let i=0;i<n;i++){ const ang=a+i*1.1;
-        add({ vx:Math.cos(ang)*8, vy:Math.sin(ang)*8, dmg:38*P, r:11, pierce:99, life:200, bounce:2+Math.floor(lv/2), cExplode:32 }); } break; }
+        add({ vx:Math.cos(ang)*8, vy:Math.sin(ang)*8, dmg:38*P, r:11, pierce:99, life:120, bounce:1+Math.floor(lv/4), cExplode:32 }); } break; }   // 튕김↓(1~3)·수명↓(200→120)로 화면에 덜 쌓이게
     // ── 혜성: 초고속 라인관통+빙결. Lv1=1발 → Lv5부터 2발 ──
     case 'vodkacranberry': { const n=1+(lv>=5?1:0);
       fanAt(a, n, 11, 0.14, { dmg:60*P, r:13, pierce:99, life:100, cFreeze:55 }); break; }
