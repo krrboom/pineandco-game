@@ -1081,7 +1081,7 @@ const INGREDIENTS = {
   // 소다건 = 소다+토닉 둘 다 Lv4일 때 만들어지는 히든 조합. 물방울을 게틀링처럼 한 타겟에 집중사격.
   sodagun:{ name:'SODA GUN', ic:'🔫', img:'ing_sodagun', color:'#3d7fb0', attack:'sodagun', cd:11, max:4, desc:'Gatling soda, locks a target' },
   // 칵테일 조합 재료들도 시트러스 휠(관통 발사)로 통일. 각자 올린 이미지로 날아감. (조합 시스템 추가 시 재료로도 사용)
-  cointreau:{ name:'COINTREAU', ic:'🍊', img:'ing_cointreau', color:'#c8731f', max:3, pas:{stat:'amount',per:1}, desc:'+1 projectile per level (max 3). Full on single-shot weapons; capped on spread weapons.' },
+  cointreau:{ name:'COINTREAU', ic:'🍊', img:'ing_cointreau', color:'#c8731f', max:3, pas:{stat:'amount',per:1}, desc:'+1 projectile per level, added one at a time (max 3, every weapon)' },
   soda:     { name:'SODA WATER',ic:'🫧', img:'ing_soda',      color:'#7fb5d6', max:8, pas:{stat:'cd',per:0.025},   desc:'Attacks fire faster' },
   tonic:    { name:'TONIC',     ic:'🟩', img:'ing_tonic',     color:'#4f9a4f', max:8, pas:{stat:'pierce',per:0.25},desc:'+1 pierce per 4 Lv' },
   olive:    { name:'OLIVE',     ic:'🫒', img:'ing_olive',     color:'#7a8c3a', max:8, pas:{stat:'armor',per:2},    desc:'Armor: take less contact dmg' },
@@ -1324,7 +1324,7 @@ const SKILL_INDEX=[
   { img:'ing_soda',      name:'SODA WATER · ATTACK SPEED', t:'All attacks fire faster each level.' },
   { img:'ing_orange',    name:'ORANGE · AREA',          t:'Bigger attacks (area/size) each level.' },
   { img:'ing_sugar',     name:'SUGAR · AREA',           t:'Bigger attacks (area/size) each level.' },
-  { img:'ing_cointreau', name:'COINTREAU · +PROJECTILE',t:'+1 projectile each level (max Lv3). Single-shot machine-gun weapons benefit fully; spread/fan weapons are capped so they never flood the screen.' },
+  { img:'ing_cointreau', name:'COINTREAU · +PROJECTILE',t:'Adds 1 extra projectile to your volley per level, one at a time (max Lv3 = +3). A flat add, never a multiplier, so it never floods the screen.' },
   { img:'ing_tonic',     name:'TONIC · +PIERCE',        t:'+1 pierce per 4 levels (all weapons).' },
   { img:'ing_mint',      name:'MINT · MOVE SPEED',      t:'Move faster each level.' },
   { img:'ing_water',     name:'WATER · REGEN',          t:'Regenerate HP each level.' },
@@ -1771,16 +1771,12 @@ function randomEnemy(){ return enemies.length? enemies[Math.floor(Math.random()*
 function addExtraShots(n0){
   const ex=player.extraProj||0; if(ex<=0) return;
   const added=projectiles.slice(n0); const base=added.length; if(!base) return;
-  // 한 방향 단발/기관총(mg 태그: gatling 연사)은 그대로 ex번 복제.
-  // 방사형(여러 갈래로 퍼지는 무기)은 총 발사체 상한(SPREAD_CAP)을 둬 코인트로 풀업 시 화면 폭주/밸런스 붕괴 방지.
-  const machineGun = base < 2 || added.every(p=>p.mg);
-  let copies = ex;
-  if(!machineGun){ const SPREAD_CAP = 9; copies = Math.max(0, Math.min(ex, Math.floor(SPREAD_CAP/base) - 1)); }
-  if(copies <= 0) return;
-  for(let c=1;c<=copies;c++){ const off=(c%2?1:-1)*0.17*Math.ceil(c/2);
-    for(const p of added){ const sp=Math.hypot(p.vx,p.vy); if(sp<0.01) continue;
-      const ang=Math.atan2(p.vy,p.vx)+off;
-      projectiles.push(Object.assign({}, p, { vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, hit:new Set() })); } }
+  // 코인트로/EXTRA SHOT = 발사체 +1씩 추가(볼리 전체 복제 아님). 이번 발사에 딱 ex개(=코인트로 레벨)만 더 얹는다.
+  // → 방사형이든 기관총이든 최대 +3발만 늘어나 화면 폭주/밸런스 붕괴 없음.
+  for(let c=1;c<=ex;c++){ const src=added[(c-1)%base];              // 원본 발사체를 돌아가며 하나씩 복제
+    const sp=Math.hypot(src.vx,src.vy); if(sp<0.01) continue;
+    const off=(c%2?1:-1)*0.17*Math.ceil(c/2), ang=Math.atan2(src.vy,src.vx)+off;
+    projectiles.push(Object.assign({}, src, { vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, hit:new Set() })); }
 }
 function fireSpirit(key, lv){
   if(key==='vodka'){               // 마티니: 직선 관통 단검 연사
@@ -1941,7 +1937,7 @@ function fireCocktail(key, lv){
     if(!tg) return; const ta=Math.atan2(tg.y-player.y, tg.x-player.x);
     const n=1+Math.floor(lv/2);   // Lv1=1발 → Lv8=5발 연사
     for(let i=0;i<n;i++){ const ang=ta+(Math.random()-0.5)*spread, s=sp+Math.random()*1.2;
-      add(Object.assign({ vx:Math.cos(ang)*s, vy:Math.sin(ang)*s, dmg:dmgC*P, r:7, life, kind:pk, mg:true }, extra)); } };   // mg=한방향 기관총(EXTRA SHOT 캡 제외)
+      add(Object.assign({ vx:Math.cos(ang)*s, vy:Math.sin(ang)*s, dmg:dmgC*P, r:7, life, kind:pk }, extra)); } };
   switch(key){
     // ── 단검: 바라보는 방향. ★Lv1=다트 1개 → 레벨업마다 +1 다트 & 공격력↑ (Lv8=8발) ──
     case 'gimlet':
