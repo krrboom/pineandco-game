@@ -72,7 +72,8 @@
   .ck-twist{ display:inline-block; color:#1a130a; background:var(--gold,#c89a3c); font-size:7px; padding:2px 7px; border-radius:3px; letter-spacing:.5px; }
   .ck-tag{ display:inline-block; color:var(--pine-light); border:1px solid var(--pine); font-size:7px; padding:2px 6px; border-radius:3px; }
   .ck-ing{ color:var(--dim); font-size:8px; line-height:1.65; margin-top:8px; }
-  .ck-glass{ display:inline-block; color:var(--pine-light); border:1px solid #2a3a2a; font-size:7px; padding:2px 7px; border-radius:3px; }
+  .ck-glass{ display:inline-flex; align-items:center; }
+  .gl-svg{ width:15px; height:20px; opacity:.95; }
   /* 위스키/스피릿 */
   .sp-legend{ text-align:center; color:#e9e2d2; font-size:8px; letter-spacing:.3px; margin:0 auto 14px; max-width:500px; line-height:2; }
   .sp-code{ display:inline-block; min-width:15px; text-align:center; color:#1a130a; background:var(--gold,#c89a3c); font-size:7px; font-weight:bold; padding:1px 4px; border-radius:3px; margin-right:6px; letter-spacing:.5px; }
@@ -356,7 +357,7 @@
     .menu-nav{ max-width:700px; } .menu-nav button{ font-size:12px; padding:9px 16px; }
     .menu-welcome{ max-width:600px; font-size:12px; }
     .ck-name{ font-size:15px; } .ck-num{ font-size:12px; } .ck-price{ font-size:12px; }
-    .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag,.ck-glass{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; }
+    .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; } .gl-svg{ width:19px; height:26px; }
     .sp-legend{ font-size:11px; max-width:640px; } .sp-code{ font-size:9px; min-width:18px; } .sp-keep{ font-size:10px; max-width:600px; }
     #indexScreen .title, #menuScreen .title{ font-size:clamp(22px,3vw,34px); }
     #indexScreen .board-tabs .bt-tab, #menuScreen .board-tabs .bt-tab{ font-size:12px; padding:7px 12px; }
@@ -1223,21 +1224,21 @@ const MENU_WELCOME = 'Born from <b>wild ideas and little moments in life</b>.<br
 /* 시그니처 칵테일: 스토리 카드(인용문 → Twisted 컨셉 → 글라스 → 재료). 전 종 ₩26,000(팁 별도). */
 const COCKTAIL_PRICE = '₩26,000';
 const MENU_COCKTAILS = [
-  { n:1,  name:'BINGSU', tw:'Twisted Frozen G&T', gl:'🍸 Copa', q:'What if Korean Bingsu is a G&T?', ing:'shiso · gin · tonic water · mandarin sorbet · lime' },
-  { n:2,  name:'NURUK', tw:'Twisted Whisky Highball', gl:'🍹 Highball', q:'Whisky is made from barley… so what if barley meets nuruk?', ing:'whisky · nuruk · genmai tea · koji · toasted barley' },
-  { n:3,  name:'PICNIC', tw:'Twisted Tom Collins', gl:'🍹 Collins', q:'Eggs, Milkis, gimbap… a classic mom picnic combo!', ing:'boiled egg · vodka · lactose · yuzu · lemon · gimbap · umami rice' },
-  { n:4,  name:'BULGOGI', tw:'Twisted Paloma & Batanga', gl:'🍹 Highball', q:'Tacos and palomas, match made in heaven. But add bulgogi?', ing:'tequila · bulgogi · calamansi · grapefruit · cola syrup · tonic water' },
-  { n:5,  name:'WHISKY TEA & DIMSUM', tw:'Twisted Rob Roy', gl:'🍸 Coupe', q:'A Pine&Co style cocktail combining Hong Kong dim sum flavors with truffle.', ing:'whisky · black vinegar shrub · amontillado · vermouth · shiitake · homemade dim sum · truffle' },
-  { n:6,  name:'HWACHAE', tw:'Twisted Punch', gl:'🍶 Punch', q:'Do you wanna know how Koreans spend their summer?', ing:'soju · omija · watermelon · sparkling wine · LARGE = seasonal-fruit punch / REGULAR = melon bingsu', p:'₩120,000 / 26,000' },
-  { n:7,  name:'APEROL SLUSH', tw:'Twisted Aperol Spritz', gl:'🥂 Wine', q:'A summer slush with Aperol spritz!', ing:'aperol · sparkling wine · campari · orange · lemon zest', tag:'SEASONAL' },
-  { n:8,  name:'KIWI COLADA', tw:'Twisted Piña Colada', gl:'🍹 Hurricane', q:'A nutty spin on the Piña Colada with a hint of kiwi!', ing:'white rum · korean mint · pistachio · kiwi · almond · coconut · green tea' },
-  { n:9,  name:'BANANA', tw:'Twisted Daiquiri', gl:'🍸 Coupe', q:'Sweet, smooth, and just a little bit wild. Not your average Daiquiri — this one’s got curves.', ing:'rum · banana · lime · homemade black sesame meringue', tag:'NEW · 120th' },
-  { n:10, name:'YOGURT', tw:'Twisted Kaikan Fizz', gl:'🍹 Highball', q:'My wife makes yogurt at home. I stole her recipe.', ing:'vodka · apricot · peach · homemade yogurt · lime · agave · lemongrass · kaffir lime' },
-  { n:11, name:'OLIVE', tw:'Twisted Basil Smash', gl:'🥃 Rocks', q:'Which ingredient in the gin is best?', ing:'gin · olive · lemon · celery bitter · basil · yuzu · cocktail foamer · peperoncino bitter · kimchi · cheese · tomato' },
-  { n:12, name:'HOT BEER', tw:'Twisted Irish Coffee', gl:'☕ Irish Coffee', q:'Designed to recreate the warmth of coffee using dark beer.', ing:'rye whisky · peanut butter · soboro powder · coffee · Guinness · mango butter' },
-  { n:13, name:'CACAO', tw:'Twisted Old Fashioned', gl:'🥃 Rocks', q:'Whiskey and chocolate walk into a glass… Magic happens.', ing:'whisky · cacao bitters · lapsang souchong · port wine · chocolate · cacao nibs · baby choux' },
-  { n:14, name:'COFFEE', tw:'Twisted Espresso Martini', gl:'🍸 Coupe', q:'What if coffee were clear? Espresso meets mystery.', ing:'vodka · coffee · cacao nibs · amontillado · watermelon · cranberry · homemade biscoff' },
-  { n:15, name:'PASSIONFRUIT', tw:'Twisted Pornstar Martini', gl:'🍸 Martini', q:'Pornstar indulgence, Gibson edge. Vesper sharpness, yakju softened.', ing:'gin · vodka · passionfruit · lemon · yakju · vanilla' },
+  { n:1,  name:'BINGSU', tw:'Twisted Frozen G&T', gl:'copa', q:'What if Korean Bingsu is a G&T?', ing:'shiso · gin · tonic water · mandarin sorbet · lime' },
+  { n:2,  name:'NURUK', tw:'Twisted Whisky Highball', gl:'highball', q:'Whisky is made from barley… so what if barley meets nuruk?', ing:'whisky · nuruk · genmai tea · koji · toasted barley' },
+  { n:3,  name:'PICNIC', tw:'Twisted Tom Collins', gl:'highball', q:'Eggs, Milkis, gimbap… a classic mom picnic combo!', ing:'boiled egg · vodka · lactose · yuzu · lemon · gimbap · umami rice' },
+  { n:4,  name:'BULGOGI', tw:'Twisted Paloma & Batanga', gl:'highball', q:'Tacos and palomas, match made in heaven. But add bulgogi?', ing:'tequila · bulgogi · calamansi · grapefruit · cola syrup · tonic water' },
+  { n:5,  name:'WHISKY TEA & DIMSUM', tw:'Twisted Rob Roy', gl:'coupe', q:'A Pine&Co style cocktail combining Hong Kong dim sum flavors with truffle.', ing:'whisky · black vinegar shrub · amontillado · vermouth · shiitake · homemade dim sum · truffle' },
+  { n:6,  name:'HWACHAE', tw:'Twisted Punch', gl:'punch', q:'Do you wanna know how Koreans spend their summer?', ing:'soju · omija · watermelon · sparkling wine · LARGE = seasonal-fruit punch / REGULAR = melon bingsu', p:'₩120,000 / 26,000' },
+  { n:7,  name:'APEROL SLUSH', tw:'Twisted Aperol Spritz', gl:'wine', q:'A summer slush with Aperol spritz!', ing:'aperol · sparkling wine · campari · orange · lemon zest', tag:'SEASONAL' },
+  { n:8,  name:'KIWI COLADA', tw:'Twisted Piña Colada', gl:'hurricane', q:'A nutty spin on the Piña Colada with a hint of kiwi!', ing:'white rum · korean mint · pistachio · kiwi · almond · coconut · green tea' },
+  { n:9,  name:'BANANA', tw:'Twisted Daiquiri', gl:'coupe', q:'Sweet, smooth, and just a little bit wild. Not your average Daiquiri — this one’s got curves.', ing:'rum · banana · lime · homemade black sesame meringue', tag:'NEW · 120th' },
+  { n:10, name:'YOGURT', tw:'Twisted Kaikan Fizz', gl:'highball', q:'My wife makes yogurt at home. I stole her recipe.', ing:'vodka · apricot · peach · homemade yogurt · lime · agave · lemongrass · kaffir lime' },
+  { n:11, name:'OLIVE', tw:'Twisted Basil Smash', gl:'rocks', q:'Which ingredient in the gin is best?', ing:'gin · olive · lemon · celery bitter · basil · yuzu · cocktail foamer · peperoncino bitter · kimchi · cheese · tomato' },
+  { n:12, name:'HOT BEER', tw:'Twisted Irish Coffee', gl:'irish', q:'Designed to recreate the warmth of coffee using dark beer.', ing:'rye whisky · peanut butter · soboro powder · coffee · Guinness · mango butter' },
+  { n:13, name:'CACAO', tw:'Twisted Old Fashioned', gl:'rocks', q:'Whiskey and chocolate walk into a glass… Magic happens.', ing:'whisky · cacao bitters · lapsang souchong · port wine · chocolate · cacao nibs · baby choux' },
+  { n:14, name:'COFFEE', tw:'Twisted Espresso Martini', gl:'coupe', q:'What if coffee were clear? Espresso meets mystery.', ing:'vodka · coffee · cacao nibs · amontillado · watermelon · cranberry · homemade biscoff' },
+  { n:15, name:'PASSIONFRUIT', tw:'Twisted Pornstar Martini', gl:'martini', q:'Pornstar indulgence, Gibson edge. Vesper sharpness, yakju softened.', ing:'gin · vodka · passionfruit · lemon · yakju · vanilla' },
 ];
 /* 리스트형 섹션 */
 const SEC_MORE = { cat:'MORE DRINKS', items:[
@@ -1562,6 +1563,20 @@ function renderIndex(){
 function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
   document.getElementById('hiTitle').textContent=fmtTime(HI_SCORE); cloudFetch('time'); show('titleScreen'); }
 function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('selectScreen'); selIndex=0; updateSelectHighlight(); }
+/* 칵테일 글라스 쉐입 — 흰색 라인아트 SVG(문구 없이 모양만). 메뉴의 미니멀 라인 스타일. */
+const GLASS_PATH = {
+  martini:  'M5 5 L12 16 L19 5 M4 5 H20 M12 16 V27 M8 28 H16',
+  coupe:    'M4 5 C4.5 12 19.5 12 20 5 M4 5 H20 M12 11 V27 M8 28 H16',
+  highball: 'M8 4 V26 Q8 28 10 28 H14 Q16 28 16 26 V4 M8 4 H16',
+  rocks:    'M6 10 V24 Q6 26 8 26 H16 Q18 26 18 24 V10 M6 10 H18',
+  wine:     'M6 4 C6 13 18 13 18 4 M6 4 H18 M12 13 V26 M8 27 H16',
+  copa:     'M4 8 C3 17 21 17 20 8 M4 8 H20 M12 16 V24 M7 26 H17',
+  hurricane:'M8 4 H16 M8 4 C6 9 7 13 10 16 L10 23 Q10 25 12 25 Q14 25 14 23 L14 16 C17 13 18 9 16 4 M9 27 H15',
+  irish:    'M7 6 V22 Q7 24 9 24 H14 Q16 24 16 22 V6 M7 6 H16 M16 10 C20 10 20 19 16 19',
+  punch:    'M4 9 C4 18 20 18 20 9 M4 9 H20 M12 18 V21 M8 22 H16',
+};
+function glassSVG(type){ const d=GLASS_PATH[type]; if(!d) return '';
+  return `<svg class="gl-svg" viewBox="0 0 24 32" fill="none" stroke="#f0ebe0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`; }
 let curMenuTab='cocktails';
 function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens(); curMenuTab='cocktails'; renderMenu(); show('menuScreen'); }
 function showMenuTab(t){ curMenuTab=t; try{ playSelect(); }catch(e){} renderMenu();
@@ -1577,9 +1592,9 @@ function renderMenu(){
     html = `<div class="menu-welcome">${MENU_WELCOME}</div>`
       + `<div class="menu-cat">SIGNATURE COCKTAILS · ${COCKTAIL_PRICE} <span class="mc-note">(tip not included)</span></div>`
       + MENU_COCKTAILS.map(c=>`<div class="ck-card">
-          <div class="ck-head"><span class="ck-num">${c.n}</span><span class="ck-name">${c.name}</span><span class="ck-price">${c.p||COCKTAIL_PRICE}</span></div>
+          <div class="ck-head"><span class="ck-num">${c.n}</span><span class="ck-name">${c.name}</span><span class="ck-glass">${glassSVG(c.gl)}</span><span class="ck-price">${c.p||COCKTAIL_PRICE}</span></div>
           <div class="ck-quote">“${c.q}”</div>
-          <div class="ck-meta"><span class="ck-twist">${c.tw}</span><span class="ck-glass">${c.gl}</span>${c.tag?`<span class="ck-tag">${c.tag}</span>`:''}</div>
+          <div class="ck-meta"><span class="ck-twist">${c.tw}</span>${c.tag?`<span class="ck-tag">${c.tag}</span>`:''}</div>
           <div class="ck-ing">${c.ing}</div>
         </div>`).join('')
       + menuSection(SEC_MORE) + menuSection(SEC_PACO);
