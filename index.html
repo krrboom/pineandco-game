@@ -152,7 +152,7 @@
     flex-wrap:wrap; justify-content:center; align-items:flex-end; }
   #hudChips.portrait .slotbar, #hudChips.portrait .resbar{ justify-content:center; }
   /* 가로(PC/태블릿): 6칸+재료는 정사각형 오른쪽 여백, 스킬은 왼쪽 여백 */
-  #hudChips.landscape #ingRow{ top:calc(var(--my,8px) + 4px); right:6px; left:auto;
+  #hudChips.landscape #ingRow{ top:calc(var(--my,8px) + 60px); right:6px; left:auto;   /* TIME/DOWN(우상단) 바로 밑으로 내려 안 가려지게 */
     max-width:calc(var(--mx,8px) - 12px); flex-direction:column; align-items:flex-end; }
   #hudChips.landscape #skillRow{ top:calc(var(--my,8px) + 4px); left:6px; right:auto; bottom:auto;
     max-width:calc(var(--mx,8px) - 12px); flex-wrap:wrap; justify-content:flex-start; align-items:flex-start; }
