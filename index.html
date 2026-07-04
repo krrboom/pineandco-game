@@ -63,6 +63,21 @@
   /* 웰컴 내러티브 */
   .menu-welcome{ text-align:center; max-width:460px; margin:0 auto 16px; color:#e9e2d2; font-size:9px; line-height:1.75; font-style:italic; }
   .menu-welcome b{ color:var(--amber); font-style:normal; }
+  /* 메뉴 진입 편지(인트로) — SKIP 버튼으로 닫으면 메뉴 표시 */
+  .menu-intro{ position:absolute; inset:0; z-index:12; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; padding:24px; background:linear-gradient(180deg,#12100c,#171208 60%,#12100c); }
+  .menu-intro.hidden{ display:none; }
+  .menu-intro .letter{ max-width:440px; width:100%; max-height:70vh; overflow-y:auto; text-align:center; color:#e9e2d2;
+    border:1px solid #3a2f1e; border-radius:12px; padding:22px 20px; background:rgba(20,16,10,.6); font-style:italic; line-height:1.7; }
+  .menu-intro .letter p{ font-size:11px; margin:12px 0; }
+  .menu-intro .letter b{ color:var(--amber); font-style:normal; }
+  .lt-hi{ font-size:20px; letter-spacing:1px; color:#fff; font-style:normal; }
+  .lt-sub{ font-size:12px; color:var(--pine-light); margin-top:4px; }
+  .lt-wifi{ display:inline-block; margin-top:16px; color:#111; background:var(--pine-light); font-style:normal; font-size:11px;
+    letter-spacing:1px; padding:8px 18px; border-radius:20px; cursor:pointer; }
+  .lt-wifi-note{ font-size:9px; color:var(--dim); font-style:normal; margin-top:10px; line-height:1.6; }
+  .letter-skip{ font-family:inherit; font-size:12px; letter-spacing:1px; color:#1a130a; background:var(--gold,#c89a3c);
+    border:none; border-radius:22px; padding:11px 26px; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.4); }
   /* 시그니처 칵테일 스토리 카드 */
   .ck-card{ text-align:left; border:1px solid #2a3a2a; border-radius:8px; padding:11px 13px; margin-bottom:9px;
     background:rgba(20,27,18,.45); }
@@ -585,6 +600,10 @@
   </div>
 
   <div class="screen hidden" id="menuScreen">
+    <div id="menuIntro" class="menu-intro hidden">
+      <div class="letter" id="menuLetter"></div>
+      <button class="letter-skip" onclick="menuSkipIntro()">VIEW MENU ▸</button>
+    </div>
     <h2 class="title">— MENU —</h2>
     <div class="menu-nav" id="menuNav"></div>
     <div class="scrollbox"><div class="menu-list" id="menuList"></div></div>
@@ -1224,6 +1243,14 @@ function recalcStats(){
 /* ===== 메뉴 (★ 실제 파인앤코 메뉴로 교체) ===== */
 // 실제 Pine & Co Seoul 메뉴 (2026.06.14). 칵테일 1~14 순서대로, 모두 ₩26,000.
 const MENU_WELCOME = 'Born from <b>wild ideas and little moments in life</b>.<br>Dear guest — welcome back home.';
+/* 메뉴 진입 시 먼저 뜨는 편지(물리 메뉴 가운데 레터). SKIP 버튼으로 닫으면 메뉴가 보인다. */
+const MENU_LETTER = `<div class="lt-hi">Dear, Guest</div>
+  <div class="lt-sub">Welcome back home &nbsp;🍸</div>
+  <p>Pine &amp; Co's main theme is<br><b>"born from wild ideas and little moments in life."</b></p>
+  <p>Our menu is a single sheet — simple to print, big on imagination. The game menu lives on your phone; if that feels too high-tech, don't worry, we've got you.</p>
+  <p>If you have any allergies to food or drinks, please let us know in advance.<br>Classic cocktails on the menu are also available to order.</p>
+  <div class="lt-wifi" onclick="menuWifi()">📶&nbsp; FREE WIFI</div>
+  <div class="lt-wifi-note hidden" id="wifiNote">Scan the WiFi QR on your table to join automatically, or ask your bartender for the password.</div>`;
 /* 시그니처 칵테일: 스토리 카드(인용문 → Twisted 컨셉 → 글라스 → 재료). 전 종 ₩26,000(팁 별도). */
 const COCKTAIL_PRICE = '₩26,000';
 const MENU_COCKTAILS = [
@@ -1234,7 +1261,7 @@ const MENU_COCKTAILS = [
   { n:5,  name:'WHISKY TEA & DIMSUM', tw:'Twisted Rob Roy', gl:'coupe', q:'A Pine&Co style cocktail combining Hong Kong dim sum flavors with truffle.', ing:'whisky · black vinegar shrub · amontillado · vermouth · shiitake · homemade dim sum · truffle' },
   { n:6,  name:'HWACHAE', tw:'Twisted Punch', gl:'punch', q:'Do you wanna know how Koreans spend their summer?', ing:'soju · omija · watermelon · sparkling wine · LARGE = seasonal-fruit punch / REGULAR = melon bingsu', p:'₩120,000 / 26,000' },
   { n:7,  name:'APEROL SLUSH', tw:'Twisted Aperol Spritz', gl:'wine', q:'A summer slush with Aperol spritz!', ing:'aperol · sparkling wine · campari · orange · lemon zest', tag:'SEASONAL' },
-  { n:8,  name:'KIWI COLADA', tw:'Twisted Piña Colada', gl:'hurricane', q:'A nutty spin on the Piña Colada with a hint of kiwi!', ing:'white rum · korean mint · pistachio · kiwi · almond · coconut · green tea' },
+  { n:8,  name:'KIWI COLADA', tw:'Twisted Piña Colada', gl:'highball', q:'A nutty spin on the Piña Colada with a hint of kiwi!', ing:'white rum · korean mint · pistachio · kiwi · almond · coconut · green tea' },
   { n:9,  name:'BANANA', tw:'Twisted Daiquiri', gl:'coupe', q:'Sweet, smooth, and just a little bit wild. Not your average Daiquiri — this one’s got curves.', ing:'rum · banana · lime · homemade black sesame meringue', tag:'NEW · 120th' },
   { n:10, name:'YOGURT', tw:'Twisted Kaikan Fizz', gl:'highball', q:'My wife makes yogurt at home. I stole her recipe.', ing:'vodka · apricot · peach · homemade yogurt · lime · agave · lemongrass · kaffir lime' },
   { n:11, name:'OLIVE', tw:'Twisted Basil Smash', gl:'rocks', q:'Which ingredient in the gin is best?', ing:'gin · olive · lemon · celery bitter · basil · yuzu · cocktail foamer · peperoncino bitter · kimchi · cheese · tomato' },
@@ -1248,7 +1275,6 @@ const SEC_MORE = { cat:'MORE DRINKS', items:[
   { n:'SPECIAL HIGHBALL — Clase Azul Reposado', p:'₩40,000', d:'Clase Azul Reposado · orange soda' },
   { n:'SOMAC — Peanut Soju & Beer', p:'₩8,000', d:'peanut butter · soju · beer' },
   { n:'NON-ALCOHOL — Mr. Tropical', p:'₩18,000', d:'seasonal fruits · tea' },
-  { n:'GUN BAE — Signature Shot', p:'₩26,000', d:'house signature' },
 ]};
 const SEC_PACO = { cat:'PACO SHOP', items:[
   { img:'paco_voucher', n:'Gift Voucher', p:'₩45,000', d:'use next time at Pine&Co · Cricket, Hopers' },
@@ -1581,7 +1607,12 @@ const GLASS_PATH = {
 function glassSVG(type){ const d=GLASS_PATH[type]; if(!d) return '';
   return `<svg class="gl-svg" viewBox="0 0 24 32" fill="none" stroke="#f0ebe0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`; }
 let curMenuTab='cocktails';
-function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens(); curMenuTab='cocktails'; renderMenu(); show('menuScreen'); }
+function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens(); curMenuTab='cocktails'; renderMenu();
+  document.getElementById('menuLetter').innerHTML = MENU_LETTER;   // 편지 인트로 먼저
+  document.getElementById('menuIntro').classList.remove('hidden');
+  show('menuScreen'); }
+function menuSkipIntro(){ try{ playSelect(); }catch(e){} document.getElementById('menuIntro').classList.add('hidden'); }
+function menuWifi(){ const n=document.getElementById('wifiNote'); if(n) n.classList.toggle('hidden'); }
 function showMenuTab(t){ curMenuTab=t; try{ playSelect(); }catch(e){} renderMenu();
   const sb=document.querySelector('#menuScreen .scrollbox'); if(sb) sb.scrollTop=0; }
 function menuSection(sec){ return `<div class="menu-cat">${sec.cat}</div>`+
@@ -1592,8 +1623,7 @@ function renderMenu(){
     `<button class="${curMenuTab===k?'active':''}" onclick="showMenuTab('${k}')">${l}</button>`).join('');
   let html='';
   if(curMenuTab==='cocktails'){
-    html = `<div class="menu-welcome">${MENU_WELCOME}</div>`
-      + `<div class="menu-cat">SIGNATURE COCKTAILS · ${COCKTAIL_PRICE} <span class="mc-note">(tip not included)</span></div>`
+    html = `<div class="menu-cat">SIGNATURE COCKTAILS · ${COCKTAIL_PRICE} <span class="mc-note">(tip not included)</span></div>`
       + MENU_COCKTAILS.map(c=>`<div class="ck-card">
           <div class="ck-head"><span class="ck-num">${c.n}</span><span class="ck-name">${c.name}</span><span class="ck-glass">${glassSVG(c.gl)}</span><span class="ck-price">${c.p||COCKTAIL_PRICE}</span></div>
           <div class="ck-quote">“${c.q}”</div>
