@@ -10,7 +10,9 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; height:100%;}
   body{ font-family:"Noto Serif KR","Pretendard",system-ui,sans-serif;
-    background:radial-gradient(120% 120% at 50% 0%, #f6f2e8 0%, var(--bg) 70%);
+    background-color:var(--bg);
+    background-image:radial-gradient(120% 120% at 50% 0%, rgba(246,242,232,.9) 0%, rgba(240,235,224,.94) 70%), url('assets/bg_logo.png');
+    background-repeat:no-repeat, repeat; background-size:auto, 62px auto; background-position:center, center;
     color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center;
     min-height:100%; overflow:hidden; user-select:none; }
 

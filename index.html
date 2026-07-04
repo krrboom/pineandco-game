@@ -983,7 +983,15 @@ function playSfx(name,gain,when){
 /* 효과음: 각 사운드를 피크 0.85로 정규화(norm)했으니 gain은 강조용으로만 (배경음악 MVOL=0.3) */
 function playHit(){ const now=audioCtx?audioCtx.currentTime:0; if(!audioCtx||!SFX.hit||now-lastHitT<0.03) return; lastHitT=now; playSfx('hit',1.0,0); }
 function playCoin(){ const now=audioCtx?audioCtx.currentTime:0; if(!audioCtx||!SFX.coin||now-lastCoinT<0.05) return; lastCoinT=now; playSfx('coin',1.15,0); }
-function playSelect(){ playSfx('select',1.25,0); }
+let _lastSel=0;
+function playSelect(){ var t=(window.performance?performance.now():Date.now()); if(t-_lastSel<80) return; _lastSel=t; playSfx('select',1.25,0); }
+/* 모든 버튼 클릭에 선택 효과음(중복은 위 스로틀로 자동 제거). 게임 액션버튼(필살기·대쉬)은 제외. */
+document.addEventListener('click', function(e){
+  var el = e.target.closest && e.target.closest('button, .imgbtn, .letter-skip');
+  if(!el) return;
+  if(el.id==='ultBtn' || el.id==='dashBtn') return;
+  try{ initAudio(); playSelect(); }catch(_){}
+}, true);
 function playHurt(){ playSfx('hurt',1.2,0); }   // 플레이어 피격 (무적 38프레임이라 자동 스로틀됨)
 function playBossAlarm(){ const s=SFX.boss; if(!audioCtx||!s) return;
   const step=Math.max(s.dur,0.13)+0.02;          // 연속 비프 간격
@@ -993,7 +1001,7 @@ function playBossAlarm(){ const s=SFX.boss; if(!audioCtx||!s) return;
 /* ===== 배경 음악 — 효과음과 동일하게 Web Audio 버퍼로 재생.
    iOS는 <audio>.volume과 페이드를 무시하므로, 디코드한 AudioBuffer를 BufferSource로 틀고
    src.stop()으로 확실히 끊는다(겹침 원천 차단). 음량은 게인으로 제어(iOS도 적용됨). ===== */
-const MUSIC_SRC={ title:'assets/music_title.mp3', select:'assets/music_select.mp3',
+const MUSIC_SRC={ title:'assets/music_title.mp3', select:'assets/music_select.mp3', menu:'assets/music_menu.mp3',
   play1:'assets/music_play1.mp3', play2:'assets/music_play2.mp3', play3:'assets/music_play3.mp3' };
 const MUSICBUF={};            // name -> AudioBuffer
 const MVOL=0.3, MXF=0.3;      // 음악 기준 음량 + 전환 페이드(초)
@@ -1012,6 +1020,7 @@ function pickPlay(){ const o=['play1','play2','play3'].filter(n=>n!==curPlay); r
 function desiredName(){
   if(musicMode==='title') return 'title';
   if(musicMode==='select') return 'select';
+  if(musicMode==='menu') return 'menu';
   if(musicMode==='play'){ if(!curPlay) curPlay=pickPlay(); return curPlay; }
   return null;
 }
@@ -1024,7 +1033,7 @@ function stopVoice(v){
 }
 function startVoice(name){
   if(!audioCtx||!musicBus||!MUSICBUF[name]) return null;
-  const loop=(name==='title'||name==='select');
+  const loop=(name==='title'||name==='select'||name==='menu');
   const src=audioCtx.createBufferSource(); src.buffer=MUSICBUF[name]; src.loop=loop;
   const g=audioCtx.createGain(); const now=audioCtx.currentTime;
   g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(MVOL, now+MXF);
@@ -1707,7 +1716,7 @@ function secT(sec, key){ const tr=SEC_TR[menuLang]&&SEC_TR[menuLang][key];
 const SPCAT_TR = { ko:{ WHISKY:'위스키', WHISKEY:'위스키 (아메리칸)', GIN:'진', TEQUILA:'데킬라', VODKA:'보드카', COGNAC:'코냑', SOJU:'소주', RUM:'럼' } };
 function spCat(name){ const m=SPCAT_TR[menuLang]; return (m&&m[name])||name; }
 let curMenuTab='cocktails';
-function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens(); curMenuTab='cocktails'; renderMenu();
+function showMenu(){ initAudio(); playSelect(); setMusic('menu'); state='menu'; hideAllScreens(); curMenuTab='cocktails'; renderMenu();
   document.getElementById('menuLetter').innerHTML = MENU_LETTER(); updateLangBars();   // 편지 인트로 먼저
   document.getElementById('menuIntro').classList.remove('hidden');
   show('menuScreen'); }
@@ -4048,14 +4057,26 @@ addEventListener('keydown', function(e){
 }, true);
 
 /* ===== BOTTOMS UP: 술게임 허브 (CHOOSE YOUR GAME → 룰렛 / 병돌리기) ===== */
+/* Bottoms Up 전용 BGM: audioCtx는 suspend되므로 독립 HTML5 오디오로 재생 →
+   허브 안 미니게임(럭키투스·병돌리기)을 플레이하는 동안에도 부모에서 계속 흐르고,
+   Bottoms Up을 나가면(close) 딱 멈춘다. */
+let bottomsBgm=null;
+function playBottomsBgm(){ try{
+  if(!bottomsBgm){ bottomsBgm=new Audio('assets/music_bottomsup.mp3'); bottomsBgm.loop=true; }
+  bottomsBgm.volume=Math.max(0,Math.min(1, musicVol*0.5)); bottomsBgm.currentTime=0;
+  bottomsBgm.play().catch(function(){});
+}catch(e){} }
+function stopBottomsBgm(){ try{ if(bottomsBgm){ bottomsBgm.pause(); bottomsBgm.currentTime=0; } }catch(e){} }
 function openBottomsUp(){
   try{ initAudio(); playSelect(); }catch(e){}
   var f=document.getElementById('bottomsFrame');
   if(f.getAttribute('src')!=='bottomsup/index.html') f.setAttribute('src','bottomsup/index.html');
   document.getElementById('bottomsOverlay').classList.add('show');
   try{ if(typeof audioCtx!=='undefined' && audioCtx && audioCtx.suspend) audioCtx.suspend(); }catch(e){}
+  playBottomsBgm();   // Bottoms Up 배경음악 시작(미니게임 중에도 유지)
 }
 function closeBottomsUp(){
+  stopBottomsBgm();   // 나가면 딱 정지
   document.getElementById('bottomsOverlay').classList.remove('show');
   document.getElementById('bottomsFrame').setAttribute('src','about:blank');
   try{ if(typeof audioCtx!=='undefined' && audioCtx && audioCtx.resume) audioCtx.resume(); }catch(e){}
