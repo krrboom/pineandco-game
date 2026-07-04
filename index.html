@@ -55,6 +55,17 @@
   .menu-item.has-img{ align-items:center; gap:10px; }
   .menu-item.has-img > span:first-of-type{ flex:1; }
   .paco-img{ width:40px; height:40px; object-fit:contain; flex:0 0 auto; border-radius:5px; }
+  /* PACO SHOP 전용 탭 — 큰 이미지 카드 3개 */
+  .paco-grid{ display:flex; flex-direction:column; gap:16px; max-width:360px; margin:0 auto; }
+  .paco-card{ border:1px solid #3a2f1e; border-radius:14px; padding:16px 16px 18px; text-align:center;
+    background:linear-gradient(180deg, rgba(30,24,14,.55), rgba(18,15,9,.55)); box-shadow:0 3px 10px rgba(0,0,0,.35); }
+  .paco-thumb{ width:100%; height:190px; display:flex; align-items:center; justify-content:center; margin-bottom:12px;
+    background:rgba(255,255,255,.04); border-radius:10px; }
+  .paco-thumb img{ max-width:92%; max-height:92%; object-fit:contain; filter:drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+  .paco-name{ color:#fff; font-size:15px; letter-spacing:1.2px; }
+  .paco-desc{ color:var(--dim); font-size:9.5px; margin:7px 0 9px; line-height:1.55; }
+  .paco-price{ display:inline-block; color:#1a130a; background:var(--gold,#c89a3c); font-size:12px; font-weight:bold;
+    letter-spacing:.5px; padding:4px 14px; border-radius:16px; }
   /* 메뉴 섹션 네비(칵테일/푸드/보틀/위스키) */
   .menu-nav{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:2px auto 12px; max-width:520px; }
   .menu-nav button{ font-family:inherit; font-size:9px; letter-spacing:.5px; padding:7px 11px; cursor:pointer;
@@ -375,6 +386,8 @@
     .menu-list{ max-width:700px; font-size:12px; }
     .menu-cat{ font-size:15px; } .menu-item{ padding:11px 0; } .menu-item small{ font-size:9.5px; }
     .menu-nav{ max-width:700px; } .menu-nav button{ font-size:12px; padding:9px 16px; } .paco-img{ width:56px; height:56px; }
+    .paco-grid{ flex-direction:row; max-width:760px; } .paco-card{ flex:1; } .paco-thumb{ height:240px; }
+    .paco-name{ font-size:17px; } .paco-desc{ font-size:11px; } .paco-price{ font-size:14px; }
     .menu-welcome{ max-width:600px; font-size:12px; }
     .pine-logo{ width:92px; } .lt-brand{ font-size:20px; } .menu-intro .letter p{ font-size:13px; } .lt-hi{ font-size:26px; }
     .ck-name{ font-size:15px; } .ck-num{ font-size:12px; } .ck-price{ font-size:12px; }
@@ -1631,7 +1644,7 @@ function showMenuTab(t){ curMenuTab=t; try{ playSelect(); }catch(e){} renderMenu
 function menuSection(sec){ return `<div class="menu-cat">${sec.cat}</div>`+
   sec.items.map(it=>`<div class="menu-item${it.img?' has-img':''}">${it.img?`<img class="paco-img" src="assets/${it.img}.png" alt="">`:''}<span>${it.n}${it.d?`<small>${it.d}</small>`:''}</span><span>${it.p}</span></div>`).join(''); }
 function renderMenu(){
-  const tabs=[['cocktails','🍸 COCKTAILS'],['food','🍽 FOOD'],['whisky','🥃 WHISKY'],['bottles','🍾 BUBBLES & WINE']];
+  const tabs=[['cocktails','🍸 COCKTAILS'],['food','🍽 FOOD'],['whisky','🥃 WHISKY'],['bottles','🍾 BUBBLES & WINE'],['paco','🛍 PACO SHOP']];
   document.getElementById('menuNav').innerHTML = tabs.map(([k,l])=>
     `<button class="${curMenuTab===k?'active':''}" onclick="showMenuTab('${k}')">${l}</button>`).join('');
   let html='';
@@ -1643,11 +1656,21 @@ function renderMenu(){
           <div class="ck-meta"><span class="ck-twist">${c.tw}</span>${c.tag?`<span class="ck-tag">${c.tag}</span>`:''}</div>
           <div class="ck-ing">${c.ing}</div>
         </div>`).join('')
-      + menuSection(SEC_MORE) + menuSection(SEC_PACO);
+      + menuSection(SEC_MORE);
   } else if(curMenuTab==='food'){
     html = menuSection(SEC_FOOD);
   } else if(curMenuTab==='bottles'){
     html = menuSection(SEC_CHAMP)+menuSection(SEC_WINE)+menuSection(SEC_BEER);
+  } else if(curMenuTab==='paco'){
+    html = `<div class="menu-cat">PACO SHOP <span class="mc-note">take a piece of Pine&amp;Co home</span></div>`
+      + `<div class="paco-grid">`
+      + SEC_PACO.items.map(it=>`<div class="paco-card">
+          <div class="paco-thumb"><img src="assets/${it.img}.png" alt="${it.n}"></div>
+          <div class="paco-name">${it.n}</div>
+          <div class="paco-desc">${it.d}</div>
+          <div class="paco-price">${it.p}</div>
+        </div>`).join('')
+      + `</div>`;
   } else {   // whisky & spirits
     html = `<div class="sp-legend">TYPE OF WHISKY&nbsp;&nbsp;`
       + SPIRIT_LEGEND.map(([a,w])=>`<span class="sp-code">${a}</span>${w}`).join('&nbsp;&nbsp;') + `</div>`
