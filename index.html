@@ -52,6 +52,9 @@
   .menu-item span:last-child{ color:var(--pine-light); }
   .menu-item small{ display:block; color:var(--dim); font-size:7px; margin-top:6px; line-height:1.6; }
   .mc-note{ color:var(--dim); font-size:7px; letter-spacing:0; }
+  .menu-item.has-img{ align-items:center; gap:10px; }
+  .menu-item.has-img > span:first-of-type{ flex:1; }
+  .paco-img{ width:40px; height:40px; object-fit:contain; flex:0 0 auto; border-radius:5px; }
   /* 메뉴 섹션 네비(칵테일/푸드/보틀/위스키) */
   .menu-nav{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:2px auto 12px; max-width:520px; }
   .menu-nav button{ font-family:inherit; font-size:9px; letter-spacing:.5px; padding:7px 11px; cursor:pointer;
@@ -354,7 +357,7 @@
     .mname{ font-size:15px; margin-bottom:6px; } .mtrait{ font-size:13px; line-height:1.55; }
     .menu-list{ max-width:700px; font-size:12px; }
     .menu-cat{ font-size:15px; } .menu-item{ padding:11px 0; } .menu-item small{ font-size:9.5px; }
-    .menu-nav{ max-width:700px; } .menu-nav button{ font-size:12px; padding:9px 16px; }
+    .menu-nav{ max-width:700px; } .menu-nav button{ font-size:12px; padding:9px 16px; } .paco-img{ width:56px; height:56px; }
     .menu-welcome{ max-width:600px; font-size:12px; }
     .ck-name{ font-size:15px; } .ck-num{ font-size:12px; } .ck-price{ font-size:12px; }
     .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; } .gl-svg{ width:19px; height:26px; }
@@ -1248,9 +1251,9 @@ const SEC_MORE = { cat:'MORE DRINKS', items:[
   { n:'GUN BAE — Signature Shot', p:'₩26,000', d:'house signature' },
 ]};
 const SEC_PACO = { cat:'PACO SHOP', items:[
-  { n:'🎟️ Gift Voucher', p:'₩45,000', d:'use next time at Pine&Co · Cricket, Hopers' },
-  { n:'👕 PACO T-Shirt', p:'₩30,000', d:'size Large, Baby' },
-  { n:'🎰 Gacha Cocktail', p:'₩23,000', d:'Can’t decide? Spin the gacha for a surprise cocktail.' },
+  { img:'paco_voucher', n:'Gift Voucher', p:'₩45,000', d:'use next time at Pine&Co · Cricket, Hopers' },
+  { img:'paco_tshirt', n:'PACO T-Shirt', p:'₩30,000', d:'size Large, Baby' },
+  { img:'paco_gacha', n:'Gacha Cocktail', p:'₩23,000', d:'Can’t decide? Spin the gacha for a surprise cocktail.' },
 ]};
 const SEC_FOOD = { cat:'FOOD', items:[
   { n:'Bloody Mary Chips', p:'₩15,000', d:'french fries · Bloody Mary seasoning · celery mayo' },
@@ -1582,7 +1585,7 @@ function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens(); 
 function showMenuTab(t){ curMenuTab=t; try{ playSelect(); }catch(e){} renderMenu();
   const sb=document.querySelector('#menuScreen .scrollbox'); if(sb) sb.scrollTop=0; }
 function menuSection(sec){ return `<div class="menu-cat">${sec.cat}</div>`+
-  sec.items.map(it=>`<div class="menu-item"><span>${it.n}${it.d?`<small>${it.d}</small>`:''}</span><span>${it.p}</span></div>`).join(''); }
+  sec.items.map(it=>`<div class="menu-item${it.img?' has-img':''}">${it.img?`<img class="paco-img" src="assets/${it.img}.png" alt="">`:''}<span>${it.n}${it.d?`<small>${it.d}</small>`:''}</span><span>${it.p}</span></div>`).join(''); }
 function renderMenu(){
   const tabs=[['cocktails','🍸 COCKTAILS'],['food','🍽 FOOD'],['whisky','🥃 WHISKY'],['bottles','🍾 BUBBLES & WINE']];
   document.getElementById('menuNav').innerHTML = tabs.map(([k,l])=>
