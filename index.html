@@ -72,6 +72,13 @@
   .ck-twist{ display:inline-block; color:#1a130a; background:var(--gold,#c89a3c); font-size:7px; padding:2px 7px; border-radius:3px; letter-spacing:.5px; }
   .ck-tag{ display:inline-block; color:var(--pine-light); border:1px solid var(--pine); font-size:7px; padding:2px 6px; border-radius:3px; }
   .ck-ing{ color:var(--dim); font-size:8px; line-height:1.65; margin-top:8px; }
+  .ck-glass{ display:inline-block; color:var(--pine-light); border:1px solid #2a3a2a; font-size:7px; padding:2px 7px; border-radius:3px; }
+  /* 위스키/스피릿 */
+  .sp-legend{ text-align:center; color:#e9e2d2; font-size:8px; letter-spacing:.3px; margin:0 auto 14px; max-width:500px; line-height:2; }
+  .sp-code{ display:inline-block; min-width:15px; text-align:center; color:#1a130a; background:var(--gold,#c89a3c); font-size:7px; font-weight:bold; padding:1px 4px; border-radius:3px; margin-right:6px; letter-spacing:.5px; }
+  .sp-row span:first-child{ display:flex; align-items:center; }
+  .sp-row span:last-child{ white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .sp-keep{ text-align:center; color:var(--dim); font-size:7.5px; line-height:1.7; margin:20px auto 4px; max-width:460px; border-top:1px solid #2a3a2a; padding-top:12px; }
   /* 심플시럽 조합 화면 */
   .craft-eq{ display:flex; align-items:center; justify-content:center; gap:12px; margin:6px 0 16px; }
   .craft-ic{ width:52px; height:52px; object-fit:contain; image-rendering:pixelated; }
@@ -349,7 +356,8 @@
     .menu-nav{ max-width:700px; } .menu-nav button{ font-size:12px; padding:9px 16px; }
     .menu-welcome{ max-width:600px; font-size:12px; }
     .ck-name{ font-size:15px; } .ck-num{ font-size:12px; } .ck-price{ font-size:12px; }
-    .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; }
+    .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag,.ck-glass{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; }
+    .sp-legend{ font-size:11px; max-width:640px; } .sp-code{ font-size:9px; min-width:18px; } .sp-keep{ font-size:10px; max-width:600px; }
     #indexScreen .title, #menuScreen .title{ font-size:clamp(22px,3vw,34px); }
     #indexScreen .board-tabs .bt-tab, #menuScreen .board-tabs .bt-tab{ font-size:12px; padding:7px 12px; }
   }
@@ -1212,32 +1220,36 @@ function recalcStats(){
 /* ===== 메뉴 (★ 실제 파인앤코 메뉴로 교체) ===== */
 // 실제 Pine & Co Seoul 메뉴 (2026.06.14). 칵테일 1~14 순서대로, 모두 ₩26,000.
 const MENU_WELCOME = 'Born from <b>wild ideas and little moments in life</b>.<br>Dear guest — welcome back home.';
-/* 시그니처 칵테일: 스토리 카드(인용문 → Twisted 컨셉 → 재료). 전 종 ₩26,000(팁 별도). */
+/* 시그니처 칵테일: 스토리 카드(인용문 → Twisted 컨셉 → 글라스 → 재료). 전 종 ₩26,000(팁 별도). */
 const COCKTAIL_PRICE = '₩26,000';
 const MENU_COCKTAILS = [
-  { n:1,  name:'BINGSU', tw:'Twisted Frozen G&T', q:'What if Korean Bingsu is a G&T?', ing:'shiso · gin · tonic water · mandarin sorbet · lime' },
-  { n:2,  name:'NURUK', tw:'Twisted Whisky Highball', q:'Whisky is made from barley… so what if barley meets nuruk?', ing:'whisky · nuruk · genmai tea · koji · toasted barley' },
-  { n:3,  name:'PICNIC', tw:'Twisted Tom Collins', q:'Eggs, Milkis, gimbap… a classic mom picnic combo!', ing:'boiled egg · vodka · lactose · yuzu · lemon · gimbap · umami rice' },
-  { n:4,  name:'BULGOGI', tw:'Twisted Paloma & Batanga', q:'Tacos and palomas, match made in heaven. But add bulgogi?', ing:'tequila · bulgogi · calamansi · grapefruit · cola syrup · tonic water' },
-  { n:5,  name:'WHISKY TEA & DIMSUM', tw:'Twisted Rob Roy', q:'A Pine&Co style cocktail combining Hong Kong dim sum flavors with truffle.', ing:'whisky · black vinegar shrub · amontillado · vermouth · shiitake · homemade dim sum · truffle' },
-  { n:6,  name:'HWACHAE', tw:'Twisted Punch', q:'Do you wanna know how Koreans spend their summer?', ing:'soju · omija · watermelon · sparkling wine · LARGE = seasonal-fruit punch / REGULAR = melon bingsu', p:'₩120,000 / 26,000' },
-  { n:7,  name:'APEROL SLUSH', tw:'Twisted Aperol Spritz', q:'A summer slush with Aperol spritz!', ing:'aperol · sparkling wine · campari · orange · lemon zest', tag:'SEASONAL' },
-  { n:8,  name:'KIWI COLADA', tw:'Twisted Piña Colada', q:'A nutty spin on the Piña Colada with a hint of kiwi!', ing:'white rum · korean mint · pistachio · kiwi · almond · coconut · green tea' },
-  { n:9,  name:'BANANA', tw:'Twisted Daiquiri', q:'Sweet, smooth, and just a little bit wild. Not your average Daiquiri — this one’s got curves.', ing:'rum · banana · lime · homemade black sesame meringue', tag:'NEW · 120th' },
-  { n:10, name:'YOGURT', tw:'Twisted Kaikan Fizz', q:'My wife makes yogurt at home. I stole her recipe.', ing:'vodka · apricot · peach · homemade yogurt · lime · agave · lemongrass · kaffir lime' },
-  { n:11, name:'OLIVE', tw:'Twisted Basil Smash', q:'Which ingredient in the gin is best?', ing:'gin · olive · lemon · celery bitter · basil · yuzu · cocktail foamer · peperoncino bitter · kimchi · cheese · tomato' },
-  { n:12, name:'HOT BEER', tw:'Twisted Irish Coffee', q:'Designed to recreate the warmth of coffee using dark beer.', ing:'rye whisky · peanut butter · soboro powder · coffee · Guinness · mango butter' },
-  { n:13, name:'CACAO', tw:'Twisted Old Fashioned', q:'Whiskey and chocolate walk into a glass… Magic happens.', ing:'whisky · cacao bitters · lapsang souchong · port wine · chocolate · cacao nibs · baby choux' },
-  { n:14, name:'COFFEE', tw:'Twisted Espresso Martini', q:'What if coffee were clear? Espresso meets mystery.', ing:'vodka · coffee · cacao nibs · amontillado · watermelon · cranberry · homemade biscoff' },
-  { n:15, name:'PASSIONFRUIT', tw:'Twisted Pornstar Martini', q:'Pornstar indulgence, Gibson edge. Vesper sharpness, yakju softened.', ing:'gin · vodka · passionfruit · lemon · yakju · vanilla' },
+  { n:1,  name:'BINGSU', tw:'Twisted Frozen G&T', gl:'🍸 Copa', q:'What if Korean Bingsu is a G&T?', ing:'shiso · gin · tonic water · mandarin sorbet · lime' },
+  { n:2,  name:'NURUK', tw:'Twisted Whisky Highball', gl:'🍹 Highball', q:'Whisky is made from barley… so what if barley meets nuruk?', ing:'whisky · nuruk · genmai tea · koji · toasted barley' },
+  { n:3,  name:'PICNIC', tw:'Twisted Tom Collins', gl:'🍹 Collins', q:'Eggs, Milkis, gimbap… a classic mom picnic combo!', ing:'boiled egg · vodka · lactose · yuzu · lemon · gimbap · umami rice' },
+  { n:4,  name:'BULGOGI', tw:'Twisted Paloma & Batanga', gl:'🍹 Highball', q:'Tacos and palomas, match made in heaven. But add bulgogi?', ing:'tequila · bulgogi · calamansi · grapefruit · cola syrup · tonic water' },
+  { n:5,  name:'WHISKY TEA & DIMSUM', tw:'Twisted Rob Roy', gl:'🍸 Coupe', q:'A Pine&Co style cocktail combining Hong Kong dim sum flavors with truffle.', ing:'whisky · black vinegar shrub · amontillado · vermouth · shiitake · homemade dim sum · truffle' },
+  { n:6,  name:'HWACHAE', tw:'Twisted Punch', gl:'🍶 Punch', q:'Do you wanna know how Koreans spend their summer?', ing:'soju · omija · watermelon · sparkling wine · LARGE = seasonal-fruit punch / REGULAR = melon bingsu', p:'₩120,000 / 26,000' },
+  { n:7,  name:'APEROL SLUSH', tw:'Twisted Aperol Spritz', gl:'🥂 Wine', q:'A summer slush with Aperol spritz!', ing:'aperol · sparkling wine · campari · orange · lemon zest', tag:'SEASONAL' },
+  { n:8,  name:'KIWI COLADA', tw:'Twisted Piña Colada', gl:'🍹 Hurricane', q:'A nutty spin on the Piña Colada with a hint of kiwi!', ing:'white rum · korean mint · pistachio · kiwi · almond · coconut · green tea' },
+  { n:9,  name:'BANANA', tw:'Twisted Daiquiri', gl:'🍸 Coupe', q:'Sweet, smooth, and just a little bit wild. Not your average Daiquiri — this one’s got curves.', ing:'rum · banana · lime · homemade black sesame meringue', tag:'NEW · 120th' },
+  { n:10, name:'YOGURT', tw:'Twisted Kaikan Fizz', gl:'🍹 Highball', q:'My wife makes yogurt at home. I stole her recipe.', ing:'vodka · apricot · peach · homemade yogurt · lime · agave · lemongrass · kaffir lime' },
+  { n:11, name:'OLIVE', tw:'Twisted Basil Smash', gl:'🥃 Rocks', q:'Which ingredient in the gin is best?', ing:'gin · olive · lemon · celery bitter · basil · yuzu · cocktail foamer · peperoncino bitter · kimchi · cheese · tomato' },
+  { n:12, name:'HOT BEER', tw:'Twisted Irish Coffee', gl:'☕ Irish Coffee', q:'Designed to recreate the warmth of coffee using dark beer.', ing:'rye whisky · peanut butter · soboro powder · coffee · Guinness · mango butter' },
+  { n:13, name:'CACAO', tw:'Twisted Old Fashioned', gl:'🥃 Rocks', q:'Whiskey and chocolate walk into a glass… Magic happens.', ing:'whisky · cacao bitters · lapsang souchong · port wine · chocolate · cacao nibs · baby choux' },
+  { n:14, name:'COFFEE', tw:'Twisted Espresso Martini', gl:'🍸 Coupe', q:'What if coffee were clear? Espresso meets mystery.', ing:'vodka · coffee · cacao nibs · amontillado · watermelon · cranberry · homemade biscoff' },
+  { n:15, name:'PASSIONFRUIT', tw:'Twisted Pornstar Martini', gl:'🍸 Martini', q:'Pornstar indulgence, Gibson edge. Vesper sharpness, yakju softened.', ing:'gin · vodka · passionfruit · lemon · yakju · vanilla' },
 ];
-/* 나머지 섹션(리스트형) */
+/* 리스트형 섹션 */
 const SEC_MORE = { cat:'MORE DRINKS', items:[
   { n:'SPECIAL HIGHBALL — Clase Azul Reposado', p:'₩40,000', d:'Clase Azul Reposado · orange soda' },
   { n:'SOMAC — Peanut Soju & Beer', p:'₩8,000', d:'peanut butter · soju · beer' },
   { n:'NON-ALCOHOL — Mr. Tropical', p:'₩18,000', d:'seasonal fruits · tea' },
-  { n:'GACHA', p:'₩23,000', d:'Can’t decide? Spin the gacha for a surprise cocktail.' },
   { n:'GUN BAE — Signature Shot', p:'₩26,000', d:'house signature' },
+]};
+const SEC_PACO = { cat:'PACO SHOP', items:[
+  { n:'🎟️ Gift Voucher', p:'₩45,000', d:'use next time at Pine&Co · Cricket, Hopers' },
+  { n:'👕 PACO T-Shirt', p:'₩30,000', d:'size Large, Baby' },
+  { n:'🎰 Gacha Cocktail', p:'₩23,000', d:'Can’t decide? Spin the gacha for a surprise cocktail.' },
 ]};
 const SEC_FOOD = { cat:'FOOD', items:[
   { n:'Charcuterie & Bruschetta', p:'₩25,000', d:'mortadella · tuna pâté · herbs · olive tapenade · carrot rape · rye cracker' },
@@ -1268,10 +1280,156 @@ const SEC_BEER = { cat:'BEER & SOFT', items:[
   { n:'Fever-Tree Ginger / Tonic', p:'₩5,000', d:'' },
   { n:'Sprite · Coke · Zero Coke · Red Bull', p:'₩5,000', d:'' },
 ]};
-const SEC_PACO = { cat:'PACO SHOP', items:[
-  { n:'Voucher', p:'₩45,000', d:'use next time at Pine&Co · Cricket, Hopers' },
-  { n:'T-Shirt', p:'₩30,000', d:'size Large, Baby' },
-]};
+/* ===== 스피릿(위스키) 메뉴 — 병(b)/잔(g) ₩1,000 단위. c=플레이버 코드(위스키·위스키만). ===== */
+const SPIRIT_LEGEND = [['R','RICH'],['F','FRUITY'],['W','WOODY'],['S','SMOKEY'],['L','LIGHT'],['H','HONEY']];
+const SPIRIT_KEEP = 'We keep your whisky for 3 months · keeping charge ₩10,000 per person.<br>위스키 보관기간 3개월, 보관 후 1인당 ₩10,000 보관료가 부과됩니다.';
+const SPIRIT_MENU = [
+  { cat:'WHISKY', items:[
+    { c:'FR', n:'Macallan Edition 1-6', b:12000 },
+    { c:'FR', n:'Macallan 18Y', b:1600 },
+    { c:'FH', n:'Balvenie 12Y', b:400, g:27 },
+    { c:'FH', n:'Balvenie 12Y Single Barrel', b:420, g:28 },
+    { c:'FR', n:'Balvenie 16Y French Oak', b:800 },
+    { c:'FR', n:'Balvenie 17Y', b:1200 },
+    { c:'FH', n:'Balvenie 25Y', b:3500 },
+    { c:'FH', n:'Balvenie 30Y', b:10000 },
+    { c:'FR', n:'Bunnahabhain 12Y', g:21 },
+    { c:'FR', n:'Dalwhinnie 15Y', b:370, g:25 },
+    { c:'FR', n:'Glenfarclas 105', b:470, g:31 },
+    { c:'FR', n:'Glenmorangie Lasanta', b:330, g:23 },
+    { c:'FR', n:'Glenmorangie Cadboll Estate', g:38 },
+    { c:'HW', n:'Glenmorangie Signet', b:780, g:54 },
+    { c:'HF', n:'Glenturret 12Y', g:23 },
+    { c:'FR', n:'Aberlour A’bunadh', b:480, g:32 },
+    { c:'FR', n:'Royal Brackla 12Y', b:320, g:22 },
+    { c:'FR', n:'Royal Brackla 18Y', b:600, g:39 },
+    { c:'FR', n:'Royal Brackla 21Y', b:800, g:53 },
+    { c:'FL', n:'Glenburgie 12Y', g:23 },
+    { c:'FL', n:'Glenlivet 12Y', g:24 },
+    { c:'FL', n:'Glenfiddich 12Y', b:290, g:19 },
+    { c:'FL', n:'Glenfiddich 12Y Sherry Cask', b:320, g:23 },
+    { c:'FR', n:'Glenfiddich 15Y', b:400, g:27 },
+    { c:'FR', n:'Glenfiddich 30Y', b:3500 },
+    { c:'FR', n:'Glenfiddich 29Y Yozakura', b:5000 },
+    { c:'HF', n:'Glenallachie 7Y', b:480, g:32 },
+    { c:'HF', n:'Glenallachie 10Y', b:520, g:35 },
+    { c:'RF', n:'Glenallachie 10Y CS', b:570, g:38 },
+    { c:'HF', n:'Glenallachie 12Y', b:400, g:27 },
+    { c:'HF', n:'Glenallachie 15Y', b:570, g:38 },
+    { c:'RF', n:'Glenallachie 18Y', g:66 },
+    { c:'HL', n:'Singleton 15Y', g:27 },
+    { c:'FL', n:'Aultmore 12Y', b:310, g:21 },
+    { c:'FL', n:'Aultmore 18Y', b:570, g:38 },
+    { c:'FL', n:'Aultmore 21Y', b:880, g:58 },
+    { c:'LH', n:'Aberfeldy 12Y', b:310, g:21 },
+    { c:'LH', n:'Aberfeldy 16Y', b:490, g:33 },
+    { c:'RH', n:'Aberfeldy 21Y', b:710, g:49 },
+    { c:'FR', n:'Dalmore 15Y', b:480, g:32 },
+    { c:'SH', n:'Oban 14Y', b:400, g:27 },
+    { c:'FR', n:'Glendronach 12Y', b:350, g:24 },
+    { c:'FR', n:'Glendronach 15Y', b:490, g:33 },
+    { c:'SH', n:'Ardbeg 10Y', b:310, g:21 },
+    { c:'SH', n:'Talisker 10Y', b:310, g:21 },
+    { c:'WS', n:'Octomore 14.3', b:1000, g:70 },
+    { c:'WS', n:'Octomore 16.3', g:75 },
+    { c:'SF', n:'Lagavulin 16Y', b:490, g:33 },
+    { c:'SH', n:'Laphroaig 10Y', b:280, g:19 },
+    { c:'SR', n:'Laphroaig Quarter Cask', b:310, g:21 },
+    { c:'SR', n:'Bowmore 12Y', b:270, g:18 },
+    { c:'FR', n:'Yamazaki DR', b:420, g:28 },
+    { c:'FR', n:'Yamazaki 12Y', b:800, g:53 },
+    { c:'FR', n:'Yamazaki 18Y', b:3000 },
+    { c:'FR', n:'Yamazaki LTO 12Y', b:950, g:66 },
+    { c:'FR', n:'Hibiki Harmony', b:420, g:28 },
+    { c:'RFH', n:'Hibiki 21Y', b:3200 },
+    { c:'FR', n:'Hibiki 30Y', b:15000 },
+    { c:'FL', n:'Chita DR', b:320, g:22 },
+    { c:'FL', n:'Hakushu DR', b:420, g:28 },
+    { c:'RS', n:'Kamiki Sakura Wood', b:480, g:32 },
+    { c:'FR', n:'Yoichi 10Y', b:650, g:43 },
+    { c:'SR', n:'Kione Tiger', b:350, g:24 },
+    { c:'SR', n:'Kione Eagle', b:340, g:23 },
+    { c:'SR', n:'Kione Unicorn', b:350, g:24 },
+    { c:'SR', n:'Kione CS Batch 8', b:500, g:34 },
+    { c:'FL', n:'Kavalan Classic', b:480, g:32 },
+    { c:'FR', n:'Kavalan Triple Sherry', b:480, g:32 },
+    { c:'FR', n:'Kavalan Sherry', b:590, g:39 },
+    { c:'FR', n:'Kavalan Solist Sherry', b:650, g:43 },
+    { c:'FR', n:'Kavalan Solist Port', b:650, g:43 },
+    { c:'FR', n:'Kavalan Vinho Barrique', b:690, g:48 },
+    { c:'FR', n:'Dewars 12Y', g:15 },
+    { c:'FR', n:'Dewars 15Y', b:270, g:18 },
+    { c:'FH', n:'Dewar’s 18Y', b:400, g:27 },
+    { c:'FH', n:'Dewar’s 18Y Mizunara', b:480, g:32 },
+    { c:'FR', n:'Dewars 21Y Double Double', b:480, g:32 },
+    { c:'FH', n:'Dewars 27Y Double Double', b:690, g:48 },
+    { c:'FH', n:'Dewars 32Y Double Double', b:950 },
+    { c:'RW', n:'Johnnie Walker Blue 2023 Rabbit Edition', b:900, g:60 },
+    { c:'RW', n:'Johnnie Walker Blue', b:900, g:60 },
+    { c:'RH', n:'Monkey Shoulder', b:220, g:15 },
+    { c:'SR', n:'Teeling Small Batch', b:220, g:15 },
+    { c:'FW', n:'Teeling Single Malt', b:280, g:19 },
+    { c:'FW', n:'Teeling Single Potstill', b:310, g:20 },
+    { c:'LH', n:'Teeling Single Grain', b:260, g:17 },
+  ]},
+  { cat:'WHISKEY', items:[
+    { c:'HW', n:'Basil Hayden', g:22 },
+    { c:'HW', n:'Maker’s Mark', b:250, g:17 },
+    { c:'FRS', n:'Michter’s Rye', b:380, g:26 },
+    { c:'FRS', n:'Michter’s Rye 10Y', b:1200, g:79 },
+    { c:'FR', n:'Michter’s Bourbon', b:380, g:26 },
+    { c:'FRS', n:'Michter’s American', b:380, g:26 },
+    { c:'FR', n:'Michter’s Sour Mash', b:380, g:26 },
+    { c:'FR', n:'C&C Sherry Cask', b:400, g:27 },
+    { c:'HW', n:'Angel’s Envy', b:270, g:18 },
+    { c:'HW', n:'Angel’s Envy CS', b:650, g:42 },
+    { c:'HW', n:'Widow Jane American Oak', g:28 },
+  ]},
+  { cat:'GIN', items:[
+    { n:'Hendricks', b:250, g:17 },
+    { n:'Monkey 47', b:330, g:22 },
+    { n:'Kinobi', b:330, g:22 },
+    { n:'Botanist', b:240, g:16 },
+  ]},
+  { cat:'TEQUILA', items:[
+    { n:'Cenote Blanco', b:470, g:33 },
+    { n:'Don Julio Blanco', b:380, g:26 },
+    { n:'Patron Silver', b:430, g:28 },
+    { n:'Patron Reposado', b:450, g:29 },
+    { n:'Patron Añejo', b:470, g:33 },
+    { n:'Patron X.O Cafe', b:270, g:18 },
+    { n:'Somos Añejo', b:1200, g:79 },
+    { n:'Clase Azul Plata', b:600, g:40 },
+    { n:'Clase Azul Reposado', b:750, g:49 },
+    { n:'Clase Azul Gold', b:1200, g:79 },
+    { n:'Clase Azul Añejo', b:2500, g:165 },
+    { n:'Clase Azul Durango', b:1300, g:86 },
+    { n:'Clase Azul Guerrero', g:86 },
+    { n:'Clase Azul San Luis', b:1300, g:86 },
+    { n:'Cincoro Reposado', b:460, g:32 },
+    { n:'Cincoro Añejo', b:510, g:35 },
+    { n:'Siete Misterios', b:390, g:26 },
+  ]},
+  { cat:'VODKA', items:[
+    { n:'Grey Goose', b:240, g:16 },
+  ]},
+  { cat:'COGNAC', items:[
+    { n:'Remy Martin VSOP', b:310, g:21 },
+    { n:'Remy Martin 1738', b:350, g:24 },
+    { n:'Paul Giraud Elegance', b:350, g:24 },
+    { n:'Paul Giraud', b:650, g:43 },
+    { n:'Hennessy VSOP', b:350, g:24 },
+    { n:'Hennessy XO', b:650, g:43 },
+  ]},
+  { cat:'SOJU', items:[
+    { n:'Hwayo X.Premium', b:420, g:28 },
+  ]},
+  { cat:'RUM', items:[
+    { n:'Bacardi 8Y', b:250, g:17 },
+    { n:'Dictador 12Y', g:21 },
+    { n:'Dictador 20Y', g:27 },
+  ]},
+];
 
 /* ===== 상태 ===== */
 let state='title';
@@ -1420,19 +1578,28 @@ function renderMenu(){
       + MENU_COCKTAILS.map(c=>`<div class="ck-card">
           <div class="ck-head"><span class="ck-num">${c.n}</span><span class="ck-name">${c.name}</span><span class="ck-price">${c.p||COCKTAIL_PRICE}</span></div>
           <div class="ck-quote">“${c.q}”</div>
-          <div class="ck-meta"><span class="ck-twist">${c.tw}</span>${c.tag?`<span class="ck-tag">${c.tag}</span>`:''}</div>
+          <div class="ck-meta"><span class="ck-twist">${c.tw}</span><span class="ck-glass">${c.gl}</span>${c.tag?`<span class="ck-tag">${c.tag}</span>`:''}</div>
           <div class="ck-ing">${c.ing}</div>
         </div>`).join('')
-      + menuSection(SEC_MORE);
+      + menuSection(SEC_MORE) + menuSection(SEC_PACO);
   } else if(curMenuTab==='food'){
     html = menuSection(SEC_FOOD);
   } else if(curMenuTab==='bottles'){
-    html = menuSection(SEC_CHAMP)+menuSection(SEC_WINE)+menuSection(SEC_BEER)+menuSection(SEC_PACO);
-  } else {   // whisky
-    html = `<div class="menu-welcome">Our whisky &amp; spirits list is being updated.<br>The full flavour map (rich · fruity · woody · smoky · light · honey) lands here soon — ask your bartender in the meantime.</div>`;
+    html = menuSection(SEC_CHAMP)+menuSection(SEC_WINE)+menuSection(SEC_BEER);
+  } else {   // whisky & spirits
+    html = `<div class="sp-legend">TYPE OF WHISKY&nbsp;&nbsp;`
+      + SPIRIT_LEGEND.map(([a,w])=>`<span class="sp-code">${a}</span>${w}`).join('&nbsp;&nbsp;') + `</div>`
+      + SPIRIT_MENU.map(sec=>`<div class="menu-cat">${sec.cat}</div>`
+        + sec.items.map(it=>`<div class="menu-item sp-row"><span>${it.c?`<span class="sp-code">${it.c}</span>`:''}${it.n}</span><span>${spPrice(it)}</span></div>`).join('')).join('')
+      + `<div class="sp-keep">${SPIRIT_KEEP}</div>`;
   }
   document.getElementById('menuList').innerHTML = html;
 }
+function spPrice(it){ const f=n=>'₩'+(n*1000).toLocaleString();
+  if(it.b&&it.g) return f(it.b)+' / '+(it.g*1000).toLocaleString();
+  if(it.b) return f(it.b);
+  if(it.g) return 'glass '+f(it.g);
+  return ''; }
 
 /* ===== 게임 시작 ===== */
 function startGame(charKey){
