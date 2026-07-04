@@ -71,11 +71,13 @@
     border:1px solid #3a2f1e; border-radius:12px; padding:22px 20px; background:rgba(20,16,10,.6); font-style:italic; line-height:1.7; }
   .menu-intro .letter p{ font-size:11px; margin:12px 0; }
   .menu-intro .letter b{ color:var(--amber); font-style:normal; }
+  .lt-logo{ text-align:center; }
+  .pine-logo{ width:66px; height:auto; display:inline-block; }
+  .lt-brand{ font-style:normal; color:#f0ebe0; font-size:16px; letter-spacing:1.5px; margin:2px 0 12px; line-height:1.1; }
+  .lt-brand span{ display:block; font-size:9px; letter-spacing:4px; color:var(--pine-light); margin-top:2px; }
   .lt-hi{ font-size:20px; letter-spacing:1px; color:#fff; font-style:normal; }
   .lt-sub{ font-size:12px; color:var(--pine-light); margin-top:4px; }
-  .lt-wifi{ display:inline-block; margin-top:16px; color:#111; background:var(--pine-light); font-style:normal; font-size:11px;
-    letter-spacing:1px; padding:8px 18px; border-radius:20px; cursor:pointer; }
-  .lt-wifi-note{ font-size:9px; color:var(--dim); font-style:normal; margin-top:10px; line-height:1.6; }
+  .lt-staff{ font-size:8px; color:var(--dim); font-style:normal; margin-top:16px; letter-spacing:.3px; }
   .letter-skip{ font-family:inherit; font-size:12px; letter-spacing:1px; color:#1a130a; background:var(--gold,#c89a3c);
     border:none; border-radius:22px; padding:11px 26px; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.4); }
   /* 시그니처 칵테일 스토리 카드 */
@@ -374,6 +376,7 @@
     .menu-cat{ font-size:15px; } .menu-item{ padding:11px 0; } .menu-item small{ font-size:9.5px; }
     .menu-nav{ max-width:700px; } .menu-nav button{ font-size:12px; padding:9px 16px; } .paco-img{ width:56px; height:56px; }
     .menu-welcome{ max-width:600px; font-size:12px; }
+    .pine-logo{ width:92px; } .lt-brand{ font-size:20px; } .menu-intro .letter p{ font-size:13px; } .lt-hi{ font-size:26px; }
     .ck-name{ font-size:15px; } .ck-num{ font-size:12px; } .ck-price{ font-size:12px; }
     .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; } .gl-svg{ width:19px; height:26px; }
     .sp-legend{ font-size:11px; max-width:640px; } .sp-code{ font-size:9px; min-width:18px; } .sp-keep{ font-size:10px; max-width:600px; }
@@ -1243,14 +1246,24 @@ function recalcStats(){
 /* ===== 메뉴 (★ 실제 파인앤코 메뉴로 교체) ===== */
 // 실제 Pine & Co Seoul 메뉴 (2026.06.14). 칵테일 1~14 순서대로, 모두 ₩26,000.
 const MENU_WELCOME = 'Born from <b>wild ideas and little moments in life</b>.<br>Dear guest — welcome back home.';
+/* Pine & Co 로고 — 솔잎(frond) + 솔방울 흰색 라인아트 SVG */
+const PINE_LOGO = (()=>{ let nd='';
+  for(let i=0;i<13;i++){ const y=(14+i*3.4).toFixed(1), len=4+i*1.35;
+    nd+=`<path d="M50 ${y} L${(50-len).toFixed(1)} ${(y-len*0.6).toFixed(1)}"/><path d="M50 ${y} L${(50+len).toFixed(1)} ${(y-len*0.6).toFixed(1)}"/>`; }
+  let sc=''; for(let r=0;r<4;r++){ const yy=71+r*4.2; sc+=`<path d="M44 ${yy} Q50 ${(yy+3.4).toFixed(1)} 56 ${yy}"/>`; }
+  return `<svg class="pine-logo" viewBox="0 0 100 96" fill="none" stroke="#f0ebe0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">`
+    + `<path d="M50 8 V66" stroke-width="1.7"/>${nd}`
+    + `<path d="M50 65 C41 67 41 82 50 91 C59 82 59 67 50 65 Z" fill="#f0ebe0"/>`
+    + `<g stroke="#171208" stroke-width="1.1">${sc}<path d="M50 67 V89"/></g></svg>`; })();
 /* 메뉴 진입 시 먼저 뜨는 편지(물리 메뉴 가운데 레터). SKIP 버튼으로 닫으면 메뉴가 보인다. */
-const MENU_LETTER = `<div class="lt-hi">Dear, Guest</div>
+const MENU_LETTER = `<div class="lt-logo">${PINE_LOGO}</div>
+  <div class="lt-brand">Pine &amp; Co<span>SEOUL</span></div>
+  <div class="lt-hi">Dear, Guest</div>
   <div class="lt-sub">Welcome back home &nbsp;🍸</div>
   <p>Pine &amp; Co's main theme is<br><b>"born from wild ideas and little moments in life."</b></p>
   <p>Our menu is a single sheet — simple to print, big on imagination. The game menu lives on your phone; if that feels too high-tech, don't worry, we've got you.</p>
   <p>If you have any allergies to food or drinks, please let us know in advance.<br>Classic cocktails on the menu are also available to order.</p>
-  <div class="lt-wifi" onclick="menuWifi()">📶&nbsp; FREE WIFI</div>
-  <div class="lt-wifi-note hidden" id="wifiNote">Scan the WiFi QR on your table to join automatically, or ask your bartender for the password.</div>`;
+  <div class="lt-staff">Please ask our staff for the Wi-Fi.</div>`;
 /* 시그니처 칵테일: 스토리 카드(인용문 → Twisted 컨셉 → 글라스 → 재료). 전 종 ₩26,000(팁 별도). */
 const COCKTAIL_PRICE = '₩26,000';
 const MENU_COCKTAILS = [
