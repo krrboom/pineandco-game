@@ -2731,7 +2731,7 @@ function collectPickup(g){
   if(g.kind==='bill'){               // 보스 지폐/뭉치: 금액(won)만큼 매출 + 경험치(동전보다 많이)
     money += g.won; player.xp += Math.round(billXP(g.won)*xm); playCoin();
   } else {                            // 황금동전
-    money += 500; player.xp += Math.round(2*xm); playCoin();   // 동전도 경험치 2(기존 1)
+    money += 500; player.xp += 2.2*xm; playCoin();   // 동전 경험치 2 → 2.2 (+10%). 반올림 안 함(소수 누적 → 10% 실제 반영)
   }
   if(player.xp>=player.xpNeed) levelUp();
 }
