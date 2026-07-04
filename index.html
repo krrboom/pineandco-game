@@ -51,6 +51,27 @@
   .menu-item{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; }
   .menu-item span:last-child{ color:var(--pine-light); }
   .menu-item small{ display:block; color:var(--dim); font-size:7px; margin-top:6px; line-height:1.6; }
+  .mc-note{ color:var(--dim); font-size:7px; letter-spacing:0; }
+  /* 메뉴 섹션 네비(칵테일/푸드/보틀/위스키) */
+  .menu-nav{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:2px auto 12px; max-width:520px; }
+  .menu-nav button{ font-family:inherit; font-size:9px; letter-spacing:.5px; padding:7px 11px; cursor:pointer;
+    color:var(--dim); background:#141b12; border:1px solid #2a3a2a; border-radius:6px; }
+  .menu-nav button.active{ color:var(--pine-light); border-color:var(--pine); background:#1c241a; }
+  /* 웰컴 내러티브 */
+  .menu-welcome{ text-align:center; max-width:460px; margin:0 auto 16px; color:#e9e2d2; font-size:9px; line-height:1.75; font-style:italic; }
+  .menu-welcome b{ color:var(--amber); font-style:normal; }
+  /* 시그니처 칵테일 스토리 카드 */
+  .ck-card{ text-align:left; border:1px solid #2a3a2a; border-radius:8px; padding:11px 13px; margin-bottom:9px;
+    background:rgba(20,27,18,.45); }
+  .ck-head{ display:flex; align-items:baseline; gap:8px; }
+  .ck-num{ color:var(--pine-light); font-size:9px; min-width:16px; }
+  .ck-name{ color:#fff; font-size:12px; letter-spacing:1px; flex:1; }
+  .ck-price{ color:var(--amber); font-size:9px; white-space:nowrap; }
+  .ck-quote{ color:#efe8d8; font-size:9.5px; font-style:italic; line-height:1.5; margin:7px 0 7px; }
+  .ck-meta{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .ck-twist{ display:inline-block; color:#1a130a; background:var(--gold,#c89a3c); font-size:7px; padding:2px 7px; border-radius:3px; letter-spacing:.5px; }
+  .ck-tag{ display:inline-block; color:var(--pine-light); border:1px solid var(--pine); font-size:7px; padding:2px 6px; border-radius:3px; }
+  .ck-ing{ color:var(--dim); font-size:8px; line-height:1.65; margin-top:8px; }
   /* 심플시럽 조합 화면 */
   .craft-eq{ display:flex; align-items:center; justify-content:center; gap:12px; margin:6px 0 16px; }
   .craft-ic{ width:52px; height:52px; object-fit:contain; image-rendering:pixelated; }
@@ -325,6 +346,10 @@
     .mname{ font-size:15px; margin-bottom:6px; } .mtrait{ font-size:13px; line-height:1.55; }
     .menu-list{ max-width:700px; font-size:12px; }
     .menu-cat{ font-size:15px; } .menu-item{ padding:11px 0; } .menu-item small{ font-size:9.5px; }
+    .menu-nav{ max-width:700px; } .menu-nav button{ font-size:12px; padding:9px 16px; }
+    .menu-welcome{ max-width:600px; font-size:12px; }
+    .ck-name{ font-size:15px; } .ck-num{ font-size:12px; } .ck-price{ font-size:12px; }
+    .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; }
     #indexScreen .title, #menuScreen .title{ font-size:clamp(22px,3vw,34px); }
     #indexScreen .board-tabs .bt-tab, #menuScreen .board-tabs .bt-tab{ font-size:12px; padding:7px 12px; }
   }
@@ -549,6 +574,7 @@
 
   <div class="screen hidden" id="menuScreen">
     <h2 class="title">— MENU —</h2>
+    <div class="menu-nav" id="menuNav"></div>
     <div class="scrollbox"><div class="menu-list" id="menuList"></div></div>
     <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
@@ -623,7 +649,7 @@
    초보용 메모: 이 파일 하나로 끝. 자주 만질 곳:
    - CHARACTERS{}  : Pat / Joe 기본 능력치
    - SPIRITS{}     : 6대 기주 무기 정의 (보스가 떨어뜨림)
-   - MENU_DATA[]   : 실제 메뉴로 교체
+   - MENU_COCKTAILS[] / SEC_* : 실제 매장 메뉴(칵테일 카드 + 섹션)
    - DIFF()        : 난이도 곡선 (시간이 갈수록 강해지는 핵심)
    - SURGE_*       : 러시(피버) 타임 주기/길이
    ===================================================================== */
@@ -1185,60 +1211,67 @@ function recalcStats(){
 
 /* ===== 메뉴 (★ 실제 파인앤코 메뉴로 교체) ===== */
 // 실제 Pine & Co Seoul 메뉴 (2026.06.14). 칵테일 1~14 순서대로, 모두 ₩26,000.
-const MENU_DATA = [
-  { cat:'SIGNATURE COCKTAILS · ₩26,000 (tip not included)', items:[
-    { n:'1. BINGSU',  p:'₩26,000', d:'Twisted Frozen G&T · “What if Korean Bingsu is a G&T?” · shiso · gin · tonic water · mandarin sorbet · lime' },
-    { n:'2. NURUK',   p:'₩26,000', d:'Twisted Whisky Highball · “Barley meets nuruk” · whisky · nuruk · genmai tea · koji · toasted barley' },
-    { n:'3. PICNIC',  p:'₩26,000', d:'Twisted Tom Collins · “Eggs, Milkis, gimbap, a mom’s picnic combo!” · boiled egg · vodka · lactose · yuzu · lemon · gimbap · umami rice' },
-    { n:'4. BULGOGI', p:'₩26,000', d:'Twisted Paloma & Batanga · “Tacos and palomas, but add bulgogi?” · tequila · bulgogi · calamansi · grapefruit · cola syrup · tonic water' },
-    { n:'5. WHISKY TEA & DIMSUM', p:'₩26,000', d:'Twisted Rob Roy · Hong Kong dim sum + truffle · whisky · black vinegar shrub · amontillado · vermouth · shiitake · homemade dim sum · truffle' },
-    { n:'6. HWACHAE', p:'₩120,000 / 26,000', d:'Twisted Punch · “How do Koreans spend their summer?” · soju · omija · watermelon · sparkling wine · LARGE = punch (seasonal fruit), REGULAR = melon bingsu' },
-    { n:'7. APEROL SLUSH', p:'₩26,000', d:'Seasonal · Twisted Aperol Spritz · “A summer slush with Aperol!” · aperol · sparkling wine · campari · orange · lemon zest' },
-    { n:'8. KIWI COLADA', p:'₩26,000', d:'Twisted Piña Colada · “A nutty spin with a hint of kiwi!” · white rum · korean mint · pistachio · kiwi · almond · coconut · green tea' },
-    { n:'9. YOGURT', p:'₩26,000', d:'Twisted Kaikan Fizz · “My wife’s homemade yogurt recipe” · vodka · apricot · peach · homemade yogurt · lime · agave · lemongrass · kaffir lime' },
-    { n:'10. OLIVE', p:'₩26,000', d:'Twisted Basil Smash · “Which ingredient in gin is best?” · gin · olive · lemon · celery bitter · basil · yuzu · foamer · peperoncino · kimchi · cheese · tomato' },
-    { n:'11. HOT BEER', p:'₩26,000', d:'Twisted Irish Coffee · “The warmth of coffee using dark beer” · rye whisky · peanut butter · soboro powder · coffee · Guinness · mango butter' },
-    { n:'12. CACAO', p:'₩26,000', d:'Twisted Old Fashioned · “Whiskey and chocolate, magic happens.” · whisky · cacao bitters · lapsang souchong · port wine · chocolate · cacao nibs · baby choux' },
-    { n:'13. COFFEE', p:'₩26,000', d:'Twisted Espresso Martini · “What if coffee were clear?” · vodka · coffee · cacao nibs · amontillado · homemade biscoff' },
-    { n:'14. PASSIONFRUIT', p:'₩26,000', d:'Twisted Pornstar Martini · “Vesper sharpness, yakju softened.” · gin · vodka · passionfruit · lemon · yakju · vanilla' },
-  ]},
-  { cat:'MORE DRINKS', items:[
-    { n:'SPECIAL HIGHBALL — Clase Azul Reposado', p:'₩40,000', d:'Clase Azul Reposado · orange soda' },
-    { n:'SOMAC — Peanut Soju & Beer', p:'₩8,000', d:'peanut butter · soju · beer' },
-    { n:'NON-ALCOHOL — Mr. Tropical', p:'₩18,000', d:'seasonal fruits · tea' },
-    { n:'GACHA', p:'₩23,000', d:'Can’t decide? Spin the gacha for a surprise cocktail.' },
-    { n:'GUN BAE — Signature Shot', p:'₩26,000', d:'house signature' },
-  ]},
-  { cat:'FOOD', items:[
-    { n:'Charcuterie & Bruschetta', p:'₩25,000', d:'mortadella · tuna pâté · herbs · olive tapenade · carrot rape · rye cracker' },
-    { n:'Samgyupsal', p:'₩30,000', d:'caramelized pork belly · namul chimichurri · basil yuzu olive oil · red pepper oil' },
-    { n:'Ddeok-Galbi', p:'₩25,000', d:'minced pork & beef · homemade galbi sauce · cinnamon · mayo · shichimi' },
-    { n:'Ramen', p:'₩20,000', d:'beef & chicken soup · capellini · mungbean sprout · tuna & kimchi onigiri' },
-    { n:'P.F.C', p:'₩25,000', d:'boneless chicken leg · Uiseong garlic · home-made soy sauce · mezcal spray' },
-    { n:'Roasted Chicken', p:'₩25,000', d:'sake-marinade chicken leg · yuzu soy · perilla · oven-roasted (takes a little longer)' },
-    { n:'Makgeolli Ice-cream', p:'₩23,000', d:'fresh salad · makgeolli · roasted rice · solomon’s seal · seasonal fruit · redbean chip (contains alcohol)' },
-  ]},
-  { cat:'CHAMPAGNE  (bottle / glass)', items:[
-    { n:'Telmont Reserve Brut', p:'₩290,000 / 19,000', d:'' },
-    { n:'Piper-Heidsieck Cuvée Brut', p:'₩290,000', d:'' },
-    { n:'Piper-Heidsieck Essential', p:'₩310,000', d:'' },
-    { n:'Perrier-Jouët Belle Époque', p:'₩650,000', d:'' },
-    { n:'Dom Pérignon', p:'₩900,000', d:'' },
-  ]},
-  { cat:'WINE  (bottle / glass)', items:[
-    { n:'Concha y Toro — Cabernet Sauvignon', p:'₩90,000 / 15,000', d:'' },
-    { n:'Rawson’s Retreat — Chardonnay', p:'₩90,000 / 15,000', d:'' },
-    { n:'Oyster Bay — Sauvignon Blanc', p:'₩120,000', d:'' },
-    { n:'Carmel Road — Pinot Noir', p:'₩120,000', d:'' },
-  ]},
-  { cat:'BEER & SOFT', items:[
-    { n:'Guinness', p:'₩15,000', d:'' },
-    { n:'Smithwick’s Pale Ale', p:'₩15,000', d:'' },
-    { n:'Perrier', p:'₩5,000', d:'' },
-    { n:'Fever-Tree Ginger / Tonic', p:'₩5,000', d:'' },
-    { n:'Sprite · Coke · Zero Coke', p:'₩5,000', d:'' },
-  ]},
+const MENU_WELCOME = 'Born from <b>wild ideas and little moments in life</b>.<br>Dear guest — welcome back home.';
+/* 시그니처 칵테일: 스토리 카드(인용문 → Twisted 컨셉 → 재료). 전 종 ₩26,000(팁 별도). */
+const COCKTAIL_PRICE = '₩26,000';
+const MENU_COCKTAILS = [
+  { n:1,  name:'BINGSU', tw:'Twisted Frozen G&T', q:'What if Korean Bingsu is a G&T?', ing:'shiso · gin · tonic water · mandarin sorbet · lime' },
+  { n:2,  name:'NURUK', tw:'Twisted Whisky Highball', q:'Whisky is made from barley… so what if barley meets nuruk?', ing:'whisky · nuruk · genmai tea · koji · toasted barley' },
+  { n:3,  name:'PICNIC', tw:'Twisted Tom Collins', q:'Eggs, Milkis, gimbap… a classic mom picnic combo!', ing:'boiled egg · vodka · lactose · yuzu · lemon · gimbap · umami rice' },
+  { n:4,  name:'BULGOGI', tw:'Twisted Paloma & Batanga', q:'Tacos and palomas, match made in heaven. But add bulgogi?', ing:'tequila · bulgogi · calamansi · grapefruit · cola syrup · tonic water' },
+  { n:5,  name:'WHISKY TEA & DIMSUM', tw:'Twisted Rob Roy', q:'A Pine&Co style cocktail combining Hong Kong dim sum flavors with truffle.', ing:'whisky · black vinegar shrub · amontillado · vermouth · shiitake · homemade dim sum · truffle' },
+  { n:6,  name:'HWACHAE', tw:'Twisted Punch', q:'Do you wanna know how Koreans spend their summer?', ing:'soju · omija · watermelon · sparkling wine · LARGE = seasonal-fruit punch / REGULAR = melon bingsu', p:'₩120,000 / 26,000' },
+  { n:7,  name:'APEROL SLUSH', tw:'Twisted Aperol Spritz', q:'A summer slush with Aperol spritz!', ing:'aperol · sparkling wine · campari · orange · lemon zest', tag:'SEASONAL' },
+  { n:8,  name:'KIWI COLADA', tw:'Twisted Piña Colada', q:'A nutty spin on the Piña Colada with a hint of kiwi!', ing:'white rum · korean mint · pistachio · kiwi · almond · coconut · green tea' },
+  { n:9,  name:'BANANA', tw:'Twisted Daiquiri', q:'Sweet, smooth, and just a little bit wild. Not your average Daiquiri — this one’s got curves.', ing:'rum · banana · lime · homemade black sesame meringue', tag:'NEW · 120th' },
+  { n:10, name:'YOGURT', tw:'Twisted Kaikan Fizz', q:'My wife makes yogurt at home. I stole her recipe.', ing:'vodka · apricot · peach · homemade yogurt · lime · agave · lemongrass · kaffir lime' },
+  { n:11, name:'OLIVE', tw:'Twisted Basil Smash', q:'Which ingredient in the gin is best?', ing:'gin · olive · lemon · celery bitter · basil · yuzu · cocktail foamer · peperoncino bitter · kimchi · cheese · tomato' },
+  { n:12, name:'HOT BEER', tw:'Twisted Irish Coffee', q:'Designed to recreate the warmth of coffee using dark beer.', ing:'rye whisky · peanut butter · soboro powder · coffee · Guinness · mango butter' },
+  { n:13, name:'CACAO', tw:'Twisted Old Fashioned', q:'Whiskey and chocolate walk into a glass… Magic happens.', ing:'whisky · cacao bitters · lapsang souchong · port wine · chocolate · cacao nibs · baby choux' },
+  { n:14, name:'COFFEE', tw:'Twisted Espresso Martini', q:'What if coffee were clear? Espresso meets mystery.', ing:'vodka · coffee · cacao nibs · amontillado · watermelon · cranberry · homemade biscoff' },
+  { n:15, name:'PASSIONFRUIT', tw:'Twisted Pornstar Martini', q:'Pornstar indulgence, Gibson edge. Vesper sharpness, yakju softened.', ing:'gin · vodka · passionfruit · lemon · yakju · vanilla' },
 ];
+/* 나머지 섹션(리스트형) */
+const SEC_MORE = { cat:'MORE DRINKS', items:[
+  { n:'SPECIAL HIGHBALL — Clase Azul Reposado', p:'₩40,000', d:'Clase Azul Reposado · orange soda' },
+  { n:'SOMAC — Peanut Soju & Beer', p:'₩8,000', d:'peanut butter · soju · beer' },
+  { n:'NON-ALCOHOL — Mr. Tropical', p:'₩18,000', d:'seasonal fruits · tea' },
+  { n:'GACHA', p:'₩23,000', d:'Can’t decide? Spin the gacha for a surprise cocktail.' },
+  { n:'GUN BAE — Signature Shot', p:'₩26,000', d:'house signature' },
+]};
+const SEC_FOOD = { cat:'FOOD', items:[
+  { n:'Charcuterie & Bruschetta', p:'₩25,000', d:'mortadella · tuna pâté · herbs · olive tapenade · carrot rape · rye cracker' },
+  { n:'Samgyupsal', p:'₩30,000', d:'caramelized pork belly · namul chimichurri · basil yuzu olive oil · red pepper oil' },
+  { n:'Ddeok-Galbi', p:'₩25,000', d:'minced pork & beef · homemade galbi sauce · cinnamon · mayo · shichimi' },
+  { n:'Ramen', p:'₩20,000', d:'beef & chicken soup · capellini · mungbean sprout · tuna & kimchi onigiri' },
+  { n:'P.F.C', p:'₩25,000', d:'boneless chicken leg · Uiseong garlic · homemade soy sauce · mezcal spray' },
+  { n:'Roasted Chicken', p:'₩25,000', d:'sake-marinade chicken leg · yuzu soy · perilla · oven-roasted (takes 15 min+)' },
+  { n:'Makgeolli Ice-cream', p:'₩23,000', d:'fresh salad · makgeolli · roasted rice · solomon’s seal · seasonal fruit · redbean chip (contains alcohol)' },
+]};
+const SEC_CHAMP = { cat:'CHAMPAGNE  (bottle / glass)', items:[
+  { n:'Telmont Reserve Brut', p:'₩290,000 / 19,000', d:'' },
+  { n:'Piper-Heidsieck Cuvée Brut', p:'₩290,000', d:'' },
+  { n:'Piper-Heidsieck Essential', p:'₩310,000', d:'' },
+  { n:'Perrier-Jouët Belle Époque', p:'₩650,000', d:'' },
+  { n:'Dom Pérignon', p:'₩900,000', d:'' },
+]};
+const SEC_WINE = { cat:'WINE  (bottle / glass)', items:[
+  { n:'Concha y Toro — Cabernet Sauvignon', p:'₩90,000 / 15,000', d:'' },
+  { n:'Rawson’s Retreat — Chardonnay', p:'₩90,000 / 15,000', d:'' },
+  { n:'Oyster Bay — Sauvignon Blanc', p:'₩120,000', d:'' },
+  { n:'Carmel Road — Pinot Noir', p:'₩120,000', d:'' },
+]};
+const SEC_BEER = { cat:'BEER & SOFT', items:[
+  { n:'Guinness', p:'₩15,000', d:'' },
+  { n:'Smithwick’s Pale Ale', p:'₩15,000', d:'' },
+  { n:'Perrier', p:'₩5,000', d:'' },
+  { n:'Fever-Tree Ginger / Tonic', p:'₩5,000', d:'' },
+  { n:'Sprite · Coke · Zero Coke · Red Bull', p:'₩5,000', d:'' },
+]};
+const SEC_PACO = { cat:'PACO SHOP', items:[
+  { n:'Voucher', p:'₩45,000', d:'use next time at Pine&Co · Cricket, Hopers' },
+  { n:'T-Shirt', p:'₩30,000', d:'size Large, Baby' },
+]};
 
 /* ===== 상태 ===== */
 let state='title';
@@ -1370,11 +1403,36 @@ function renderIndex(){
 function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
   document.getElementById('hiTitle').textContent=fmtTime(HI_SCORE); cloudFetch('time'); show('titleScreen'); }
 function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('selectScreen'); selIndex=0; updateSelectHighlight(); }
-function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens();
-  document.getElementById('menuList').innerHTML = MENU_DATA.map(cat=>`
-    <div class="menu-cat">${cat.cat}</div>
-    ${cat.items.map(it=>`<div class="menu-item"><span>${it.n}<small>${it.d}</small></span><span>${it.p}</span></div>`).join('')}`).join('');
-  show('menuScreen'); }
+let curMenuTab='cocktails';
+function showMenu(){ initAudio(); playSelect(); state='menu'; hideAllScreens(); curMenuTab='cocktails'; renderMenu(); show('menuScreen'); }
+function showMenuTab(t){ curMenuTab=t; try{ playSelect(); }catch(e){} renderMenu();
+  const sb=document.querySelector('#menuScreen .scrollbox'); if(sb) sb.scrollTop=0; }
+function menuSection(sec){ return `<div class="menu-cat">${sec.cat}</div>`+
+  sec.items.map(it=>`<div class="menu-item"><span>${it.n}${it.d?`<small>${it.d}</small>`:''}</span><span>${it.p}</span></div>`).join(''); }
+function renderMenu(){
+  const tabs=[['cocktails','🍸 COCKTAILS'],['food','🍽 FOOD'],['bottles','🍾 BOTTLES'],['whisky','🥃 WHISKY']];
+  document.getElementById('menuNav').innerHTML = tabs.map(([k,l])=>
+    `<button class="${curMenuTab===k?'active':''}" onclick="showMenuTab('${k}')">${l}</button>`).join('');
+  let html='';
+  if(curMenuTab==='cocktails'){
+    html = `<div class="menu-welcome">${MENU_WELCOME}</div>`
+      + `<div class="menu-cat">SIGNATURE COCKTAILS · ${COCKTAIL_PRICE} <span class="mc-note">(tip not included)</span></div>`
+      + MENU_COCKTAILS.map(c=>`<div class="ck-card">
+          <div class="ck-head"><span class="ck-num">${c.n}</span><span class="ck-name">${c.name}</span><span class="ck-price">${c.p||COCKTAIL_PRICE}</span></div>
+          <div class="ck-quote">“${c.q}”</div>
+          <div class="ck-meta"><span class="ck-twist">${c.tw}</span>${c.tag?`<span class="ck-tag">${c.tag}</span>`:''}</div>
+          <div class="ck-ing">${c.ing}</div>
+        </div>`).join('')
+      + menuSection(SEC_MORE);
+  } else if(curMenuTab==='food'){
+    html = menuSection(SEC_FOOD);
+  } else if(curMenuTab==='bottles'){
+    html = menuSection(SEC_CHAMP)+menuSection(SEC_WINE)+menuSection(SEC_BEER)+menuSection(SEC_PACO);
+  } else {   // whisky
+    html = `<div class="menu-welcome">Our whisky &amp; spirits list is being updated.<br>The full flavour map (rich · fruity · woody · smoky · light · honey) lands here soon — ask your bartender in the meantime.</div>`;
+  }
+  document.getElementById('menuList').innerHTML = html;
+}
 
 /* ===== 게임 시작 ===== */
 function startGame(charKey){
