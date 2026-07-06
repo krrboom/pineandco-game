@@ -511,7 +511,7 @@
   <div id="statPanel" class="hidden">
     <div class="strow"><b>SPD</b><span class="sbar" id="stSpeed"></span></div>
     <div class="strow"><b>PWR</b><span class="sbar" id="stPower"></span><i class="stn" id="nPower"></i></div>
-    <div class="strow"><b>ATK</b><span class="sbar" id="stRapid"></span><i class="stn" id="nRapid"></i></div>
+    <div class="strow"><b>RPD</b><span class="sbar" id="stRapid"></span><i class="stn" id="nRapid"></i></div>
     <div class="strow"><b>HP</b><span class="sbar" id="stHealth"></span><i class="stn" id="nHealth"></i></div>
     <div class="strow"><b>REG</b><span class="sbar" id="stRegen"></span><i class="stn" id="nRegen"></i></div>
     <div class="strow"><b>DEF</b><span class="sbar" id="stDef"></span><i class="stn" id="nDef"></i></div>
@@ -1156,7 +1156,7 @@ const CHARACTERS = {
   // Pat: 마티니 글라스를 던진다 — 강하고 광역(쉐이킹), 느림
   // 기본공격 약화(칵테일 시스템이 주력) — Pat 쉐이커(splash), Joe 믹싱글라스(관통 강화)
   pat: { name:'PAT', color:'#d9544d', moveSpeed:1.9, maxHp:130,
-         base:'shaker', projKind:'shaker', fireCd:49, dmg:40, projSpeed:4.6, projR:8, splash:38, pierce:0 },
+         base:'shaker', projKind:'shaker', fireCd:49, dmg:72, projSpeed:4.6, projR:8, splash:38, pierce:0 },   // 기본공격 공격력 +80%(40→72)
   // Joe: 믹싱글라스를 던진다 — 빠르고 강한 관통 (한 줄로 여러 마리 꿰뚫음)
   joe: { name:'JOE', color:'#e6b450', moveSpeed:3.0, maxHp:85,
          base:'barspoon', projKind:'mixglass', fireCd:14, dmg:6, projSpeed:8.5, projR:4, splash:0, pierce:8 }
