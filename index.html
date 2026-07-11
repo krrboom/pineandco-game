@@ -1120,11 +1120,12 @@ function playHit(){ const now=audioCtx?audioCtx.currentTime:0; if(!audioCtx||!SF
 function playCoin(){ const now=audioCtx?audioCtx.currentTime:0; if(!audioCtx||!SFX.coin||now-lastCoinT<0.05) return; lastCoinT=now; playSfx('coin',1.15,0); }
 let _lastSel=0;
 function playSelect(){ var t=(window.performance?performance.now():Date.now()); if(t-_lastSel<80) return; _lastSel=t; playSfx('select',1.25,0); }
-/* 모든 버튼 클릭에 선택 효과음(중복은 위 스로틀로 자동 제거). 게임 액션버튼(필살기·대쉬)은 제외. */
+/* ★모든 버튼·클릭요소에 동일한 'select' 효과음. (button + onclick 달린 div 카드까지 전부 커버)
+   중복은 playSelect의 80ms 스로틀로 자동 제거 → 항상 같은 소리 1번. 게임 액션버튼(필살기·대쉬)만 제외(전투 연타). */
 document.addEventListener('click', function(e){
-  var el = e.target.closest && e.target.closest('button, .imgbtn, .letter-skip');
+  var el = e.target.closest && e.target.closest('button, [onclick], .imgbtn, .letter-skip, .ck-card, .up-card, .char');
   if(!el) return;
-  if(el.id==='ultBtn' || el.id==='dashBtn') return;
+  if(el.id==='ultBtn' || el.id==='dashBtn') return;   // 필살기·대쉬는 전투 컨트롤이라 UI클릭음 제외
   try{ initAudio(); playSelect(); }catch(_){}
 }, true);
 function playHurt(){ playSfx('hurt',1.2,0); }   // 플레이어 피격 (무적 38프레임이라 자동 스로틀됨)
