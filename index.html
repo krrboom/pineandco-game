@@ -338,6 +338,15 @@
   .hint{ font-size:8px; color:var(--dim); line-height:1.9; }
   .drop-banner{ position:absolute; top:40%; left:0; right:0; text-align:center; font-size:11px;
     color:var(--amber); text-shadow:2px 2px 0 #000; pointer-events:none; z-index:7; }
+  /* 30분 피날레 메시지 (가운데) */
+  .finale-msg{ position:absolute; inset:0; z-index:9; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; padding:24px; text-align:center; pointer-events:none;
+    background:radial-gradient(60% 50% at 50% 45%, rgba(20,4,4,.55), rgba(8,4,4,.82)); }
+  .finale-msg .fin-title{ color:#ff5a4d; font-size:clamp(22px,7vw,40px); font-weight:900; letter-spacing:2px;
+    text-shadow:2px 2px 0 #000, 0 0 18px rgba(255,60,50,.9); animation:bossShake .1s infinite; }
+  .finale-msg .fin-body{ color:#f4ead6; font-size:clamp(12px,3.6vw,18px); line-height:1.6; max-width:22ch;
+    text-shadow:1px 2px 3px #000; }
+  .finale-msg .fin-sub{ color:var(--amber,#c89a3c); font-size:clamp(10px,2.8vw,14px); letter-spacing:2px; font-weight:700; }
   .drop-banner.boss{ color:#ff5a4d; font-size:clamp(15px,4.4vw,22px);
     text-shadow:2px 2px 0 #000, 0 0 12px rgba(217,40,40,.9); animation:bossShake .1s infinite; }
   @keyframes bossShake{ 0%,100%{transform:translateX(-2px)} 50%{transform:translateX(2px)} }
@@ -566,6 +575,8 @@
     <div class="strow"><b>DEF</b><span class="sbar" id="stDef"></span><i class="stn" id="nDef"></i></div>
   </div>
   <div id="dropBanner" class="drop-banner hidden"></div>
+  <!-- 30분 피날레: 라이벌 바텐더가 등장해 교대(게임 종료) -->
+  <div id="finaleMsg" class="finale-msg hidden"></div>
 
   <button id="ultBtn" class="hidden" onclick="useUltimate()" aria-label="ultimate">⚡</button>
   <button id="dashBtn" class="hidden" aria-label="dash">»</button>
@@ -1622,6 +1633,8 @@ let gameTime, killCount, money, spawnTimer, frame, enemyId;
 let sbGod=false;   // 샌드박스 무적
 let surgeUntil, nextSurge, bannerTimer, bannerText;
 let nextRaid, raidLeft, raidNextBoss;   // 5분마다 보스 레이드
+let finale={ active:false, until:0, rival:null, killed:false };   // 30분 피날레: 라이벌 바텐더 등장 → 교대(종료)
+const FINALE_AT = 1800;   // 30분(초)
 let bossCount, nextBoss, bossAlertUntil=0;
 let nextWall;   // 노부킹 무리(가로 벽 보스) 다음 등장 시각. 0이면 더 안 나옴
 let bossBag=[], bossRecent=[];   // bossRecent = 최근 2턴에 나온 보스
@@ -2051,6 +2064,7 @@ function startGame(charKey){
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bossAlertUntil=0; keys={};
   nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set(); declinedCraft=new Set(); pendingCraft=null; pendingFromTip=false;
   bossCount=0; nextBoss=BOSS_FIRST; nextWall=WALL_FIRST; bossBag=[]; bossRecent=[];
+  finale={ active:false, until:0, rival:null, killed:false }; try{ hide('finaleMsg'); }catch(e){}
   state='playing'; hideAllScreens(); show('hud'); show('hudChips'); show('ultBtn'); show('statPanel');
   document.getElementById('hudCharImg').src='assets/name_'+charKey+'.png';
   updateWeaponChips();
@@ -2829,12 +2843,44 @@ function bossBanner(nick, intro){
   bannerTimer = 320;   // ~5.3초 (2~3줄 읽을 시간)
 }
 
+/* ===== 30분 피날레: 라이벌 바텐더가 등장해 "이제 그만" 하고 교대(게임 종료) ===== */
+function startFinale(){
+  finale.active=true; finale.until=frame+220; finale.killed=false;
+  const rk = (player.key==='joe') ? 'pat' : 'joe';   // 플레이어가 Joe면 Pat, Pat이면 Joe
+  finale.rival={ key:rk, x:W/2, y:-90 };
+  enemies.length=0; eprojectiles.length=0; projectiles.length=0; mintRain.length=0; gatStream.length=0;   // 깔끔한 연출
+  const rn=rk.toUpperCase(), pn=(player.key||'').toUpperCase();
+  const el=document.getElementById('finaleMsg');
+  if(el){ el.innerHTML =
+    `<div class="fin-title">★ CLOSING TIME ★</div>`+
+    `<div class="fin-body">${rn} steps behind the bar.<br>“Alright ${pn}, that’s enough for one night.<br>You’ve poured enough for a lifetime — go home.”</div>`+
+    `<div class="fin-sub">— YOUR SHIFT ENDS · 30:00 —</div>`;
+    el.classList.remove('hidden'); }
+  bannerTimer=0; try{ hide('dropBanner'); }catch(e){}
+  try{ playBossAlarm(); }catch(e){} try{ playDing(); }catch(e){}
+  musicDuckUntil = frame + 240;
+}
+function finaleTick(){
+  const r=finale.rival;
+  if(r){ r.x += (player.x-r.x)*0.045; r.y += (player.y-r.y)*0.04; }   // 라이벌이 플레이어에게 서서히 다가옴
+  if(!finale.killed && (frame>=finale.until || (r && Math.hypot(r.x-player.x, r.y-player.y)<26))){
+    finale.killed=true;
+    burst(player.x,player.y,'#ff3b3b',44); burst(player.x,player.y,'#ffffff',18);
+    player.hp=0;
+    try{ hide('finaleMsg'); }catch(e){}
+    gameOver();   // 교대 완료 → 게임 종료(스코어 등록 화면으로)
+  }
+}
 /* ===== 업데이트 ===== */
 function update(){
   frame++;
   if(state==='tip'){ tipTick(); return; }   // 팁 스핀 연출 중
   if(state!=='playing' || paused) return;   // 설정창 열려있으면 일시정지
   gameTime += 1/60;
+
+  // ★30분 피날레: 라이벌 바텐더(Pat↔Joe)가 등장해 교대 → 게임 종료
+  if(!finale.active && gameTime>=FINALE_AT){ startFinale(); }
+  if(finale.active){ finaleTick(); return; }   // 피날레 연출 중엔 일반 업데이트 정지
 
   // 러시 타임 트리거
   if(gameTime>=nextSurge && gameTime>=surgeUntil){
@@ -3946,6 +3992,18 @@ function draw(){
       }
       else { ctx.save(); ctx.translate(player.x-8,player.y-8); drawSprite(ctx,player.key,1); ctx.restore(); }
       ctx.strokeStyle='rgba(111,207,143,.1)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.pickupR,0,6.28); ctx.stroke();
+    }
+
+    // ★30분 피날레: 라이벌 바텐더가 위에서 내려와 다가옴 (붉은 위협 오라 + 큰 스프라이트, 살짝 흔들림)
+    if(finale.active && finale.rival){
+      const r=finale.rival, rim=spr(r.key);
+      const gr=ctx.createRadialGradient(r.x,r.y,6,r.x,r.y,72);
+      gr.addColorStop(0,'rgba(255,60,50,.55)'); gr.addColorStop(1,'rgba(255,40,40,0)');
+      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(r.x,r.y,72,0,6.28); ctx.fill();
+      if(rim){ const DH=96, aspect=rim.width/rim.height;
+        ctx.save(); ctx.translate(Math.random()*2-1, Math.random()*2-1);
+        drawImgC(rim, r.x, r.y, DH*aspect, DH, 0, r.x>player.x);
+        ctx.restore(); }
     }
 
     // 팁 연출: 화면 어둡게 + 후광 + 가운데서 뱅글뱅글 도는 플레이어
