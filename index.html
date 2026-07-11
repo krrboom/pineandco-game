@@ -122,8 +122,9 @@
     border:2px solid var(--gold,#c89a3c); }
   .ckm-x{ position:absolute; top:8px; right:10px; z-index:2; width:30px; height:30px; border:none; border-radius:50%;
     background:rgba(0,0,0,.55); color:#fff; font-size:15px; cursor:pointer; line-height:1; }
-  .ckm-imgwrap{ position:relative; border-radius:10px; overflow:hidden; background:#ded7c4; }
-  .ckm-img{ display:block; width:100%; height:auto; image-rendering:pixelated; image-rendering:crisp-edges; }
+  /* 사진마다 비율이 달라도(정사각/세로) 같은 크기 박스 안에 전체가 다 보이게 (object-fit:contain) */
+  .ckm-imgwrap{ position:relative; border-radius:10px; overflow:hidden; background:#ded7c4; height:clamp(190px,42vh,320px); }
+  .ckm-img{ display:block; width:100%; height:100%; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; }
   .ckm-name{ position:absolute; left:0; right:0; bottom:0; padding:26px 14px 10px; color:#fff;
     font-size:22px; font-weight:800; letter-spacing:1px; line-height:1.1; text-shadow:1px 2px 4px rgba(0,0,0,.9);
     background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.72)); }
