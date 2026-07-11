@@ -726,9 +726,9 @@
     <div class="scrollbox"><div class="menu-list" id="menuList"></div></div>
     <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
     <!-- 칵테일 사진 모달: 카드 탭 시 큰 사진 + 이름/재료/가격/설명 -->
-    <div id="ckModal" class="ck-modal hidden" onclick="closeCkModal(event)">
+    <div id="ckModal" class="ck-modal hidden" onclick="closeCkModal()">
       <div class="ckm-card">
-        <button class="ckm-x" onclick="closeCkModal(event,true)">✕</button>
+        <button class="ckm-x" onclick="closeCkModal()">✕</button>
         <div class="ckm-imgwrap">
           <img class="ckm-img" id="ckmImg" src="" alt="">
           <div class="ckm-name" id="ckmName"></div>
@@ -1998,7 +1998,7 @@ function openCkModal(i){
   document.getElementById('ckModal').classList.remove('hidden');
   try{ playSelect(); }catch(e){}
 }
-function closeCkModal(e, force){ if(force || (e&&e.target&&e.target.id==='ckModal')) document.getElementById('ckModal').classList.add('hidden'); }
+function closeCkModal(){ document.getElementById('ckModal').classList.add('hidden'); }   // 아무 곳이나 클릭하면 닫힘
 function renderMenu(){
   updateLangBars();
   const tabs=[['cocktails',T('cocktails')],['food',T('food')],['whisky',T('whisky')],['bottles',T('bottles')],['paco',T('paco')]];
