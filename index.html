@@ -110,6 +110,30 @@
   .ck-tag{ display:inline-block; color:var(--pine-light); border:1px solid var(--pine); font-size:7px; padding:2px 6px; border-radius:3px; }
   .ck-ing{ color:var(--dim); font-size:8px; line-height:1.65; margin-top:8px; }
   .ck-glass{ display:inline-flex; align-items:center; }
+  .ck-card{ cursor:pointer; transition:border-color .12s, background .12s; }
+  .ck-card:hover{ border-color:var(--gold,#c89a3c); background:rgba(30,40,26,.6); }
+  /* ── 칵테일 사진 모달 ── */
+  .ck-modal{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:safe center;
+    padding:20px; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background:linear-gradient(rgba(13,15,12,.94), rgba(11,13,10,.96)), url('assets/bg_logo.png');
+    background-size:auto, 300px; background-position:center; background-repeat:no-repeat, repeat; }
+  .ckm-card{ position:relative; width:100%; max-width:400px; background:#f0ebe0; color:#1a130a;
+    border-radius:14px; padding:14px 14px 18px; box-shadow:0 20px 60px rgba(0,0,0,.6);
+    border:2px solid var(--gold,#c89a3c); }
+  .ckm-x{ position:absolute; top:8px; right:10px; z-index:2; width:30px; height:30px; border:none; border-radius:50%;
+    background:rgba(0,0,0,.55); color:#fff; font-size:15px; cursor:pointer; line-height:1; }
+  .ckm-imgwrap{ position:relative; border-radius:10px; overflow:hidden; background:#ded7c4; }
+  .ckm-img{ display:block; width:100%; height:auto; image-rendering:pixelated; image-rendering:crisp-edges; }
+  .ckm-name{ position:absolute; left:0; right:0; bottom:0; padding:26px 14px 10px; color:#fff;
+    font-size:22px; font-weight:800; letter-spacing:1px; line-height:1.1; text-shadow:1px 2px 4px rgba(0,0,0,.9);
+    background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.72)); }
+  .ckm-sub{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:12px 2px 0; }
+  .ckm-twist{ display:inline-block; color:#1a130a; background:var(--gold,#c89a3c); font-size:10px; font-weight:700;
+    padding:3px 9px; border-radius:4px; letter-spacing:.5px; }
+  .ckm-price{ color:#7a5a1a; font-size:15px; font-weight:800; white-space:nowrap; }
+  .ckm-ing{ color:#5a5040; font-size:11px; line-height:1.7; margin:10px 2px 0; }
+  .ckm-desc{ color:#2a2418; font-size:12.5px; font-style:italic; line-height:1.55; margin:12px 2px 0;
+    border-top:1px solid #d8cfb8; padding-top:11px; }
   .gl-svg{ width:15px; height:20px; opacity:.95; }
   /* 위스키/스피릿 */
   .sp-legend{ text-align:center; color:#e9e2d2; font-size:8px; letter-spacing:.3px; margin:0 auto 14px; max-width:500px; line-height:2; }
@@ -651,6 +675,19 @@
     <div class="menu-nav" id="menuNav"></div>
     <div class="scrollbox"><div class="menu-list" id="menuList"></div></div>
     <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
+    <!-- 칵테일 사진 모달: 카드 탭 시 큰 사진 + 이름/재료/가격/설명 -->
+    <div id="ckModal" class="ck-modal hidden" onclick="closeCkModal(event)">
+      <div class="ckm-card">
+        <button class="ckm-x" onclick="closeCkModal(event,true)">✕</button>
+        <div class="ckm-imgwrap">
+          <img class="ckm-img" id="ckmImg" src="" alt="">
+          <div class="ckm-name" id="ckmName"></div>
+        </div>
+        <div class="ckm-sub"><span class="ckm-twist" id="ckmTwist"></span><span class="ckm-price" id="ckmPrice"></span></div>
+        <div class="ckm-ing" id="ckmIng"></div>
+        <div class="ckm-desc" id="ckmDesc"></div>
+      </div>
+    </div>
   </div>
 
   <div class="screen hidden" id="levelScreen">
@@ -1012,6 +1049,19 @@ function playSfx(name,gain,when){
   src.connect(g); g.connect(sfxBus||audioCtx.destination);
   try{ src.start(audioCtx.currentTime+(when||0), s.start, s.dur); }catch(e){ try{ src.start(); }catch(_){} }
 }
+/* 슈퍼 칵테일 완성 "띠링" — 신디사이즈 벨(에셋 불필요). 밝은 두 음 + 빠른 감쇠. */
+function playDing(){
+  if(!audioCtx) return;
+  const t0=audioCtx.currentTime, bus=sfxBus||audioCtx.destination;
+  [[1318.5,0],[1975.5,0.09]].forEach(([f,dt])=>{
+    try{ const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t0+dt); g.gain.exponentialRampToValueAtTime(0.55*sfxVol+0.0001,t0+dt+0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.55);
+      o.connect(g); g.connect(bus); o.start(t0+dt); o.stop(t0+dt+0.6);
+    }catch(e){}
+  });
+}
 /* 효과음: 각 사운드를 피크 0.85로 정규화(norm)했으니 gain은 강조용으로만 (배경음악 MVOL=0.3) */
 function playHit(){ const now=audioCtx?audioCtx.currentTime:0; if(!audioCtx||!SFX.hit||now-lastHitT<0.03) return; lastHitT=now; playSfx('hit',1.0,0); }
 function playCoin(){ const now=audioCtx?audioCtx.currentTime:0; if(!audioCtx||!SFX.coin||now-lastCoinT<0.05) return; lastCoinT=now; playSfx('coin',1.15,0); }
@@ -1293,7 +1343,7 @@ function recalcStats(){
   player.pickupR   = 72 + 45*(player.upPickup||0) + pas.magnet;
   player.defense   = Math.min(25, 3*(player.upDefense||0) + pas.armor);
   player.crit      = Math.min(0.5, Math.min(0.08, 0.01*(player.upCrit||0)) + pas.crit);
-  player.critMul   = 2 + 0.5*Math.max(0,(player.weapons.dryver||0)-1);   // 크리 데미지: 드라이버무스 레벨당 +50%(0.5배) → Lv1 ×2, Lv6 ×4.5
+  player.critMul   = [0,2,3.5,4,7,12,18][Math.min(6, player.weapons.dryver||0)] || 2;   // 크리 데미지: 드라이버무스 레벨별 ×2 / ×3.5 / ×4 / ×7 / ×12 / ×18 (확률은 그대로)
   player.regenBonus= 0.25*(player.upRegen||0) + pas.regen;
   player.xpMul     = Math.pow(1.15, player.upXp||0) * (1+pas.xp);
   player.basePierce= (c.pierce||0) + Math.floor(pas.pierce);
@@ -1525,6 +1575,7 @@ let state='title';
 let player, enemies, projectiles, eprojectiles, pickups, zones, particles, explosions, crits=[], limes=[];
 let mintRain=[];   // 사우스사이드 민트 레인: 하늘에서 한발씩 떨어질 폭탄 예약 큐
 let lightning=[];  // 김렛 전기 체인: 번개 아크 이펙트 큐 (짧게 반짝이고 사라짐)
+let gatStream=[];  // 게틀링 연속 스트림: 한 발씩 시간차로 뿜어져 나가는 탄 예약 큐 (진짜 게틀링건 느낌)
 let gameTime, killCount, money, spawnTimer, frame, enemyId;
 let sbGod=false;   // 샌드박스 무적
 let surgeUntil, nextSurge, bannerTimer, bannerText;
@@ -1875,6 +1926,20 @@ function showMenuTab(t){ curMenuTab=t; try{ playSelect(); }catch(e){} renderMenu
 function won(s){ return (s||'').replace(/₩/g,'₩ '); }   // 원화 기호와 금액 사이 공백으로 분리
 function menuRows(items){ return items.map(it=>`<div class="menu-item${it.img?' has-img':''}">${it.img?`<img class="paco-img" src="assets/${it.img}.png" alt="">`:''}<span>${it.n}${it.d?`<small>${it.d}</small>`:''}</span><span class="mi-price">${won(it.p)}</span></div>`).join(''); }
 function menuSection(catLabel, items){ return `<div class="menu-cat">${catLabel}</div>`+menuRows(items); }
+/* 칵테일 사진 모달: 카드 탭 → 큰 픽셀 사진 + 이름(사진 위) + 재료·가격 + 설명 */
+function ckSlug(name){ return name.toLowerCase().replace(/[^a-z0-9]/g,''); }
+function openCkModal(i){
+  const c0=MENU_COCKTAILS[i], c=ckT(c0,i);
+  document.getElementById('ckmImg').src='assets/photo_'+ckSlug(c0.name)+'.png';
+  document.getElementById('ckmName').textContent=c0.name;
+  document.getElementById('ckmTwist').textContent=c.tw;
+  document.getElementById('ckmPrice').textContent=won(c0.p||COCKTAIL_PRICE);
+  document.getElementById('ckmIng').textContent=c.ing;
+  document.getElementById('ckmDesc').textContent='“'+c.q+'”';
+  document.getElementById('ckModal').classList.remove('hidden');
+  try{ playSelect(); }catch(e){}
+}
+function closeCkModal(e, force){ if(force || (e&&e.target&&e.target.id==='ckModal')) document.getElementById('ckModal').classList.add('hidden'); }
 function renderMenu(){
   updateLangBars();
   const tabs=[['cocktails',T('cocktails')],['food',T('food')],['whisky',T('whisky')],['bottles',T('bottles')],['paco',T('paco')]];
@@ -1883,7 +1948,7 @@ function renderMenu(){
   let html='';
   if(curMenuTab==='cocktails'){
     html = `<div class="menu-cat">${T('sigTitle')} · ${won(COCKTAIL_PRICE)} <span class="mc-note">${T('tip')}</span></div>`
-      + MENU_COCKTAILS.map((c0,i)=>{ const c=ckT(c0,i); return `<div class="ck-card">
+      + MENU_COCKTAILS.map((c0,i)=>{ const c=ckT(c0,i); return `<div class="ck-card" onclick="openCkModal(${i})">
           <div class="ck-head"><span class="ck-num">${c0.n}</span><span class="ck-name">${c0.name}</span><span class="ck-glass">${glassSVG(c0.gl)}</span><span class="ck-price">${won(c0.p||COCKTAIL_PRICE)}</span></div>
           <div class="ck-quote">“${c.q}”</div>
           <div class="ck-meta"><span class="ck-twist">${c.tw}</span>${c0.tag?`<span class="ck-tag">${c0.tag}</span>`:''}</div>
@@ -1937,7 +2002,7 @@ function startGame(charKey){
     regenBonus:0,                                  // HEAL 강화로 쌓이는 패시브 회복(둘 다)
     weapons:{}, wt:{}, evolved:new Set(), superLv:{}, hasDash:false };  // weapons: 무기/재료 레벨, evolved: 진화 칵테일, superLv: 슈퍼 레벨(1~8)
   applyBaseLevel(); recalcStats();
-  enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[];
+  enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[]; gatStream=[];
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bossAlertUntil=0; keys={};
   nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set(); declinedCraft=new Set(); pendingCraft=null; pendingFromTip=false;
@@ -2279,6 +2344,10 @@ function onHit(p, e){
   if(p.cSlow){ e.frozenUntil = Math.max(e.frozenUntil||0, frame + p.cSlow); }
   if(p.cPoison){ e.poison = { dmg: Math.max(3, p.dmg*0.3), until: frame + p.cPoison }; }
   if(p.cExplode){ explodeAt(p.x, p.y, p.dmg*0.7, p.cExplode); }
+  // ★슈퍼 게틀링(코스모/보드카마티니): 명중 시 뒤(진행 방향)로 작은 분산탄 3발이 퍼져나감
+  if(p.scatter && p.evo && !p._scat){ p._scat=1; const b=Math.atan2(p.vy,p.vx);
+    for(let s=-1;s<=1;s++){ const ang=b+s*0.38;
+      projectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*7, vy:Math.sin(ang)*7, dmg:p.dmg*0.5, r:5, splash:0, pierce:1, hit:new Set(), life:42, kind:p.kind, cFreeze:30 }); } }
   // 모히또: 맞은 부위에서 민트잎 3개가 흩어져 날아감
   if(p.cMint){ const b=Math.atan2(p.vy,p.vx);
     for(let i=0;i<p.cMint;i++){ const ang=b+(i-(p.cMint-1)/2)*0.7;
@@ -2482,10 +2551,15 @@ function fireCocktail(key, lv){
     for(let i=0;i<n;i++){ const oa=(frame*0.04)+i*(6.28/n); add(Object.assign({ orbit:true, okey:key, oR, oav, oa, pierce:999, life:999999 }, o)); } };
   // 소다건식 연사(코스모=크랜베리 / 보드카마티니=올리브): 한 타겟을 락온해 죽을 때까지 난사, 죽으면 다음 타겟
   // 게틀링(소다건식): 방향키(aim) 방향으로 무작위 스프레이 연사. 방사형 아님. 발수 2배 + 데미지 +20%.
+  // ★게틀링: n발을 한 번에 뿌리지 않고 2프레임 간격 '연속 스트림'으로 예약 → 진짜 게틀링건처럼 끊김없이 발사.
+  //   스폰 시점의 조준 방향/위치를 써서 움직이며 쏘는 느낌 유지. evo 강화(폭발·빙결)는 미리 계산.
   const gatling=(pk, dmgC, sp, spread, life, extra)=>{
-    const n = 2*(1+Math.floor(lv/2));   // 피사체 2배: Lv1=2 → Lv6=8발
-    for(let i=0;i<n;i++){ const ang=aim+(Math.random()-0.5)*spread*2.4, s=sp+Math.random()*1.6;   // aim(방향키) 기준 랜덤 확산
-      add(Object.assign({ vx:Math.cos(ang)*s, vy:Math.sin(ang)*s, dmg:dmgC*P*1.2, r:7, life, kind:pk }, extra)); } };
+    const n = 2*(1+Math.floor(lv/2));   // 총 발수: Lv1=2 → Lv6=8발
+    const ex = Object.assign({}, extra);
+    if(pp && (ex.pierce==null || ex.pierce<99)) ex.pierce=(ex.pierce!=null?ex.pierce:1)+pp;
+    if(evo){ if(ex.cExplode) ex.cExplode=Math.round(ex.cExplode*1.7); if(ex.cFreeze) ex.cFreeze=Math.round(ex.cFreeze*1.6);
+      if(ex.cSlow) ex.cSlow=Math.round(ex.cSlow*1.6); if(ex.cMint) ex.cMint+=2; }
+    for(let i=0;i<n;i++) gatStream.push({ at:frame+i*2, dmg:dmgC*P*1.2, r:(ex.r||7), life, pk, spread, sp, ex, evo }); };
   switch(key){
     // ── 단검→⚡전기 체인: 가장 가까운 적에서 시작해 근처 적들로 번개가 튄다. 레벨업마다 ×1.8 더 많이 감전.
     //    공속·공격력은 올드패션드급(느리게·강하게). ──
@@ -2508,10 +2582,10 @@ function fireCocktail(key, lv){
       break; }
     // ── 하이볼→게틀링: 정면 탄산 스플래시를 무작위 연사로. 발수 2배·+20%. ──
     case 'highball':
-      gatling(img, 32, 8.5, 0.16, 46, { r:11, pierce:1, cExplode:24 }); break;
+      gatling(img, 32, 8.5, 0.16, 46, { r:11, pierce:0, cExplode:24, cFreeze:40 }); break;   // 저관통+빙결 · 슈퍼=피사체마다 폭발↑
     // ── 산탄콘→게틀링: 슬로우+민트 스프레이 연사. 발수 2배·+20%. ──
     case 'mojito':
-      gatling(img, 24, 7, 0.24, 58, { r:9, pierce:0, cExplode:36, cSlow:100, cMint:2 }); break;
+      gatling(img, 24, 7, 0.24, 58, { r:9, pierce:0, cExplode:36, cMint:2, cFreeze:40 }); break;   // 저관통+빙결 · 슈퍼=피사체마다 폭발↑
     // ── 마법지팡이: 유도 얼음볼트. Lv1=1발 → 2레벨마다 +1 ──
     case 'vodkatonic': { const n=1+Math.floor((lv-1)/2);
       fanAt(a, n, 7.5, 0.2, { dmg:34*P, r:8, pierce:1, life:95, homing:true, cFreeze:55 }); break; }
@@ -2532,23 +2606,24 @@ function fireCocktail(key, lv){
         add({ vx:Math.cos(ang)*8, vy:Math.sin(ang)*8, dmg:38*P, r:11, pierce:99, life:120, bounce:1+Math.floor(lv/4), cExplode:32 }); } break; }   // 튕김↓(1~3)·수명↓(200→120)로 화면에 덜 쌓이게
     // ── 혜성: 초고속 라인관통+빙결. Lv1=1발 → Lv5부터 2발 ──
     case 'vodkacranberry': { const n=1+(lv>=5?1:0);
-      fanAt(a, n, 11, 0.14, { dmg:60*P, r:13, pierce:99, life:100, cFreeze:55, lifesteal:0.08 }); break; }   // 흡혈: 준 데미지의 8%만큼 회복(피격당 최대 5)
+      fanAt(a, n, 11, 0.14, { dmg:60*P, r:13, pierce:99, life:200, cFreeze:55, lifesteal:0.08 }); break; }   // 흡혈 8%(피격당 최대 5) · 수명 2배(100→200)로 더 오래 유지
     // ── 성수(재해석): 무공격 병이 포물선으로 날아가 랜덤 착지 → 그 자리에 민트 장판. Lv1=1개 → 2레벨마다 +1 ──
-    case 'southside': {   // ★민트 레인: 하늘에서 한 발씩 시간차로 떨어져 랜덤 착지. 업글 교대 → 짝수레벨=피사체+1 / 홀수레벨(3,5,7)=공격범위+
-      const count = 3 + Math.floor(lv/2);                       // Lv1=3발, 짝수레벨마다 +1 (Lv2 4·Lv4 5·Lv6 6·Lv8 7)
-      const landR = 44 + (lv-1)*10;                             // 레벨마다 폭발 공격범위↑ (Lv1 44 → Lv6 94)
-      const R = Math.max(80, 240 - (lv-1)*22);                  // 착지 흩뿌림: 레벨 오를수록 플레이어 주위로 좁게(기존 유지)
-      for(let i=0;i<count;i++) mintRain.push({ at: frame + i*7, R, dmg:30*P, landR, cSlow:80, cPoison:90 });
+    case 'southside': {   // ★파란 불꽃 레인: 떨어진 자리에 파란 불꽃 장판(지속 데미지+빙결). 레벨업 → 발수+2·범위↑·근처·원형화
+      const count = 3 + (lv-1)*2;                               // ★레벨당 피사체 +2 (Lv1 3 → Lv6 13)
+      const landR = 40 + (lv-1)*9;                              // 장판(지속공격) 범위↑ (Lv1 40 → Lv6 85)
+      const R = Math.max(70, 210 - (lv-1)*26);                  // 흩뿌림 반경: 레벨↑ 플레이어 근처로 (Lv1 210 → Lv6 80)
+      const circ = Math.min(0.8, (lv-1)*0.16);                  // 원형화 정도: 레벨↑ 플레이어 주변 원형에 가깝게(0=완전랜덤)
+      for(let i=0;i<count;i++) mintRain.push({ at: frame + i*4, R, dmg:34*P, landR, cFreeze:70, circ, baseAng:(i/count)*6.28 });
       break; }
     // ── 비둘기→소다건식: 코스모 = 크랜베리 연사(빙결). Lv1=1발 → Lv8=5발 ──
     case 'cosmopolitan':
-      gatling('cranberry', 20, 8, 0.12, 70, { pierce:1, cFreeze:45 }); break;
+      gatling('cranberry', 20, 8, 0.12, 70, { pierce:0, cFreeze:45, scatter:1 }); break;   // 저관통+빙결 · 슈퍼=명중 시 뒤로 분산탄
     // ── 성경: 올리브 궤도(유일한 회전 무기). Lv1=1개 → 2레벨마다 +1 ──
     case 'drymartini':
       orbitCast(lv, 46+lv*8, 0.10, { dmg:28*P, r:11 }); break;   // 궤도수=레벨(레벨마다 +1) · 궤도반경 레벨마다↑(Lv1 54 → Lv6 94)
     // ── 검은비둘기→소다건식: 보드카마티니 = 올리브 연사(빙결). Lv1=1발 → Lv8=5발 ──
     case 'vodkamartini':
-      gatling('ing_olive', 26, 8.5, 0.1, 75, { pierce:2, cFreeze:55 }); break;
+      gatling('ing_olive', 26, 8.5, 0.1, 75, { pierce:0, cFreeze:55, scatter:1 }); break;   // 저관통+빙결 · 슈퍼=명중 시 뒤로 분산탄
     // ── 마늘(재해석): 플레이어 뒤 반투명 진토닉 = updateGinTonic()에서 상시 처리 ──
     case 'gintonic': break;
   }
@@ -2559,21 +2634,35 @@ function updateGinTonic(){
   if(!player || !player.weapons || !player.weapons.gintonic){ if(player) player.gtr=0; return; }
   const lv=player.weapons.gintonic, evo=player.evolved&&player.evolved.has('gintonic'), slv=evo?((player.superLv&&player.superLv.gintonic)||1):0;
   const sMul=evo?0.85*Math.pow(1.166,slv-1):1;                   // 슈퍼: Lv1=0.85배 → Lv8=2.5배
-  let axx=(player.aimx!==undefined?player.aimx:(player.facing||1)), ayy=(player.aimy||0);
-  const m=Math.hypot(axx,ayy)||1; axx/=m; ayy/=m;
-  const off=player.r+10;
-  player.gtx=player.x-axx*off; player.gty=player.y-ayy*off;
-  player.gtr=(22+lv*5)*(player.sizeMul||1)*(evo?1.5:1);          // 범위: 슈퍼는 대폭↑
-  const dmg=(3.3+lv*1.8)*player.dmgMul*sMul;                      // 공격력(전체 30%↓): 슈퍼는 대폭↑
-  const tick=Math.max(4, (evo?12:18)-lv);                        // 데미지 주기: 슈퍼는 더 자주 타격
+  // ★이미지·범위를 플레이어 중심에 고정(이동 방향 따라 안 도는·안 뒤집히게) + 사이즈 2배
+  player.gtx=player.x; player.gty=player.y;
+  player.gtr=(22+lv*5)*(player.sizeMul||1)*(evo?1.5:1)*2;        // ★2배 확대(레벨업에도 적용)
+  const dmg=(3.3+lv*1.8)*player.dmgMul*sMul;                      // 공격력: 슈퍼는 대폭↑
+  const tick=Math.max(4, (evo?12:18)-lv);                        // 데미지 주기
   for(const e of enemies){ if(Math.hypot(e.x-player.gtx,e.y-player.gty) < player.gtr+e.r){
-    if(frame>=(e.gtNext||0)){ dealDmg(e, dmg); e.poison={ dmg:Math.max(2,dmg*0.3), until:frame+90 }; e.gtNext=frame+tick; } } }
+    if(frame>=(e.gtNext||0)){ dealDmg(e, dmg); e.gtNext=frame+tick; }
+    // ★프리즈: 범위에 들어오면 1초(60f) 빙결. 한 번 걸리면 5초(300f) 뒤 다시 가능(적별 쿨다운)
+    if(frame>=(e.gtFrzNext||0)){ e.frozenUntil=Math.max(e.frozenUntil||0, frame+60); e.gtFrzNext=frame+300; burst(e.x,e.y,'#bfe6ff',5); }
+  } }
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
+}
+/* 드라이 마티니: 플레이어 근처(궤도 안쪽)에 온 적을 살짝 바깥으로 밀어냄. 보스는 거의 안 밀림. */
+function drymartiniPush(){
+  if(!player||!player.weapons||!player.weapons.drymartini) return;
+  const lv=player.weapons.drymartini, R=(46+lv*8)+16;   // 궤도 반경 + 약간
+  for(const e of enemies){
+    const dx=e.x-player.x, dy=e.y-player.y, d=Math.hypot(dx,dy)||1;
+    if(d < R+e.r){
+      const push=(e.type==='boss')?0.25:2.2;             // 보스는 거의 안 밀림
+      e.x+=dx/d*push; e.y+=dy/d*push;
+    }
+  }
 }
 function weaponCd(key, lv){
   if(key==='gintonic') return 40;   // 발사 자체는 no-op(실제 데미지는 updateGinTonic 상시)
   if(key==='cosmopolitan'||key==='vodkamartini') return Math.max(10, 25 - lv*1.5);   // 소다건식 연사(공속 ~15%↓)
   if(key==='gimlet') return Math.round(232/(1+0.10*(lv-1)));   // ⚡전기체인: 기본 공속 50%↓(≈232f) + 레벨당 공속 +10% (Lv1 232 → Lv6 155)
+  if(key==='southside') return Math.max(40, 120 - lv*13);      // 파란불꽃 레인: 레벨업마다 공속 크게↑ (Lv1 107 → Lv6 42)
   if(COCKTAILS[key]) return Math.max(30, (COCKTAIL_CD[key]||80) - lv*4);   // 칵테일 공속: 하한 30f(빠른 칵테일도 Lv8에서 ~15% 느려짐)
   if(SPIRITS[key]) return spiritCd(key,lv);
   if(key==='trio') return Math.round(58*(1-(lv-1)/6));   // 시트러스 트리오: Lv1=58 → Lv4=29(공속 2배)
@@ -2777,13 +2866,25 @@ function update(){
   updateOrbits();   // 크랜베리 궤도무기
   updateAuras();    // 버무스 웜우드 오라
   updateGinTonic(); // 마늘(진토닉): 플레이어 뒤 반투명 진토닉 히트박스
+  drymartiniPush(); // 드라이 마티니: 플레이어 근처 적 살짝 밀어냄(보스는 거의 안 밀림)
   // ★사우스사이드 민트 레인: 예약된 폭탄을 한발씩(시간차) 하늘에서 떨어뜨림 → 착지 지점은 플레이어 주위 랜덤
   for(let i=mintRain.length-1;i>=0;i--){ const m=mintRain[i]; if(frame<m.at) continue;
-    const ang=Math.random()*6.28, rr=Math.sqrt(Math.random())*m.R;      // 원 안 균일 랜덤
+    // 원형화: circ 확률로 플레이어 주변 '원'(baseAng+흔들림, 바깥쪽)에, 아니면 완전 랜덤. → 정확한 원 아님
+    let ang, rr; const c=m.circ||0;
+    if(c>0 && Math.random()<c){ ang=(m.baseAng||0)+(Math.random()-0.5)*0.7; rr=m.R*(0.72+Math.random()*0.24); }
+    else { ang=Math.random()*6.28; rr=Math.sqrt(Math.random())*m.R; }
     let tx=player.x+Math.cos(ang)*rr, ty=player.y+Math.sin(ang)*rr;
     tx=Math.max(14,Math.min(W-14,tx)); ty=Math.max(24,Math.min(H-16,ty));
-    projectiles.push({ x:tx, y:-34, vx:0, vy:9, dmg:m.dmg, r:11, splash:0, pierce:0, hit:new Set(), life:140, kind:'ing_mint', land:ty, landR:m.landR, cSlow:m.cSlow, cPoison:m.cPoison });
+    projectiles.push({ x:tx, y:-34, vx:0, vy:9, dmg:m.dmg, r:11, splash:0, pierce:0, hit:new Set(), life:140, kind:'ing_mint', land:ty, landR:m.landR, sbFlame:true, cFreeze:m.cFreeze });
     mintRain.splice(i,1);
+  }
+  // ★게틀링 연속 스트림: 예약된 탄을 한 발씩 뿜어냄(스폰 시점의 조준 방향/위치 사용 → 움직이며 쏘는 연속 발사)
+  for(let i=gatStream.length-1;i>=0;i--){ const g=gatStream[i]; if(frame<g.at) continue;
+    let ax=(player.aimx!==undefined?player.aimx:(player.facing||1)), ay=(player.aimy||0);
+    if(ax===0&&ay===0){ ax=player.facing||1; ay=0; }
+    const aim2=Math.atan2(ay,ax), ang2=aim2+(Math.random()-0.5)*g.spread*2.4, s2=g.sp+Math.random()*1.6;
+    projectiles.push(Object.assign({ x:player.x, y:player.y, vx:Math.cos(ang2)*s2, vy:Math.sin(ang2)*s2, dmg:g.dmg, r:g.r, splash:0, pierce:1, hit:new Set(), life:g.life, kind:g.pk, evo:g.evo }, g.ex));
+    gatStream.splice(i,1);
   }
   // ✝️🔥 불뿜는 십자가(아이템): 움직이는(바라보는) 방향으로 한 방향 화염 방사(레인보우건급)
   if(player.fireCrossUntil && gameTime < player.fireCrossUntil){
@@ -2926,14 +3027,21 @@ function update(){
       }
     }
     let dead=false;
-    // ★민트 레인 폭탄: 낙하 중엔 충돌/화면밖 판정 스킵, 착지점(land)에 닿으면 광역 폭발+슬로우+독
+    // ★사우스사이드/민트 레인: 낙하 중엔 충돌/화면밖 판정 스킵, 착지점(land)에 닿으면 처리
     if(p.land!=null){
       if(p.y>=p.land || p.life<=0){ const lx=p.x, ly=Math.min(p.land,p.y);
-        explodeAt(lx, ly, p.dmg, p.landR);                                     // 착지 광역 데미지
-        for(const e of enemies){ if(Math.hypot(e.x-lx,e.y-ly) < p.landR+e.r){
-          e.frozenUntil=Math.max(e.frozenUntil||0, frame+(p.cSlow||0));
-          if(p.cPoison) e.poison={ dmg:Math.max(3,p.dmg*0.3), until:frame+p.cPoison }; } }
-        burst(lx,ly,'#8fd14f',14);
+        if(p.sbFlame){
+          // ★파란 불꽃 장판: 지속 데미지 + 빙결(z.slow). 폭발 아님(계속 타오름).
+          zones.push({ x:lx, y:ly, r:p.landR, life:160, dmg:p.dmg*0.6, tick:14, slow:(p.cFreeze||60), kind:'sbflame' });
+          explosions.push({ x:lx, y:ly, r:p.landR, life:16, max:16, col:'#5fc9e6', ring:'#bfefff', flash:true });
+          burst(lx,ly,'#7fd8ff',12);
+        } else {
+          explodeAt(lx, ly, p.dmg, p.landR);                                   // (기존) 착지 광역 데미지
+          for(const e of enemies){ if(Math.hypot(e.x-lx,e.y-ly) < p.landR+e.r){
+            e.frozenUntil=Math.max(e.frozenUntil||0, frame+(p.cSlow||0));
+            if(p.cPoison) e.poison={ dmg:Math.max(3,p.dmg*0.3), until:frame+p.cPoison }; } }
+          burst(lx,ly,'#8fd14f',14);
+        }
         for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
         projectiles.splice(i,1);
       }
@@ -3413,13 +3521,21 @@ function pickUpgrade(i){
 /* ===== 팁(보스 보상 봉투) ===== */
 let tipFx={ until:0, rewards:[], granted:true, cocktail:null, cocktailRc:null };
 function startTip(){
-  tipFx.cocktail=null; tipFx.cocktailRc=null;
+  tipFx.cocktail=null; tipFx.cocktailRc=null; tipFx.superKeys=[];
+  // ★슈퍼 자동생성: 팁을 먹는 순간, 진화 준비된(기본공격 풀업 + 칵테일 Lv6 + 대표 재료 만렙) 칵테일을 즉시 슈퍼로 만든다.
+  //   (팁 안의 업그레이드로 만드는 게 아니라, 팁을 먹으면 준비된 슈퍼가 바로 완성) → 슈퍼 칵테일이 뱅글뱅글 돌며 완성 + 띠링.
+  for(const ck of COCKTAIL_KEYS){ if(canEvolve(ck)){
+    player.evolved=player.evolved||new Set(); player.evolved.add(ck);
+    player.superLv=player.superLv||{}; player.superLv[ck]=1;
+    tipFx.superKeys.push(ck);
+  } }
+  if(tipFx.superKeys.length){ recalcStats(); tipFx.cocktail=tipFx.superKeys[0]; burst(player.x,player.y,'#ffd24a',40); playDing(); }
   const r=Math.random();
   const n = r<0.60?1 : r<0.85?2 : r<0.97?3 : 4;   // 1개60% / 2개25% / 3개12% / 4개3%
-  tipFx.rewards=[]; for(let i=0;i<n;i++) tipFx.rewards.push('skill');  // ★팁 보상 = 진화(슈퍼업그레이드) + 보유 능력치 강화만 (스피릿/신규아이템 지급 제거)
+  tipFx.rewards=[]; for(let i=0;i<n;i++) tipFx.rewards.push('skill');  // 팁 보상 = 보유 능력치 강화(진화는 위에서 자동 처리됨)
   tipFx.until = frame + 110; tipFx.granted=false;
   state='tip';
-  banner('🧾 A TIP FROM A CUSTOMER!', true);
+  banner(tipFx.superKeys.length ? '★ SUPER COCKTAIL CREATED!' : '🧾 A TIP FROM A CUSTOMER!', true);
   musicDuckUntil = frame + 115;
   playSfx('tipcoin',2.2,0); playSfx('whistle',2.0,0.04);   // 팁 효과음 크게
 }
@@ -3465,10 +3581,12 @@ function tipTick(){   // 스핀 연출이 끝나면 → 보상 화면(레벨업 
       </div>`;
     state='tipreward'; show('tipScreen'); return;
   }
-  const got=tipFx.rewards.map(applyTipReward);
+  // ★슈퍼 자동생성 카드(먼저) + 팁의 일반 업그레이드 카드(뒤) 함께 표시
+  const superCards=(tipFx.superKeys||[]).map(ck=>({ label:'★ SUPER '+COCKTAILS[ck].name, img:COCKTAILS[ck].img, sub:'CREATED! (Lv1)', _super:true }));
+  const got=superCards.concat(tipFx.rewards.map(applyTipReward));
   updateWeaponChips();
   document.getElementById('tipRow').innerHTML = got.map(g=>`
-    <div class="up-card ${g.sub==='NEW WEAPON!'?'new':''}" onclick="closeTip()">
+    <div class="up-card ${(g.sub==='NEW WEAPON!'||g._super)?'new':''}" onclick="closeTip()">
       <div class="up-inner">
         <div class="ic">${g.img?`<img class="up-ic" src="assets/${g.img}.png" alt="">`:`<span>${g.ic||'✨'}</span>`}</div>
         <h4>${g.label}</h4>
@@ -3693,12 +3811,26 @@ function draw(){
     }
 
     drawAuras();    // 버무스 웜우드 오라(반투명 원) + 머리 위 웜우드
-    // 성수(사우스사이드) 민트 장판
+    // 장판: 사우스사이드 파란 불꽃(sbflame) / 성수 민트(green)
     for(const z of zones){ const fade=Math.min(1, z.life/30);
-      ctx.globalAlpha=(0.16+0.10*Math.sin(frame*0.2))*fade; ctx.fillStyle='#4fd18a';
-      ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.fill();
-      ctx.globalAlpha=0.45*fade; ctx.strokeStyle='#7fffbf'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.stroke(); ctx.globalAlpha=1; }
+      if(z.kind==='sbflame'){
+        // 파란 불꽃: 안쪽 밝은 코어 + 넘실대는 불꽃 링
+        ctx.globalAlpha=(0.20+0.12*Math.sin(frame*0.28))*fade; ctx.fillStyle='#2f7fd6';
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.fill();
+        ctx.globalAlpha=(0.26+0.14*Math.sin(frame*0.4+1))*fade; ctx.fillStyle='#5fc9e6';
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r*0.6,0,6.28); ctx.fill();
+        // 넘실대는 불꽃 혓바닥(랜덤 스파클)
+        ctx.globalAlpha=0.7*fade; ctx.fillStyle='#bfefff';
+        for(let f=0;f<6;f++){ const fa=frame*0.12+f*1.05, fr=z.r*(0.5+0.5*Math.abs(Math.sin(fa)));
+          ctx.beginPath(); ctx.arc(z.x+Math.cos(fa)*fr, z.y+Math.sin(fa)*fr, 2.2, 0, 6.28); ctx.fill(); }
+        ctx.globalAlpha=0.5*fade; ctx.strokeStyle='#8fe0ff'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
+      } else {
+        ctx.globalAlpha=(0.16+0.10*Math.sin(frame*0.2))*fade; ctx.fillStyle='#4fd18a';
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.fill();
+        ctx.globalAlpha=0.45*fade; ctx.strokeStyle='#7fffbf'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
+      } }
     // 마늘(진토닉): 플레이어 뒤 반투명 진토닉 잔 — 닿으면 데미지
     if(player.weapons&&player.weapons.gintonic&&player.gtr>0){ const gim=spr('cocktail_gintonic');
       ctx.save(); ctx.globalAlpha=0.42+0.08*Math.sin(frame*0.14);
