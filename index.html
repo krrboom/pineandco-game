@@ -209,6 +209,10 @@
     background:linear-gradient(90deg, rgba(255,200,70,.18), rgba(255,200,70,.04)); animation:goldPulse 1.3s ease-in-out infinite; }
   @keyframes goldPulse{ 0%,100%{ filter:brightness(1) } 50%{ filter:brightness(1.4) } }
   .board .brank{ color:var(--pine-light); display:inline-block; min-width:18px; }
+  /* 순위표 바텐더 배지 (P=Pat 빨강 / J=Joe 앰버) */
+  .bch{ display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:3px;
+    color:#1a130a; font-weight:800; font-size:9px; line-height:1; margin-right:5px; vertical-align:middle; box-shadow:0 0 0 1px rgba(0,0,0,.4); }
+  .tr-name .bch{ width:17px; height:17px; font-size:11px; }
   #hud{ position:absolute; top:10px; left:12px; right:12px; display:flex;
     justify-content:space-between; align-items:flex-start; pointer-events:none; z-index:5; }
   .hud-name{ height:clamp(24px,7vw,40px); width:auto; image-rendering:pixelated; display:block;
@@ -483,6 +487,27 @@
     background-image:linear-gradient(rgba(13,15,12,.82), rgba(11,13,10,.9)), url('assets/bg_select.png');
     background-size:cover, 92px auto; background-repeat:no-repeat, repeat; image-rendering:pixelated; }
   #selectScreen .title{ font-size:clamp(14px,4.2vw,24px); }
+  /* More Bartenders? 버튼 (선택화면 상단) */
+  .more-bartenders{ display:inline-block; margin:2px auto 4px; padding:8px 18px; cursor:pointer;
+    background:linear-gradient(#2c3e2d,#1e2a1f); color:#eafbe9; border:1px solid var(--gold,#c89a3c); border-radius:999px;
+    font-family:inherit; font-size:clamp(11px,3vw,15px); font-weight:700; letter-spacing:.5px;
+    box-shadow:0 3px 0 rgba(0,0,0,.4); transition:transform .07s, background .12s; }
+  .more-bartenders:hover{ background:linear-gradient(#375038,#26362a); }
+  .more-bartenders:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.4); }
+  /* 세계지도 화면 */
+  #worldScreen{ background-color:#0d0f0c;
+    background-image:linear-gradient(rgba(13,15,12,.82), rgba(11,13,10,.9)), url('assets/bg_select.png');
+    background-size:cover, 92px auto; background-repeat:no-repeat, repeat; image-rendering:pixelated;
+    gap:16px; justify-content:center; }
+  .worldmap{ position:relative; width:min(90%,560px); aspect-ratio:16/9; border:2px solid var(--gold,#c89a3c);
+    border-radius:10px; overflow:hidden; background:#122032; }
+  .worldmap img{ width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
+  .worldmap-ph{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; color:#7fa8d8; font-size:clamp(28px,8vw,52px); text-align:center; }
+  .worldmap-ph div{ font-size:clamp(13px,3.4vw,18px); font-weight:700; letter-spacing:2px; color:#bcd6f2; }
+  .worldmap-ph small{ font-size:clamp(9px,2.4vw,12px); color:#6f8bab; letter-spacing:.5px; }
+  .coming-soon{ text-align:center; color:var(--gold,#c89a3c); font-size:clamp(15px,4.6vw,26px); font-weight:800; letter-spacing:1px; line-height:1.5; }
+  .coming-soon span{ display:block; margin-top:6px; color:#cfc6b0; font-size:clamp(10px,2.8vw,14px); font-weight:500; letter-spacing:.3px; }
   #selectScreen .row{ flex-wrap:nowrap; gap:clamp(6px,2vw,18px); width:100%; justify-content:center; align-items:flex-start; }
   #selectScreen .char{ width:clamp(168px,48vw,340px); padding:0; background:none; border:0; box-shadow:none;
     display:flex; flex-direction:column; align-items:center; transition:transform .07s; }
@@ -627,6 +652,7 @@
 
   <div class="screen hidden crt" id="selectScreen">
     <h2 class="title">SELECT BARTENDER</h2>
+    <button class="more-bartenders" onclick="openMoreBartenders()">🌍 MORE BARTENDERS?</button>
     <div class="row">
       <div class="char pat" onclick="startGame('pat')">
         <div class="cardframe">
@@ -662,6 +688,18 @@
       </div>
     </div>
     <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
+  </div>
+
+  <!-- 세계 바텐더 선택(준비중): 세계지도 픽셀 이미지 위에 해외 바텐더들이 올라갈 예정 -->
+  <div class="screen hidden crt" id="worldScreen">
+    <h2 class="title">WORLD BARTENDERS</h2>
+    <div class="worldmap">
+      <img id="worldMapImg" src="assets/world_map.png" alt="World Map"
+        onerror="this.style.display='none'; document.getElementById('worldMapPh').style.display='flex';">
+      <div id="worldMapPh" class="worldmap-ph">🗺️<div>WORLD MAP</div><small>pixel map coming here</small></div>
+    </div>
+    <div class="coming-soon">🌍 COMING SOON<br><span>해외 바텐더들이 곧 합류합니다!</span></div>
+    <button class="imgbtn backbtn" onclick="goSelect()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
 
   <div class="screen hidden" id="menuScreen">
@@ -804,7 +842,7 @@ function isFirstPlace(run){ return ['time','kills','sales'].some(m=>{
 function addRun(name, run){
   // 각 지표 순위마다 행 전체(시간/제압/매출)를 저장 → 한 화면에 3개 다 보여줄 수 있게
   for(const m of ['time','kills','sales']){ const b=BOARDS[m];
-    b.push({ name, time:run.time||0, kills:run.kills||0, sales:run.sales||0 });
+    b.push({ name, char:run.char||'', time:run.time||0, kills:run.kills||0, sales:run.sales||0 });
     b.sort((a,c)=>(c[m]||0)-(a[m]||0)); BOARDS[m]=b.slice(0,10);
     try{ localStorage.setItem(BD_KEYS[m], JSON.stringify(BOARDS[m])); }catch(e){} }
   HI_SCORE = BOARDS.time.length ? (BOARDS.time[0].time||0) : 0;
@@ -822,7 +860,7 @@ function cloudSubmit(name, run){
   if(!CLOUD_URL) return;
   try{
     fetch(CLOUD_URL, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ secret:CLOUD_SECRET, name:name, time:run.time, kills:run.kills, sales:run.sales }) })
+      body: JSON.stringify({ secret:CLOUD_SECRET, name:name, char:run.char||'', time:run.time, kills:run.kills, sales:run.sales }) })
       .then(()=>{ setTimeout(()=>{ cloudFetch('time'); cloudFetch('kills'); cloudFetch('sales'); }, 900); }).catch(()=>{});
   }catch(e){}
 }
@@ -833,7 +871,7 @@ function cloudFetch(metric){
   const cb='__pineCb'+(_cloudCbN++), s=document.createElement('script'); let done=false;
   window[cb]=(data)=>{ done=true;
     try{ if(data && data.ok && Array.isArray(data.top)){
-      CLOUD_BOARDS[metric]=data.top.map(e=>({ name:String(e.name||'---'), time:Number(e.time)||0, kills:Number(e.kills)||0, sales:Number(e.sales)||0 }));
+      CLOUD_BOARDS[metric]=data.top.map(e=>({ name:String(e.name||'---'), char:String(e.char||''), time:Number(e.time)||0, kills:Number(e.kills)||0, sales:Number(e.sales)||0 }));
       if(metric==='time' && CLOUD_BOARDS.time.length){ HI_SCORE=Math.max(HI_SCORE, CLOUD_BOARDS.time[0].time);
         const h=document.getElementById('hiTitle'); if(h) h.textContent=fmtTime(HI_SCORE); }
       if(curBoardMetric===metric) renderBoard();
@@ -845,6 +883,10 @@ function cloudFetch(metric){
   document.body.appendChild(s);
   setTimeout(()=>{ if(!done){ try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); } }, 8000);
 }
+// 순위표에 어떤 바텐더로 플레이했는지 작은 배지로 표시 (Pat=빨강 P / Joe=앰버 J)
+function charBadge(ch){ if(ch!=='pat'&&ch!=='joe') return '';
+  const col=ch==='pat'?'#d9544d':'#e6b450', lab=ch==='pat'?'P':'J';
+  return `<span class="bch" style="background:${col}" title="${ch.toUpperCase()}">${lab}</span>`; }
 function renderBoard(){
   const cloud=CLOUD_BOARDS[curBoardMetric];
   const b=(cloud!==null) ? cloud : (BOARDS[curBoardMetric]||[]);   // 선택한 지표로 정렬된 Top10(클라우드 우선, 없으면 로컬)
@@ -852,14 +894,14 @@ function renderBoard(){
   const top=b[0];
   // 1위 = TOP RECORD 이미지 안(아래 크림 박스)에 표시
   let html = `<div class="top-record"><img src="assets/top_record.png" alt="TOP RECORD">`
-    + `<div class="tr-overlay"><div class="tr-name">${top?top.name:'—'}</div>`
+    + `<div class="tr-overlay"><div class="tr-name">${top?charBadge(top.char)+top.name:'—'}</div>`
     + `<div class="tr-stats">${top? fmtCell('time',top.time)+' · '+fmtCell('kills',top.kills)+' DOWN · '+fmtCell('sales',top.sales) : 'NO RECORD YET'}</div></div></div>`;
   // 2위부터 리스트
   html += `<div class="brow bhead"><span class="bn">RANK</span><span class="${hot('time').trim()}">TIME</span><span class="${hot('kills').trim()}">DOWNS</span><span class="${hot('sales').trim()}">SALES</span></div>`;
   for(let i=1;i<10;i++){ const e=b[i];
     const me = e && e.name===lastSavedName && (e[curBoardMetric]===pendingRun[curBoardMetric]);
     html += `<div class="brow ${me?'me':''}">`
-      + `<span class="bn"><span class="brank">${i+1}.</span> ${e?e.name:'---'}</span>`
+      + `<span class="bn"><span class="brank">${i+1}.</span> ${e?charBadge(e.char)+e.name:'---'}</span>`
       + `<span class="${hot('time').trim()}">${e?fmtCell('time',e.time):'-'}</span>`
       + `<span class="${hot('kills').trim()}">${e?fmtCell('kills',e.kills):'-'}</span>`
       + `<span class="${hot('sales').trim()}">${e?fmtCell('sales',e.sales):'-'}</span>`
@@ -1618,7 +1660,7 @@ document.querySelectorAll('.ava').forEach(av=> drawSprite(av.getContext('2d'), a
 /* ===== 화면 전환 ===== */
 function show(id){ document.getElementById(id).classList.remove('hidden'); }
 function hide(id){ document.getElementById(id).classList.add('hidden'); }
-function hideAllScreens(){ ['titleScreen','selectScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen','indexScreen'].forEach(hide); }
+function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen','indexScreen'].forEach(hide); }
 function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
 function openIndex(){ initAudio(); playSelect(); state='index'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); showIndexTab('monsters'); show('indexScreen'); }
 /* 몬스터 족보 */
@@ -1702,6 +1744,8 @@ function renderIndex(){
 function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
   document.getElementById('hiTitle').textContent=fmtTime(HI_SCORE); cloudFetch('time'); show('titleScreen'); }
 function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('selectScreen'); selIndex=0; updateSelectHighlight(); }
+/* 세계 바텐더(준비중): 세계지도 화면으로. 해외 바텐더 이미지가 들어오면 여기서 선택 가능해질 예정. */
+function openMoreBartenders(){ initAudio(); playSelect(); state='world'; hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('worldScreen'); }
 /* 칵테일 글라스 쉐입 — 흰색 라인아트 SVG(문구 없이 모양만). 메뉴의 미니멀 라인 스타일. */
 const GLASS_PATH = {
   martini:  'M5 5 L12 16 L19 5 M4 5 H20 M12 16 V27 M8 28 H16',
@@ -3678,7 +3722,7 @@ function fmtTime(s){ return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
 
 /* ===== 게임오버 ===== */
 function gameOver(){ state='over'; setMusic('title'); const secs=Math.floor(gameTime);
-  pendingRun={ time:secs, kills:killCount, sales:money }; lastSavedName='';
+  pendingRun={ time:secs, kills:killCount, sales:money, char:(player&&player.key)||'' }; lastSavedName='';   // 어떤 바텐더로 플레이했는지 기록
   document.getElementById('overTime').textContent=fmtTime(secs);
   document.getElementById('overKill').textContent=killCount;
   document.getElementById('overMoney').textContent=money.toLocaleString();
