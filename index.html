@@ -69,10 +69,10 @@
   .paco-price{ display:inline-block; color:#1a130a; background:var(--gold,#c89a3c); font-size:12px; font-weight:bold;
     letter-spacing:.5px; padding:4px 14px; border-radius:16px; }
   /* 메뉴 섹션 네비(칵테일/푸드/보틀/위스키) */
-  .menu-lang{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:0 auto 10px; }
-  .menu-lang button{ font-family:inherit; font-size:8.5px; letter-spacing:.5px; padding:5px 12px; cursor:pointer;
-    color:var(--dim); background:transparent; border:1px solid #2a3a2a; border-radius:20px; }
-  .menu-lang button.active{ color:#1a130a; background:var(--pine-light); border-color:var(--pine-light); font-weight:bold; }
+  .menu-lang{ display:flex; gap:9px; justify-content:center; flex-wrap:wrap; margin:0 auto 12px; }
+  .menu-lang button{ font-family:inherit; font-size:14px; font-weight:600; letter-spacing:.4px; padding:10px 20px; cursor:pointer;
+    min-width:64px; color:#eafbe9; background:rgba(30,42,29,.6); border:1.5px solid #4a6a48; border-radius:22px; }
+  .menu-lang button.active{ color:#1a130a; background:var(--pine-light); border-color:var(--pine-light); font-weight:800; }
   .menu-nav{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:2px auto 12px; max-width:520px; }
   .menu-nav button{ font-family:inherit; font-size:9px; letter-spacing:.5px; padding:7px 11px; cursor:pointer;
     color:var(--dim); background:#141b12; border:1px solid #2a3a2a; border-radius:6px; }
@@ -122,6 +122,11 @@
     border:2px solid var(--gold,#c89a3c); }
   .ckm-x{ position:absolute; top:8px; right:10px; z-index:2; width:30px; height:30px; border:none; border-radius:50%;
     background:rgba(0,0,0,.55); color:#fff; font-size:15px; cursor:pointer; line-height:1; }
+  .ckm-arrow{ position:absolute; top:50%; transform:translateY(-50%); z-index:3; width:46px; height:46px; border-radius:50%;
+    border:2px solid var(--gold,#c89a3c); background:rgba(20,27,18,.82); color:#f0ebe0; font-size:30px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; padding-bottom:4px; }
+  .ckm-arrow:active{ background:var(--pine-light,#6fcf8f); color:#1a130a; }
+  .ckm-prev{ left:8px; } .ckm-next{ right:8px; }
   /* 사진마다 비율이 달라도(정사각/세로) 같은 크기 박스 안에 전체가 다 보이게 (object-fit:contain) */
   .ckm-imgwrap{ position:relative; border-radius:10px; overflow:hidden; background:#ded7c4; height:clamp(190px,42vh,320px); }
   .ckm-img{ display:block; width:100%; height:100%; object-fit:contain; image-rendering:pixelated; image-rendering:crisp-edges; }
@@ -214,6 +219,9 @@
   .bch{ display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:3px;
     color:#1a130a; font-weight:800; font-size:9px; line-height:1; margin-right:5px; vertical-align:middle; box-shadow:0 0 0 1px rgba(0,0,0,.4); }
   .tr-name .bch{ width:17px; height:17px; font-size:11px; }
+  .bchi{ width:18px; height:18px; border-radius:50%; object-fit:cover; object-position:50% 22%; vertical-align:middle;
+    margin-right:5px; border:2px solid #888; background:#1a130a; box-shadow:0 0 0 1px rgba(0,0,0,.4); }
+  .tr-name .bchi{ width:22px; height:22px; }
   #hud{ position:absolute; top:10px; left:12px; right:12px; display:flex;
     justify-content:space-between; align-items:flex-start; pointer-events:none; z-index:5; }
   .hud-name{ height:clamp(24px,7vw,40px); width:auto; image-rendering:pixelated; display:block;
@@ -348,6 +356,10 @@
   .finale-msg .fin-body{ color:#f4ead6; font-size:clamp(12px,3.6vw,18px); line-height:1.6; max-width:22ch;
     text-shadow:1px 2px 3px #000; }
   .finale-msg .fin-sub{ color:var(--amber,#c89a3c); font-size:clamp(10px,2.8vw,14px); letter-spacing:2px; font-weight:700; }
+  .finale-msg .fin-continue{ pointer-events:auto; margin-top:20px; padding:14px 34px; cursor:pointer;
+    font-family:inherit; font-size:clamp(15px,4vw,20px); font-weight:800; letter-spacing:1px;
+    color:#1a130a; background:var(--amber,#c89a3c); border:none; border-radius:26px; box-shadow:0 4px 0 rgba(0,0,0,.5); }
+  .finale-msg .fin-continue:active{ transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.5); }
   .drop-banner.boss{ color:#ff5a4d; font-size:clamp(15px,4.4vw,22px);
     text-shadow:2px 2px 0 #000, 0 0 12px rgba(217,40,40,.9); animation:bossShake .1s infinite; }
   @keyframes bossShake{ 0%,100%{transform:translateX(-2px)} 50%{transform:translateX(2px)} }
@@ -518,6 +530,20 @@
   .worldmap-ph small{ font-size:clamp(9px,2.4vw,12px); color:#6f8bab; letter-spacing:.5px; }
   .coming-soon{ text-align:center; color:var(--gold,#c89a3c); font-size:clamp(15px,4.6vw,26px); font-weight:800; letter-spacing:1px; line-height:1.5; }
   .coming-soon span{ display:block; margin-top:6px; color:#cfc6b0; font-size:clamp(10px,2.8vw,14px); font-weight:500; letter-spacing:.3px; }
+  /* 인트로 스토리 크롤 (스타워즈식) */
+  #introScreen{ background:#05070a; overflow:hidden; padding:0; justify-content:flex-end; }
+  .crawl-wrap{ position:absolute; inset:0; overflow:hidden; perspective:330px; }
+  .crawl{ position:absolute; left:50%; top:100%; width:min(88%,540px); transform:translateX(-50%) rotateX(26deg);
+    transform-origin:50% 0%; color:#ffd24a; text-align:center; font-weight:700; line-height:1.7;
+    text-shadow:0 0 10px rgba(255,180,40,.35); animation:crawlUp 26s linear forwards; }
+  @keyframes crawlUp{ 0%{ top:100%; opacity:0; } 6%{ opacity:1; } 90%{ opacity:1; } 100%{ top:-280%; opacity:0; } }
+  .crawl p{ font-size:clamp(14px,4.2vw,20px); margin:0 0 22px; }
+  .crawl .crawl-ep{ color:#eafbe9; letter-spacing:3px; font-size:clamp(11px,3vw,14px); margin-bottom:8px; }
+  .crawl .crawl-title{ font-size:clamp(24px,7.5vw,44px); margin:0 0 30px; letter-spacing:1px; line-height:1.15; }
+  .crawl-skip{ position:absolute; bottom:24px; left:50%; transform:translateX(-50%); z-index:6;
+    padding:14px 42px; font-family:inherit; font-size:clamp(16px,4.6vw,22px); font-weight:800; letter-spacing:1px; cursor:pointer;
+    color:#1a130a; background:var(--amber,#c89a3c); border:none; border-radius:28px; box-shadow:0 4px 0 rgba(0,0,0,.5); }
+  .crawl-skip:active{ transform:translateX(-50%) translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.5); }
   #selectScreen .row{ flex-wrap:nowrap; gap:clamp(6px,2vw,18px); width:100%; justify-content:center; align-items:flex-start; }
   #selectScreen .char{ width:clamp(168px,48vw,340px); padding:0; background:none; border:0; box-shadow:none;
     display:flex; flex-direction:column; align-items:center; transition:transform .07s; }
@@ -714,6 +740,21 @@
     <button class="imgbtn backbtn" onclick="goSelect()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
 
+  <!-- 인트로 스토리 크롤: 어두운 배경 위로 스토리가 위로 올라감(스타워즈식) -->
+  <div class="screen hidden" id="introScreen">
+    <div class="crawl-wrap">
+      <div class="crawl" id="introCrawl">
+        <p class="crawl-ep">PINE &amp; CO SEOUL · LAST CALL</p>
+        <h3 class="crawl-title">THE FINAL 30 MINUTES</h3>
+        <p>Closing time is near. The very last call of the night has just rung out across Pine &amp; Co.</p>
+        <p>Word travels fast down the street — and the customers come pouring in. Thirsty. Restless. Endless.</p>
+        <p>For thirty long minutes you stand alone behind the bar, shaker in hand, holding the line against the flood.</p>
+        <p>Do you have what it takes to last the full thirty minutes... until your shift finally ends?</p>
+      </div>
+    </div>
+    <button class="crawl-skip" onclick="skipIntro()">SKIP ▸</button>
+  </div>
+
   <div class="screen hidden" id="menuScreen">
     <div id="menuIntro" class="menu-intro hidden">
       <div class="menu-lang js-langbar"></div>
@@ -727,6 +768,8 @@
     <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
     <!-- 칵테일 사진 모달: 카드 탭 시 큰 사진 + 이름/재료/가격/설명 -->
     <div id="ckModal" class="ck-modal hidden" onclick="closeCkModal()">
+      <button class="ckm-arrow ckm-prev" onclick="ckModalNav(-1,event)" aria-label="prev">‹</button>
+      <button class="ckm-arrow ckm-next" onclick="ckModalNav(1,event)" aria-label="next">›</button>
       <div class="ckm-card">
         <button class="ckm-x" onclick="closeCkModal()">✕</button>
         <div class="ckm-imgwrap">
@@ -895,10 +938,11 @@ function cloudFetch(metric){
   document.body.appendChild(s);
   setTimeout(()=>{ if(!done){ try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); } }, 8000);
 }
-// 순위표에 어떤 바텐더로 플레이했는지 작은 배지로 표시 (Pat=빨강 P / Joe=앰버 J)
+// 순위표에 어떤 바텐더로 달성했는지: 이름 앞에 캐릭터 얼굴 아이콘(색 테두리) — Pat 빨강 / Joe 앰버
 function charBadge(ch){ if(ch!=='pat'&&ch!=='joe') return '';
   const col=ch==='pat'?'#d9544d':'#e6b450', lab=ch==='pat'?'P':'J';
-  return `<span class="bch" style="background:${col}" title="${ch.toUpperCase()}">${lab}</span>`; }
+  return `<img class="bchi" style="border-color:${col}" src="assets/char_${ch}.png" alt="${ch}" title="Played as ${ch.toUpperCase()}"`
+    + ` onerror="this.outerHTML='<span class=&quot;bch&quot; style=&quot;background:${col}&quot;>${lab}</span>'">`; }
 function renderBoard(){
   const cloud=CLOUD_BOARDS[curBoardMetric];
   const b=(cloud!==null) ? cloud : (BOARDS[curBoardMetric]||[]);   // 선택한 지표로 정렬된 Top10(클라우드 우선, 없으면 로컬)
@@ -980,6 +1024,7 @@ const ASSET_MANIFEST = {
   boss_amaro_stand:'assets/boss_amaro_stand.png', boss_amaro_walkA:'assets/boss_amaro_walkA.png', boss_amaro_walkB:'assets/boss_amaro_walkB.png',
   boss_nobook_stand:'assets/boss_nobook_stand.png',   // 노부킹 무리(가로 벽 보스) — 한 줄로 늘어선 사람들
   boss_nobook_icon:'assets/boss_nobook_icon.png',     // 인덱스용 정사각 썸네일(4명 무리)
+  drunk_0:'assets/drunk_0.png', drunk_1:'assets/drunk_1.png', drunk_2:'assets/drunk_2.png', drunk_3:'assets/drunk_3.png',   // 만취 손님 몬스터(하늘에서 떨어지는 장애물)
   // 업그레이드/스킬 아이콘
   icon_barspoon:'assets/icon_barspoon.png', icon_shaker:'assets/icon_shaker.png',
   icon_sneaker:'assets/icon_sneaker.png', icon_bicep:'assets/icon_bicep.png',
@@ -1637,6 +1682,7 @@ let surgeUntil, nextSurge, bannerTimer, bannerText;
 let nextRaid, raidLeft, raidNextBoss;   // 5분마다 보스 레이드
 let finale={ active:false, until:0, rival:null, killed:false };   // 30분 피날레: 라이벌 바텐더 등장 → 교대(종료)
 const FINALE_AT = 1800;   // 30분(초)
+let nextPassout, lastPassoutImg=-1;   // 만취 손님(장애물): 1분에 3번(20초마다) 하늘에서 낙하
 let bossCount, nextBoss, bossAlertUntil=0;
 let nextWall;   // 노부킹 무리(가로 벽 보스) 다음 등장 시각. 0이면 더 안 나옴
 let bossBag=[], bossRecent=[];   // bossRecent = 최근 2턴에 나온 보스
@@ -1675,7 +1721,7 @@ document.querySelectorAll('.ava').forEach(av=> drawSprite(av.getContext('2d'), a
 /* ===== 화면 전환 ===== */
 function show(id){ document.getElementById(id).classList.remove('hidden'); }
 function hide(id){ document.getElementById(id).classList.add('hidden'); }
-function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen','indexScreen'].forEach(hide); }
+function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','introScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen','indexScreen'].forEach(hide); }
 function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
 function openIndex(){ initAudio(); playSelect(); state='index'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); showIndexTab('monsters'); show('indexScreen'); }
 /* 몬스터 족보 */
@@ -1986,10 +2032,12 @@ function showMenuTab(t){ curMenuTab=t; try{ playSelect(); }catch(e){} renderMenu
 function won(s){ return (s||'').replace(/₩/g,'₩ '); }   // 원화 기호와 금액 사이 공백으로 분리
 function menuRows(items){ return items.map(it=>`<div class="menu-item${it.img?' has-img':''}">${it.img?`<img class="paco-img" src="assets/${it.img}.png" alt="">`:''}<span>${it.n}${it.d?`<small>${it.d}</small>`:''}</span><span class="mi-price">${won(it.p)}</span></div>`).join(''); }
 function menuSection(catLabel, items){ return `<div class="menu-cat">${catLabel}</div>`+menuRows(items); }
-/* 칵테일 사진 모달: 카드 탭 → 큰 픽셀 사진 + 이름(사진 위) + 재료·가격 + 설명 */
+/* 칵테일 사진 모달: 카드 탭 → 큰 픽셀 사진 + 이름(사진 위) + 재료·가격 + 설명. 좌우 화살표로 이동, 그 외 클릭은 닫힘 */
 function ckSlug(name){ return name.toLowerCase().replace(/[^a-z0-9]/g,''); }
+let ckModalIdx=0;
 function openCkModal(i){
-  const c0=MENU_COCKTAILS[i], c=ckT(c0,i);
+  ckModalIdx = (i % MENU_COCKTAILS.length + MENU_COCKTAILS.length) % MENU_COCKTAILS.length;
+  const c0=MENU_COCKTAILS[ckModalIdx], c=ckT(c0,ckModalIdx);
   document.getElementById('ckmImg').src='assets/photo_'+ckSlug(c0.name)+'.png';
   document.getElementById('ckmName').textContent=c0.name;
   document.getElementById('ckmTwist').textContent=c.tw;
@@ -1999,6 +2047,7 @@ function openCkModal(i){
   document.getElementById('ckModal').classList.remove('hidden');
   try{ playSelect(); }catch(e){}
 }
+function ckModalNav(dir, ev){ if(ev) ev.stopPropagation(); openCkModal(ckModalIdx + dir); }   // 화살표: 옆 칵테일로(닫히지 않게 전파 차단)
 function closeCkModal(){ document.getElementById('ckModal').classList.add('hidden'); }   // 아무 곳이나 클릭하면 닫힘
 function renderMenu(){
   updateLangBars();
@@ -2059,7 +2108,7 @@ function startGame(charKey){
     dmg:c.dmg, fireCd:c.fireCd, splash:c.splash, projCount:1,
     xp:0, xpNeed:xpForLevel(1), level:1, invuln:0,
     ultReadyAt:ULT_CD, ultUntil:0, ultFxUntil:0, ultLevel:1, ultSpiralUntil:0, ultSpiralAng:0,   // 필살기: 80초 쿨타임(레벨업으로 위력만 강화)
-    regenBonus:0,                                  // HEAL 강화로 쌓이는 패시브 회복(둘 다)
+    regenBonus:0, noSustain:false,                 // HEAL 강화로 쌓이는 패시브 회복(둘 다) · noSustain=피날레 시 회복/흡혈 정지
     weapons:{}, wt:{}, evolved:new Set(), superLv:{}, hasDash:false };  // weapons: 무기/재료 레벨, evolved: 진화 칵테일, superLv: 슈퍼 레벨(1~8)
   applyBaseLevel(); recalcStats();
   enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[]; gatStream=[];
@@ -2067,11 +2116,27 @@ function startGame(charKey){
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bossAlertUntil=0; keys={};
   nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set(); declinedCraft=new Set(); pendingCraft=null; pendingFromTip=false;
   bossCount=0; nextBoss=BOSS_FIRST; nextWall=WALL_FIRST; bossBag=[]; bossRecent=[];
-  finale={ active:false, until:0, rival:null, killed:false }; try{ hide('finaleMsg'); }catch(e){}
-  state='playing'; hideAllScreens(); show('hud'); show('hudChips'); show('ultBtn'); show('statPanel');
+  finale={ active:false, phase:'', rival:null, killed:false, hitCd:0, msgHideAt:0 };
+  try{ const el=document.getElementById('finaleMsg'); el.classList.add('hidden'); el.style.pointerEvents='none'; }catch(e){}
+  nextPassout=20; lastPassoutImg=-1;   // 첫 만취 손님 20초
   document.getElementById('hudCharImg').src='assets/name_'+charKey+'.png';
   updateWeaponChips();
-  hide('stick');   // 조이스틱은 화면을 누를 때 그 자리에 나타남(고정 위치 없음)
+  startIntroCrawl();   // ★스타워즈식 스토리 크롤 → 스킵/종료 시 실제 게임 시작
+}
+/* 인트로 크롤: 어두운 배경 위로 스토리가 위로 올라감. 스킵 버튼(아래·큼) 또는 크롤 종료 시 게임 시작. */
+function startIntroCrawl(){
+  state='intro'; hideAllScreens();
+  ['hud','hudChips','statPanel','ultBtn','dashBtn','stick'].forEach(hide);
+  document.getElementById('introScreen').classList.remove('hidden');
+  const cr=document.getElementById('introCrawl');
+  if(cr){ cr.style.animation='none'; void cr.offsetWidth; cr.style.animation='';   // 애니메이션 재시작
+    cr.onanimationend=()=>revealGame(); }
+}
+function skipIntro(){ revealGame(); }
+function revealGame(){
+  const cr=document.getElementById('introCrawl'); if(cr) cr.onanimationend=null;
+  document.getElementById('introScreen').classList.add('hidden');
+  state='playing'; show('hud'); show('hudChips'); show('ultBtn'); show('statPanel'); hide('stick');
 }
 
 /* ===== 입력 ===== */
@@ -2335,6 +2400,20 @@ function spawnBoss(){
   bossAlertUntil = gameTime + 2.2;   // 긴박한 빨간 플래시
   playBossAlarm();                    // 같은 알람음 6번 연속
 }
+/* 만취 손님(passout): 하늘에서 떨어지는 정적 장애물. 20배 체력·2배 크기(3분마다 30%↑)·지폐 드랍. */
+function spawnPassout(){
+  const d=DIFF();
+  const x=44+Math.random()*(W-88), y=54+Math.random()*(H-108);     // 필드 안 랜덤
+  let img=Math.floor(Math.random()*4);
+  if(img===lastPassoutImg) img=(img+1+Math.floor(Math.random()*3))%4;   // 직전과 안 겹치게(최대한)
+  lastPassoutImg=img;
+  const sizeMul=2*Math.pow(1.3, Math.floor(gameTime/180));         // 기본 2배 + 3분마다 +30%
+  const hp=d.hp*20;                                                // 기존 몬스터 20배
+  const won=Math.round(400 + gameTime*4);                          // 처치 시 큰 경험치 지폐
+  enemies.push({ id:enemyId++, type:'passout', x, y, r:8*sizeMul, hp, maxHp:hp,
+    speed:0, moving:false, dmgCd:0, wobble:0, drunkImg:img, fallT:0, showHpBar:true,
+    won, billSprite:billSpriteFor(won) });
+}
 
 /* ===== 노부킹 무리: 가로 벽 보스 =====
    한 줄로 늘어선 사람들이 화면 전체를 가로로 막은 채 위→아래 또는 아래→위로 아주 천천히 횡단.
@@ -2396,7 +2475,7 @@ function dealDmg(e, base){ let dmg=base; if(player.crit && Math.random()<player.
 /* 스피릿별 명중 효과: vodka=빙결 / gin=독 / whiskey·rum=폭발 / tequila=라임 궤도 추가타 */
 function onHit(p, e){
   // 흡혈(보드카 크랜베리): 준 데미지의 일부만큼 회복(피격당 상한). 관통 무기라 상한으로 밸런스.
-  if(p.lifesteal && player.hp>0){ const heal=Math.min(5, p.dmg*p.lifesteal);
+  if(p.lifesteal && player.hp>0 && !player.noSustain){ const heal=Math.min(5, p.dmg*p.lifesteal);
     player.hp=Math.min(player.maxHp, player.hp+heal);
     if(frame%3===0) burst(player.x, player.y, '#ff5a7a', 3); }
   // 칵테일 범용 명중 효과(플래그)
@@ -2844,34 +2923,50 @@ function bossBanner(nick, intro){
   bannerTimer = 320;   // ~5.3초 (2~3줄 읽을 시간)
 }
 
-/* ===== 30분 피날레: 라이벌 바텐더가 등장해 "이제 그만" 하고 교대(게임 종료) ===== */
+/* ===== 30분 피날레: 라이벌 바텐더(엄청 큰)가 쫓아옴. 도망갈 수 있게 하되 결국 잡힘 → 교대(종료) =====
+   Joe면 Pat이, Pat이면 Joe가 등장. 라이벌은 빙결/슬로우 무관(별도 엔티티), Joe 기본속도보다 빠름.
+   Joe 플레이: 한 방에 죽음. Pat 플레이: 한 방에 회복·흡혈 무효 + 큰 피해(못 버티고 죽음). */
 function startFinale(){
-  finale.active=true; finale.until=frame+220; finale.killed=false;
-  const rk = (player.key==='joe') ? 'pat' : 'joe';   // 플레이어가 Joe면 Pat, Pat이면 Joe
-  finale.rival={ key:rk, x:W/2, y:-90 };
-  enemies.length=0; eprojectiles.length=0; projectiles.length=0; mintRain.length=0; gatStream.length=0;   // 깔끔한 연출
-  const rn=rk.toUpperCase(), pn=(player.key||'').toUpperCase();
+  finale.active=true; finale.phase='chase'; finale.killed=false; finale.hitCd=0;
+  const rk = (player.key==='joe') ? 'pat' : 'joe';
+  const ep=edgePos();
+  finale.rival={ key:rk, x:ep.x, y:ep.y, spd:3.6 };   // Joe 기본이동(3.0)보다 빠름
+  enemies.length=0; eprojectiles.length=0; mintRain.length=0; gatStream.length=0;
+  spawnTimer=1e9; nextBoss=1e9; nextPassout=1e9; nextWall=1e9; nextSurge=1e9;   // 추격 중 스폰 정지
+  const rn=rk.toUpperCase();
   const el=document.getElementById('finaleMsg');
-  if(el){ el.innerHTML =
-    `<div class="fin-title">★ CLOSING TIME ★</div>`+
-    `<div class="fin-body">${rn} steps behind the bar.<br>“Alright ${pn}, that’s enough for one night.<br>You’ve poured enough for a lifetime — go home.”</div>`+
-    `<div class="fin-sub">— YOUR SHIFT ENDS · 30:00 —</div>`;
+  if(el){ el.style.pointerEvents='none';
+    el.innerHTML=`<div class="fin-title">★ CLOSING TIME ★</div><div class="fin-body">${rn} clocks in and comes for you.<br>Last call — RUN.</div>`;
     el.classList.remove('hidden'); }
+  finale.msgHideAt=frame+140;
   bannerTimer=0; try{ hide('dropBanner'); }catch(e){}
   try{ playBossAlarm(); }catch(e){} try{ playDing(); }catch(e){}
-  musicDuckUntil = frame + 240;
+  musicDuckUntil = frame + 99999;
 }
-function finaleTick(){
-  const r=finale.rival;
-  if(r){ r.x += (player.x-r.x)*0.045; r.y += (player.y-r.y)*0.04; }   // 라이벌이 플레이어에게 서서히 다가옴
-  if(!finale.killed && (frame>=finale.until || (r && Math.hypot(r.x-player.x, r.y-player.y)<26))){
-    finale.killed=true;
-    burst(player.x,player.y,'#ff3b3b',44); burst(player.x,player.y,'#ffffff',18);
-    player.hp=0;
-    try{ hide('finaleMsg'); }catch(e){}
-    gameOver();   // 교대 완료 → 게임 종료(스코어 등록 화면으로)
+function finaleChase(){
+  const r=finale.rival; if(!r) return;
+  if(frame>=finale.msgHideAt) try{ hide('finaleMsg'); }catch(e){}
+  const a=Math.atan2(player.y-r.y, player.x-r.x);
+  r.x += Math.cos(a)*r.spd; r.y += Math.sin(a)*r.spd;   // 추격(별도 엔티티라 빙결/슬로우 안 통함)
+  if(finale.hitCd>0) finale.hitCd--;
+  if(finale.hitCd<=0 && Math.hypot(r.x-player.x, r.y-player.y) < player.r+26){
+    finale.hitCd=18; burst(player.x,player.y,'#ff3b3b',30);
+    if(player.key==='joe'){ player.hp=0; }                         // Joe 플레이 → Pat 한 방
+    else { player.regenBonus=0; player.noSustain=true; player.hp -= player.maxHp*0.5; }   // Pat 플레이 → Joe: 회복·흡혈 무효 + 큰 피해
+    if(player.hp<=0){ player.hp=0; finaleEnd(); }
   }
 }
+function finaleEnd(){
+  if(finale.phase==='ended') return;
+  finale.phase='ended'; burst(player.x,player.y,'#ffffff',22);
+  const el=document.getElementById('finaleMsg');
+  if(el){ el.style.pointerEvents='auto';
+    el.innerHTML=`<div class="fin-title">CLOSING TIME</div>`+
+      `<div class="fin-body">Your shift is over.<br>${(player.key==='joe')?'PAT':'JOE'} takes the bar from here.<br>You poured enough for a lifetime — go home.</div>`+
+      `<button class="fin-continue" onclick="finaleContinue()">CONTINUE ▸</button>`;
+    el.classList.remove('hidden'); }
+}
+function finaleContinue(){ try{ const el=document.getElementById('finaleMsg'); el.style.pointerEvents='none'; el.classList.add('hidden'); }catch(e){} gameOver(); }
 /* ===== 업데이트 ===== */
 function update(){
   frame++;
@@ -2879,9 +2974,14 @@ function update(){
   if(state!=='playing' || paused) return;   // 설정창 열려있으면 일시정지
   gameTime += 1/60;
 
-  // ★30분 피날레: 라이벌 바텐더(Pat↔Joe)가 등장해 교대 → 게임 종료
+  // ★30분 피날레: 라이벌 바텐더가 쫓아옴(도망 가능). 잡히면 교대 → 게임 종료
   if(!finale.active && gameTime>=FINALE_AT){ startFinale(); }
-  if(finale.active){ finaleTick(); return; }   // 피날레 연출 중엔 일반 업데이트 정지
+  if(finale.active){
+    if(finale.phase==='ended') return;   // 최종 메시지 대기(CONTINUE 버튼)
+    finaleChase();
+    if(finale.phase==='ended') return;
+    // chase 중엔 아래 일반 업데이트 계속(플레이어 이동/발사) — 적 스폰만 정지됨
+  }
 
   // 러시 타임 트리거
   if(gameTime>=nextSurge && gameTime>=surgeUntil){
@@ -2892,6 +2992,7 @@ function update(){
 
   // 보스 등장 타이밍: 90초마다 (매번 더 강함). 러쉬는 120초마다(별도). 5분 레이드는 제거됨.
   if(gameTime>=nextBoss){ spawnBoss(); nextBoss+=BOSS_GAP; }
+  if(gameTime>=nextPassout){ spawnPassout(); nextPassout+=20; }   // 만취 손님: 20초마다(1분에 3번)
   // 노부킹 무리: 초반에만(5번째 보스 전까지). 가로 벽처럼 천천히 화면을 횡단.
   if(nextWall>0 && gameTime>=nextWall){
     if(bossCount<5){ spawnWall(); nextWall+=WALL_GAP; } else nextWall=0;
@@ -2933,7 +3034,7 @@ function update(){
   // 회복력: Joe가 가장 높고, Pat도 약간(조 보다 낮게). + HEAL 강화 보너스
   const regenPerSec = (player.key==='joe' ? 0.10 + (player.level-1)*0.075    // ★기본 회복률 절반
                      : player.key==='pat' ? 0.035 + (player.level-1)*0.025 : 0) + (player.regenBonus||0);
-  if(regenPerSec>0 && player.hp>0 && player.hp<player.maxHp){
+  if(regenPerSec>0 && player.hp>0 && player.hp<player.maxHp && !player.noSustain){   // noSustain(피날레) 시 회복 정지
     player.hp = Math.min(player.maxHp, player.hp + regenPerSec/60);
   }
 
@@ -3049,6 +3150,13 @@ function update(){
       if(e.fuseUntil>0){ e.moving=false;                          // 점화되면 멈춰서 부들부들
         if(frame>=e.fuseUntil && !e.remove){ explodeBomber(e); e.remove=true; }
       } else { const wob=Math.sin(e.wobble)*0.4; e.x+=Math.cos(a+wob)*e.speed; e.y+=Math.sin(a+wob)*e.speed; e.moving=true; }
+    } else if(e.type==='passout'){
+      // ★만취 손님: 하늘에서 빠르게 낙하(원근 축소) → 착지 후 움직임 없는 장애물. 플레이어가 겹치면 밖으로 밀어냄.
+      e.moving=false;
+      if((e.fallT||0) < 1){ e.fallT=(e.fallT||0)+1/20; }   // 20프레임 낙하(빠르게, 게임진행 방해 없게)
+      else { let dx=player.x-e.x, dy=player.y-e.y, dd=Math.hypot(dx,dy); const need=e.r+player.r;
+        if(dd<0.01){ dx=0; dy=-1; dd=1; }                  // 정확히 겹치면 위로 밀어냄(방향 0/0 방지)
+        if(dd<need){ player.x=e.x+dx/dd*need; player.y=e.y+dy/dd*need; } }   // 장애물: 플레이어를 밖으로
     } else {
       // 잡몹: 평소엔 걷고, 가끔 멈춰서 서기 모션
       if(frame>=e.nextPause && frame>=e.standUntil){ e.standUntil=frame+24+Math.random()*36; e.nextPause=e.standUntil+90+Math.random()*240; }
@@ -3061,8 +3169,8 @@ function update(){
       const pdx=e.partner.x-e.x, pdy=e.partner.y-e.y, pd=Math.hypot(pdx,pdy);
       if(pd>28){ e.x+=pdx/pd*e.speed*0.55; e.y+=pdy/pd*e.speed*0.55; }
     }
-    // 접촉 데미지
-    if(!isInvuln() && Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r){
+    // 접촉 데미지 (passout=만취 손님은 장애물이라 데미지 없음)
+    if(e.type!=='passout' && !isInvuln() && Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r){
       const dmg = e.wall? D.dmg*3.2 : e.type==='boss'? D.dmg*4.4 : e.bomb? D.dmg*1.4 : D.dmg;   // 보스=2배(4.4), 벽은 더 쎄게
       hurtPlayer(dmg); if(player.hp<=0){ gameOver(); return; }
     }
@@ -3076,7 +3184,7 @@ function update(){
     for(let j=i+1;j<enemies.length;j++){ const B=enemies[j];
       const dx=B.x-A.x, dy=B.y-A.y, min=(A.r+B.r)*0.8, d2=dx*dx+dy*dy;
       if(d2>0.01 && d2<min*min){ const d=Math.sqrt(d2), push=(min-d)/d*0.5;
-        const aw=A.type==='boss'?0.12:1, bw=B.type==='boss'?0.12:1;
+        const aw=A.type==='passout'?0:A.type==='boss'?0.12:1, bw=B.type==='passout'?0:B.type==='boss'?0.12:1;   // 만취 손님은 안 밀림(정적 장애물)
         A.x-=dx*push*aw; A.y-=dy*push*aw; B.x+=dx*push*bw; B.y+=dy*push*bw; } } }
   if(player.invuln>0) player.invuln--;
 
@@ -3274,6 +3382,8 @@ function killEnemy(idx){
   if(e.type==='boss'){
     pickups.push({ x:e.x, y:e.y, kind:'bill', won:e.won, sprite:e.billSprite });
     pickups.push({ x:e.x+12, y:e.y, kind:'tip' });   // 팁 봉투 드롭(랜덤 스킬 보상)
+  } else if(e.type==='passout'){
+    pickups.push({ x:e.x, y:e.y, kind:'bill', won:e.won, sprite:e.billSprite });   // 만취 손님: 큰 경험치 지폐(팁 없음)
   } else {
     const rr=Math.random();   // ★강력 아이템 4종 + 동전. LUCK(sugar)이 드랍아이템 확률을 올림
     const lk=(player.pas&&player.pas.luck)||0;   // sugar 레벨당 +0.002(=0.2%) → 특수드랍 창이 넓어짐
@@ -3998,12 +4108,12 @@ function draw(){
     // ★30분 피날레: 라이벌 바텐더가 위에서 내려와 다가옴 (붉은 위협 오라 + 큰 스프라이트, 살짝 흔들림)
     if(finale.active && finale.rival){
       const r=finale.rival, rim=spr(r.key);
-      const gr=ctx.createRadialGradient(r.x,r.y,6,r.x,r.y,72);
-      gr.addColorStop(0,'rgba(255,60,50,.55)'); gr.addColorStop(1,'rgba(255,40,40,0)');
-      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(r.x,r.y,72,0,6.28); ctx.fill();
-      if(rim){ const DH=96, aspect=rim.width/rim.height;
-        ctx.save(); ctx.translate(Math.random()*2-1, Math.random()*2-1);
-        drawImgC(rim, r.x, r.y, DH*aspect, DH, 0, r.x>player.x);
+      const gr=ctx.createRadialGradient(r.x,r.y,10,r.x,r.y,120);   // 큰 붉은 위협 오라
+      gr.addColorStop(0,'rgba(255,60,50,.6)'); gr.addColorStop(1,'rgba(255,40,40,0)');
+      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(r.x,r.y,120,0,6.28); ctx.fill();
+      if(rim){ const DH=170, aspect=rim.width/rim.height;   // ★엄청 크게
+        ctx.save(); ctx.translate(Math.random()*3-1.5, Math.random()*3-1.5);
+        drawImgC(rim, r.x, r.y-DH*0.15, DH*aspect, DH, 0, r.x>player.x);
         ctx.restore(); }
     }
 
@@ -4063,6 +4173,21 @@ function drawWall(e){
 }
 function drawEnemy(e){
   if(e.wall){ drawWall(e); return; }   // 가로 벽 보스는 전용 렌더
+  if(e.type==='passout'){              // ★만취 손님: 위에서 원근으로 크게→작게 낙하 후 장애물 + HP바
+    const im=spr('drunk_'+(e.drunkImg||0));
+    const ft=Math.min(1, e.fallT||0);
+    const persp=4-3*ft, yLift=(1-ft)*100, baseH=e.r*2.6;   // 시작 4배·위 100px → 착지 1배
+    ctx.globalAlpha=0.28*ft; ctx.fillStyle='#000';         // 착지 지점 그림자(낙하할수록 진하게)
+    ctx.beginPath(); ctx.ellipse(e.x, e.y+e.r*0.75, e.r*0.95, e.r*0.42, 0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+    if(im){ const HH=baseH*persp, aspect=im.width/im.height;
+      drawImgC(im, e.x, e.y - yLift - HH*0.18, HH*aspect, HH, 0, player&&player.x<e.x); }
+    else { ctx.fillStyle='#8a5a3a'; ctx.beginPath(); ctx.arc(e.x, e.y-yLift, e.r*persp, 0,6.28); ctx.fill(); }
+    if(ft>=1 && e.hp<e.maxHp){                             // 피격 시 남은 체력바(보스처럼)
+      const bw=e.r*2, by=e.y-e.r*1.55;
+      ctx.fillStyle='#000'; ctx.fillRect(e.x-bw/2,by,bw,4);
+      ctx.fillStyle='#c0654d'; ctx.fillRect(e.x-bw/2,by,bw*Math.max(0,e.hp/e.maxHp),4); }
+    return;
+  }
   // 폭탄몹 점화: 폭발 반경 경고(빨강 점멸) + 카운트다운 + 부들부들 흔들림
   let jx=0, jy=0;
   if(e.bomb && e.fuseUntil>0){
