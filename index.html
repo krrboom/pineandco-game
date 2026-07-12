@@ -2414,7 +2414,7 @@ function spawnPassout(){
   let img=Math.floor(Math.random()*4);
   if(img===lastPassoutImg) img=(img+1+Math.floor(Math.random()*3))%4;   // 직전과 안 겹치게(최대한)
   lastPassoutImg=img;
-  const sizeMul=2*Math.pow(1.3, Math.floor(gameTime/180));         // 기본 2배 + 3분마다 +30%
+  const sizeMul=2*Math.pow(1.2, Math.floor(gameTime/180));         // 기본 2배 + 3분마다 +20%
   const hp=d.hp*20;                                                // 기존 몬스터 20배
   const won=Math.round(400 + gameTime*4);                          // 처치 시 큰 경험치 지폐
   enemies.push({ id:enemyId++, type:'passout', x, y, r:8*sizeMul, hp, maxHp:hp,
@@ -4200,14 +4200,14 @@ function drawEnemy(e){
   if(e.type==='passout'){              // ★만취 손님: 위에서 원근으로 크게→작게 낙하 후 장애물 + HP바
     const im=spr('drunk_'+(e.drunkImg||0));
     const ft=Math.min(1, e.fallT||0);
-    const persp=4-3*ft, yLift=(1-ft)*100, baseH=e.r*2.6;   // 시작 4배·위 100px → 착지 1배
+    const persp=4-3*ft, yLift=(1-ft)*100, baseH=e.r*6;   // 스프라이트 = 일반 몹의 약 2배로 크게 · 시작 4배·위 100px → 착지 1배
     ctx.globalAlpha=0.28*ft; ctx.fillStyle='#000';         // 착지 지점 그림자(낙하할수록 진하게)
-    ctx.beginPath(); ctx.ellipse(e.x, e.y+e.r*0.75, e.r*0.95, e.r*0.42, 0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.ellipse(e.x, e.y+e.r*0.6, e.r*1.4, e.r*0.5, 0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
     if(im){ const HH=baseH*persp, aspect=im.width/im.height;
-      drawImgC(im, e.x, e.y - yLift - HH*0.18, HH*aspect, HH, 0, player&&player.x<e.x); }
+      drawImgC(im, e.x, e.y - yLift - HH*0.08, HH*aspect, HH, 0, player&&player.x<e.x); }
     else { ctx.fillStyle='#8a5a3a'; ctx.beginPath(); ctx.arc(e.x, e.y-yLift, e.r*persp, 0,6.28); ctx.fill(); }
-    if(ft>=1 && e.hp<e.maxHp){                             // 피격 시 남은 체력바(보스처럼)
-      const bw=e.r*2, by=e.y-e.r*1.55;
+    if(ft>=1 && e.hp<e.maxHp){                             // 피격 시 남은 체력바(보스처럼, 큰 스프라이트 위)
+      const bw=e.r*2.4, by=e.y-baseH*0.55;
       ctx.fillStyle='#000'; ctx.fillRect(e.x-bw/2,by,bw,4);
       ctx.fillStyle='#c0654d'; ctx.fillRect(e.x-bw/2,by,bw*Math.max(0,e.hp/e.maxHp),4); }
     return;
