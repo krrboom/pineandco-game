@@ -530,13 +530,19 @@
   .worldmap-ph small{ font-size:clamp(9px,2.4vw,12px); color:#6f8bab; letter-spacing:.5px; }
   .coming-soon{ text-align:center; color:var(--gold,#c89a3c); font-size:clamp(15px,4.6vw,26px); font-weight:800; letter-spacing:1px; line-height:1.5; }
   .coming-soon span{ display:block; margin-top:6px; color:#cfc6b0; font-size:clamp(10px,2.8vw,14px); font-weight:500; letter-spacing:.3px; }
-  /* 인트로 스토리 크롤 (스타워즈식) */
+  /* 인트로 스토리 크롤 (스타워즈식): 밑에서 큰 글씨 → 위로 가며 원근으로 멀어져 작아짐 */
   #introScreen{ background:#05070a; overflow:hidden; padding:0; justify-content:flex-end; }
-  .crawl-wrap{ position:absolute; inset:0; overflow:hidden; perspective:330px; }
-  .crawl{ position:absolute; left:50%; top:100%; width:min(88%,540px); transform:translateX(-50%) rotateX(26deg);
-    transform-origin:50% 0%; color:#ffd24a; text-align:center; font-weight:700; line-height:1.7;
-    text-shadow:0 0 10px rgba(255,180,40,.35); animation:crawlUp 26s linear forwards; }
-  @keyframes crawlUp{ 0%{ top:100%; opacity:0; } 6%{ opacity:1; } 90%{ opacity:1; } 100%{ top:-280%; opacity:0; } }
+  .crawl-wrap{ position:absolute; inset:0; overflow:hidden; perspective:400px; perspective-origin:50% 38%; }
+  .crawl-wrap::before{ content:''; position:absolute; top:0; left:0; right:0; height:46%; z-index:2; pointer-events:none;
+    background:linear-gradient(#05070a 6%, rgba(5,7,10,0)); }   /* 위로 갈수록 어둠 속으로 소실 */
+  .crawl{ position:absolute; left:0; right:0; margin:0 auto; bottom:0; width:min(90%,560px);
+    transform-origin:50% 100%; color:#ffd24a; text-align:center; font-weight:700; line-height:1.7;
+    text-shadow:0 0 10px rgba(255,180,40,.35); animation:crawlUp 34s linear forwards; }
+  @keyframes crawlUp{
+    0%   { transform:rotateX(24deg) translateY(100%)  translateZ(0);      opacity:0; }
+    7%   { opacity:1; }
+    88%  { opacity:1; }
+    100% { transform:rotateX(24deg) translateY(-340%) translateZ(-900px); opacity:0; } }
   .crawl p{ font-size:clamp(14px,4.2vw,20px); margin:0 0 22px; }
   .crawl .crawl-ep{ color:#eafbe9; letter-spacing:3px; font-size:clamp(11px,3vw,14px); margin-bottom:8px; }
   .crawl .crawl-title{ font-size:clamp(24px,7.5vw,44px); margin:0 0 30px; letter-spacing:1px; line-height:1.15; }
