@@ -916,12 +916,21 @@ function fmtCell(m,v){ v=v||0;
   return v>=1e4 ? (v/1e3).toFixed(1)+'k' : ''+v;   // kills/downs
 }
 function showBoard(m){ curBoardMetric=m; document.querySelectorAll('.bt-tab').forEach(t=>t.classList.toggle('active', t.dataset.m===m)); renderBoard(); cloudFetch(m); }
+/* 캐릭터를 이름 필드에 인코딩(구글 시트/Apps Script가 char 열을 몰라도 캐릭터가 살아남게 함).
+   보내는 이름 끝에 ~P(Pat)/~J(Joe) 마커를 붙이고, 받을 때 파싱해 배지로 표시하고 이름은 깨끗하게. */
+function charMark(ch){ return ch==='pat'?'~P':ch==='joe'?'~J':''; }
+function parseCharName(name, char){
+  let c=(char==='pat'||char==='joe')?char:'';
+  const m=name.match(/~([PJ])$/);
+  if(m){ if(!c) c=(m[1]==='P')?'pat':'joe'; name=name.slice(0,-2); }   // 마커 있으면 캐릭터 복원 + 이름에서 제거
+  return { name:name, char:c };
+}
 /* 점수 전송 (fire-and-forget, no-cors) */
 function cloudSubmit(name, run){
   if(!CLOUD_URL) return;
   try{
     fetch(CLOUD_URL, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ secret:CLOUD_SECRET, name:name, char:run.char||'', time:run.time, kills:run.kills, sales:run.sales }) })
+      body: JSON.stringify({ secret:CLOUD_SECRET, name:name+charMark(run.char), char:run.char||'', time:run.time, kills:run.kills, sales:run.sales }) })
       .then(()=>{ setTimeout(()=>{ cloudFetch('time'); cloudFetch('kills'); cloudFetch('sales'); }, 900); }).catch(()=>{});
   }catch(e){}
 }
@@ -932,7 +941,8 @@ function cloudFetch(metric){
   const cb='__pineCb'+(_cloudCbN++), s=document.createElement('script'); let done=false;
   window[cb]=(data)=>{ done=true;
     try{ if(data && data.ok && Array.isArray(data.top)){
-      CLOUD_BOARDS[metric]=data.top.map(e=>({ name:String(e.name||'---'), char:String(e.char||''), time:Number(e.time)||0, kills:Number(e.kills)||0, sales:Number(e.sales)||0 }));
+      CLOUD_BOARDS[metric]=data.top.map(e=>{ const pc=parseCharName(String(e.name||'---'), String(e.char||''));
+        return { name:pc.name, char:pc.char, time:Number(e.time)||0, kills:Number(e.kills)||0, sales:Number(e.sales)||0 }; });
       if(metric==='time' && CLOUD_BOARDS.time.length){ HI_SCORE=Math.max(HI_SCORE, CLOUD_BOARDS.time[0].time);
         const h=document.getElementById('hiTitle'); if(h) h.textContent=fmtTime(HI_SCORE); }
       if(curBoardMetric===metric) renderBoard();
@@ -1688,7 +1698,7 @@ let surgeUntil, nextSurge, bannerTimer, bannerText;
 let nextRaid, raidLeft, raidNextBoss;   // 5분마다 보스 레이드
 let finale={ active:false, until:0, rival:null, killed:false };   // 30분 피날레: 라이벌 바텐더 등장 → 교대(종료)
 const FINALE_AT = 1800;   // 30분(초)
-let passoutQueue=[], passoutSchedMin=-1, lastPassoutImg=-1;   // 만취 손님: 매 1분마다 무작위 3번 낙하 예약
+let nextDrunkWave, lastPassoutImg=-1;   // 만취 손님: 1분마다 3마리 한꺼번에 낙하(게임 12분까지)
 let bossCount, nextBoss, bossAlertUntil=0;
 let nextWall;   // 노부킹 무리(가로 벽 보스) 다음 등장 시각. 0이면 더 안 나옴
 let bossBag=[], bossRecent=[];   // bossRecent = 최근 2턴에 나온 보스
@@ -1738,7 +1748,7 @@ const MONSTER_INDEX=[
   { img:'enemy_thrower_stand', name:'GREEN HURLER',    t:'Keeps distance, vomits saliva blobs. Shoot the blobs down.' },
   { img:'enemy_genzf_stand',   name:'GEN-Z GIRL',      t:'Rolls as a couple. While the two stay together they chill a freeze field that slows you down.' },
   { img:'enemy_genzm_stand',   name:'GEN-Z GUY',       t:'Split the couple up — apart, the freeze field dies. Tanky together.' },
-  { img:'drunk_0', name:'PASSED-OUT REGULAR', t:'Drops out of the sky 3 times a minute (random) and sprawls on the floor, dead asleep. Does not move — a living roadblock in your way. Huge (2x size, +30% every 3 min) and stubborn (20x a normal drunk\'s HP). Slam into one and you take DOUBLE contact damage, so squeeze past carefully. Take one down for a fat XP payout.' },
+  { img:'drunk_0', name:'BOSS · THE PASS-OUTS', t:'Too gone to remember their own address, their friends bailed hours ago, their phone died, and they never closed the tab. Shake them all you want — they are NOT waking up. Three crash-land out of the sky every minute (until the 12-min mark), sprawled dead-weight on the floor. They never move — a body-wall you have to go around; their no-pass circle is the size of the whole slump. Boss-tough (2x a boss\'s HP, all three identical) and slamming into one hurts exactly like a boss. Clear all three for a stack of cash — and one of them still has a TIP in their pocket.', boss:1 },
   { img:'boss_couple_stand',   name:'BOSS · GET-A-ROOM GANG',     t:'Booked one stool, used it as a honeymoon suite. Tongues like they signed a release form. Glows, drops cash, traumatizes stool #3.', boss:1 },
   { img:'boss_pickup_stand',   name:'BOSS · THE SMOOTH OPERATOR', t:'Zero drinks, full hunt. Collects phone numbers like loyalty stamps, then leaves every text on read. Big, glowing, and somehow still single.', boss:1 },
   { img:'boss_woman_stand',    name:'BOSS · MADAME SEND-IT-BACK', t:'Returned the cocktail twice, the ice for being cold, and the water for being wet. The kitchen fears her. The bar fears her more.', boss:1 },
@@ -2041,7 +2051,11 @@ function menuRows(items){ return items.map(it=>`<div class="menu-item${it.img?' 
 function menuSection(catLabel, items){ return `<div class="menu-cat">${catLabel}</div>`+menuRows(items); }
 /* 칵테일 사진 모달: 카드 탭 → 큰 픽셀 사진 + 이름(사진 위) + 재료·가격 + 설명. 좌우 화살표로 이동, 그 외 클릭은 닫힘 */
 function ckSlug(name){ return name.toLowerCase().replace(/[^a-z0-9]/g,''); }
-let ckModalIdx=0;
+let ckModalIdx=0, _ckPhotoCache=[];
+function preloadCocktailPhotos(){   // 15개 사진 미리 로드(캐시 유지) → 화살표 넘김이 즉시
+  if(_ckPhotoCache.length) return;
+  for(const c of MENU_COCKTAILS){ const im=new Image(); im.src='assets/photo_'+ckSlug(c.name)+'.png'; _ckPhotoCache.push(im); }
+}
 function openCkModal(i){
   ckModalIdx = (i % MENU_COCKTAILS.length + MENU_COCKTAILS.length) % MENU_COCKTAILS.length;
   const c0=MENU_COCKTAILS[ckModalIdx], c=ckT(c0,ckModalIdx);
@@ -2063,6 +2077,7 @@ function renderMenu(){
     `<button class="${curMenuTab===k?'active':''}" onclick="showMenuTab('${k}')">${l}</button>`).join('');
   let html='';
   if(curMenuTab==='cocktails'){
+    preloadCocktailPhotos();   // 사진 미리 로드 → 좌우 화살표 넘김 즉시
     html = `<div class="menu-cat">${T('sigTitle')} · ${won(COCKTAIL_PRICE)} <span class="mc-note">${T('tip')}</span></div>`
       + MENU_COCKTAILS.map((c0,i)=>{ const c=ckT(c0,i); return `<div class="ck-card" onclick="openCkModal(${i})">
           <div class="ck-head"><span class="ck-num">${c0.n}</span><span class="ck-name">${c0.name}</span><span class="ck-glass">${glassSVG(c0.gl)}</span><span class="ck-price">${won(c0.p||COCKTAIL_PRICE)}</span></div>
@@ -2125,7 +2140,7 @@ function startGame(charKey){
   bossCount=0; nextBoss=BOSS_FIRST; nextWall=WALL_FIRST; bossBag=[]; bossRecent=[];
   finale={ active:false, phase:'', rival:null, killed:false, hitCd:0, msgHideAt:0 };
   try{ const el=document.getElementById('finaleMsg'); el.classList.add('hidden'); el.style.pointerEvents='none'; }catch(e){}
-  passoutQueue=[]; passoutSchedMin=-1; lastPassoutImg=-1;   // 만취 손님 예약 초기화
+  nextDrunkWave=30; lastPassoutImg=-1;   // 첫 만취 웨이브 30초, 이후 1분마다(12분까지)
   document.getElementById('hudCharImg').src='assets/name_'+charKey+'.png';
   updateWeaponChips();
   startIntroCrawl();   // ★스타워즈식 스토리 크롤 → 스킵/종료 시 실제 게임 시작
@@ -2407,19 +2422,26 @@ function spawnBoss(){
   bossAlertUntil = gameTime + 2.2;   // 긴박한 빨간 플래시
   playBossAlarm();                    // 같은 알람음 6번 연속
 }
-/* 만취 손님(passout): 하늘에서 떨어지는 정적 장애물. 20배 체력·2배 크기(3분마다 30%↑)·지폐 드랍. */
-function spawnPassout(){
+/* 만취 손님(passout): 하늘에서 3마리 한꺼번에 낙하하는 보스급 정적 장애물.
+   보스 HP의 2배(3마리 동일)·접촉 데미지 보스와 동일·크기 1.7배 고정·이미지 크기 원(통과 불가)·지폐(1명만 팁). */
+function spawnDrunkWave(){
   const d=DIFF();
-  const x=44+Math.random()*(W-88), y=54+Math.random()*(H-108);     // 필드 안 랜덤
-  let img=Math.floor(Math.random()*4);
-  if(img===lastPassoutImg) img=(img+1+Math.floor(Math.random()*3))%4;   // 직전과 안 겹치게(최대한)
-  lastPassoutImg=img;
-  const sizeMul=2*Math.pow(1.2, Math.floor(gameTime/180));         // 기본 2배 + 3분마다 +20%
-  const hp=d.hp*20;                                                // 기존 몬스터 20배
-  const won=Math.round(400 + gameTime*4);                          // 처치 시 큰 경험치 지폐
-  enemies.push({ id:enemyId++, type:'passout', x, y, r:8*sizeMul, hp, maxHp:hp,
-    speed:0, moving:false, dmgCd:0, wobble:0, drunkImg:img, fallT:0, showHpBar:true,
-    won, billSprite:billSpriteFor(won) });
+  const estBoss=Math.max(1, Math.floor(gameTime/90));               // 대략적인 동시대 보스 강도
+  const timeScale=1+(gameTime/60)*0.22;
+  const strength=8*(1+(estBoss-1)*0.7)*timeScale;
+  const hp=d.hp*strength*2;                                         // ★보스의 2배 (3마리 모두 동일)
+  const won=Math.round(600 + gameTime*5);                           // 처치 시 큰 경험치 지폐
+  const tipIdx=Math.floor(Math.random()*3);                         // ★3명 중 1명만 팁
+  const r=41, drawH=82;                                             // 1.7배 고정(일반 ~48px→~82px), 원=이미지 크기(반경 41)
+  for(let i=0;i<3;i++){
+    const x=52+Math.random()*(W-104), y=62+Math.random()*(H-124);
+    let img=Math.floor(Math.random()*4);
+    if(img===lastPassoutImg) img=(img+1+Math.floor(Math.random()*3))%4;   // 직전과 안 겹치게
+    lastPassoutImg=img;
+    enemies.push({ id:enemyId++, type:'passout', x, y, r, drawH, hp, maxHp:hp,
+      speed:0, moving:false, dmgCd:0, wobble:0, drunkImg:img, fallT:0, showHpBar:true,
+      won, billSprite:billSpriteFor(won), givesTip:(i===tipIdx) });
+  }
 }
 
 /* ===== 노부킹 무리: 가로 벽 보스 =====
@@ -2939,7 +2961,7 @@ function startFinale(){
   const ep=edgePos();
   finale.rival={ key:rk, x:ep.x, y:ep.y, spd:3.6 };   // Joe 기본이동(3.0)보다 빠름
   enemies.length=0; eprojectiles.length=0; mintRain.length=0; gatStream.length=0;
-  spawnTimer=1e9; nextBoss=1e9; nextWall=1e9; nextSurge=1e9; passoutQueue.length=0; passoutSchedMin=1e9;   // 추격 중 스폰 정지
+  spawnTimer=1e9; nextBoss=1e9; nextWall=1e9; nextSurge=1e9; nextDrunkWave=1e9;   // 추격 중 스폰 정지
   const rn=rk.toUpperCase();
   const el=document.getElementById('finaleMsg');
   if(el){ el.style.pointerEvents='none';
@@ -2999,12 +3021,8 @@ function update(){
 
   // 보스 등장 타이밍: 90초마다 (매번 더 강함). 러쉬는 120초마다(별도). 5분 레이드는 제거됨.
   if(gameTime>=nextBoss){ spawnBoss(); nextBoss+=BOSS_GAP; }
-  // 만취 손님: 매 1분마다 그 분 안에서 무작위 3개 시각을 예약 → 예로 10s·30s·35s처럼 불규칙
-  { const curMin=Math.floor(gameTime/60);
-    if(curMin>passoutSchedMin){ passoutSchedMin=curMin;
-      for(let i=0;i<3;i++) passoutQueue.push(curMin*60 + Math.random()*60);
-      passoutQueue.sort((a,b)=>a-b); }
-    while(passoutQueue.length && gameTime>=passoutQueue[0]){ passoutQueue.shift(); spawnPassout(); } }
+  // 만취 손님: 1분마다 3마리 한꺼번에 낙하 (게임 12분까지만)
+  if(gameTime<=720 && gameTime>=nextDrunkWave){ spawnDrunkWave(); nextDrunkWave+=60; }
   // 노부킹 무리: 초반에만(5번째 보스 전까지). 가로 벽처럼 천천히 화면을 횡단.
   if(nextWall>0 && gameTime>=nextWall){
     if(bossCount<5){ spawnWall(); nextWall+=WALL_GAP; } else nextWall=0;
@@ -3169,7 +3187,7 @@ function update(){
       else { let dx=player.x-e.x, dy=player.y-e.y, dd=Math.hypot(dx,dy); const need=e.r+player.r;
         if(dd<0.01){ dx=0; dy=-1; dd=1; }                  // 정확히 겹치면 위로 밀어냄(방향 0/0 방지)
         if(dd<need){
-          if(!isInvuln()){ hurtPlayer(D.dmg*2); if(player.hp<=0){ gameOver(); return; } }   // ★부딪히면 일반 몬스터 2배 데미지(무적프레임으로 스로틀)
+          if(!isInvuln()){ hurtPlayer(D.dmg*4.4); if(player.hp<=0){ gameOver(); return; } }   // ★부딪히면 보스와 동일 데미지(무적프레임으로 스로틀)
           player.x=e.x+dx/dd*need; player.y=e.y+dy/dd*need; } }   // 장애물: 플레이어를 밖으로
     } else {
       // 잡몹: 평소엔 걷고, 가끔 멈춰서 서기 모션
@@ -3407,7 +3425,8 @@ function killEnemy(idx){
     pickups.push({ x:e.x, y:e.y, kind:'bill', won:e.won, sprite:e.billSprite });
     pickups.push({ x:e.x+12, y:e.y, kind:'tip' });   // 팁 봉투 드롭(랜덤 스킬 보상)
   } else if(e.type==='passout'){
-    pickups.push({ x:e.x, y:e.y, kind:'bill', won:e.won, sprite:e.billSprite });   // 만취 손님: 큰 경험치 지폐(팁 없음)
+    pickups.push({ x:e.x, y:e.y, kind:'bill', won:e.won, sprite:e.billSprite });   // 만취 손님: 3명 모두 지폐
+    if(e.givesTip) pickups.push({ x:e.x+12, y:e.y, kind:'tip' });                   // 그중 1명만 팁(계산 안 한 사람)
   } else {
     const rr=Math.random();   // ★강력 아이템 4종 + 동전. LUCK(sugar)이 드랍아이템 확률을 올림
     const lk=(player.pas&&player.pas.luck)||0;   // sugar 레벨당 +0.002(=0.2%) → 특수드랍 창이 넓어짐
@@ -4200,14 +4219,19 @@ function drawEnemy(e){
   if(e.type==='passout'){              // ★만취 손님: 위에서 원근으로 크게→작게 낙하 후 장애물 + HP바
     const im=spr('drunk_'+(e.drunkImg||0));
     const ft=Math.min(1, e.fallT||0);
-    const persp=4-3*ft, yLift=(1-ft)*100, baseH=e.r*6;   // 스프라이트 = 일반 몹의 약 2배로 크게 · 시작 4배·위 100px → 착지 1배
+    const persp=4-3*ft, yLift=(1-ft)*100, baseH=e.drawH||82;   // 1.7배 고정 스프라이트 · 시작 4배·위 100px → 착지 1배
     ctx.globalAlpha=0.28*ft; ctx.fillStyle='#000';         // 착지 지점 그림자(낙하할수록 진하게)
-    ctx.beginPath(); ctx.ellipse(e.x, e.y+e.r*0.6, e.r*1.4, e.r*0.5, 0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.ellipse(e.x, e.y+e.r*0.6, e.r*1.15, e.r*0.42, 0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+    if(ft>=1){                                             // ★통과 불가 영역(이미지 크기 원) 살짝 표시
+      ctx.globalAlpha=0.16+0.06*Math.sin(frame*0.12); ctx.fillStyle='#c0654d';
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, 6.28); ctx.fill();
+      ctx.globalAlpha=0.45; ctx.lineWidth=1.5; ctx.strokeStyle='#e8887a';
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, 6.28); ctx.stroke(); ctx.globalAlpha=1; }
     if(im){ const HH=baseH*persp, aspect=im.width/im.height;
-      drawImgC(im, e.x, e.y - yLift - HH*0.08, HH*aspect, HH, 0, player&&player.x<e.x); }
+      drawImgC(im, e.x, e.y - yLift - HH*0.08, HH*aspect, HH, 0, false); }   // 방향 고정(플립 없음)
     else { ctx.fillStyle='#8a5a3a'; ctx.beginPath(); ctx.arc(e.x, e.y-yLift, e.r*persp, 0,6.28); ctx.fill(); }
     if(ft>=1 && e.hp<e.maxHp){                             // 피격 시 남은 체력바(보스처럼, 큰 스프라이트 위)
-      const bw=e.r*2.4, by=e.y-baseH*0.55;
+      const bw=e.r*1.6, by=e.y-baseH*0.55;
       ctx.fillStyle='#000'; ctx.fillRect(e.x-bw/2,by,bw,4);
       ctx.fillStyle='#c0654d'; ctx.fillRect(e.x-bw/2,by,bw*Math.max(0,e.hp/e.maxHp),4); }
     return;
