@@ -2706,15 +2706,13 @@ function updateGinTonic(){
   } }
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
 }
-/* 드라이 마티니: 플레이어 근처(궤도 안쪽)에 온 적을 살짝 바깥으로 밀어냄. 보스는 거의 안 밀림. */
-function drymartiniPush(){
+/* 드라이 마티니: 밀어내기 제거(너무 강했음) → 궤도 사정거리 안에 든 적을 느리게(속도 32%). 보스에도 적용. */
+function drymartiniSlow(){
   if(!player||!player.weapons||!player.weapons.drymartini) return;
-  const lv=player.weapons.drymartini, R=(46+lv*8)+16;   // 궤도 반경 + 약간
+  const lv=player.weapons.drymartini, R=(46+lv*8)+16;   // 궤도 사정거리
   for(const e of enemies){
-    const dx=e.x-player.x, dy=e.y-player.y, d=Math.hypot(dx,dy)||1;
-    if(d < R+e.r){
-      const push=(e.type==='boss')?0.25:2.2;             // 보스는 거의 안 밀림
-      e.x+=dx/d*push; e.y+=dy/d*push;
+    if(Math.hypot(e.x-player.x, e.y-player.y) < R+e.r){
+      e.frozenUntil=Math.max(e.frozenUntil||0, frame+18);   // 사정거리 안이면 슬로우(매 프레임 갱신)
     }
   }
 }
@@ -2958,7 +2956,7 @@ function update(){
   updateOrbits();   // 크랜베리 궤도무기
   updateAuras();    // 버무스 웜우드 오라
   updateGinTonic(); // 마늘(진토닉): 플레이어 뒤 반투명 진토닉 히트박스
-  drymartiniPush(); // 드라이 마티니: 플레이어 근처 적 살짝 밀어냄(보스는 거의 안 밀림)
+  drymartiniSlow(); // 드라이 마티니: 사정거리 안 적을 느리게(속도 32%)
   // ★사우스사이드 민트 레인: 예약된 폭탄을 한발씩(시간차) 하늘에서 떨어뜨림 → 착지 지점은 플레이어 주위 랜덤
   for(let i=mintRain.length-1;i>=0;i--){ const m=mintRain[i]; if(frame<m.at) continue;
     // 원형화: circ 확률로 플레이어 주변 '원'(baseAng+흔들림, 바깥쪽)에, 아니면 완전 랜덤. → 정확한 원 아님
@@ -3123,8 +3121,8 @@ function update(){
     if(p.land!=null){
       if(p.y>=p.land || p.life<=0){ const lx=p.x, ly=Math.min(p.land,p.y);
         if(p.sbFlame){
-          // ★파란 불꽃 장판: 지속 데미지 + 빙결(z.slow). 폭발 아님(계속 타오름).
-          zones.push({ x:lx, y:ly, r:p.landR, life:160, dmg:p.dmg*0.6, tick:14, slow:(p.cFreeze||60), kind:'sbflame' });
+          // ★파란 불꽃 장판: 지속 데미지만(빙결 제거 — 너무 강했음). 폭발 아님(계속 타오름).
+          zones.push({ x:lx, y:ly, r:p.landR, life:160, dmg:p.dmg*0.6, tick:14, slow:0, kind:'sbflame' });
           explosions.push({ x:lx, y:ly, r:p.landR, life:16, max:16, col:'#5fc9e6', ring:'#bfefff', flash:true });
           burst(lx,ly,'#7fd8ff',12);
         } else {
