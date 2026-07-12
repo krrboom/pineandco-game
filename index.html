@@ -14,8 +14,10 @@
     --bg:#0d0f0c; --panel:#161a14; --pine:#3a7d4f; --pine-light:#6fcf8f;
     --amber:#e6b450; --red:#d9544d; --ink:#e8e6dd; --dim:#8a8d82;
   }
-  html,body{ height:100%; background:var(--bg); color:var(--ink);
-    font-family:'Press Start 2P', monospace; overflow:hidden; user-select:none; }
+  html,body{ height:100%; width:100%; background:var(--bg); color:var(--ink);
+    font-family:'Press Start 2P', monospace; overflow:hidden; user-select:none;
+    position:fixed; overscroll-behavior:none; touch-action:none;   /* ★안드로이드: 당겨서 새로고침·스크롤·확대 방지(조이스틱 깨짐 방지) */
+    -webkit-user-select:none; -webkit-touch-callout:none; }
   #wrap{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
     background:radial-gradient(circle at 50% 0%, #1a2418 0%, var(--bg) 70%); }
   /* 플레이 정사각형 컨테이너 — 스킬/재료 HUD가 뷰포트가 아니라 이 정사각형에 붙음(PC·태블릿 큰 화면 대응) */
@@ -102,8 +104,8 @@
     background:rgba(20,27,18,.45); }
   .ck-head{ display:flex; align-items:baseline; gap:8px; }
   .ck-num{ color:var(--pine-light); font-size:9px; min-width:16px; }
-  .ck-name{ color:#fff; font-size:12px; letter-spacing:1px; flex:1; }
-  .ck-price{ color:var(--amber); font-size:10.5px; white-space:nowrap; letter-spacing:.3px; }
+  .ck-name{ color:#fff; font-size:12px; letter-spacing:1px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ck-price{ color:var(--amber); font-size:10.5px; white-space:nowrap; letter-spacing:.3px; flex-shrink:0; text-align:right; }
   .ck-quote{ color:#efe8d8; font-size:9.5px; font-style:italic; line-height:1.5; margin:7px 0 7px; }
   .ck-meta{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .ck-twist{ display:inline-block; color:#1a130a; background:var(--gold,#c89a3c); font-size:7px; padding:2px 7px; border-radius:3px; letter-spacing:.5px; }
@@ -192,8 +194,8 @@
     padding:10px 8px; background:#0d0f0c; color:var(--pine-light); border:3px solid var(--pine); text-align:center;
     box-shadow:3px 3px 0 #000; outline:none; }
   #nameInput:focus{ border-color:var(--amber); }
-  .board-tabs{ display:flex; gap:6px; justify-content:center; }
-  .bt-tab{ font-family:inherit; font-size:clamp(7px,2vw,10px); padding:6px 11px; cursor:pointer;
+  .board-tabs{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; max-width:100%; padding:0 6px; box-sizing:border-box; }
+  .bt-tab{ font-family:inherit; font-size:clamp(7px,2vw,10px); padding:6px 11px; cursor:pointer; white-space:nowrap;
     background:var(--panel); color:var(--dim); border:2px solid #333; box-shadow:2px 2px 0 #000; }
   .bt-tab.active{ color:var(--pine-light); border-color:var(--pine); background:#1c241a; }
   .board{ font-size:clamp(8px,2.2vw,11px); color:var(--dim); line-height:1.5; min-width:clamp(236px,92vw,360px); }
@@ -206,8 +208,11 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
   .tr-stats{ font-size:clamp(6px,1.8vw,9px); color:#6a4e22; font-variant-numeric:tabular-nums; }
   /* 한 행에 이름 + 시간/제압/매출 3개 컬럼을 한꺼번에 */
-  .board .brow{ display:grid; grid-template-columns:minmax(46px,1fr) auto auto auto; gap:6px; padding:1px 5px; align-items:center; }
-  .board .brow > span:not(.bn){ text-align:right; min-width:32px; font-variant-numeric:tabular-nums; }
+  .board .brow{ display:grid; grid-template-columns:minmax(40px,1fr) auto auto auto auto; gap:5px; padding:1px 5px; align-items:center; }
+  .board .brow > span:not(.bn){ text-align:right; min-width:28px; font-variant-numeric:tabular-nums; }
+  .board .brow .bby{ min-width:30px; font-weight:700; letter-spacing:.3px; }
+  .tr-by{ font-size:clamp(6px,1.7vw,9px); color:#6a4e22; margin-top:1px; }
+  .tr-by b{ color:#8a5a1a; }
   .board .brow.bhead{ color:var(--pine-light); font-weight:bold; border-bottom:1px solid #2a3a2a; margin-bottom:2px; }
   .board .brow .hot{ color:var(--amber); }
   .board .brow.me{ color:var(--amber); background:rgba(230,180,80,.16); }
@@ -469,7 +474,9 @@
     .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; } .gl-svg{ width:19px; height:26px; }
     .sp-legend{ font-size:11px; max-width:640px; } .sp-code{ font-size:9px; min-width:18px; } .sp-keep{ font-size:10px; max-width:600px; }
     #indexScreen .title, #menuScreen .title{ font-size:clamp(22px,3vw,34px); }
-    #indexScreen .board-tabs .bt-tab, #menuScreen .board-tabs .bt-tab{ font-size:12px; padding:7px 12px; }
+    #indexScreen .board-tabs .bt-tab, #menuScreen .board-tabs .bt-tab{ font-size:11px; padding:7px 9px; }
+    #indexScreen .board-tabs{ gap:4px; }   /* MONSTERS·BARTENDERS·INGREDIENTS·COCKTAILS 4개가 한 줄에 안 잘리게 */
+    @media (max-width:380px){ #indexScreen .board-tabs .bt-tab{ font-size:9.5px; padding:6px 6px; letter-spacing:0; } }
   }
 
   /* 타이틀 듀오 아트 (여백 트리밍됨 → 크게) */
@@ -954,29 +961,30 @@ function cloudFetch(metric){
   document.body.appendChild(s);
   setTimeout(()=>{ if(!done){ try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); } }, 8000);
 }
-// 순위표에 어떤 바텐더로 달성했는지: 이름 앞에 캐릭터 얼굴 아이콘(색 테두리) — Pat 빨강 / Joe 앰버
-function charBadge(ch){ if(ch!=='pat'&&ch!=='joe') return '';
-  const col=ch==='pat'?'#d9544d':'#e6b450', lab=ch==='pat'?'P':'J';
-  return `<img class="bchi" style="border-color:${col}" src="assets/char_${ch}.png" alt="${ch}" title="Played as ${ch.toUpperCase()}"`
-    + ` onerror="this.outerHTML='<span class=&quot;bch&quot; style=&quot;background:${col}&quot;>${lab}</span>'">`; }
+// 순위표에 어떤 바텐더로 달성했는지: 오른쪽 끝 'BY' 열에 텍스트로(Pat 빨강 / Joe 앰버)
+function charName(ch){ return ch==='pat'?'PAT':ch==='joe'?'JOE':''; }
+function charCell(ch){ const nm=charName(ch); if(!nm) return `<span class="bby">-</span>`;
+  const col=ch==='pat'?'#e8746d':'#e6b450'; return `<span class="bby" style="color:${col}">${nm}</span>`; }
 function renderBoard(){
   const cloud=CLOUD_BOARDS[curBoardMetric];
   const b=(cloud!==null) ? cloud : (BOARDS[curBoardMetric]||[]);   // 선택한 지표로 정렬된 Top10(클라우드 우선, 없으면 로컬)
   const hot = m => curBoardMetric===m ? ' hot' : '';               // 정렬 중인 컬럼 강조
   const top=b[0];
   // 1위 = TOP RECORD 이미지 안(아래 크림 박스)에 표시
+  const topBy = top&&charName(top.char) ? `<div class="tr-by">played with <b>${charName(top.char)}</b></div>` : '';
   let html = `<div class="top-record"><img src="assets/top_record.png" alt="TOP RECORD">`
-    + `<div class="tr-overlay"><div class="tr-name">${top?charBadge(top.char)+top.name:'—'}</div>`
-    + `<div class="tr-stats">${top? fmtCell('time',top.time)+' · '+fmtCell('kills',top.kills)+' DOWN · '+fmtCell('sales',top.sales) : 'NO RECORD YET'}</div></div></div>`;
+    + `<div class="tr-overlay"><div class="tr-name">${top?top.name:'—'}</div>`
+    + `<div class="tr-stats">${top? fmtCell('time',top.time)+' · '+fmtCell('kills',top.kills)+' DOWN · '+fmtCell('sales',top.sales) : 'NO RECORD YET'}</div>${topBy}</div></div>`;
   // 2위부터 리스트
-  html += `<div class="brow bhead"><span class="bn">RANK</span><span class="${hot('time').trim()}">TIME</span><span class="${hot('kills').trim()}">DOWNS</span><span class="${hot('sales').trim()}">SALES</span></div>`;
+  html += `<div class="brow bhead"><span class="bn">RANK</span><span class="${hot('time').trim()}">TIME</span><span class="${hot('kills').trim()}">DOWNS</span><span class="${hot('sales').trim()}">SALES</span><span class="bby">BY</span></div>`;
   for(let i=1;i<10;i++){ const e=b[i];
     const me = e && e.name===lastSavedName && (e[curBoardMetric]===pendingRun[curBoardMetric]);
     html += `<div class="brow ${me?'me':''}">`
-      + `<span class="bn"><span class="brank">${i+1}.</span> ${e?charBadge(e.char)+e.name:'---'}</span>`
+      + `<span class="bn"><span class="brank">${i+1}.</span> ${e?e.name:'---'}</span>`
       + `<span class="${hot('time').trim()}">${e?fmtCell('time',e.time):'-'}</span>`
       + `<span class="${hot('kills').trim()}">${e?fmtCell('kills',e.kills):'-'}</span>`
       + `<span class="${hot('sales').trim()}">${e?fmtCell('sales',e.sales):'-'}</span>`
+      + `${e?charCell(e.char):'<span class="bby">-</span>'}`
       + `</div>`;
   }
   document.querySelectorAll('.board-out').forEach(el=> el.innerHTML=html);
@@ -1748,7 +1756,7 @@ const MONSTER_INDEX=[
   { img:'enemy_thrower_stand', name:'GREEN HURLER',    t:'Keeps distance, vomits saliva blobs. Shoot the blobs down.' },
   { img:'enemy_genzf_stand',   name:'GEN-Z GIRL',      t:'Rolls as a couple. While the two stay together they chill a freeze field that slows you down.' },
   { img:'enemy_genzm_stand',   name:'GEN-Z GUY',       t:'Split the couple up — apart, the freeze field dies. Tanky together.' },
-  { img:'drunk_0', name:'BOSS · THE PASS-OUTS', t:'Too gone to remember their own address, their friends bailed hours ago, their phone died, and they never closed the tab. Shake them all you want — they are NOT waking up. Three crash-land out of the sky every minute (until the 12-min mark), sprawled dead-weight on the floor. They never move — a body-wall you have to go around; their no-pass circle is the size of the whole slump. Boss-tough (2x a boss\'s HP, all three identical) and slamming into one hurts exactly like a boss. Clear all three for a stack of cash — and one of them still has a TIP in their pocket.', boss:1 },
+  { img:'drunk_0', name:'BOSS · THE PASS-OUTS', t:'Too gone to remember their own address, their friends bailed hours ago, their phone died, and they never closed the tab. Shake them all you want — they are NOT waking up. Just a wall of dead weight you have to go around.', boss:1 },
   { img:'boss_couple_stand',   name:'BOSS · GET-A-ROOM GANG',     t:'Booked one stool, used it as a honeymoon suite. Tongues like they signed a release form. Glows, drops cash, traumatizes stool #3.', boss:1 },
   { img:'boss_pickup_stand',   name:'BOSS · THE SMOOTH OPERATOR', t:'Zero drinks, full hunt. Collects phone numbers like loyalty stamps, then leaves every text on read. Big, glowing, and somehow still single.', boss:1 },
   { img:'boss_woman_stand',    name:'BOSS · MADAME SEND-IT-BACK', t:'Returned the cocktail twice, the ice for being cold, and the water for being wet. The kitchen fears her. The bar fears her more.', boss:1 },
@@ -2204,6 +2212,7 @@ function stickFrom(cx,cy){
   }
 }
 function onTouchStart(e){
+  try{ initAudio(); }catch(_){}                        // 안드로이드: 첫 터치에서 오디오 언락
   if(state!=='playing' || stickId!==null) return;     // 이미 조이스틱 잡은 손가락이 있으면 무시
   if(e.target && e.target.closest && e.target.closest('button')) return;   // 버튼(필살기/설정) 위 터치는 제외
   const t=e.changedTouches[0]; stickId=t.identifier;
@@ -2442,6 +2451,9 @@ function spawnDrunkWave(){
       speed:0, moving:false, dmgCd:0, wobble:0, drunkImg:img, fallT:0, showHpBar:true,
       won, billSprite:billSpriteFor(won), givesTip:(i===tipIdx) });
   }
+  bossBanner('THE PASS-OUTS', "Three regulars just hit the floor.\nNo address, no friends, tab unpaid.\nShake all you want — they're out cold.");
+  bossAlertUntil = gameTime + 2.2;   // 빨간 경고 플래시
+  playBossAlarm();                    // 보스 알람 효과음
 }
 
 /* ===== 노부킹 무리: 가로 벽 보스 =====
@@ -2728,7 +2740,8 @@ function fireCocktail(key, lv){
     if(pp && (ex.pierce==null || ex.pierce<99)) ex.pierce=(ex.pierce!=null?ex.pierce:1)+pp;
     if(evo){ if(ex.cExplode) ex.cExplode=Math.round(ex.cExplode*1.7); if(ex.cFreeze) ex.cFreeze=Math.round(ex.cFreeze*1.6);
       if(ex.cSlow) ex.cSlow=Math.round(ex.cSlow*1.6); if(ex.cMint) ex.cMint+=2; }
-    for(let i=0;i<n;i++) gatStream.push({ at:frame+i*2, dmg:dmgC*P*1.2, r:(ex.r||7), life, pk, spread, sp, ex, evo }); };
+    const lvNerf = lv>=2 ? 0.85 : 1;   // ★Lv2~6 공격력 15%↓ (레벨업 시 과하게 세지던 것 하향)
+    for(let i=0;i<n;i++) gatStream.push({ at:frame+i*2, dmg:dmgC*P*1.2*lvNerf, r:(ex.r||7), life, pk, spread, sp, ex, evo }); };
   switch(key){
     // ── 단검→⚡전기 체인: 가장 가까운 적에서 시작해 근처 적들로 번개가 튄다. 레벨업마다 ×1.8 더 많이 감전.
     //    공속·공격력은 올드패션드급(느리게·강하게). ──
@@ -2782,7 +2795,7 @@ function fireCocktail(key, lv){
       const landR = 40 + (lv-1)*9;                              // 장판(지속공격) 범위↑ (Lv1 40 → Lv6 85)
       const R = Math.max(70, 210 - (lv-1)*26);                  // 흩뿌림 반경: 레벨↑ 플레이어 근처로 (Lv1 210 → Lv6 80)
       const circ = Math.min(0.8, (lv-1)*0.16);                  // 원형화 정도: 레벨↑ 플레이어 주변 원형에 가깝게(0=완전랜덤)
-      for(let i=0;i<count;i++) mintRain.push({ at: frame + i*4, R, dmg:34*P, landR, cFreeze:70, circ, baseAng:(i/count)*6.28 });
+      for(let i=0;i<count;i++) mintRain.push({ at: frame + i*4, R, dmg:29*P, landR, cFreeze:70, circ, baseAng:(i/count)*6.28 });   // 데미지 15%↓ (34→29)
       break; }
     // ── 비둘기→소다건식: 코스모 = 크랜베리 연사(빙결). Lv1=1발 → Lv8=5발 ──
     case 'cosmopolitan':
@@ -2829,7 +2842,7 @@ function weaponCd(key, lv){
   if(key==='gintonic') return 40;   // 발사 자체는 no-op(실제 데미지는 updateGinTonic 상시)
   if(key==='cosmopolitan'||key==='vodkamartini') return Math.max(10, 25 - lv*1.5);   // 소다건식 연사(공속 ~15%↓)
   if(key==='gimlet') return Math.round(232/(1+0.10*(lv-1)));   // ⚡전기체인: 기본 공속 50%↓(≈232f) + 레벨당 공속 +10% (Lv1 232 → Lv6 155)
-  if(key==='southside') return Math.max(40, 120 - lv*13);      // 파란불꽃 레인: 레벨업마다 공속 크게↑ (Lv1 107 → Lv6 42)
+  if(key==='southside') return 110;      // 파란불꽃 레인: 공속 고정(레벨 스케일 제거) · 이전보다 ~15% 느리게
   if(COCKTAILS[key]) return Math.max(30, (COCKTAIL_CD[key]||80) - lv*4);   // 칵테일 공속: 하한 30f(빠른 칵테일도 Lv8에서 ~15% 느려짐)
   if(SPIRITS[key]) return spiritCd(key,lv);
   if(key==='trio') return Math.round(58*(1-(lv-1)/6));   // 시트러스 트리오: Lv1=58 → Lv4=29(공속 2배)
@@ -2962,19 +2975,21 @@ function startFinale(){
   finale.rival={ key:rk, x:ep.x, y:ep.y, spd:3.6 };   // Joe 기본이동(3.0)보다 빠름
   enemies.length=0; eprojectiles.length=0; mintRain.length=0; gatStream.length=0;
   spawnTimer=1e9; nextBoss=1e9; nextWall=1e9; nextSurge=1e9; nextDrunkWave=1e9;   // 추격 중 스폰 정지
+  finale.phase='intro';   // ★등장 안내 동안 게임 정지 → 확인 눌러야 추격 시작(도망 기회)
   const rn=rk.toUpperCase();
   const el=document.getElementById('finaleMsg');
-  if(el){ el.style.pointerEvents='none';
-    el.innerHTML=`<div class="fin-title">★ CLOSING TIME ★</div><div class="fin-body">${rn} clocks in and comes for you.<br>Last call — RUN.</div>`;
+  if(el){ el.style.pointerEvents='auto';
+    el.innerHTML=`<div class="fin-title">⚠ ${rn} SHOWS UP! ⚠</div>`+
+      `<div class="fin-body">Closing time. ${rn} is coming to drag you out.<br>You can still make a run for it...</div>`+
+      `<button class="fin-continue" onclick="finaleGo()">START RUNNING ▸</button>`;
     el.classList.remove('hidden'); }
-  finale.msgHideAt=frame+140;
   bannerTimer=0; try{ hide('dropBanner'); }catch(e){}
   try{ playBossAlarm(); }catch(e){} try{ playDing(); }catch(e){}
   musicDuckUntil = frame + 99999;
 }
+function finaleGo(){ finale.phase='chase'; try{ const el=document.getElementById('finaleMsg'); el.style.pointerEvents='none'; el.classList.add('hidden'); }catch(e){} }
 function finaleChase(){
   const r=finale.rival; if(!r) return;
-  if(frame>=finale.msgHideAt) try{ hide('finaleMsg'); }catch(e){}
   const a=Math.atan2(player.y-r.y, player.x-r.x);
   r.x += Math.cos(a)*r.spd; r.y += Math.sin(a)*r.spd;   // 추격(별도 엔티티라 빙결/슬로우 안 통함)
   if(finale.hitCd>0) finale.hitCd--;
@@ -3006,7 +3021,7 @@ function update(){
   // ★30분 피날레: 라이벌 바텐더가 쫓아옴(도망 가능). 잡히면 교대 → 게임 종료
   if(!finale.active && gameTime>=FINALE_AT){ startFinale(); }
   if(finale.active){
-    if(finale.phase==='ended') return;   // 최종 메시지 대기(CONTINUE 버튼)
+    if(finale.phase==='intro' || finale.phase==='ended') return;   // 등장 안내/최종 메시지 대기(정지 → 버튼 눌러야 진행)
     finaleChase();
     if(finale.phase==='ended') return;
     // chase 중엔 아래 일반 업데이트 계속(플레이어 이동/발사) — 적 스폰만 정지됨
@@ -3311,8 +3326,8 @@ function update(){
           const cands=[];
           for(const e2 of enemies){
             let dd;
-            if(e2.wall){ const dy=e2.y-p.y; if(Math.abs(dy) >= p.splash + e2.r) continue; dd=dy*dy; }
-            else { dd=(e2.x-p.x)**2+(e2.y-p.y)**2; if(dd >= p.splash*p.splash) continue; }
+            if(e2.wall){ const dy=Math.abs(e2.y-p.y); if(dy >= p.splash + e2.r) continue; dd=dy; }
+            else { const c=Math.hypot(e2.x-p.x,e2.y-p.y)-e2.r; if(c >= p.splash) continue; dd=c; }   // ★큰 적은 '가장자리' 기준(중심 놓쳐서 데미지 누락 방지 — passout/보스)
             cands.push({e:e2, d:dd}); }
           cands.sort((a,b)=>a.d-b.d);
           const lim = p.splashMax || 999;   // 럼(기주)은 제한 없음, Pat 기본기만 제한
@@ -3965,6 +3980,24 @@ function draw(){
   }
 
   if(state==='playing'||state==='levelup'||state==='craft'||state==='notice'||state==='over'||state==='tip'){
+    // 장판(사우스사이드 등)은 바닥 이펙트 → 아이템·적·보스보다 먼저(아래) 그려서 가리지 않게
+    for(const z of zones){ const fade=Math.min(1, z.life/30);
+      if(z.kind==='sbflame'){
+        ctx.globalAlpha=(0.20+0.12*Math.sin(frame*0.28))*fade; ctx.fillStyle='#2f7fd6';
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.fill();
+        ctx.globalAlpha=(0.26+0.14*Math.sin(frame*0.4+1))*fade; ctx.fillStyle='#5fc9e6';
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r*0.6,0,6.28); ctx.fill();
+        ctx.globalAlpha=0.7*fade; ctx.fillStyle='#bfefff';
+        for(let f=0;f<6;f++){ const fa=frame*0.12+f*1.05, fr=z.r*(0.5+0.5*Math.abs(Math.sin(fa)));
+          ctx.beginPath(); ctx.arc(z.x+Math.cos(fa)*fr, z.y+Math.sin(fa)*fr, 2.2, 0, 6.28); ctx.fill(); }
+        ctx.globalAlpha=0.5*fade; ctx.strokeStyle='#8fe0ff'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
+      } else {
+        ctx.globalAlpha=(0.16+0.10*Math.sin(frame*0.2))*fade; ctx.fillStyle='#4fd18a';
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.fill();
+        ctx.globalAlpha=0.45*fade; ctx.strokeStyle='#7fffbf'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
+      } }
     // 픽업: 동전/지폐를 먼저, 그 위에 아이템(재료/스피릿/스킬)을 그려서 아이템이 더 잘 보이게
     for(const g of pickups){ if(g.kind==='coin'||g.kind==='bill') drawPickup(g); }
     for(const g of pickups){ if(g.kind!=='coin'&&g.kind!=='bill') drawPickup(g); }
@@ -4055,26 +4088,7 @@ function draw(){
     }
 
     drawAuras();    // 버무스 웜우드 오라(반투명 원) + 머리 위 웜우드
-    // 장판: 사우스사이드 파란 불꽃(sbflame) / 성수 민트(green)
-    for(const z of zones){ const fade=Math.min(1, z.life/30);
-      if(z.kind==='sbflame'){
-        // 파란 불꽃: 안쪽 밝은 코어 + 넘실대는 불꽃 링
-        ctx.globalAlpha=(0.20+0.12*Math.sin(frame*0.28))*fade; ctx.fillStyle='#2f7fd6';
-        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.fill();
-        ctx.globalAlpha=(0.26+0.14*Math.sin(frame*0.4+1))*fade; ctx.fillStyle='#5fc9e6';
-        ctx.beginPath(); ctx.arc(z.x,z.y,z.r*0.6,0,6.28); ctx.fill();
-        // 넘실대는 불꽃 혓바닥(랜덤 스파클)
-        ctx.globalAlpha=0.7*fade; ctx.fillStyle='#bfefff';
-        for(let f=0;f<6;f++){ const fa=frame*0.12+f*1.05, fr=z.r*(0.5+0.5*Math.abs(Math.sin(fa)));
-          ctx.beginPath(); ctx.arc(z.x+Math.cos(fa)*fr, z.y+Math.sin(fa)*fr, 2.2, 0, 6.28); ctx.fill(); }
-        ctx.globalAlpha=0.5*fade; ctx.strokeStyle='#8fe0ff'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
-      } else {
-        ctx.globalAlpha=(0.16+0.10*Math.sin(frame*0.2))*fade; ctx.fillStyle='#4fd18a';
-        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.fill();
-        ctx.globalAlpha=0.45*fade; ctx.strokeStyle='#7fffbf'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(z.x,z.y,z.r,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
-      } }
+    // (장판은 위쪽 바닥 이펙트에서 먼저 그림 — 아이템·보스 안 가리게)
     // 마늘(진토닉): 플레이어 뒤 반투명 진토닉 잔 — 닿으면 데미지
     if(player.weapons&&player.weapons.gintonic&&player.gtr>0){ const gim=spr('cocktail_gintonic');
       ctx.save(); ctx.globalAlpha=0.42+0.08*Math.sin(frame*0.14);
@@ -4150,7 +4164,7 @@ function draw(){
 
     // ★30분 피날레: 라이벌 바텐더가 위에서 내려와 다가옴 (붉은 위협 오라 + 큰 스프라이트, 살짝 흔들림)
     if(finale.active && finale.rival){
-      const r=finale.rival, rim=spr(r.key);
+      const r=finale.rival, rim=spr(r.key+(Math.floor(frame/8)%2?'_walkB':'_walkA')) || spr(r.key+'_stand') || spr(r.key);   // ★base(joe.png/pat.png) 파일 없음 → 걷기/서기 프레임 사용
       const gr=ctx.createRadialGradient(r.x,r.y,10,r.x,r.y,120);   // 큰 붉은 위협 오라
       gr.addColorStop(0,'rgba(255,60,50,.6)'); gr.addColorStop(1,'rgba(255,40,40,0)');
       ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(r.x,r.y,120,0,6.28); ctx.fill();
