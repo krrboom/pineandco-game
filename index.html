@@ -544,7 +544,7 @@
     background:linear-gradient(#05070a 6%, rgba(5,7,10,0)); }   /* 위로 갈수록 어둠 속으로 소실 */
   .crawl{ position:absolute; left:0; right:0; margin:0 auto; bottom:0; width:min(90%,560px);
     transform-origin:50% 100%; color:#ffd24a; text-align:center; font-weight:700; line-height:1.7;
-    text-shadow:0 0 10px rgba(255,180,40,.35); animation:crawlUp 34s linear forwards; }
+    text-shadow:0 0 10px rgba(255,180,40,.35); animation:crawlUp 42.5s linear forwards; }   /* 속도 20%↓(34s→42.5s): 결연함·음악과 호흡 */
   @keyframes crawlUp{
     0%   { transform:rotateX(24deg) translateY(100%)  translateZ(0);      opacity:0; }
     7%   { opacity:1; }
@@ -1208,6 +1208,7 @@ function playBossAlarm(){ const s=SFX.boss; if(!audioCtx||!s) return;
    iOS는 <audio>.volume과 페이드를 무시하므로, 디코드한 AudioBuffer를 BufferSource로 틀고
    src.stop()으로 확실히 끊는다(겹침 원천 차단). 음량은 게인으로 제어(iOS도 적용됨). ===== */
 const MUSIC_SRC={ title:'assets/music_title.mp3', select:'assets/music_select.mp3', menu:'assets/music_menu.mp3',
+  epilogue:'assets/music_epilogue.mp3',   // ★인트로 크롤(에필로그) 전용 곡
   play1:'assets/music_play1.mp3', play2:'assets/music_play2.mp3', play3:'assets/music_play3.mp3' };
 const MUSICBUF={};            // name -> AudioBuffer
 const MVOL=0.3, MXF=0.3;      // 음악 기준 음량 + 전환 페이드(초)
@@ -1227,6 +1228,7 @@ function desiredName(){
   if(musicMode==='title') return 'title';
   if(musicMode==='select') return 'select';
   if(musicMode==='menu') return 'menu';
+  if(musicMode==='intro') return 'epilogue';   // ★에필로그 크롤 전용
   if(musicMode==='play'){ if(!curPlay) curPlay=pickPlay(); return curPlay; }
   return null;
 }
@@ -1239,7 +1241,7 @@ function stopVoice(v){
 }
 function startVoice(name){
   if(!audioCtx||!musicBus||!MUSICBUF[name]) return null;
-  const loop=(name==='title'||name==='select'||name==='menu');
+  const loop=(name==='title'||name==='select'||name==='menu'||name==='epilogue');   // 에필로그도 크롤 길면 이어지게 루프
   const src=audioCtx.createBufferSource(); src.buffer=MUSICBUF[name]; src.loop=loop;
   const g=audioCtx.createGain(); const now=audioCtx.currentTime;
   g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(MVOL, now+MXF);
@@ -2125,7 +2127,7 @@ function spPrice(it){ const f=n=>'₩ '+(n*1000).toLocaleString();
 
 /* ===== 게임 시작 ===== */
 function startGame(charKey){
-  initAudio(); playSelect(); setMusic('play');   // 캐릭터 선택 사운드 + 플레이 음악
+  initAudio(); playSelect(); setMusic('intro');   // 캐릭터 선택 사운드 + 에필로그 크롤 음악(크롤 끝나면 revealGame에서 play로 전환)
   const c=CHARACTERS[charKey];
   player={ key:charKey, x:W/2, y:H/2, r:8, speed:c.moveSpeed, hp:c.maxHp, maxHp:c.maxHp,
     base:c.base, projKind:c.projKind, fireTimer:0, projSpeed:c.projSpeed, projR:c.projR, basePierce:c.pierce||0,
@@ -2166,6 +2168,7 @@ function skipIntro(){ revealGame(); }
 function revealGame(){
   const cr=document.getElementById('introCrawl'); if(cr) cr.onanimationend=null;
   document.getElementById('introScreen').classList.add('hidden');
+  setMusic('play');   // ★에필로그 곡 종료 → 플레이 음악으로 전환
   state='playing'; show('hud'); show('hudChips'); show('ultBtn'); show('statPanel'); hide('stick');
 }
 
