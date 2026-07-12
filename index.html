@@ -3187,12 +3187,22 @@ function update(){
   // 자폭한 폭탄몹 제거 + 폭발로 죽었으면 게임오버
   for(let j=enemies.length-1;j>=0;j--){ if(enemies[j].remove) enemies.splice(j,1); }
   if(player.hp<=0){ gameOver(); return; }
-  // 몬스터끼리 완전히 겹치지 않게 살짝 서로 밀어내기(분리)
+  // 몬스터끼리 완전히 겹치지 않게 살짝 서로 밀어내기(분리) + 만취 손님(장애물)은 벽처럼 통과 불가
   for(let i=0;i<enemies.length;i++){ const A=enemies[i];
     for(let j=i+1;j<enemies.length;j++){ const B=enemies[j];
-      const dx=B.x-A.x, dy=B.y-A.y, min=(A.r+B.r)*0.8, d2=dx*dx+dy*dy;
+      const dx=B.x-A.x, dy=B.y-A.y, d2=dx*dx+dy*dy;
+      // ★만취 손님은 벽: 상대 몬스터를 경계 밖으로 완전히 밀어냄(못 넘어가게)
+      if(A.type==='passout' || B.type==='passout'){
+        if(A.type==='passout' && B.type==='passout') continue;   // 만취끼리는 서로 안 밀어냄
+        const need=A.r+B.r;
+        if(d2>0.0001 && d2<need*need){ const d=Math.sqrt(d2);
+          if(A.type==='passout'){ B.x=A.x+dx/d*need; B.y=A.y+dy/d*need; }   // B를 A(만취) 밖으로
+          else { A.x=B.x-dx/d*need; A.y=B.y-dy/d*need; } }                  // A를 B(만취) 밖으로
+        continue;
+      }
+      const min=(A.r+B.r)*0.8;
       if(d2>0.01 && d2<min*min){ const d=Math.sqrt(d2), push=(min-d)/d*0.5;
-        const aw=A.type==='passout'?0:A.type==='boss'?0.12:1, bw=B.type==='passout'?0:B.type==='boss'?0.12:1;   // 만취 손님은 안 밀림(정적 장애물)
+        const aw=A.type==='boss'?0.12:1, bw=B.type==='boss'?0.12:1;
         A.x-=dx*push*aw; A.y-=dy*push*aw; B.x+=dx*push*bw; B.y+=dy*push*bw; } } }
   if(player.invuln>0) player.invuln--;
 
