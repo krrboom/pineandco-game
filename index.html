@@ -1682,7 +1682,7 @@ let surgeUntil, nextSurge, bannerTimer, bannerText;
 let nextRaid, raidLeft, raidNextBoss;   // 5분마다 보스 레이드
 let finale={ active:false, until:0, rival:null, killed:false };   // 30분 피날레: 라이벌 바텐더 등장 → 교대(종료)
 const FINALE_AT = 1800;   // 30분(초)
-let nextPassout, lastPassoutImg=-1;   // 만취 손님(장애물): 1분에 3번(20초마다) 하늘에서 낙하
+let passoutQueue=[], passoutSchedMin=-1, lastPassoutImg=-1;   // 만취 손님: 매 1분마다 무작위 3번 낙하 예약
 let bossCount, nextBoss, bossAlertUntil=0;
 let nextWall;   // 노부킹 무리(가로 벽 보스) 다음 등장 시각. 0이면 더 안 나옴
 let bossBag=[], bossRecent=[];   // bossRecent = 최근 2턴에 나온 보스
@@ -1732,6 +1732,7 @@ const MONSTER_INDEX=[
   { img:'enemy_thrower_stand', name:'GREEN HURLER',    t:'Keeps distance, vomits saliva blobs. Shoot the blobs down.' },
   { img:'enemy_genzf_stand',   name:'GEN-Z GIRL',      t:'Rolls as a couple. While the two stay together they chill a freeze field that slows you down.' },
   { img:'enemy_genzm_stand',   name:'GEN-Z GUY',       t:'Split the couple up — apart, the freeze field dies. Tanky together.' },
+  { img:'drunk_0', name:'PASSED-OUT REGULAR', t:'Drops out of the sky 3 times a minute (random) and sprawls on the floor, dead asleep. Does not move — a living roadblock in your way. Huge (2x size, +30% every 3 min) and stubborn (20x a normal drunk\'s HP). Slam into one and you take DOUBLE contact damage, so squeeze past carefully. Take one down for a fat XP payout.' },
   { img:'boss_couple_stand',   name:'BOSS · GET-A-ROOM GANG',     t:'Booked one stool, used it as a honeymoon suite. Tongues like they signed a release form. Glows, drops cash, traumatizes stool #3.', boss:1 },
   { img:'boss_pickup_stand',   name:'BOSS · THE SMOOTH OPERATOR', t:'Zero drinks, full hunt. Collects phone numbers like loyalty stamps, then leaves every text on read. Big, glowing, and somehow still single.', boss:1 },
   { img:'boss_woman_stand',    name:'BOSS · MADAME SEND-IT-BACK', t:'Returned the cocktail twice, the ice for being cold, and the water for being wet. The kitchen fears her. The bar fears her more.', boss:1 },
@@ -2118,7 +2119,7 @@ function startGame(charKey){
   bossCount=0; nextBoss=BOSS_FIRST; nextWall=WALL_FIRST; bossBag=[]; bossRecent=[];
   finale={ active:false, phase:'', rival:null, killed:false, hitCd:0, msgHideAt:0 };
   try{ const el=document.getElementById('finaleMsg'); el.classList.add('hidden'); el.style.pointerEvents='none'; }catch(e){}
-  nextPassout=20; lastPassoutImg=-1;   // 첫 만취 손님 20초
+  passoutQueue=[]; passoutSchedMin=-1; lastPassoutImg=-1;   // 만취 손님 예약 초기화
   document.getElementById('hudCharImg').src='assets/name_'+charKey+'.png';
   updateWeaponChips();
   startIntroCrawl();   // ★스타워즈식 스토리 크롤 → 스킵/종료 시 실제 게임 시작
@@ -2932,7 +2933,7 @@ function startFinale(){
   const ep=edgePos();
   finale.rival={ key:rk, x:ep.x, y:ep.y, spd:3.6 };   // Joe 기본이동(3.0)보다 빠름
   enemies.length=0; eprojectiles.length=0; mintRain.length=0; gatStream.length=0;
-  spawnTimer=1e9; nextBoss=1e9; nextPassout=1e9; nextWall=1e9; nextSurge=1e9;   // 추격 중 스폰 정지
+  spawnTimer=1e9; nextBoss=1e9; nextWall=1e9; nextSurge=1e9; passoutQueue.length=0; passoutSchedMin=1e9;   // 추격 중 스폰 정지
   const rn=rk.toUpperCase();
   const el=document.getElementById('finaleMsg');
   if(el){ el.style.pointerEvents='none';
@@ -2992,7 +2993,12 @@ function update(){
 
   // 보스 등장 타이밍: 90초마다 (매번 더 강함). 러쉬는 120초마다(별도). 5분 레이드는 제거됨.
   if(gameTime>=nextBoss){ spawnBoss(); nextBoss+=BOSS_GAP; }
-  if(gameTime>=nextPassout){ spawnPassout(); nextPassout+=20; }   // 만취 손님: 20초마다(1분에 3번)
+  // 만취 손님: 매 1분마다 그 분 안에서 무작위 3개 시각을 예약 → 예로 10s·30s·35s처럼 불규칙
+  { const curMin=Math.floor(gameTime/60);
+    if(curMin>passoutSchedMin){ passoutSchedMin=curMin;
+      for(let i=0;i<3;i++) passoutQueue.push(curMin*60 + Math.random()*60);
+      passoutQueue.sort((a,b)=>a-b); }
+    while(passoutQueue.length && gameTime>=passoutQueue[0]){ passoutQueue.shift(); spawnPassout(); } }
   // 노부킹 무리: 초반에만(5번째 보스 전까지). 가로 벽처럼 천천히 화면을 횡단.
   if(nextWall>0 && gameTime>=nextWall){
     if(bossCount<5){ spawnWall(); nextWall+=WALL_GAP; } else nextWall=0;
@@ -3156,7 +3162,9 @@ function update(){
       if((e.fallT||0) < 1){ e.fallT=(e.fallT||0)+1/20; }   // 20프레임 낙하(빠르게, 게임진행 방해 없게)
       else { let dx=player.x-e.x, dy=player.y-e.y, dd=Math.hypot(dx,dy); const need=e.r+player.r;
         if(dd<0.01){ dx=0; dy=-1; dd=1; }                  // 정확히 겹치면 위로 밀어냄(방향 0/0 방지)
-        if(dd<need){ player.x=e.x+dx/dd*need; player.y=e.y+dy/dd*need; } }   // 장애물: 플레이어를 밖으로
+        if(dd<need){
+          if(!isInvuln()){ hurtPlayer(D.dmg*2); if(player.hp<=0){ gameOver(); return; } }   // ★부딪히면 일반 몬스터 2배 데미지(무적프레임으로 스로틀)
+          player.x=e.x+dx/dd*need; player.y=e.y+dy/dd*need; } }   // 장애물: 플레이어를 밖으로
     } else {
       // 잡몹: 평소엔 걷고, 가끔 멈춰서 서기 모션
       if(frame>=e.nextPause && frame>=e.standUntil){ e.standUntil=frame+24+Math.random()*36; e.nextPause=e.standUntil+90+Math.random()*240; }
