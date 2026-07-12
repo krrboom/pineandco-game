@@ -1217,16 +1217,16 @@ const CRAFT_FX = {
   manhattan:'A heavy cherry bomb with a huge explosion. Hits harder than the Old Fashioned.',
   oldfashioned:'A giant ice rock with a wide blast.',
   sidecar:'A shot that ricochets off the walls, piercing and bursting on impact. Slower fire rate, fewer bounces.',
-  mojito:'A gatling spray of rum bursts that slow and leave mint clouds.',
-  cosmopolitan:'A spread of pink darts that freeze.',
-  gintonic:'A wide fan of poison fizz.',
-  highball:'A gatling stream of fizzy splashes, each a small blast.',
-  vodkatonic:'A wide spread of freezing darts.',
-  vodkacranberry:'A crimson comet that pierces a whole line, freezes it, and heals you for part of the damage (lifesteal).',
-  southside:'Mint rain: bombs fall one by one across a wide random area, each bursting with slow + poison. Slower fire rate. Even levels add a bomb, odd levels widen each blast; lands tighter around you as you level.',
+  mojito:'A continuous gatling spray of rum bursts (low pierce) that slow, freeze, and leave mint clouds. Super: each shot explodes.',
+  cosmopolitan:'A continuous gatling stream of freezing pink darts (low pierce). Super: shots scatter behind the enemy they hit.',
+  gintonic:'A gin & tonic aura locked around you (2x size). Enemies that enter are frozen for 1s, then can be frozen again after 5s.',
+  highball:'A continuous gatling stream of fizzy splashes (low pierce) that freeze, each a small blast. Super: each shot explodes bigger.',
+  vodkatonic:'A wide spread of homing, freezing ice bolts.',
+  vodkacranberry:'A long-flying crimson comet that pierces a whole line, freezes it, and heals you for part of the damage (lifesteal).',
+  southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
   margarita:'Giant salt boomerangs that fly out and back.',
-  drymartini:'Olives orbit you. Each level adds one olive and widens the orbit.',
-  vodkamartini:'A freezing shockwave plus a piercing shot.',
+  drymartini:'Olives orbit you (one more each level, wider orbit). Enemies within the orbit range are slowed.',
+  vodkamartini:'A continuous gatling stream of freezing olive shots (low pierce) + a freezing shockwave. Super: shots scatter behind the enemy they hit.',
 };
 function recRow(outImg, name, parts, desc){
   const need = parts.map((p,i)=> (i>0?'<span class="rec-plus">+</span>':'') + `<img src="assets/${p.img}.png" alt="">${p.lv?`<small>${p.lv}</small>`:''}`).join('');
@@ -1714,18 +1714,19 @@ const SKILL_INDEX=[
   { img:'ing_orange',    name:'ORANGE · AREA',          t:'Bigger attacks (area/size) each level.' },
   { img:'ing_sugar',     name:'SUGAR · LUCK',           t:'+0.2% item drop rate each level. More luck = more items drop from enemies.' },
   { img:'ing_cointreau', name:'COINTREAU · +PROJECTILE',t:'Adds 1 extra projectile to your volley per level, one at a time (max Lv3 = +3). A flat add, never a multiplier, so it never floods the screen.' },
-  { img:'ing_tonic',     name:'TONIC · +PIERCE',        t:'+1 pierce per 4 levels (all weapons).' },
+  { img:'ing_tonic',     name:'TONIC · +PIERCE',        t:'+2 pierce per level (all weapons).' },
   { img:'ing_mint',      name:'MINT · MOVE SPEED',      t:'Move faster each level.' },
   { img:'ing_water',     name:'WATER · REGEN',          t:'Regenerate HP each level.' },
   { img:'ing_olive',     name:'OLIVE · ARMOR',          t:'Take less contact damage each level.' },
   { img:'ing_sweetver',  name:'SWEET VERMOUTH · +MAX HP', t:'+max HP each level.' },
-  { img:'ing_dryver',    name:'DRY VERMOUTH · +CRIT',   t:'Crit chance rises each level, AND crit damage grows +50%/level: ×2 at Lv1 up to ×4.5 at Lv6.' },
+  { img:'ing_dryver',    name:'DRY VERMOUTH · +CRIT',   t:'Crit chance rises each level, AND crit damage jumps by level: ×2 / ×3.5 / ×4 / ×7 / ×12 / ×18 (Lv1→Lv6).' },
   { img:'cranberry',     name:'CRANBERRY · MAGNET',     t:'Wider cash & item pickup range each level.' },
   { img:'ing_angostura', name:'ANGOSTURA · +XP · DASH', t:'+XP gain each level, and unlocks DASH — double-tap a direction to blink forward.' },
   // ── 촉매 & 진화 & 필살기 ──
   { ic:'🥃', name:'SPIRITS · field drops', t:'The 6 spirits still drop on the field but they are NOT needed to evolve cocktails anymore. They only feed the secret endgame RAINBOW GUN.' },
-  { ic:'✨', name:'EVOLUTION · Super cocktails', t:'Fully upgrade your BASE ATTACK (max level) + get the cocktail to Lv6 + max its ONE key ingredient. No spirits needed. Then take a BOSS TIP to evolve it into a far stronger SUPER version (gold glow) that levels 1→8 far beyond the base. Only boss tips offer evolution.' },
+  { ic:'✨', name:'EVOLUTION · Super cocktails', t:'Fully upgrade your BASE ATTACK (max level) + get the cocktail to Lv6 + max its ONE key ingredient. No spirits needed. Then, the moment you grab a BOSS TIP, any ready cocktail auto-evolves into a far stronger SUPER version — it spins into being with a ding — and the tip\'s normal upgrade still appears. Supers glow gold and level 1→8 far beyond the base.' },
   { ic:'🌀', name:'ULTIMATE UP · max Lv6', t:'Strengthens your ultimate. Ready once every 105s — tap the ⚡ button when it lights up.' },
+  { ic:'🔔', name:'CLOSING TIME · 30:00', t:'Last for 30 minutes and the OTHER bartender clocks in — Joe if you play Pat, Pat if you play Joe — walks in behind the bar and ends your shift. Nobody outlasts closing time.' },
 ];
 /* 칵테일 도감 — 새 시트(칵테일 new.png)에서 잘라낸 14종. 기주별 / 재료 표기. */
 const COCKTAIL_INDEX=[
@@ -4401,6 +4402,7 @@ function sbMaxAll(){ if(!player) return; for(const w of sbWeaponList()){ player.
 function sbSpawn(n){ for(let i=0;i<n;i++) try{ spawnEnemy(); }catch(e){} }
 function sbBoss(){ try{ spawnBoss(); }catch(e){} }
 function sbWall(){ try{ spawnWall(); }catch(e){} }   // 노부킹 무리(가로 벽) 즉시 소환
+function sbFinale(){ if(!player) return; try{ if(!finale.active) startFinale(); }catch(e){} }   // 30분 피날레(라이벌 바텐더 등장) 즉시 미리보기
 function sbGodToggle(){ sbGod=!sbGod; if(sbGod&&player) player.hp=player.maxHp; sbRefresh(); }
 function sbCharSwap(){ const next=(player&&player.key==='pat')?'joe':'pat'; try{ startGame(next); }catch(e){} sbRefresh(); }
 function sbRainbow(){ if(!player) return; player.rainbow=true; player.weapons={}; player.wt={}; try{ updateWeaponChips(); }catch(e){} sbRefresh(); }   // 레인보우 건 즉시 장착(테스트)
@@ -4442,6 +4444,7 @@ function buildSandbox(){
         <button class="sbbtn" onclick="sbSpawn(10)">+10 MOB</button>
         <button class="sbbtn" onclick="sbBoss()">BOSS</button>
         <button class="sbbtn" onclick="sbWall()">NO-BOOK</button>
+        <button class="sbbtn" onclick="sbFinale()">30min END</button>
       </div>
       <div class="sbrow">
         <button class="sbbtn" onclick="sbClear()">CLEAR</button>
