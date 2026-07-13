@@ -4418,7 +4418,7 @@ function draw(){
         const im=spr(p.img);
         const grow=1+0.4*Math.min(1, (p.life0-p.life)/p.life0);           // 0→+40%
         if(im){ const DH=p.r*2.6*grow, aspect=im.width/im.height;
-          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);            // 아치가 진행방향을 가리키게
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang+Math.PI);    // ★넓은(열린) 쪽이 진행방향을 향하게(180° 뒤집음)
           ctx.imageSmoothingEnabled=false; ctx.drawImage(im, -DH*aspect/2, -DH/2, DH*aspect, DH); ctx.restore();
         } else { ctx.fillStyle='#e0555a'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*grow,0,6.28); ctx.fill(); }
         continue;

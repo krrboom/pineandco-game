@@ -1049,6 +1049,8 @@ const ASSET_MANIFEST = {
   bg:'assets/bg_map.png',                 // 플레이 배경(파인앤코 맵)
   selfie:'assets/selfie.png',             // Feed Filler 보스: 하늘에서 떨어지는 셀카
   amaro_0:'assets/amaro_0.png', amaro_1:'assets/amaro_1.png', amaro_2:'assets/amaro_2.png', amaro_3:'assets/amaro_3.png', amaro_4:'assets/amaro_4.png',   // Amaro Nerd 부채꼴 발사
+  boss_karaoke_stand:'assets/boss_karaoke_stand.png', boss_karaoke_walkA:'assets/boss_karaoke_walkA.png', boss_karaoke_walkB:'assets/boss_karaoke_walkB.png', boss_karaoke_walkC:'assets/boss_karaoke_walkC.png',   // 고성방가 보스(3걷기+서기)
+  eproj_rainbow:'assets/eproj_rainbow.png', eproj_note1:'assets/eproj_note1.png', eproj_note2:'assets/eproj_note2.png',   // 무지개 피사체 + 양옆 음표
   bg_select:'assets/bg_select.png', bg_logo:'assets/bg_logo.png',
   btn_highscore:'assets/btn_highscore.png', btn_index:'assets/btn_index.png',
   enemy_genzf_stand:'assets/enemy_genzf_stand.png', enemy_genzf_walkA:'assets/enemy_genzf_walkA.png', enemy_genzf_walkB:'assets/enemy_genzf_walkB.png',
@@ -1735,6 +1737,7 @@ let gameTime, killCount, money, spawnTimer, frame, enemyId;
 let sbGod=false;   // 샌드박스 무적
 let sbNoDrop=false;   // 샌드박스: 드랍아이템 끄기(테스트 중 업그레이드창 방지) — 기본 켜짐(=드랍없음)
 let surgeUntil, nextSurge, bannerTimer, bannerText;
+let bannerQueue=[], curBannerPrio=0;   // 보스 배너 우선순위 큐(일반 보스=2 먼저, 노부킹/만취=1 나중)
 let nextRaid, raidLeft, raidNextBoss;   // 5분마다 보스 레이드
 let finale={ active:false, until:0, rival:null, killed:false };   // 30분 피날레: 라이벌 바텐더 등장 → 교대(종료)
 const FINALE_AT = 1800;   // 30분(초)
@@ -1797,6 +1800,7 @@ const MONSTER_INDEX=[
   { img:'boss_ladies_stand', name:'BOSS · FOUR-HOUR TWO-TOP',  t:'Two ladies, one tap water, four hours of gossip and zero turnover. The table is theirs now. You just work here.', boss:1 },
   { img:'boss_photo_stand',  name:'BOSS · THE FEED FILLER',    t:'Forty photos, zero sips. The cocktail goes flat and warm while she chases the light. It was never a drink. It was a prop.', boss:1 },
   { img:'boss_amaro_stand',  name:'BOSS · THE AMARO NERD',     t:'Won\'t touch anything sweet. Just Fernet, Campari, and a free lecture on why your palate is tragically broken. Tips in opinions.', boss:1 },
+  { img:'boss_karaoke_stand', name:'BOSS · THE HUMAN MEGAPHONE', t:'Physically cannot use his indoor voice. Every sentence is a broadcast, table three gets his whole life story whether they want it or not, and once the beer kicks in it turns into a one-man karaoke set at maximum volume. Stops walking only to blast a rainbow of noise and flanking music notes at you.', boss:1 },
   { img:'boss_nobook_icon', name:'BOSS · THE NO-BOOKING MOB', t:'A whole party, zero reservations. Prime Friday, they "just showed up" and want the booth you saved for weeks. They link arms and crawl across the whole room, very slowly, so nobody gets past. Tankier than any single boss and it hits harder. Early shift only — once the night gets serious, even they give up. Clear them for a fat stack.', boss:1 },
 ];
 /* 바텐더(캐릭터) 사전 */
@@ -2178,7 +2182,7 @@ function startGame(charKey){
   applyBaseLevel(); recalcStats();
   enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[]; gatStream=[]; dropMarks=[]; roadLines=[];
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
-  surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bossAlertUntil=0; keys={};
+  surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; bossAlertUntil=0; keys={};
   nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set(); declinedCraft=new Set(); pendingCraft=null; pendingFromTip=false;
   bossCount=0; nextBoss=BOSS_FIRST; nextWall=WALL_FIRST; bossBag=[]; bossRecent=[];
   finale={ active:false, phase:'', rival:null, killed:false, hitCd:0, msgHideAt:0 };
@@ -2445,6 +2449,8 @@ const BOSS_CHARS=[
     intro:"Forty photos, zero sips.\nIt was never a drink.\nIt was a prop." },                                                 // 사진충 인플루언서
   { sprite:'boss_amaro',  nick:'THE AMARO NERD',
     intro:"Nothing sweet. Just Fernet,\nCampari, and a free lecture\non your tragically broken palate." },                     // 아마로 너드
+  { sprite:'boss_karaoke', nick:'THE HUMAN MEGAPHONE',
+    intro:"He can't talk. He only broadcasts.\nEvery word at full blast, no volume knob,\nand once he's drunk it's an all-night karaoke encore\nyou never asked for." },   // 고성방가(소리지르며 대화+취해서 노래)
 ];
 /* ===== 보스 스폰 (3분 스케줄, 매번 강해짐) ===== */
 function spawnBoss(forceIdx){   // forceIdx: 샌드박스에서 특정 보스 지정(없으면 순환 셔플백)
@@ -2491,14 +2497,14 @@ function bossAttack(e, a, dist, D){
 
   // ── Smooth Operator: "010-1234-1234" 전화번호를 약하게 유도해 발사(스쳐가면 화면밖, 공격 안 통함) ──
   if(e.bossChar==='boss_pickup'){
-    if(e.phoneCd==null) e.phoneCd = 85;
+    if(e.phoneCd==null) e.phoneCd = 110;
     e.phoneCd--;
     if(e.phoneCd<=0 && dist<540){
       const spd=2.8;
       eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
         r:13, life:340, kind:'phone', hp:1, noKill:true, home:60, spd, dmg:halfContact });   // ★유도 약화(105→60프레임, 회전율도 절반)
       burst(e.x, e.y, '#ffd24a', 8); try{ playSfx('select', 0.35); }catch(_){}
-      e.phoneCd = 100 + Math.random()*46;
+      e.phoneCd = 130 + Math.random()*60;   // ★공격속도 30%↓(쿨다운 ×1.3)
     }
     return;
   }
@@ -2585,14 +2591,44 @@ function bossAttack(e, a, dist, D){
     else { e.selfieCd--; if(e.selfieCd<=0 && dist<640){ e.selfieLeft=4; e.selfieGap=0; e.selfieCd=300; } }
     return;
   }
+
+  // ── The Human Megaphone(고성방가): 걷다가 2초에 한 번 멈춰서 무지개+양옆 음표 발사(멈췄을 때만 공격) ──
+  if(e.bossChar==='boss_karaoke'){
+    if(e.kstate==null){ e.kstate='walk'; e.kt=120; }
+    e.kt--;
+    if(e.kstate==='walk'){
+      const wob=Math.sin(e.wobble)*0.3; e.x+=Math.cos(a+wob)*e.speed; e.y+=Math.sin(a+wob)*e.speed; e.moving=true;   // 걷기(공격 안 함)
+      if(e.kt<=0){ e.kstate='stop'; e.kt=36; e.moving=false;                                                        // 멈춰서 공격 1발
+        const spd=2.3;   // ★Pat 기본공격(4.6)의 절반
+        eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd, r:18, life0:340, life:340, kind:'rainbowshout', img:'eproj_rainbow', hp:1, noKill:true, dmg:halfContact });   // 무지개: 나가며 커짐
+        for(const o of [-0.34,0.34]){ const ang=a+o;                                                               // 양옆 음표
+          eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, r:12, life:300, kind:'note', img:(o<0?'eproj_note1':'eproj_note2'), hp:1, noKill:true, bob:Math.random()*6.28, dmg:halfContact*0.5 }); }
+        burst(e.x, e.y-e.r, '#ffd24a', 10); try{ playSfx('select',0.5); }catch(_){}
+      }
+    } else { e.moving=false; if(e.kt<=0){ e.kstate='walk'; e.kt=120; } }   // 0.6초 멈춤 후 다시 2초 걷기
+    return;
+  }
 }
-/* Madame "Again!" 낙하 착지: 예고 원 안에 있으면 큰 데미지 */
+/* Madame "Again!" 낙하 착지: 예고 원 안에 있으면 큰 데미지(폭발 후 사라짐) */
 function landAgain(m){
   explosions.push({ x:m.x, y:m.y, r:m.r, life:20, max:20, col:'#d94d4d', ring:'#ffb3b3', flash:true });
   burst(m.x, m.y, '#ff6a6a', 18);
   if(!isInvuln() && Math.hypot(player.x-m.x, player.y-m.y) < m.r+player.r){
     hurtPlayer(m.dmg); if(player.hp<=0){ gameOver(); return; }
   }
+}
+/* Feed Filler 셀카 낙하 착지: 폭발(범위 데미지) + 그 자리에 셀카 장애물(기본몹 2배 체력, 때려야 사라짐) */
+function landSelfie(m){
+  const d=DIFF();
+  explosions.push({ x:m.x, y:m.y, r:m.r, life:20, max:20, col:'#4a6f8f', ring:'#bcd8ee', flash:true });
+  burst(m.x, m.y, '#9fc4e0', 16);
+  if(!isInvuln() && Math.hypot(player.x-m.x, player.y-m.y) < m.r+player.r){
+    hurtPlayer(m.dmg); if(player.hp<=0){ gameOver(); return; }
+  }
+  const hp=d.hp*2, won=Math.round(300+gameTime*3);   // ★기본몹 2배 체력 · 장애물로 남음
+  enemies.push({ id:enemyId++, type:'passout', x:m.x, y:m.y, r:m.r, drawH:m.r*1.9, hp, maxHp:hp,
+    speed:0, moving:false, dmgCd:0, wobble:0, photoImg:'selfie', fallT:1, showHpBar:true,
+    won, billSprite:billSpriteFor(won), contactDmg:d.dmg*1.5 });
 }
 /* 만취 손님(passout): 하늘에서 3마리 한꺼번에 낙하하는 보스급 정적 장애물.
    보스 HP의 2배(3마리 동일)·접촉 데미지 보스와 동일·크기 1.7배 고정·이미지 크기 원(통과 불가)·지폐(1명만 팁). */
@@ -2623,7 +2659,7 @@ function spawnDrunkWave(){
     // 실제 낙하는 2초 뒤. 그 전까지 빨간 예고 마커만 표시(플레이어가 비켜설 시간).
     dropMarks.push({ x, y, r, at:gameTime+2, drawH, img, hp, won, givesTip:(i===tipIdx) });
   }
-  bossBanner('THE PASS-OUTS', "Three regulars are about to hit the floor.\nRed circles mark where they'll drop.\nStep aside, then shake them all you want.");
+  bossBanner('THE PASS-OUTS', "Three regulars are about to hit the floor.\nRed circles mark where they'll drop.\nStep aside, then shake them all you want.", 1);   // 낮은 우선순위(일반 보스 설명 먼저)
   bossAlertUntil = gameTime + 2.2;   // 빨간 경고 플래시
   playBossAlarm();                    // 보스 알람 효과음
 }
@@ -2651,7 +2687,7 @@ function spawnWall(){
     hp, maxHp:hp, speed:0.42,                   // 아주 천천히
     nickname:'NO-BOOKING MOB', moving:false, dmgCd:0 });
   bossBanner('THE NO-BOOKING MOB',
-    "A whole party, zero reservations.\nPrime Friday, they 'just showed up'\nand want the booth you saved for weeks.\nYou will not get past. Neither will they.");
+    "A whole party, zero reservations.\nPrime Friday, they 'just showed up'\nand want the booth you saved for weeks.\nYou will not get past. Neither will they.", 1);   // 낮은 우선순위(일반 보스 설명 먼저)
   bossAlertUntil = gameTime + 2.2;
   playBossAlarm();
 }
@@ -2957,9 +2993,11 @@ function fireCocktail(key, lv){
       for(let i=0;i<n;i++){ const dir=(i%2?1:-1)*(0.5+Math.random());
         add({ vx:dir*2, vy:-8, ay:0.30, dmg:130*P, r:15, pierce:99, life:120, cExplode:58 }); } break; }   // 빙결 제거(폭발만)
     // ── 십자가: 부메랑. Lv1=1개 → 2레벨마다 +1 ──
-    case 'margarita': { const n=1+Math.floor((lv-1)/3);   // 발수 완화 Lv8 4→3
-      for(let i=0;i<n;i++){ const ang=a+(i-(n-1)/2)*0.45;
-        add({ vx:Math.cos(ang)*7, vy:Math.sin(ang)*7, dmg:40*P*(1+(lv-1)*0.03), r:12, pierce:99, life:100, life0:100, boom:true, cSlow:60 }); } break; }   // 발수↓ 보정: 레벨당 데미지 소폭↑
+    case 'margarita': {   // ★방사형 부메랑: Lv1=2개(3시·9시) → 레벨업 3개→…→만렙 5개. 기본 2배 크기 + 레벨당 +10%. 나가는 거리 절반.
+      const n=Math.min(5, 2+Math.floor(lv/2));
+      const sz=24*(1+(lv-1)*0.1)*(player.sizeMul||1);
+      for(let i=0;i<n;i++){ const ang=(i/n)*6.28318;   // 3시(0)부터 균등 방사(플레이어 기준 고정 방향)
+        add({ noScale:true, vx:Math.cos(ang)*4.6, vy:Math.sin(ang)*4.6, dmg:40*P*(1+(lv-1)*0.03), r:sz, pierce:99, life:84, life0:84, boom:true, boomSp:8, cSlow:60 }); } break; }   // 나가는 거리 절반(느린 out)·복귀 빠르게(손까지 완전히 돌아옴)
     // ── 룬트레이서: 벽 튕김. Lv1=1발·2튕김 → 레벨업마다 튕김↑, 4레벨마다 +1발 ──
     case 'sidecar': { const n=1+Math.floor((lv-1)/5);   // 발수 완화: Lv1~5=1발, Lv6~8=2발
       for(let i=0;i<n;i++){ const ang=a+i*1.1;
@@ -3138,12 +3176,20 @@ function itemBanner(info, text){
   bannerTimer = 220;
 }
 /* 보스 등장 배너: 별명(큰 글씨, 흔들림) + 진상 멘트(작은 글씨) */
-function bossBanner(nick, intro){
-  const b=document.getElementById('dropBanner');
-  b.className='drop-banner boss';
+function bossBanner(nick, intro, prio){
+  prio = (prio==null) ? 2 : prio;   // 일반 보스=2(먼저), 노부킹/만취=1(나중)
   const desc = intro ? '<div class="bn-desc">'+intro.replace(/\n/g,'<br>')+'</div>' : '';
-  b.innerHTML='<div class="bn-name">⚠ '+nick+' ⚠</div>'+desc;
-  bannerTimer = 320;   // ~5.3초 (2~3줄 읽을 시간)
+  const html = '<div class="bn-name">⚠ '+nick+' ⚠</div>'+desc;
+  // 우선순위 삽입: 높은 prio가 앞, 같은 prio는 FIFO
+  let idx=0; while(idx<bannerQueue.length && bannerQueue[idx].prio>=prio) idx++;
+  bannerQueue.splice(idx,0,{ html, cls:'drop-banner boss', timer:320, prio });
+  if(bannerTimer<=0) showNextBanner();   // 표시 중이 없으면 즉시(같은 프레임엔 update 순서상 일반 보스가 먼저 enqueue)
+}
+function showNextBanner(){
+  const item=bannerQueue.shift(); if(!item){ curBannerPrio=0; return; }
+  const b=document.getElementById('dropBanner'); if(!b) return;
+  b.className=item.cls; b.innerHTML=item.html; b.classList.remove('hidden');
+  bannerTimer=item.timer; curBannerPrio=item.prio;
 }
 
 /* ===== 30분 피날레: 라이벌 바텐더(엄청 큰)가 쫓아옴. 도망갈 수 있게 하되 결국 잡힘 → 교대(종료) =====
@@ -3164,7 +3210,7 @@ function startFinale(){
       `<div class="fin-body">Closing time. ${rn} is coming to drag you out.<br>You can still make a run for it...</div>`+
       `<button class="fin-continue" onclick="finaleGo()">START RUNNING ▸</button>`;
     el.classList.remove('hidden'); }
-  bannerTimer=0; try{ hide('dropBanner'); }catch(e){}
+  bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; try{ hide('dropBanner'); }catch(e){}
   try{ playBossAlarm(); }catch(e){} try{ playDing(); }catch(e){}
   musicDuckUntil = frame + 99999;
 }
@@ -3224,7 +3270,7 @@ function update(){
   if(gameTime<=1080 && gameTime>=nextDrunkWave){ spawnDrunkWave(); nextDrunkWave+=60; }
   // 예고 마커: 시간 되면 그 자리에 낙하 (drunk=만취손님 / again=Madame 데미지 낙하)
   for(let i=dropMarks.length-1;i>=0;i--){ if(gameTime>=dropMarks[i].at){
-    const m=dropMarks[i]; if(m.kind==='again'||m.kind==='selfie') landAgain(m); else landDrunk(m); dropMarks.splice(i,1); } }
+    const m=dropMarks[i]; if(m.kind==='again') landAgain(m); else if(m.kind==='selfie') landSelfie(m); else landDrunk(m); dropMarks.splice(i,1); } }
   // Linebacker 도로: 화면 가로지르는 두꺼운 빨간 줄 — 닿으면 접촉데미지(무적프레임으로 스로틀)
   for(let i=roadLines.length-1;i>=0;i--){ const rl=roadLines[i]; rl.life--;
     const dpx=player.x-rl.x, dpy=player.y-rl.y, perp=Math.abs(dpx*Math.sin(rl.ang)-dpy*Math.cos(rl.ang));
@@ -3384,8 +3430,8 @@ function update(){
       e.y += e.dir * e.speed; e.x = player.x; e.moving=false;
       if((e.dir>0 && e.y>H+70) || (e.dir<0 && e.y<-70)) e.remove=true;   // 다 지나가면 소멸(보상 없음)
     } else if(e.type==='boss'){
-      // Linebacker가 카운트/돌진 중이면 bossAttack이 이동을 직접 제어(그 외엔 평소처럼 추격)
-      const selfMove = (e.bossChar==='boss_sprinter' && e.rush && e.rush.st!=='idle');
+      // Linebacker(카운트/돌진) · Human Megaphone(걷다 멈춤)은 bossAttack이 이동을 직접 제어(그 외엔 평소처럼 추격)
+      const selfMove = (e.bossChar==='boss_sprinter' && e.rush && e.rush.st!=='idle') || e.bossChar==='boss_karaoke';
       if(!selfMove){ const wob=Math.sin(e.wobble)*0.4; e.x+=Math.cos(a+wob)*e.speed; e.y+=Math.sin(a+wob)*e.speed; e.moving=true; }
       bossAttack(e, a, dist, D);   // ★보스별 고유 공격
     } else if(e.bomb){
@@ -3401,7 +3447,7 @@ function update(){
       else { let dx=player.x-e.x, dy=player.y-e.y, dd=Math.hypot(dx,dy); const need=e.r+player.r;
         if(dd<0.01){ dx=0; dy=-1; dd=1; }                  // 정확히 겹치면 위로 밀어냄(방향 0/0 방지)
         if(dd<need){
-          if(!isInvuln()){ hurtPlayer(D.dmg*4.4); if(player.hp<=0){ gameOver(); return; } }   // ★부딪히면 보스와 동일 데미지(무적프레임으로 스로틀)
+          if(!isInvuln()){ hurtPlayer(e.contactDmg||D.dmg*4.4); if(player.hp<=0){ gameOver(); return; } }   // ★부딪히면 데미지(셀카 장애물은 contactDmg로 약하게)
           player.x=e.x+dx/dd*need; player.y=e.y+dy/dd*need; } }   // 장애물: 플레이어를 밖으로
     } else {
       // 잡몹: 평소엔 걷고, 가끔 멈춰서 서기 모션
@@ -3472,7 +3518,7 @@ function update(){
       if(p.ay) p.vy+=p.ay;                  // 위스키/도끼 포물선
       // 데킬라(마가리타·십자가): 부메랑 — 후반 절반엔 플레이어에게 되돌아옴
       if(p.boom && p.life < p.life0*0.5){
-        const a=Math.atan2(player.y-p.y, player.x-p.x), sp=7;
+        const a=Math.atan2(player.y-p.y, player.x-p.x), sp=p.boomSp||7;   // 복귀 속도(마가리타는 5)
         p.vx += (Math.cos(a)*sp - p.vx)*0.12; p.vy += (Math.sin(a)*sp - p.vy)*0.12;
         if(Math.hypot(player.x-p.x,player.y-p.y)<14) p.life=0; // 손에 돌아오면 소멸
       }
@@ -3549,7 +3595,7 @@ function update(){
         }
       }
     }
-    if(dead||p.life<=0||(!p.orbit && !p.holyArc && (p.x<-40||p.x>W+40||p.y<-40||p.y>H+40))){   // 궤도·성수병은 화면밖 판정 제외
+    if(dead||p.life<=0||(!p.orbit && !p.holyArc && !p.boom && (p.x<-40||p.x>W+40||p.y<-40||p.y>H+40))){   // 궤도·성수병·부메랑은 화면밖 판정 제외(부메랑은 나갔다 돌아옴)
       if(p.holyArc){   // 착지 → 그 자리에 민트 장판(성수 효과 발동)
         zones.push({ x:p.x, y:p.y, r:p.zoneR*(player.sizeMul||1), life:150, dmg:p.zoneDmg, tick:12, slow:70, poison:90, kind:'southside' });
         explosions.push({ x:p.x, y:p.y, r:p.zoneR, life:18, max:18, col:'#4fd18a', ring:'#bfffdf' });
@@ -3596,7 +3642,7 @@ function update(){
     if(frame>=(L.hitNext||0)) for(const e of enemies){ if(Math.hypot(e.x-lx,e.y-ly)<10+e.r){ dealDmg(e,L.dmg); L.hitNext=frame+8; break; } } }
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
 
-  if(bannerTimer>0){ bannerTimer--; if(bannerTimer===0) hide('dropBanner'); }
+  if(bannerTimer>0){ bannerTimer--; if(bannerTimer===0){ if(bannerQueue.length) showNextBanner(); else hide('dropBanner'); } }
   updateHUD();
 }
 
@@ -3760,7 +3806,7 @@ function openCraftChoice(recipes, mode){
   document.querySelector('#craftChoiceScreen .title').textContent = mode==='tip' ? '✦ CHOOSE YOUR COCKTAIL ✦' : '✦ CHOOSE A COCKTAIL ✦';
   document.getElementById('craftChoices').innerHTML = recipes.map((rc,i)=>
     `<div class="craft-choice" onclick="pickCraftChoice(${i})"><img src="assets/${rc.eq[rc.eq.length-1]}.png" alt=""><span>${weaponInfo(rc.result).name}</span></div>`).join('');
-  bannerTimer=0; hide('dropBanner');
+  bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; hide('dropBanner');
   state='craft'; show('craftChoiceScreen'); playSelect();
 }
 function pickCraftChoice(i){ const rc=craftChoiceList[i]; if(!rc) return; playSelect(); hide('craftChoiceScreen');
@@ -3782,7 +3828,7 @@ function openCraft(rc, fromTip){
   document.getElementById('craftDesc').innerHTML = rc.desc;
   document.querySelector('#craftScreen .title').textContent = rc.title;
   document.getElementById('craftBtn').textContent = 'MAKE '+weaponInfo(rc.result).name;
-  bannerTimer=0; hide('dropBanner');
+  bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; hide('dropBanner');
   state='craft'; show('craftScreen'); playSelect();
 }
 function confirmCraft(){
@@ -3826,7 +3872,7 @@ function showNotice(title, eqImg, bodyHtml){
   document.getElementById('noticeTitle').textContent = title;
   document.getElementById('noticeEq').innerHTML = eqImg ? `<img class="craft-ic craft-result" src="assets/${eqImg}.png" alt="">` : '';
   document.getElementById('noticeBody').innerHTML = bodyHtml;
-  bannerTimer=0; hide('dropBanner');
+  bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; hide('dropBanner');
   state='notice'; show('noticeScreen'); playSelect();
 }
 function closeNotice(){ playSelect(); hide('noticeScreen'); state='playing'; if(player && player.xp>=player.xpNeed) levelUp(); }
@@ -3936,7 +3982,7 @@ function levelUp(){
   player.xp-=player.xpNeed; player.level++; player.xpNeed=xpForLevel(player.level);
   recalcStats();                                                          // ★새 레벨 반영: 최대체력 pat+2 / joe+1
   player.hp = Math.min(player.maxHp, player.hp + (player.key==='pat'?2:1)); // 현재 체력도 같이 +2/+1 회복
-  bannerTimer=0; hide('dropBanner');   // 획득 문구 치워서 레벨업 카드와 안 겹치게
+  bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; hide('dropBanner');   // 획득 문구 치워서 레벨업 카드와 안 겹치게
   state='levelup';
   const pick = buildLevelChoices();   // 재료 1~2 + 스킬업 2~3
   document.getElementById('upRow').innerHTML = pick.map((u,i)=>`
@@ -4034,7 +4080,7 @@ function tipTick(){   // 스핀 연출이 끝나면 → 보상 화면(레벨업 
   if(tipFx.granted || frame < tipFx.until) return;
   tipFx.granted=true;
   musicDuckUntil = 0;   // 보상 화면에서는 음악 정상 음량
-  bannerTimer=0; hide('dropBanner');
+  bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; hide('dropBanner');
   playCoin();
   // 칵테일 팁: 칵테일 완성/레벨업 후 보상 카드로 보여줌
   if(tipFx.cocktailRc){
@@ -4367,6 +4413,25 @@ function draw(){
         } else { ctx.fillStyle='#cfe'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); }
         continue;
       }
+      // ★무지개(고성방가): 진행방향으로 회전 + 나갈수록 최대 +40% 커짐
+      if(p.kind==='rainbowshout'){
+        const im=spr(p.img);
+        const grow=1+0.4*Math.min(1, (p.life0-p.life)/p.life0);           // 0→+40%
+        if(im){ const DH=p.r*2.6*grow, aspect=im.width/im.height;
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang+Math.PI);    // ★넓은(열린) 쪽이 진행방향을 향하게(180° 뒤집음)
+          ctx.imageSmoothingEnabled=false; ctx.drawImage(im, -DH*aspect/2, -DH/2, DH*aspect, DH); ctx.restore();
+        } else { ctx.fillStyle='#e0555a'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*grow,0,6.28); ctx.fill(); }
+        continue;
+      }
+      // ★음표(양옆): 위아래로 살짝 흔들며 회전
+      if(p.kind==='note'){
+        const im=spr(p.img);
+        if(im){ const DH=p.r*2.2, aspect=im.width/im.height, bobY=Math.sin(frame*0.2+(p.bob||0))*2;
+          ctx.save(); ctx.translate(p.x,p.y+bobY); ctx.rotate(Math.sin(frame*0.15+(p.bob||0))*0.3);
+          ctx.imageSmoothingEnabled=false; ctx.drawImage(im, -DH*aspect/2, -DH/2, DH*aspect, DH); ctx.restore();
+        } else { ctx.fillStyle='#ff9a4d'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); }
+        continue;
+      }
       ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);
       // 끈적하게 늘어지는 침줄기 (뒤로)
       ctx.strokeStyle='rgba(143,174,63,.5)'; ctx.lineWidth=2; ctx.lineCap='round';
@@ -4513,6 +4578,7 @@ function enemyFrameKey(e){
   if(e.type==='boss'){
     if(!e.bossChar) return null;
     if(!e.moving) return e.bossChar+'_stand';
+    if(e.bossChar==='boss_karaoke'){ const f=Math.floor((frame+e.id*7)/7)%3; return e.bossChar+(f===0?'_walkA':f===1?'_walkB':'_walkC'); }   // 3프레임 걷기
     return e.bossChar + ((Math.floor((frame+e.id*7)/8)%2) ? '_walkB' : '_walkA');
   }
   const b=e.sprite; if(!b) return null;
@@ -4543,8 +4609,8 @@ function drawWall(e){
 }
 function drawEnemy(e){
   if(e.wall){ drawWall(e); return; }   // 가로 벽 보스는 전용 렌더
-  if(e.type==='passout'){              // ★만취 손님: 위에서 원근으로 크게→작게 낙하 후 장애물 + HP바
-    const im=spr('drunk_'+(e.drunkImg||0));
+  if(e.type==='passout'){              // ★만취 손님/셀카 장애물: 낙하 후 장애물 + HP바
+    const im= e.photoImg ? spr(e.photoImg) : spr('drunk_'+(e.drunkImg||0));
     const ft=Math.min(1, e.fallT||0);
     const persp=4-3*ft, yLift=(1-ft)*100, baseH=e.drawH||82;   // 1.7배 고정 스프라이트 · 시작 4배·위 100px → 착지 1배
     ctx.globalAlpha=0.28*ft; ctx.fillStyle='#000';         // 착지 지점 그림자(낙하할수록 진하게)
