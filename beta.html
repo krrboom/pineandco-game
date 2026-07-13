@@ -1731,6 +1731,7 @@ let dropMarks=[];  // 만취 손님 낙하 예고 마커: 2초 전 빨간 표시
 let roadLines=[];  // Last-Call Linebacker 돌진 도로: 화면 가로지르는 빨간 두꺼운 줄(닿으면 접촉데미지)
 let gameTime, killCount, money, spawnTimer, frame, enemyId;
 let sbGod=false;   // 샌드박스 무적
+let sbNoDrop=false;   // 샌드박스: 드랍아이템 끄기(테스트 중 업그레이드창 방지) — 기본 켜짐(=드랍없음)
 let surgeUntil, nextSurge, bannerTimer, bannerText;
 let nextRaid, raidLeft, raidNextBoss;   // 5분마다 보스 레이드
 let finale={ active:false, until:0, rival:null, killed:false };   // 30분 피날레: 라이벌 바텐더 등장 → 교대(종료)
@@ -2507,8 +2508,8 @@ function bossAttack(e, a, dist, D){
       e.againGap--;
       if(e.againGap<=0){
         const x=52+Math.random()*(W-104), y=62+Math.random()*(H-124);
-        dropMarks.push({ x, y, r:40, at:gameTime+1, kind:'again', dmg:player.maxHp*0.4 });   // 1초 예고 후 낙하(플레이어 최대체력 40% 캡)
-        e.againLeft--; e.againGap=60;                     // 1초 간격
+        dropMarks.push({ x, y, r:58, at:gameTime+0.6, tele:0.6, kind:'again', dmg:player.maxHp*0.4 });   // 0.6초 만에 빠르게 낙하(더 큰 원) · 데미지 캡 40%
+        e.againLeft--; e.againGap=48;                     // 다음 낙하 간격도 살짝 빠르게(0.8초)
       }
     } else { e.againCd--;
       if(e.againCd<=0 && dist<640){ e.againLeft=5; e.againGap=0; e.againCd=320; } }   // 5개 볼리 시작(다음 볼리까지 ~5초)
@@ -3585,7 +3586,8 @@ function killEnemy(idx){
   if(e.bomb){ if(!e.remove) explodeBomber(e); } // 플레이어가 잡아도 폭발 (자폭이면 이미 터짐)
   else burst(e.x,e.y, e.type==='boss'?'#6fcf8f':'#d9544d', e.type==='boss'?20:7);
 
-  // 드롭
+  // 드롭 (★샌드박스에서 drops 끄면 생략 — 테스트 중 XP/업그레이드창 방지)
+  if(!(SANDBOX && sbNoDrop)){
   if(e.type==='boss'){
     pickups.push({ x:e.x, y:e.y, kind:'bill', won:e.won, sprite:e.billSprite });
     pickups.push({ x:e.x+12, y:e.y, kind:'tip' });   // 팁 봉투 드롭(랜덤 스킬 보상)
@@ -3600,6 +3602,7 @@ function killEnemy(idx){
     else if(rr<0.009+lk*0.5) pickups.push({ x:e.x, y:e.y, kind:'magnet' });   // 0.4% 자석
     else if(rr<0.019+lk) pickups.push({ x:e.x, y:e.y, kind:'health' });       // 1% 에너지 회복 (+luck)
     else pickups.push({ x:e.x, y:e.y, kind:'coin' });
+  }
   }
   enemies.splice(idx,1);
 }
@@ -4176,7 +4179,7 @@ function draw(){
 
     // ★낙하 예고 마커: 착지 위치를 빨간 원으로 미리 표시(점점 커지는 링). drunk=2초·again=1초
     for(const m of dropMarks){
-      const total=(m.kind==='again')?1:2;
+      const total=m.tele||((m.kind==='again')?1:2);
       const left=Math.max(0, m.at-gameTime), prog=1-Math.min(1,left/total);   // 0→1 (착지 임박할수록 참)
       const pulse=0.5+0.5*Math.sin(frame*0.35);
       ctx.save();
@@ -4821,6 +4824,7 @@ function sbRefresh(){
   const panel=document.getElementById('sbPanel'); if(!panel) return;
   for(const w of sbWeaponList()){ const b=document.getElementById('sbw_'+w.k); if(b){ const lv=(player&&player.weapons&&player.weapons[w.k])||0; b.classList.toggle('on',lv>0); const s=b.querySelector('.sbl'); if(s) s.textContent='L'+lv+'/'+w.max; } }
   const gb=document.getElementById('sbGodBtn'); if(gb) gb.classList.toggle('on',sbGod);
+  const db=document.getElementById('sbDropBtn'); if(db){ db.textContent='DROP:'+(sbNoDrop?'OFF':'ON'); db.classList.toggle('on',!sbNoDrop); }
   const cb=document.getElementById('sbCharBtn'); if(cb&&player) cb.textContent='CHAR:'+(player.key==='pat'?'PAT':'JOE');
   const bb=document.getElementById('sbBaseBtn'); if(bb&&player) bb.textContent='BASE L'+player.baseLv;
 }
@@ -4851,6 +4855,7 @@ function buildSandbox(){
         <button class="sbbtn" id="sbCharBtn" onclick="sbCharSwap()">CHAR</button>
         <button class="sbbtn" id="sbBaseBtn" onclick="sbBaseUp()">BASE</button>
         <button class="sbbtn" id="sbGodBtn" onclick="sbGodToggle()">GOD</button>
+        <button class="sbbtn" id="sbDropBtn" onclick="sbDropToggle()">DROP</button>
       </div>
       <div class="sbrow">
         <button class="sbbtn" onclick="sbSpawn(10)">+10 MOB</button>
@@ -4877,7 +4882,8 @@ function buildSandbox(){
   document.body.appendChild(wrap);
   sbRefresh();
 }
-function initSandbox(){ try{ startGame('pat'); skipIntro(); }catch(e){} sbGod=true; buildSandbox(); }   // 크롤 건너뛰고 바로 테스트
+function initSandbox(){ try{ startGame('pat'); skipIntro(); }catch(e){} sbGod=true; sbNoDrop=true; buildSandbox(); }   // 크롤 건너뛰고 바로 테스트 · 드랍 기본 끔
+function sbDropToggle(){ sbNoDrop=!sbNoDrop; if(sbNoDrop) pickups.length=0; sbRefresh(); }   // 드랍 껐다 켰다(끄면 필드 아이템도 정리)
 if(SANDBOX){ window.addEventListener('load', ()=> setTimeout(initSandbox, 60)); }
 // 브라우저 자동재생 정책: 첫 사용자 입력에 오디오/음악 잠금 해제
 ['pointerdown','keydown','touchstart'].forEach(ev=> addEventListener(ev, unlockMusic));
