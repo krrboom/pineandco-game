@@ -3021,7 +3021,8 @@ function drymartiniSlow(){
 function weaponCd(key, lv){
   if(key==='gintonic') return 40;   // 발사 자체는 no-op(실제 데미지는 updateGinTonic 상시)
   if(key==='cosmopolitan'||key==='vodkamartini') return Math.max(10, 25 - lv*1.5);   // 소다건식 연사(공속 ~15%↓)
-  if(key==='gimlet') return Math.round(232/(1+0.10*(lv-1)));   // ⚡전기체인: 기본 공속 50%↓(≈232f) + 레벨당 공속 +10% (Lv1 232 → Lv6 155)
+  if(key==='gimlet'){ const cd=Math.round(232/(1+0.10*(lv-1)));   // ⚡전기체인: 기본 공속 50%↓ + 레벨당 +10% (Lv1 232 → Lv6 155)
+    return (player&&player.evolved&&player.evolved.has('gimlet')) ? Math.round(cd/2) : cd; }   // ★슈퍼(진화)면 공속 2배(cd 절반)
   if(key==='southside') return 121;      // 파란불꽃 레인: 공속 고정(레벨 스케일 제거) · 추가로 10% 더 느리게(110→121)
   if(COCKTAILS[key]) return Math.max(30, (COCKTAIL_CD[key]||80) - lv*4);   // 칵테일 공속: 하한 30f(빠른 칵테일도 Lv8에서 ~15% 느려짐)
   if(SPIRITS[key]) return spiritCd(key,lv);
