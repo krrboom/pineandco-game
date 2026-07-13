@@ -1317,7 +1317,7 @@ const CRAFT_FX = {
   sidecar:'A shot that ricochets off the walls, piercing and bursting on impact. Slower fire rate, fewer bounces.',
   mojito:'A continuous gatling spray of rum bursts (low pierce) that slow, freeze, and leave mint clouds. Super: each shot explodes.',
   cosmopolitan:'A continuous gatling stream of freezing pink darts (low pierce). Super: shots scatter behind the enemy they hit.',
-  gintonic:'A gin & tonic aura locked around you (2x size). Enemies that enter are frozen for 1s, then can be frozen again after 5s.',
+  gintonic:'A gin & tonic aura locked around you (2x size). Enemies inside are frozen (1s, recharges in 5s) and poisoned (lingering damage).',
   highball:'A continuous gatling stream of fizzy splashes (low pierce) that freeze, each a small blast. Super: each shot explodes bigger.',
   vodkatonic:'A wide spread of homing, freezing ice bolts.',
   vodkacranberry:'A long-flying crimson comet that pierces a whole line, freezes it, and heals you for part of the damage (lifesteal).',
@@ -2918,7 +2918,7 @@ function fireCocktail(key, lv){
     if(pp && (ex.pierce==null || ex.pierce<99)) ex.pierce=(ex.pierce!=null?ex.pierce:1)+pp;
     if(evo){ if(ex.cExplode) ex.cExplode=Math.round(ex.cExplode*1.7); if(ex.cFreeze) ex.cFreeze=Math.round(ex.cFreeze*1.6);
       if(ex.cSlow) ex.cSlow=Math.round(ex.cSlow*1.6); if(ex.cMint) ex.cMint+=2; }
-    const lvNerf = 1;   // ★Lv2~6 공격력 15%↓ 되돌림(다시 원래 위력으로)
+    const lvNerf = 1.4;   // ★게틀링 칵테일 공격력 +40%
     for(let i=0;i<n;i++) gatStream.push({ at:frame+i*2, dmg:dmgC*P*1.2*lvNerf, r:(ex.r||7), life, pk, spread, sp, ex, evo }); };
   switch(key){
     // ── 단검→⚡전기 체인: 가장 가까운 적에서 시작해 근처 적들로 번개가 튄다. 레벨업마다 ×1.8 더 많이 감전.
@@ -2997,12 +2997,14 @@ function updateGinTonic(){
   // ★이미지·범위를 플레이어 중심에 고정(이동 방향 따라 안 도는·안 뒤집히게) + 사이즈 2배
   player.gtx=player.x; player.gty=player.y;
   player.gtr=(22+lv*5)*(player.sizeMul||1)*(evo?1.5:1)*2;        // ★2배 확대(레벨업에도 적용)
-  const dmg=(3.3+lv*1.8)*player.dmgMul*sMul;                      // 공격력: 슈퍼는 대폭↑
+  const dmg=(3.3+lv*1.8)*player.dmgMul*sMul*1.5;                  // ★공격력 +50%
   const tick=Math.max(4, (evo?12:18)-lv);                        // 데미지 주기
   for(const e of enemies){ if(Math.hypot(e.x-player.gtx,e.y-player.gty) < player.gtr+e.r){
     if(frame>=(e.gtNext||0)){ dealDmg(e, dmg); e.gtNext=frame+tick; }
     // ★프리즈: 범위에 들어오면 1초(60f) 빙결. 한 번 걸리면 5초(300f) 뒤 다시 가능(적별 쿨다운)
     if(frame>=(e.gtFrzNext||0)){ e.frozenUntil=Math.max(e.frozenUntil||0, frame+60); e.gtFrzNext=frame+300; burst(e.x,e.y,'#bfe6ff',5); }
+    // ★독: 범위 안이면 1.5초 독 갱신(나가도 잔류 데미지). 토닉의 쓴맛.
+    e.poison={ until:frame+90, dmg:dmg*0.5 };
   } }
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
 }
