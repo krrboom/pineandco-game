@@ -2528,8 +2528,10 @@ function bossAttack(e, a, dist, D){
         const ang=Math.atan2(player.y-e.y, player.x-e.x);
         R.dx=Math.cos(ang); R.dy=Math.sin(ang); R.roadLaid=true;
         roadLines.push({ x:e.x, y:e.y, ang, life:210, owner:e.id, armed:false, dmg:D.dmg*4.4 }); }
-      if(R.t<=0){ R.st='dash'; R.t=90; e.rushNum=0;                                    // 돌진 시작: 도로 무장(데미지 켜짐)
-        for(const rl of roadLines) if(rl.owner===e.id) rl.armed=true;
+      if(R.t<=0){ R.st='dash'; R.t=90; e.rushNum=0;                                    // 돌진 시작: 도로 무장 + 러쉬 순간 도로 안이면 즉시 타격
+        for(const rl of roadLines){ if(rl.owner!==e.id) continue; rl.armed=true;
+          const perp=Math.abs((player.x-rl.x)*Math.sin(rl.ang)-(player.y-rl.y)*Math.cos(rl.ang));
+          if(perp < 63+player.r && !isInvuln()){ hurtPlayer(rl.dmg); if(player.hp<=0){ gameOver(); return; } } }
         try{ playBossAlarm(); }catch(_){} }
     } else if(R.st==='dash'){
       const ds=Math.max(17, e.speed*13);                                              // ★엄청 빠른 질주
@@ -2544,7 +2546,7 @@ function bossAttack(e, a, dist, D){
 
   // ── Glass Smasher: 플레이어가 가진 칵테일 피사체를 랜덤 하나씩 크게 일직선 발사 ──
   if(e.bossChar==='boss_glass'){
-    if(e.glassCd==null) e.glassCd=75;
+    if(e.glassCd==null) e.glassCd=50;
     e.glassCd--;
     if(e.glassCd<=0 && dist<560){
       const owned=Object.keys(player.weapons).filter(k=>COCKTAILS[k] && player.weapons[k]>0);
@@ -2553,7 +2555,7 @@ function bossAttack(e, a, dist, D){
       eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
         r:22, life:300, kind:'cocktailthrow', img:COCKTAILS[ck].img, hp:1, noKill:true, spin:Math.random()*6.28, dmg:halfContact });   // 크게(r22) 일직선
       burst(e.x, e.y, '#cfe', 8); try{ playSfx('select',0.4); }catch(_){}
-      e.glassCd = 90 + Math.random()*40;
+      e.glassCd = 60 + Math.random()*27;   // ★공격속도 1.5배(cd ÷1.5)
     }
     return;
   }
@@ -2566,7 +2568,7 @@ function bossAttack(e, a, dist, D){
       const n=5, spread=0.30, spd=2.9;
       for(let i=0;i<n;i++){ const off=(i-(n-1)/2)*spread, ang=a+off;
         eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
-          r:14, life:320, kind:'amaro', img:'amaro_'+i, hp:1, noKill:true, spin:(Math.random()-0.5)*0.15, dmg:halfContact }); }
+          r:21, life:320, kind:'amaro', img:'amaro_'+i, hp:1, noKill:true, spin:(Math.random()-0.5)*0.15, dmg:halfContact }); }   // ★크기 50%↑(14→21)
       burst(e.x, e.y, '#c0392b', 10); try{ playSfx('select',0.4); }catch(_){}
       e.amaroCd = 115 + Math.random()*45;
     }
@@ -3223,7 +3225,7 @@ function update(){
   // Linebacker 도로: 화면 가로지르는 두꺼운 빨간 줄 — 닿으면 접촉데미지(무적프레임으로 스로틀)
   for(let i=roadLines.length-1;i>=0;i--){ const rl=roadLines[i]; rl.life--;
     const dpx=player.x-rl.x, dpy=player.y-rl.y, perp=Math.abs(dpx*Math.sin(rl.ang)-dpy*Math.cos(rl.ang));
-    if(rl.armed!==false && perp < 42+player.r && !isInvuln()){ hurtPlayer(rl.dmg); if(player.hp<=0){ gameOver(); return; } }   // 무장(돌진 시작)된 도로만 데미지
+    if(rl.armed!==false && perp < 63+player.r && !isInvuln()){ hurtPlayer(rl.dmg); if(player.hp<=0){ gameOver(); return; } }   // 무장 도로만 데미지 · 1.5배 넓어진 폭
     const orphan = rl.owner!=null && !enemies.some(e2=>e2.id===rl.owner);   // 주인 보스 사라지면 도로 제거
     if(rl.life<=0 || orphan) roadLines.splice(i,1); }
   // 노부킹 무리: 초반에만(5번째 보스 전까지). 가로 벽처럼 천천히 화면을 횡단.
@@ -3241,7 +3243,7 @@ function update(){
     if(Math.hypot(player.x-cx, player.y-cy) < GZ_FREEZE_R){ player.slowMul=GZ_SLOW; player.frozen=true; break; } }
   // ★Four-Hour Two-Top(boss_ladies): 주위 큰 원 안에 들어오면 빙결(천천히 이동)
   for(const e of enemies){ if(e.type==='boss' && e.bossChar==='boss_ladies'){
-    if(Math.hypot(player.x-e.x, player.y-e.y) < 150){ player.slowMul=Math.min(player.slowMul,0.5); player.frozen=true; } } }
+    if(Math.hypot(player.x-e.x, player.y-e.y) < 300){ player.slowMul=Math.min(player.slowMul,0.5); player.frozen=true; } } }
 
   // 이동
   let dx=0,dy=0;
@@ -3427,6 +3429,8 @@ function update(){
       // ★만취 손님은 벽: 상대 몬스터를 경계 밖으로 완전히 밀어냄(못 넘어가게)
       if(A.type==='passout' || B.type==='passout'){
         if(A.type==='passout' && B.type==='passout') continue;   // 만취끼리는 서로 안 밀어냄
+        const other = A.type==='passout' ? B : A;                // ★돌진 중 Linebacker는 만취 손님 통과(안 막힘)
+        if(other.bossChar==='boss_sprinter' && other.rush && other.rush.st==='dash') continue;
         const need=A.r+B.r;
         if(d2>0.0001 && d2<need*need){ const d=Math.sqrt(d2);
           if(A.type==='passout'){ B.x=A.x+dx/d*need; B.y=A.y+dy/d*need; }   // B를 A(만취) 밖으로
@@ -4256,7 +4260,7 @@ function draw(){
     ctx.textBaseline='alphabetic';
     // ★Linebacker 돌진 도로: 화면을 가로지르는 두꺼운 빨간 줄(도로) — 지금보다 3배 넓게, 닿으면 접촉데미지
     for(const rl of roadLines){
-      const L=Math.hypot(W,H)+80, HW=45;                                   // HW=반폭(30→90px, 3배)
+      const L=Math.hypot(W,H)+80, HW=68;                                   // HW=반폭(추가 1.5배 → 약 136px)
       const fade=Math.min(1, rl.life/12), blink=0.6+0.4*Math.sin(frame*0.5);
       const armed=(rl.armed!==false);
       ctx.save(); ctx.translate(rl.x, rl.y); ctx.rotate(rl.ang);
@@ -4276,7 +4280,7 @@ function draw(){
     }
     // ★Four-Hour Two-Top(boss_ladies): 큰 빙결 원(들어오면 슬로우) — 바닥 이펙트
     for(const e of enemies){ if(e.type==='boss' && e.bossChar==='boss_ladies'){
-      const R=150, pulse=0.5+0.5*Math.sin(frame*0.06);
+      const R=300, pulse=0.5+0.5*Math.sin(frame*0.06);
       const gr=ctx.createRadialGradient(e.x,e.y,20,e.x,e.y,R);
       gr.addColorStop(0,'rgba(120,210,240,.05)'); gr.addColorStop(0.7,'rgba(140,220,245,.16)'); gr.addColorStop(1,'rgba(160,230,250,.28)');
       ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(e.x,e.y,R,0,6.28); ctx.fill();
