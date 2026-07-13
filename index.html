@@ -2423,7 +2423,7 @@ const BOSS_CHARS=[
     intro:"Nothing sweet. Just Fernet,\nCampari, and a free lecture\non your tragically broken palate." },                     // 아마로 너드
 ];
 /* ===== 보스 스폰 (3분 스케줄, 매번 강해짐) ===== */
-function spawnBoss(){
+function spawnBoss(forceIdx){   // forceIdx: 샌드박스에서 특정 보스 지정(없으면 순환 셔플백)
   bossCount++;
   const d=DIFF(), p=edgePos();
   // 강함 = 보스 횟수 + 경과 시간(분당 +22%)에 비례해 계속 증가. 오래 버틸수록 보스가 더 강해짐.
@@ -2432,7 +2432,7 @@ function spawnBoss(){
   const tier = bossCount<=2 ? 1 : bossCount<=4 ? 2 : 3;  // 크기 등급
   const sizeGrow = Math.pow(1.02, bossCount-1);          // 보스마다 2%씩 계속 커짐(복리)
   const won = bossWon(bossCount);
-  const bc = BOSS_CHARS[nextBossIdx()];                   // 랜덤(셔플백)
+  const bc = BOSS_CHARS[(forceIdx!=null && BOSS_CHARS[forceIdx]) ? forceIdx : nextBossIdx()];   // 지정 보스 or 랜덤(셔플백)
   enemies.push({ id:enemyId++, x:p.x, y:p.y, type:'boss', tier, bossNo:bossCount,
     bossChar:bc.sprite, nickname:bc.nick, moving:true,
     won, billSprite:billSpriteFor(won),
@@ -4668,7 +4668,9 @@ function sbBaseUp(){ if(player&&player.baseLv<MAX_BASE_LV){ player.baseLv++; app
 function sbClear(){ if(!player) return; player.weapons={}; player.wt={}; updateWeaponChips(); sbRefresh(); }
 function sbMaxAll(){ if(!player) return; for(const w of sbWeaponList()){ player.weapons[w.k]=w.max; if(player.wt[w.k]==null) player.wt[w.k]=0; } player.baseLv=MAX_BASE_LV; applyBaseLevel(); recalcStats(); updateWeaponChips(); sbRefresh(); }
 function sbSpawn(n){ for(let i=0;i<n;i++) try{ spawnEnemy(); }catch(e){} }
-function sbBoss(){ try{ spawnBoss(); }catch(e){} }
+function sbBoss(){ const sel=document.getElementById('sbBossSel'); const idx=sel?parseInt(sel.value,10):NaN;
+  try{ spawnBoss(isNaN(idx)?undefined:idx); }catch(e){} }   // 선택된 보스 소환(기본 Get-a-Room Gang)
+function sbClearBoss(){ if(!enemies) return; for(let i=enemies.length-1;i>=0;i--){ if(enemies[i].type==='boss') enemies.splice(i,1); } sbRefresh(); }   // 필드의 보스 제거(반복 테스트용)
 function sbWall(){ try{ spawnWall(); }catch(e){} }   // 노부킹 무리(가로 벽) 즉시 소환
 function sbFinale(){ if(!player) return; try{ if(!finale.active) startFinale(); }catch(e){} }   // 30분 피날레(라이벌 바텐더 등장) 즉시 미리보기
 function sbGodToggle(){ sbGod=!sbGod; if(sbGod&&player) player.hp=player.maxHp; sbRefresh(); }
@@ -4696,6 +4698,7 @@ function buildSandbox(){
   #sbPanel .sbw{ background:#202420; color:#cde; border:1px solid #345; border-radius:5px; padding:5px 2px; font-size:8px; cursor:pointer; display:flex; flex-direction:column; gap:2px; line-height:1.1; text-align:center; }
   #sbPanel .sbw.on{ background:#3a5a3e; border-color:#7c9; color:#fff; }
   #sbPanel .sbw .sbl{ font-size:7px; color:#9c9; }
+  #sbPanel .sbsel{ flex:1; background:#202420; color:#dfe; border:1px solid #4a6; border-radius:5px; padding:5px 4px; font-size:9px; font-family:monospace; cursor:pointer; }
   #sbPanel .sbhint{ margin-top:6px; color:#9ab; font-size:8px; line-height:1.45; }`;
   document.head.appendChild(st);
   const W=sbWeaponList();
@@ -4710,9 +4713,15 @@ function buildSandbox(){
       </div>
       <div class="sbrow">
         <button class="sbbtn" onclick="sbSpawn(10)">+10 MOB</button>
-        <button class="sbbtn" onclick="sbBoss()">BOSS</button>
         <button class="sbbtn" onclick="sbWall()">NO-BOOK</button>
         <button class="sbbtn" onclick="sbFinale()">30min END</button>
+      </div>
+      <div class="sbrow">
+        <select class="sbsel" id="sbBossSel">${BOSS_CHARS.map((b,i)=>`<option value="${i}">${b.nick}${i===0?' ⚔':''}</option>`).join('')}</select>
+      </div>
+      <div class="sbrow">
+        <button class="sbbtn" onclick="sbBoss()">▶ SPAWN BOSS</button>
+        <button class="sbbtn" onclick="sbClearBoss()">CLR BOSS</button>
       </div>
       <div class="sbrow">
         <button class="sbbtn" onclick="sbClear()">CLEAR</button>
@@ -4722,12 +4731,12 @@ function buildSandbox(){
       <div class="sbgrid">
         ${W.map(w=>`<button class="sbw" id="sbw_${w.k}" onclick="sbGrant('${w.k}')">${w.label}<span class="sbl">L0/${w.max}</span></button>`).join('')}
       </div>
-      <div class="sbhint">Tap a weapon = equip / +1 level → it auto-fires. CLEAR to isolate one. GOD is on by default.</div>
+      <div class="sbhint">Pick a boss → ▶ SPAWN BOSS (⚔ = has a real attack). CLR BOSS wipes bosses. Tap a weapon = equip/+1 level. GOD on by default.</div>
     </div>`;
   document.body.appendChild(wrap);
   sbRefresh();
 }
-function initSandbox(){ try{ startGame('pat'); }catch(e){} sbGod=true; buildSandbox(); }
+function initSandbox(){ try{ startGame('pat'); skipIntro(); }catch(e){} sbGod=true; buildSandbox(); }   // 크롤 건너뛰고 바로 테스트
 if(SANDBOX){ window.addEventListener('load', ()=> setTimeout(initSandbox, 60)); }
 // 브라우저 자동재생 정책: 첫 사용자 입력에 오디오/음악 잠금 해제
 ['pointerdown','keydown','touchstart'].forEach(ev=> addEventListener(ev, unlockMusic));
