@@ -1339,7 +1339,7 @@ const CHARACTERS = {
   // Pat: 마티니 글라스를 던진다 — 강하고 광역(쉐이킹), 느림
   // 기본공격 약화(칵테일 시스템이 주력) — Pat 쉐이커(splash), Joe 믹싱글라스(관통 강화)
   pat: { name:'PAT', color:'#d9544d', moveSpeed:1.9, maxHp:130,
-         base:'shaker', projKind:'shaker', fireCd:49, dmg:72, projSpeed:4.6, projR:8, splash:38, pierce:0 },   // 기본공격 공격력 +80%(40→72)
+         base:'shaker', projKind:'shaker', fireCd:59, dmg:72, projSpeed:4.6, projR:8, splash:38, pierce:0 },   // 기본공격 공격력 +80%(40→72) · 공격속도 20%↓(49→59)
   // Joe: 믹싱글라스를 던진다 — 빠르고 강한 관통 (한 줄로 여러 마리 꿰뚫음)
   joe: { name:'JOE', color:'#e6b450', moveSpeed:3.0, maxHp:85,
          base:'barspoon', projKind:'mixglass', fireCd:14, dmg:6, projSpeed:8.5, projR:4, splash:0, pierce:8 }
@@ -2443,6 +2443,23 @@ function spawnBoss(){
   bossAlertUntil = gameTime + 2.2;   // 긴박한 빨간 플래시
   playBossAlarm();                    // 같은 알람음 6번 연속
 }
+/* ===== 보스 공격 (테스트: Get-a-Room Gang만) =====
+   보스마다 고유 공격을 붙일 자리. 지금은 boss_couple(연인 보스)이 플레이어를 향해
+   하트를 일직선으로 발사하는 것만 구현. 나머지 보스는 아직 추격만. */
+function bossAttack(e, a, dist, D){
+  if(e.bossChar==='boss_couple'){
+    if(e.heartCd==null) e.heartCd = 70;                 // 첫 발까지 살짝 대기
+    e.heartCd--;
+    if(e.heartCd<=0 && dist<460){
+      const spd=3.1;                                     // 하트 속도(피할 수 있게 적당히)
+      eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
+        r:11, life:260, kind:'heart', hp:1, spin:Math.random()*6.28, dmg:D.dmg*1.3 });   // 일직선(발사 순간 조준 고정)
+      burst(e.x, e.y, '#ff77a3', 8);
+      try{ playSfx('select', 0.4); }catch(_){}          // 가벼운 발사음
+      e.heartCd = 78 + Math.random()*34;                 // 다음 발까지 ~1.3~1.9초
+    }
+  }
+}
 /* 만취 손님(passout): 하늘에서 3마리 한꺼번에 낙하하는 보스급 정적 장애물.
    보스 HP의 2배(3마리 동일)·접촉 데미지 보스와 동일·크기 1.7배 고정·이미지 크기 원(통과 불가)·지폐(1명만 팁). */
 function spawnDrunkWave(){
@@ -3054,12 +3071,15 @@ function update(){
     // chase 중엔 아래 일반 업데이트 계속(플레이어 이동/발사) — 적 스폰만 정지됨
   }
 
-  // 러시 타임 트리거
+  // ★보스가 필드에 나와 있는 동안엔 러쉬 없음 + 잡몹 스폰 확 줄임 (가로벽은 보스 제외)
+  const bossOnField = enemies.some(e=>e.type==='boss' && !e.wall);
+  // 러시 타임 트리거 (보스 있으면 미뤄 둠 → 보스 정리 후 시작)
   if(gameTime>=nextSurge && gameTime>=surgeUntil){
-    surgeUntil = gameTime + SURGE_LEN; nextSurge = gameTime + SURGE_GAP;
-    banner('⚠ RUSH! CUSTOMERS POURING IN ⚠');
+    if(bossOnField){ nextSurge = gameTime + 6; }                       // 보스 동안 계속 미룸
+    else { surgeUntil = gameTime + SURGE_LEN; nextSurge = gameTime + SURGE_GAP;
+      banner('⚠ RUSH! CUSTOMERS POURING IN ⚠'); }
   }
-  const inSurge = gameTime < surgeUntil;
+  const inSurge = !bossOnField && gameTime < surgeUntil;               // 보스 있으면 진행중 러쉬도 멈춤
 
   // 보스 등장 타이밍: 90초마다 (매번 더 강함). 러쉬는 120초마다(별도). 5분 레이드는 제거됨.
   if(gameTime>=nextBoss){ spawnBoss(); nextBoss+=BOSS_GAP; }
@@ -3184,7 +3204,7 @@ function update(){
 
   // 스폰
   spawnTimer--;
-  const rate = DIFF().spawn * (inSurge?0.34:1);
+  const rate = DIFF().spawn * (inSurge?0.34:1) * (bossOnField?2.6:1);   // ★보스 있으면 잡몹 스폰 간격 2.6배(적게)
   if(spawnTimer<=0 && enemies.length<260){ spawnEnemy(); if(inSurge) spawnEnemy(); spawnTimer=rate; }
 
   const D=DIFF();
@@ -3218,6 +3238,7 @@ function update(){
       if((e.dir>0 && e.y>H+70) || (e.dir<0 && e.y<-70)) e.remove=true;   // 다 지나가면 소멸(보상 없음)
     } else if(e.type==='boss'){
       const wob=Math.sin(e.wobble)*0.4; e.x+=Math.cos(a+wob)*e.speed; e.y+=Math.sin(a+wob)*e.speed; e.moving=true;
+      bossAttack(e, a, dist, D);   // ★보스 공격(현재 Get-a-Room Gang만 테스트: 하트 일직선 발사)
     } else if(e.bomb){
       // 폭탄몹: 플레이어가 가까이 오면 점화(울그락불그락) → 카운트다운 뒤 혼자 터짐
       if(e.fuseUntil===0 && dist<80){ e.fuseUntil=frame+126; }   // ~2.1초 도화선
@@ -3278,7 +3299,7 @@ function update(){
   for(let i=eprojectiles.length-1;i>=0;i--){ const p=eprojectiles[i];
     if(!(player.timeStopUntil && frame<player.timeStopUntil)){ p.x+=p.vx; p.y+=p.vy; p.life--; }   // 시간 멈추면 적 침도 정지
     if(!isInvuln() && Math.hypot(p.x-player.x,p.y-player.y)<p.r+player.r){
-      hurtPlayer(D.dmg*0.55); eprojectiles.splice(i,1); if(player.hp<=0){ gameOver(); return; } continue; }
+      hurtPlayer(p.dmg||D.dmg*0.55); eprojectiles.splice(i,1); if(player.hp<=0){ gameOver(); return; } continue; }   // 보스 발사체는 자체 dmg 사용
     if(p.life<=0||p.x<-30||p.x>W+30||p.y<-30||p.y>H+30) eprojectiles.splice(i,1);
   }
 
@@ -4099,6 +4120,21 @@ function draw(){
 
     // 적 발사체: 취한 손님이 게워낸 "침" — 진행방향으로 길쭉하고 끈적한 물방울형 + 침줄기 꼬리
     for(const p of eprojectiles){ const r=p.r; const ang=Math.atan2(p.vy,p.vx);
+      // ★하트 발사체(Get-a-Room Gang 보스): 분홍 하트로 그림
+      if(p.kind==='heart'){
+        const s=r*1.25, pulse=1+0.08*Math.sin(frame*0.3+(p.spin||0));
+        ctx.save(); ctx.translate(p.x,p.y); ctx.scale(pulse,pulse);
+        ctx.globalAlpha=0.35; ctx.fillStyle='#ff5b8a';                      // 글로우
+        ctx.beginPath(); ctx.arc(0,0,s*1.15,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+        const heart=(sc)=>{ ctx.beginPath(); ctx.moveTo(0, sc*0.32);
+          ctx.bezierCurveTo(-sc, -sc*0.42, -sc*0.5, -sc*1.12, 0, -sc*0.5);
+          ctx.bezierCurveTo( sc*0.5, -sc*1.12,  sc, -sc*0.42, 0, sc*0.32); ctx.closePath(); };
+        ctx.fillStyle='#e8447a'; heart(s*1.08); ctx.fill();                 // 외곽 진한 분홍
+        ctx.fillStyle='#ff77a3'; heart(s*0.9); ctx.fill();                  // 본체
+        ctx.fillStyle='rgba(255,220,235,.9)';                              // 하이라이트
+        ctx.beginPath(); ctx.ellipse(-s*0.28,-s*0.42,s*0.2,s*0.13,-0.5,0,6.28); ctx.fill();
+        ctx.restore(); continue;
+      }
       ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);
       // 끈적하게 늘어지는 침줄기 (뒤로)
       ctx.strokeStyle='rgba(143,174,63,.5)'; ctx.lineWidth=2; ctx.lineCap='round';
