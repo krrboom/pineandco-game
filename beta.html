@@ -1049,6 +1049,8 @@ const ASSET_MANIFEST = {
   bg:'assets/bg_map.png',                 // 플레이 배경(파인앤코 맵)
   selfie:'assets/selfie.png',             // Feed Filler 보스: 하늘에서 떨어지는 셀카
   amaro_0:'assets/amaro_0.png', amaro_1:'assets/amaro_1.png', amaro_2:'assets/amaro_2.png', amaro_3:'assets/amaro_3.png', amaro_4:'assets/amaro_4.png',   // Amaro Nerd 부채꼴 발사
+  boss_karaoke_stand:'assets/boss_karaoke_stand.png', boss_karaoke_walkA:'assets/boss_karaoke_walkA.png', boss_karaoke_walkB:'assets/boss_karaoke_walkB.png', boss_karaoke_walkC:'assets/boss_karaoke_walkC.png',   // 고성방가 보스(3걷기+서기)
+  eproj_rainbow:'assets/eproj_rainbow.png', eproj_note1:'assets/eproj_note1.png', eproj_note2:'assets/eproj_note2.png',   // 무지개 피사체 + 양옆 음표
   bg_select:'assets/bg_select.png', bg_logo:'assets/bg_logo.png',
   btn_highscore:'assets/btn_highscore.png', btn_index:'assets/btn_index.png',
   enemy_genzf_stand:'assets/enemy_genzf_stand.png', enemy_genzf_walkA:'assets/enemy_genzf_walkA.png', enemy_genzf_walkB:'assets/enemy_genzf_walkB.png',
@@ -1798,6 +1800,7 @@ const MONSTER_INDEX=[
   { img:'boss_ladies_stand', name:'BOSS · FOUR-HOUR TWO-TOP',  t:'Two ladies, one tap water, four hours of gossip and zero turnover. The table is theirs now. You just work here.', boss:1 },
   { img:'boss_photo_stand',  name:'BOSS · THE FEED FILLER',    t:'Forty photos, zero sips. The cocktail goes flat and warm while she chases the light. It was never a drink. It was a prop.', boss:1 },
   { img:'boss_amaro_stand',  name:'BOSS · THE AMARO NERD',     t:'Won\'t touch anything sweet. Just Fernet, Campari, and a free lecture on why your palate is tragically broken. Tips in opinions.', boss:1 },
+  { img:'boss_karaoke_stand', name:'BOSS · THE HUMAN MEGAPHONE', t:'Physically cannot use his indoor voice. Every sentence is a broadcast, table three gets his whole life story whether they want it or not, and once the beer kicks in it turns into a one-man karaoke set at maximum volume. Stops walking only to blast a rainbow of noise and flanking music notes at you.', boss:1 },
   { img:'boss_nobook_icon', name:'BOSS · THE NO-BOOKING MOB', t:'A whole party, zero reservations. Prime Friday, they "just showed up" and want the booth you saved for weeks. They link arms and crawl across the whole room, very slowly, so nobody gets past. Tankier than any single boss and it hits harder. Early shift only — once the night gets serious, even they give up. Clear them for a fat stack.', boss:1 },
 ];
 /* 바텐더(캐릭터) 사전 */
@@ -2446,6 +2449,8 @@ const BOSS_CHARS=[
     intro:"Forty photos, zero sips.\nIt was never a drink.\nIt was a prop." },                                                 // 사진충 인플루언서
   { sprite:'boss_amaro',  nick:'THE AMARO NERD',
     intro:"Nothing sweet. Just Fernet,\nCampari, and a free lecture\non your tragically broken palate." },                     // 아마로 너드
+  { sprite:'boss_karaoke', nick:'THE HUMAN MEGAPHONE',
+    intro:"He can't talk. He only broadcasts.\nEvery word at full blast, no volume knob,\nand once he's drunk it's an all-night karaoke encore\nyou never asked for." },   // 고성방가(소리지르며 대화+취해서 노래)
 ];
 /* ===== 보스 스폰 (3분 스케줄, 매번 강해짐) ===== */
 function spawnBoss(forceIdx){   // forceIdx: 샌드박스에서 특정 보스 지정(없으면 순환 셔플백)
@@ -2584,6 +2589,23 @@ function bossAttack(e, a, dist, D){
         dropMarks.push({ x, y, r:52, at:gameTime+0.9, tele:0.9, kind:'selfie', img:'selfie', dmg:player.maxHp*0.35 });
         e.selfieLeft--; e.selfieGap=54; } }
     else { e.selfieCd--; if(e.selfieCd<=0 && dist<640){ e.selfieLeft=4; e.selfieGap=0; e.selfieCd=300; } }
+    return;
+  }
+
+  // ── The Human Megaphone(고성방가): 걷다가 2초에 한 번 멈춰서 무지개+양옆 음표 발사(멈췄을 때만 공격) ──
+  if(e.bossChar==='boss_karaoke'){
+    if(e.kstate==null){ e.kstate='walk'; e.kt=120; }
+    e.kt--;
+    if(e.kstate==='walk'){
+      const wob=Math.sin(e.wobble)*0.3; e.x+=Math.cos(a+wob)*e.speed; e.y+=Math.sin(a+wob)*e.speed; e.moving=true;   // 걷기(공격 안 함)
+      if(e.kt<=0){ e.kstate='stop'; e.kt=36; e.moving=false;                                                        // 멈춰서 공격 1발
+        const spd=2.3;   // ★Pat 기본공격(4.6)의 절반
+        eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd, r:18, life0:340, life:340, kind:'rainbowshout', img:'eproj_rainbow', hp:1, noKill:true, dmg:halfContact });   // 무지개: 나가며 커짐
+        for(const o of [-0.34,0.34]){ const ang=a+o;                                                               // 양옆 음표
+          eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, r:12, life:300, kind:'note', img:(o<0?'eproj_note1':'eproj_note2'), hp:1, noKill:true, bob:Math.random()*6.28, dmg:halfContact*0.5 }); }
+        burst(e.x, e.y-e.r, '#ffd24a', 10); try{ playSfx('select',0.5); }catch(_){}
+      }
+    } else { e.moving=false; if(e.kt<=0){ e.kstate='walk'; e.kt=120; } }   // 0.6초 멈춤 후 다시 2초 걷기
     return;
   }
 }
@@ -3408,8 +3430,8 @@ function update(){
       e.y += e.dir * e.speed; e.x = player.x; e.moving=false;
       if((e.dir>0 && e.y>H+70) || (e.dir<0 && e.y<-70)) e.remove=true;   // 다 지나가면 소멸(보상 없음)
     } else if(e.type==='boss'){
-      // Linebacker가 카운트/돌진 중이면 bossAttack이 이동을 직접 제어(그 외엔 평소처럼 추격)
-      const selfMove = (e.bossChar==='boss_sprinter' && e.rush && e.rush.st!=='idle');
+      // Linebacker(카운트/돌진) · Human Megaphone(걷다 멈춤)은 bossAttack이 이동을 직접 제어(그 외엔 평소처럼 추격)
+      const selfMove = (e.bossChar==='boss_sprinter' && e.rush && e.rush.st!=='idle') || e.bossChar==='boss_karaoke';
       if(!selfMove){ const wob=Math.sin(e.wobble)*0.4; e.x+=Math.cos(a+wob)*e.speed; e.y+=Math.sin(a+wob)*e.speed; e.moving=true; }
       bossAttack(e, a, dist, D);   // ★보스별 고유 공격
     } else if(e.bomb){
@@ -4391,6 +4413,25 @@ function draw(){
         } else { ctx.fillStyle='#cfe'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); }
         continue;
       }
+      // ★무지개(고성방가): 진행방향으로 회전 + 나갈수록 최대 +40% 커짐
+      if(p.kind==='rainbowshout'){
+        const im=spr(p.img);
+        const grow=1+0.4*Math.min(1, (p.life0-p.life)/p.life0);           // 0→+40%
+        if(im){ const DH=p.r*2.6*grow, aspect=im.width/im.height;
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);            // 아치가 진행방향을 가리키게
+          ctx.imageSmoothingEnabled=false; ctx.drawImage(im, -DH*aspect/2, -DH/2, DH*aspect, DH); ctx.restore();
+        } else { ctx.fillStyle='#e0555a'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*grow,0,6.28); ctx.fill(); }
+        continue;
+      }
+      // ★음표(양옆): 위아래로 살짝 흔들며 회전
+      if(p.kind==='note'){
+        const im=spr(p.img);
+        if(im){ const DH=p.r*2.2, aspect=im.width/im.height, bobY=Math.sin(frame*0.2+(p.bob||0))*2;
+          ctx.save(); ctx.translate(p.x,p.y+bobY); ctx.rotate(Math.sin(frame*0.15+(p.bob||0))*0.3);
+          ctx.imageSmoothingEnabled=false; ctx.drawImage(im, -DH*aspect/2, -DH/2, DH*aspect, DH); ctx.restore();
+        } else { ctx.fillStyle='#ff9a4d'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); }
+        continue;
+      }
       ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);
       // 끈적하게 늘어지는 침줄기 (뒤로)
       ctx.strokeStyle='rgba(143,174,63,.5)'; ctx.lineWidth=2; ctx.lineCap='round';
@@ -4537,6 +4578,7 @@ function enemyFrameKey(e){
   if(e.type==='boss'){
     if(!e.bossChar) return null;
     if(!e.moving) return e.bossChar+'_stand';
+    if(e.bossChar==='boss_karaoke'){ const f=Math.floor((frame+e.id*7)/7)%3; return e.bossChar+(f===0?'_walkA':f===1?'_walkB':'_walkC'); }   // 3프레임 걷기
     return e.bossChar + ((Math.floor((frame+e.id*7)/8)%2) ? '_walkB' : '_walkA');
   }
   const b=e.sprite; if(!b) return null;
