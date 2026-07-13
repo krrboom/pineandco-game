@@ -3336,6 +3336,8 @@ function update(){
     const lv=player.weapons[key];
     player.wt[key]=(player.wt[key]||0)-1;
     if(player.wt[key]<=0){
+      // ★마가리타: 이전 부메랑이 완전히 돌아와 사라진 뒤에만 새로 발사(겹침 방지)
+      if(key==='margarita' && projectiles.some(p=>p.boom && p.kind==='cocktail_margarita')){ player.wt[key]=6; continue; }
       const n0=projectiles.length;
       if(COCKTAILS[key]) fireCocktail(key,lv); else if(SPIRITS[key]) fireSpirit(key,lv); else if(INGREDIENTS[key]) fireIngredient(key,lv);
       addExtraShots(n0);   // EXTRA SHOT: 이 무기가 쏜 피사체를 각도 틀어 복제(모든 무기에 적용)
