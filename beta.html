@@ -5007,6 +5007,9 @@ try{ cloudFetch('time'); }catch(e){}  // 시작화면 최고기록을 공유 시
    1단계(현재): 서버 없이 나 혼자. 구조는 처음부터 여러 명 대비(plaza.others)로 짜둠.
    2단계: WebRTC(P2P) 또는 Supabase Realtime 붙여서 others를 채우고 plazaSend에서 전송만 하면 됨. */
 let plaza=null;
+/* 🍎 Apple AI 주소 — plaza-ai Worker 배포 후 여기에 넣으면 자유 대화 ON.
+   비워두면(또는 실패하면) 아래 로컬 추천(규칙 기반)으로 자동 폴백해서 그래도 동작한다. */
+const APPLE_AI_URL = '';
 function pzEsc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pzTyping(){ const a=document.activeElement; return !!(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA')); }
 function plazaName(){ let n=''; try{ n=localStorage.getItem('paco_pzname')||''; }catch(e){}
@@ -5024,7 +5027,8 @@ function openPlaza(){
   try{ initAudio(); playSelect(); setMusic('menu'); }catch(e){}
   state='plaza'; hideAllScreens();
   ['hud','hudChips','statPanel','ultBtn','dashBtn','stick'].forEach(hide);
-  plaza={ me:{ x:W/2, y:H*0.62, facing:1, moving:false, key:'pat', name:plazaName(), msg:'', msgUntil:0 }, others:[] };
+  plaza={ me:{ x:W/2, y:H*0.62, facing:1, moving:false, key:'pat', name:plazaName(), msg:'', msgUntil:0 }, others:[],
+    apple:{ x:W*0.5, y:H*0.30, name:'APPLE', msg:'', msgUntil:0, thinking:false }, appleHist:[], nearApple:false };
   const b=document.getElementById('pzCharBtn'); if(b) b.textContent='PAT';
   const lg=document.getElementById('pzLog'); if(lg) lg.innerHTML='';
   show('plazaUI');
@@ -5046,10 +5050,118 @@ function plazaLog(who, msg){
 function plazaSay(p, msg){ p.msg=msg; p.msgUntil=frame+300; }   // 말풍선 5초 유지
 function plazaSend(){
   const inp=document.getElementById('pzInput'); if(!inp||!plaza) return;
-  const msg=inp.value.trim().slice(0,60); if(!msg) return;
+  const msg=inp.value.trim().slice(0,200); if(!msg) return;
   inp.value='';
-  plazaSay(plaza.me, msg); plazaLog(plaza.me.name, msg);
-  // TODO(2단계): 여기서 WebRTC/Supabase로 {name, msg} 전송 → 남들 화면에도 말풍선+로그
+  if(plaza.nearApple){ appleAsk(msg); return; }        // 🍎 Apple 근처면 Apple에게 질문
+  plazaSay(plaza.me, msg.slice(0,60)); plazaLog(plaza.me.name, msg);
+  // TODO(2단계): 여기서 WebRTC/Cloudflare DO로 {name, msg} 전송 → 남들 화면에도 말풍선+로그
+}
+/* 🍎 Apple에게 질문 → Worker(AI) 호출, 실패/미배포면 로컬 추천으로 폴백 */
+async function appleAsk(q){
+  const A=plaza.apple;
+  plazaSay(plaza.me, q.slice(0,60)); plazaLog(plaza.me.name, q);
+  A.thinking=true; A.msg='...'; A.msgUntil=frame+900;
+  let answer='';
+  if(APPLE_AI_URL){
+    try{
+      const r=await fetch(APPLE_AI_URL, { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ question:q, history: plaza.appleHist.slice(-6) }) });
+      const j=await r.json(); if(j && j.answer) answer=j.answer;
+    }catch(e){ /* 서버 없음/실패 → 아래 로컬 폴백 */ }
+  }
+  if(!answer) answer = appleLocalAnswer(q);           // 서버 미배포·한도초과·오류 시에도 동작
+  if(!plaza) return;                                   // 답 기다리는 동안 나갔을 수도
+  A.thinking=false;
+  A.msg = answer.length>52 ? answer.slice(0,52)+'…' : answer;   // 말풍선은 짧게, 전문은 채팅창에
+  A.msgUntil = frame + 300 + Math.min(600, answer.length*5);
+  plazaLog('🍎 APPLE', answer);
+  plaza.appleHist.push({role:'user',content:q},{role:'assistant',content:answer});
+  if(plaza.appleHist.length>12) plaza.appleHist=plaza.appleHist.slice(-12);
+}
+/* 로컬 추천(규칙 기반) — 서버 없이도 진짜 메뉴 데이터로 답한다. 지어내지 않음. */
+const PZ_ALIAS = {   // 한글로 물어봐도 칵테일을 찾게
+  '화채':'HWACHAE', '빙수':'BINGSU', '누룩':'NURUK', '피크닉':'PICNIC', '불고기':'BULGOGI',
+  '아페롤':'APEROL SLUSH', '키위':'KIWI COLADA', '콜라다':'KIWI COLADA', '옥수수':'CORN',
+  '바나나':'BANANA', '요거트':'YOGURT', '올리브':'OLIVE', '핫비어':'HOT BEER', '맥주칵테일':'HOT BEER',
+  '카카오':'CACAO', '초콜릿':'CACAO', '커피':'COFFEE', '패션후르츠':'PASSIONFRUIT', '패션프루트':'PASSIONFRUIT',
+};
+function pzFindCocktail(s){
+  for(const c of MENU_COCKTAILS) if(s.includes(c.name.toLowerCase())) return c;
+  for(const k in PZ_ALIAS) if(s.includes(k)){ const c=MENU_COCKTAILS.find(x=>x.name===PZ_ALIAS[k]); if(c) return c; }
+  return null;
+}
+function appleLocalAnswer(q){
+  const s=q.toLowerCase();
+  const has=(...w)=>w.some(x=>s.includes(x));
+  const byName=(...names)=>MENU_COCKTAILS.filter(c=>names.includes(c.name));
+  const price=(c)=>c.p||COCKTAIL_PRICE;
+  const say=(list, lead)=>{ if(!list.length) return null; const c=list[Math.floor(Math.random()*list.length)];
+    const ing=c.ing.split('·').slice(0,3).map(x=>x.trim()).join(', ');
+    return `${lead} ${c.name} 어때요. ${ing} 들어가요. ${price(c)}.`; };
+  // 재료/기주로 검색
+  const byIng=(kw)=>MENU_COCKTAILS.filter(c=>(c.ing+' '+c.tw+' '+c.q).toLowerCase().includes(kw));
+  if(has('가격','얼마','비싸','price')){
+    const c=pzFindCocktail(s);
+    if(c) return `${c.name}은 ${price(c)}이에요.`;
+    return `시그니처 칵테일은 기본 ${COCKTAIL_PRICE}이고, 화채만 ₩120,000(라지) / ₩26,000(레귤러)로 두 가지예요.`;
+  }
+  if(has('단','달달','달콤','sweet','디저트')) return say(byName('BANANA','CACAO','KIWI COLADA','HWACHAE'), '단 거면');
+  if(has('상큼','새콤','시원','sour','citrus','산뜻')) return say(byName('BINGSU','PASSIONFRUIT','YOGURT','APEROL SLUSH'), '상큼한 거면');
+  if(has('센','독한','강한','도수','strong')) return say(byName('CACAO','NURUK','CORN','PASSIONFRUIT'), '센 거면');
+  if(has('위스키','whisk')) return say(byName('NURUK','CACAO','HOT BEER'), '위스키면');
+  if(has('진 ','gin','진토닉')) return say(byName('BINGSU','OLIVE','PASSIONFRUIT'), '진이면');
+  if(has('럼','rum')) return say(byName('KIWI COLADA','BANANA'), '럼이면');
+  if(has('데킬라','메즈칼','tequila','mezcal')) return say(byName('BULGOGI','CORN'), '데킬라면');
+  if(has('보드카','vodka')) return say(byName('PICNIC','YOGURT','COFFEE','PASSIONFRUIT'), '보드카면');
+  if(has('커피','coffee','에스프레소')) return say(byName('COFFEE','HOT BEER'), '커피면');
+  if(has('초콜','카카오','choco','cacao')) return say(byName('CACAO'), '초콜릿이면');
+  if(has('논알콜','무알콜','안 마시','non-alc','술 안')) return '술 안 드시면 Mr. Tropical 있어요. 제철과일이랑 차로 만들어요. ₩18,000.';
+  if(has('맥주','beer','소맥')) return '소맥이면 SOMAC 있어요. 땅콩버터·소주·맥주. ₩8,000.';
+  if(has('추천','뭐 마','뭐마','골라','모르겠','아무거나')){
+    const c=MENU_COCKTAILS[Math.floor(Math.random()*MENU_COCKTAILS.length)];
+    return `${c.name} 한번 가보세요. ${c.tw.replace('Twisted ','')} 비틀어 만든 거예요. ${price(c)}. 못 고르겠으면 Gacha Cocktail(₩23,000)로 뽑기도 있어요.`;
+  }
+  // 칵테일 이름을 직접 물어본 경우(영문·한글 모두)
+  const named=pzFindCocktail(s);
+  if(named) return `${named.name}은 ${named.tw.replace('Twisted ','')} 비튼 거예요. ${named.ing.split('·').slice(0,4).map(x=>x.trim()).join(', ')}. ${price(named)}.`;
+  const hit=byIng(s.trim().split(/\s+/)[0]||'~~~');
+  if(hit.length) return say(hit, '그거면');
+  return '그건 아직 제가 답하기 어려워요. 메뉴 추천이나 재료, 가격은 물어보세요.';
+}
+/* 🍎 Apple 그리기 — 사과 캐릭터(도트 느낌) + 가까이 오면 말 걸기 힌트 */
+function pzApple(A){
+  const bob=Math.sin(frame*0.05)*2, x=A.x, y=A.y+bob, near=plaza.nearApple;
+  ctx.globalAlpha=0.3; ctx.fillStyle='#000';                                  // 그림자
+  ctx.beginPath(); ctx.ellipse(A.x, A.y+13, 13, 4.5, 0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+  if(near){ const g=ctx.createRadialGradient(x,y,4,x,y,34);                   // 가까우면 후광
+    g.addColorStop(0,'rgba(255,220,120,.35)'); g.addColorStop(1,'rgba(255,220,120,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,34,0,6.28); ctx.fill(); }
+  ctx.save(); ctx.translate(x,y);
+  ctx.fillStyle='#3a7d2a'; ctx.fillRect(-1.5,-16,3,6);                        // 꼭지
+  ctx.fillStyle='#5aa83a'; ctx.beginPath();                                   // 잎
+  ctx.ellipse(6,-14, 6, 3.2, -0.5, 0, 6.28); ctx.fill();
+  ctx.fillStyle='#d9333a';                                                    // 사과 몸통(두 덩이)
+  ctx.beginPath(); ctx.arc(-5,0, 10.5, 0, 6.28); ctx.fill();
+  ctx.beginPath(); ctx.arc(5,0, 10.5, 0, 6.28); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(0,3, 11, 10, 0,0,6.28); ctx.fill();
+  ctx.fillStyle='rgba(255,140,140,.55)';                                      // 광택
+  ctx.beginPath(); ctx.ellipse(-5,-5, 3.5, 2.2, -0.5, 0, 6.28); ctx.fill();
+  ctx.fillStyle='#2a1a14';                                                    // 눈
+  const blink = (frame%180)<6;
+  if(blink){ ctx.fillRect(-6,-2,4,1.5); ctx.fillRect(2,-2,4,1.5); }
+  else { ctx.fillRect(-6,-4,3,4); ctx.fillRect(3,-4,3,4); }
+  ctx.strokeStyle='#2a1a14'; ctx.lineWidth=1.4;                               // 입
+  ctx.beginPath(); ctx.arc(0,2, 3.4, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+  ctx.restore();
+  ctx.font='bold 8px "Press Start 2P", monospace'; ctx.textAlign='center';    // 이름표
+  ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)'; ctx.strokeText('APPLE', A.x, A.y+26);
+  ctx.fillStyle='#ffd24a'; ctx.fillText('APPLE', A.x, A.y+26);
+  if(near && !A.msg){                                                         // 말 걸기 힌트
+    ctx.font='7px "Press Start 2P", monospace';
+    ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)';
+    const t='아래에 질문을 쳐보세요';
+    ctx.strokeText(t, A.x, A.y-30); ctx.fillStyle='#eafbe9'; ctx.fillText(t, A.x, A.y-30);
+  }
 }
 function plazaUpdate(){
   if(!plaza) return;
@@ -5066,6 +5178,14 @@ function plazaUpdate(){
   const sp=2.2;
   m.x=Math.max(18, Math.min(W-18, m.x+dx*sp));
   m.y=Math.max(34, Math.min(H-14, m.y+dy*sp));
+  // 🍎 Apple 근처면 채팅이 Apple에게 감
+  const A=plaza.apple, wasNear=plaza.nearApple;
+  plaza.nearApple = Math.hypot(m.x-A.x, m.y-A.y) < 72;
+  if(plaza.nearApple!==wasNear){
+    const inp=document.getElementById('pzInput');
+    if(inp) inp.placeholder = plaza.nearApple ? '🍎 Apple에게 질문… (칵테일 추천, 가격, 재료)' : '채팅 입력 후 Enter…';
+    if(plaza.nearApple) plazaLog(null,'🍎 Apple 옆에 왔어요. 이제 채팅이 Apple에게 갑니다.');
+  }
   // TODO(2단계): 여기서 0.08초마다 내 위치 {x,y,facing,moving} 전송
 }
 function pzChar(p){
@@ -5101,9 +5221,11 @@ function pzBubble(p){
 }
 function plazaDraw(){
   if(!plaza) return;
+  pzApple(plaza.apple);                                         // 🍎 Apple(바 쪽에 서 있음)
   const all=[...plaza.others, plaza.me].sort((a,b)=>a.y-b.y);   // y정렬: 아래쪽이 앞
   for(const p of all) pzChar(p);
   for(const p of all) pzBubble(p);                              // 말풍선은 항상 캐릭터 위
+  pzBubble(plaza.apple);
 }
 // 채팅 입력: Enter로 전송 + 게임 키 입력과 분리
 (function(){ const inp=document.getElementById('pzInput');

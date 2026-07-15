@@ -1,0 +1,7 @@
+name = "plaza-ai"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Workers AI 바인딩 — 이 한 줄이 env.AI 를 만들어 준다(API 키 필요 없음)
+[ai]
+binding = "AI"
