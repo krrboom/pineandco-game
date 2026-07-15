@@ -5126,7 +5126,13 @@ function appleLocalAnswer(q){
   if(named) return `${named.name}은 ${named.tw.replace('Twisted ','')} 비튼 거예요. ${named.ing.split('·').slice(0,4).map(x=>x.trim()).join(', ')}. ${price(named)}.`;
   const hit=byIng(s.trim().split(/\s+/)[0]||'~~~');
   if(hit.length) return say(hit, '그거면');
-  return '그건 아직 제가 답하기 어려워요. 메뉴 추천이나 재료, 가격은 물어보세요.';
+  // 막다른 길 대신 바텐더처럼 되묻는다 (AI 붙기 전 임시 모드)
+  const back=[
+    '음, 그건 제가 지금 바빠서 짧게밖에 못 받네요. 대신 취향은 말해보세요 — 단 거? 상큼한 거? 센 거?',
+    '그 얘긴 좀 길어질 것 같은데, 일단 뭐부터 한 잔 하실래요? 단 거랑 센 거 중에 고르면 골라드릴게요.',
+    '오늘은 어떤 기분이세요? 가볍게 갈지, 제대로 갈지만 말해주시면 맞춰서 하나 뽑아드릴게요.',
+  ];
+  return back[Math.floor(Math.random()*back.length)];
 }
 /* 🍎 Apple 그리기 — 사과 캐릭터(도트 느낌) + 가까이 오면 말 걸기 힌트 */
 function pzApple(A){
