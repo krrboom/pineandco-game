@@ -178,6 +178,25 @@
   #plazaUI .pz-send{ background:var(--pine,#3a7d4f); color:#fff; border:0; border-radius:7px; padding:9px 12px;
     font-family:inherit; font-size:9px; cursor:pointer; }
   @media (max-width:430px){ #plazaUI .pz-log{ max-height:22vh; font-size:8.5px; } #plazaUI .pz-title{ font-size:8px; } }
+  /* 🍎 Apple 도우미 버튼 강조(상단바) */
+  #plazaUI .pz-apple{ background:var(--gold,#c89a3c); color:#1e1208; border-color:#e6c470; font-weight:bold; }
+  /* 🍎 Apple 감정 대화창 오버레이 */
+  #appleHelper{ position:absolute; inset:0; z-index:40; display:flex; align-items:center; justify-content:center;
+    background:rgba(8,10,8,.6); pointer-events:auto; }
+  #appleHelper.hidden{ display:none; }
+  #appleHelper .ah-box{ position:relative; width:min(94vw,410px); background:#182417; border:3px solid var(--pine,#5a8a5e);
+    box-shadow:6px 6px 0 #000; border-radius:12px; padding:14px 14px 12px; display:flex; flex-direction:column; align-items:center; }
+  #appleHelper .ah-x{ position:absolute; top:6px; right:10px; background:none; border:0; color:#dfe; font-size:18px; cursor:pointer; line-height:1; }
+  #appleHelper .ah-portrait{ width:118px; height:150px; display:flex; align-items:flex-end; justify-content:center; }
+  #appleHelper .ah-portrait img{ max-width:100%; max-height:100%; image-rendering:pixelated; filter:drop-shadow(2px 3px 0 rgba(0,0,0,.45)); }
+  #appleHelper .ah-name{ color:var(--gold,#c89a3c); font-size:12px; letter-spacing:1px; margin:2px 0 8px; }
+  #appleHelper .ah-name small{ color:#9db8a0; font-size:9.5px; letter-spacing:0; }
+  #appleHelper .ah-log{ width:100%; max-height:32vh; min-height:56px; overflow-y:auto; background:rgba(0,0,0,.32);
+    border-radius:7px; padding:8px 10px; font-size:12px; line-height:1.55; color:#eafbe9; }
+  #appleHelper .ah-log .u{ color:#bfe6ff; margin:6px 0 1px; } #appleHelper .ah-log .a{ color:#fff; margin:0 0 6px; }
+  #appleHelper .ah-inbar{ display:flex; gap:6px; width:100%; margin-top:8px; }
+  #appleHelper .ah-inbar input{ flex:1; padding:9px; border-radius:7px; border:2px solid #3a5a3a; background:#0d140d; color:#fff; font-size:13px; }
+  #appleHelper .ah-send{ padding:9px 13px; border-radius:7px; border:0; background:var(--pine,#5a8a5e); color:#fff; font-weight:bold; cursor:pointer; font-size:12px; }
   /* ★헤네시 마이웨이 프로모션 버튼 + 삽지 모달 */
   .promo-btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:min(92%,520px); margin:2px auto 8px;
     padding:10px 12px; border:1.5px solid var(--gold,#c89a3c); border-radius:9px; cursor:pointer;
@@ -687,6 +706,7 @@
     <div class="pz-top">
       <span class="pz-title">🌲 PINE &amp; CO PLAZA</span>
       <span class="pz-count" id="pzCount">1 online</span>
+      <button class="pz-btn pz-apple" onclick="openApple()">🍎 도움이 필요하세요?</button>
       <button class="pz-btn" id="pzCharBtn" onclick="plazaSwapChar()">PAT</button>
       <button class="pz-btn" onclick="plazaRename()">NAME</button>
       <button class="pz-btn pz-exit" onclick="closePlaza()">EXIT ✕</button>
@@ -695,6 +715,21 @@
     <div class="pz-inbar">
       <input id="pzInput" maxlength="60" placeholder="채팅 입력 후 Enter…" autocomplete="off">
       <button class="pz-send" onclick="plazaSend()">SEND</button>
+    </div>
+  </div>
+
+  <!-- 🍎 Apple 도우미: 버튼으로 열어서 추천/도움 받기. 답변마다 감정 표정이 바뀐다. -->
+  <div id="appleHelper" class="hidden">
+    <div class="ah-box">
+      <button class="ah-x" onclick="closeApple()" aria-label="close">✕</button>
+      <div class="ah-portrait"><img id="ahImg" src="assets/apple_neutral.png" alt="Apple"></div>
+      <div class="ah-name">🍎 APPLE <small>· 파인앤코 바텐더</small></div>
+      <div class="ah-log" id="ahLog"></div>
+      <div class="ah-inbar">
+        <input id="ahInput" maxlength="120" placeholder="칵테일·가격·추천 뭐든 물어보세요…" autocomplete="off"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();appleHelperSend();}">
+        <button class="ah-send" onclick="appleHelperSend()">물어보기</button>
+      </div>
     </div>
   </div>
   <div id="recipePanel" class="settings hidden">
@@ -1158,7 +1193,12 @@ const ASSET_MANIFEST = {
   cocktail_highball:'assets/cocktail_highball.png', cocktail_margarita:'assets/cocktail_margarita.png', cocktail_sidecar:'assets/cocktail_sidecar.png',
   bottle_tequila:'assets/bottle_tequila.png', bottle_vodka:'assets/bottle_vodka.png',
   bottle_gin:'assets/bottle_gin.png', bottle_rum:'assets/bottle_rum.png',
-  bottle_whiskey:'assets/bottle_whiskey.png', bottle_brandy:'assets/bottle_brandy.png'
+  bottle_whiskey:'assets/bottle_whiskey.png', bottle_brandy:'assets/bottle_brandy.png',
+  apple_neutral:'assets/apple_neutral.png', apple_happy:'assets/apple_happy.png', apple_happygrin:'assets/apple_happygrin.png',
+  apple_wink:'assets/apple_wink.png', apple_wink2:'assets/apple_wink2.png', apple_surprised:'assets/apple_surprised.png',
+  apple_sad:'assets/apple_sad.png', apple_confused:'assets/apple_confused.png', apple_sleeping:'assets/apple_sleeping.png',
+  apple_scared:'assets/apple_scared.png', apple_determined:'assets/apple_determined.png', apple_angry:'assets/apple_angry.png',
+  apple_shivering:'assets/apple_shivering.png'
 };
 const IMG = {};
 function loadAssets(){
@@ -5049,7 +5089,8 @@ try{ cloudFetch('time'); }catch(e){}  // 시작화면 최고기록을 공유 시
 let plaza=null;
 /* 🍎 Apple AI 주소 — plaza-ai Worker 배포 후 여기에 넣으면 자유 대화 ON.
    비워두면(또는 실패하면) 아래 로컬 추천(규칙 기반)으로 자동 폴백해서 그래도 동작한다. */
-const APPLE_AI_URL = '';   // 비움 = 광장 Apple이 내장 로컬 답변 사용(외부 AI 미연결). Render 연결 시 여기에 https://plaza-ai.onrender.com 넣기.
+// ★beta/localhost에서만 Render Apple(제미나이) 연결, 프로덕션(index.html)은 내장 로컬 답변. 나중에 프로덕션도 켜려면 아래 삼항 대신 그냥 주소만.
+const APPLE_AI_URL = /beta|localhost|127\.0\.0\.1/i.test(location.href) ? 'https://plaza-ai.onrender.com' : '';
 function pzEsc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pzTyping(){ const a=document.activeElement; return !!(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA')); }
 function plazaName(){ let n=''; try{ n=localStorage.getItem('paco_pzname')||''; }catch(e){}
@@ -5092,7 +5133,7 @@ function plazaSend(){
   const inp=document.getElementById('pzInput'); if(!inp||!plaza) return;
   const msg=inp.value.trim().slice(0,200); if(!msg) return;
   inp.value='';
-  if(plaza.nearApple){ appleAsk(msg); return; }        // 🍎 Apple 근처면 Apple에게 질문
+  if(plaza.nearApple){ openApple(); const i=document.getElementById('ahInput'); if(i){ i.value=msg; appleHelperSend(); } return; }   // 🍎 Apple 근처 = 도우미창 열고 바로 질문
   plazaSay(plaza.me, msg.slice(0,60)); plazaLog(plaza.me.name, msg);
   // TODO(2단계): 여기서 WebRTC/Cloudflare DO로 {name, msg} 전송 → 남들 화면에도 말풍선+로그
 }
@@ -5117,6 +5158,39 @@ async function appleAsk(q){
   plazaLog('🍎 APPLE', answer);
   plaza.appleHist.push({role:'user',content:q},{role:'assistant',content:answer});
   if(plaza.appleHist.length>12) plaza.appleHist=plaza.appleHist.slice(-12);
+}
+/* 🍎 Apple 도우미(버튼) — 감정 표정 대화창. APPLE_AI_URL(beta/localhost) 있으면 제미나이, 없으면 로컬 폴백. */
+const AH_EMOS=['neutral','happy','wink','happygrin','surprised','sad','confused','sleeping','scared','determined','angry','shivering','wink2'];
+let ahHist=[];
+function ahSetEmotion(e){ const img=document.getElementById('ahImg'); if(!img) return; if(!AH_EMOS.includes(e)) e='neutral'; img.src='assets/apple_'+e+'.png'; }
+function ahAdd(who,text){ const lg=document.getElementById('ahLog'); if(!lg) return null;
+  const d=document.createElement('div'); d.className=who; d.textContent=(who==='u'?'나  ':'🍎  ')+text;
+  lg.appendChild(d); while(lg.children.length>40) lg.removeChild(lg.firstChild); lg.scrollTop=lg.scrollHeight; return d; }
+function openApple(){ try{ initAudio(); }catch(e){}
+  const el=document.getElementById('appleHelper'); if(!el) return;
+  el.classList.remove('hidden');
+  const lg=document.getElementById('ahLog');
+  if(lg && !lg.children.length){ ahSetEmotion('happygrin');
+    ahAdd('a','어서 오세요. 뭐 마실지 고민되면 제가 골라드릴게요. 단 거? 상큼한 거? 아니면 센 거?'); }
+  setTimeout(()=>{ const i=document.getElementById('ahInput'); if(i) i.focus(); }, 60);
+}
+function closeApple(){ const el=document.getElementById('appleHelper'); if(el) el.classList.add('hidden'); }
+async function appleHelperSend(){
+  const inp=document.getElementById('ahInput'); if(!inp) return;
+  const q=inp.value.trim().slice(0,120); if(!q) return; inp.value='';
+  ahAdd('u', q); ahSetEmotion('sleeping'); const dots=ahAdd('a','…');
+  let answer='', emotion='';
+  if(APPLE_AI_URL){
+    try{ const r=await fetch(APPLE_AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ question:q, history:ahHist.slice(-6) }) });
+      const j=await r.json(); if(j && j.answer){ answer=j.answer; emotion=j.emotion||''; } }catch(e){}
+  }
+  if(!answer) answer=appleLocalAnswer(q);            // 서버 없음/오류 → 로컬 폴백(진짜 메뉴 데이터)
+  if(dots && dots.parentNode) dots.parentNode.removeChild(dots);
+  ahSetEmotion(emotion || 'happy');
+  ahAdd('a', answer);
+  ahHist.push({role:'user',content:q},{role:'assistant',content:answer});
+  if(ahHist.length>12) ahHist=ahHist.slice(-12);
 }
 /* 로컬 추천(규칙 기반) — 서버 없이도 진짜 메뉴 데이터로 답한다. 지어내지 않음. */
 const PZ_ALIAS = {   // 한글로 물어봐도 칵테일을 찾게
@@ -5182,31 +5256,17 @@ function pzApple(A){
   if(near){ const g=ctx.createRadialGradient(x,y,4,x,y,34);                   // 가까우면 후광
     g.addColorStop(0,'rgba(255,220,120,.35)'); g.addColorStop(1,'rgba(255,220,120,0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,34,0,6.28); ctx.fill(); }
-  ctx.save(); ctx.translate(x,y);
-  ctx.fillStyle='#3a7d2a'; ctx.fillRect(-1.5,-16,3,6);                        // 꼭지
-  ctx.fillStyle='#5aa83a'; ctx.beginPath();                                   // 잎
-  ctx.ellipse(6,-14, 6, 3.2, -0.5, 0, 6.28); ctx.fill();
-  ctx.fillStyle='#d9333a';                                                    // 사과 몸통(두 덩이)
-  ctx.beginPath(); ctx.arc(-5,0, 10.5, 0, 6.28); ctx.fill();
-  ctx.beginPath(); ctx.arc(5,0, 10.5, 0, 6.28); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(0,3, 11, 10, 0,0,6.28); ctx.fill();
-  ctx.fillStyle='rgba(255,140,140,.55)';                                      // 광택
-  ctx.beginPath(); ctx.ellipse(-5,-5, 3.5, 2.2, -0.5, 0, 6.28); ctx.fill();
-  ctx.fillStyle='#2a1a14';                                                    // 눈
-  const blink = (frame%180)<6;
-  if(blink){ ctx.fillRect(-6,-2,4,1.5); ctx.fillRect(2,-2,4,1.5); }
-  else { ctx.fillRect(-6,-4,3,4); ctx.fillRect(3,-4,3,4); }
-  ctx.strokeStyle='#2a1a14'; ctx.lineWidth=1.4;                               // 입
-  ctx.beginPath(); ctx.arc(0,2, 3.4, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
-  ctx.restore();
+  const im=spr('apple_neutral');                                             // ★진짜 파인애플 캐릭터 스프라이트
+  if(im){ const h=56, w=h*im.width/im.height; drawImgC(im, x, y-10, w, h, 0); }
+  else { ctx.save(); ctx.translate(x,y); ctx.fillStyle='#e8a53a';            // 로딩 전 임시 폴백
+    ctx.beginPath(); ctx.arc(0,0,11,0,6.28); ctx.fill(); ctx.restore(); }
   ctx.font='bold 8px "Press Start 2P", monospace'; ctx.textAlign='center';    // 이름표
-  ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)'; ctx.strokeText('APPLE', A.x, A.y+26);
-  ctx.fillStyle='#ffd24a'; ctx.fillText('APPLE', A.x, A.y+26);
-  if(near && !A.msg){                                                         // 말 걸기 힌트
-    ctx.font='7px "Press Start 2P", monospace';
-    ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)';
-    const t='아래에 질문을 쳐보세요';
-    ctx.strokeText(t, A.x, A.y-30); ctx.fillStyle='#eafbe9'; ctx.fillText(t, A.x, A.y-30);
+  ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)'; ctx.strokeText('APPLE', A.x, A.y+34);
+  ctx.fillStyle='#ffd24a'; ctx.fillText('APPLE', A.x, A.y+34);
+  if(near){                                                                   // 가까우면 → 도움 버튼 안내
+    ctx.font='7px "Press Start 2P", monospace'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.85)';
+    const t='위 도움 버튼을 눌러요';
+    ctx.strokeText(t, A.x, A.y-46); ctx.fillStyle='#eafbe9'; ctx.fillText(t, A.x, A.y-46);
   }
 }
 function plazaUpdate(){
