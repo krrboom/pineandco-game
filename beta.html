@@ -1365,10 +1365,10 @@ const CRAFT_FX = {
   sidecar:'A shot that ricochets off the walls, piercing and bursting on impact. Slower fire rate, fewer bounces.',
   mojito:'A continuous gatling spray of rum bursts (low pierce) that slow, freeze, and leave mint clouds. Super: each shot explodes.',
   cosmopolitan:'A continuous gatling stream of freezing pink darts (low pierce). Super: shots scatter behind the enemy they hit.',
-  gintonic:'A gin & tonic aura locked around you (2x size). Enemies inside are frozen (1s, recharges in 5s) and poisoned (lingering damage).',
+  gintonic:'A wide gin & tonic aura locked around you. Enemies inside are continuously frozen — slowed harder than any other freeze — poisoned, and take heavy damage (2x).',
   highball:'A continuous gatling stream of fizzy splashes (low pierce) that freeze, each a small blast. Super: each shot explodes bigger.',
   vodkatonic:'A wide spread of homing, freezing ice bolts.',
-  vodkacranberry:'Two giant crimson whips lash out to your sides and snap back (like lipstick in and out), freezing enemies and draining life on every hit (lifesteal). Very slow, sustain-focused.',
+  vodkacranberry:'A giant crimson glass whips out sideways the way you face and snaps back (like lipstick in and out), freezing and draining life on hit (lifesteal). Grows each level; at Lv6 it lashes from BOTH sides. Super: 2x speed & damage.',
   southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
   margarita:'Giant salt boomerangs that fly out and back.',
   drymartini:'Olives orbit you (one more each level, wider orbit). Enemies within the orbit range are slowed.',
@@ -1800,6 +1800,7 @@ let finale={ active:false, until:0, rival:null, killed:false };   // 30분 피�
 const FINALE_AT = 1800;   // 30분(초)
 let nextDrunkWave, lastPassoutImg=-1;   // 만취 손님: 1분마다 3마리 한꺼번에 낙하(게임 18분까지)
 let bossCount, nextBoss, bossAlertUntil=0;
+let extraBossAt=0, extraBossHp=0;   // ★20분↑: 보스 스폰 15초 뒤 1/4체력 보스 추가 스폰 예약
 let nextWall;   // 노부킹 무리(가로 벽 보스) 다음 등장 시각. 0이면 더 안 나옴
 let bossBag=[], bossRecent=[];   // bossRecent = 최근 2턴에 나온 보스
 // 셔플백: 모든 보스가 한 사이클에 한 번씩, 순서는 랜덤.
@@ -1835,9 +1836,9 @@ function drawSprite(c, char, scale){
 document.querySelectorAll('.ava').forEach(av=> drawSprite(av.getContext('2d'), av.dataset.char, 4));
 
 /* ===== 화면 전환 ===== */
-function show(id){ document.getElementById(id).classList.remove('hidden'); }
-function hide(id){ document.getElementById(id).classList.add('hidden'); }
-function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','introScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen','indexScreen'].forEach(hide); }
+function show(id){ const e=document.getElementById(id); if(e) e.classList.remove('hidden'); }   // ★null 안전(없는 요소 무시)
+function hide(id){ const e=document.getElementById(id); if(e) e.classList.add('hidden'); }      // ★null 안전(없는 요소 무시)
+function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','introScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen'].forEach(hide); }   // indexScreen 제거(📖로 통합됨)
 function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
 function openIndex(){ openRecipe(); showRecTab('monsters'); }   // INDEX는 이제 📖(RECIPE BOOK) 안 탭으로 통합됨(안전 별칭)
 /* 몬스터 족보 */
@@ -2242,7 +2243,7 @@ function startGame(charKey){
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; bossAlertUntil=0; keys={};
   nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set(); declinedCraft=new Set(); pendingCraft=null; pendingFromTip=false;
-  bossCount=0; nextBoss=BOSS_FIRST; nextWall=WALL_FIRST; bossBag=[]; bossRecent=[];
+  bossCount=0; nextBoss=BOSS_FIRST; nextWall=WALL_FIRST; bossBag=[]; bossRecent=[]; extraBossAt=0; extraBossHp=0;
   finale={ active:false, phase:'', rival:null, killed:false, hitCd:0, msgHideAt:0 };
   try{ const el=document.getElementById('finaleMsg'); el.classList.add('hidden'); el.style.pointerEvents='none'; }catch(e){}
   nextDrunkWave=30; lastPassoutImg=-1;   // 첫 만취 웨이브 30초, 이후 1분마다(18분까지)
@@ -2461,13 +2462,13 @@ function spawnEnemy(type){
   else if(type==='runner'){ e.r=6; e.hp=d.hp*0.55; e.speed=d.speed*1.65; e.sprite='runner'; }
   else if(type==='bomber'){ e.r=11; e.hp=d.hp*1.8; e.speed=d.speed*0.5; e.bomb=true; e.sprite='bomber'; e.blast=56; }
   else if(type==='thrower'){ e.r=8; e.hp=d.hp*0.6; e.speed=d.speed*0.7; e.thrower=true; e.sprite='thrower'; }
-  e.maxHp=e.hp;
+  e.hp *= 1.3; e.maxHp=e.hp;   // ★기본 몬스터 체력 30%↑
   enemies.push(e);
 }
 /* 젠지 남녀 한 쌍: 서로 partner로 묶임. 둘이 붙어 있을 때만 프리즈(슬로우) 장이 켜진다. */
 function spawnGenzPair(d,p){
   const mk=(sprite,ox)=>({ id:enemyId++, x:p.x+ox, y:p.y, type:'genz', sprite,
-    r:9, hp:d.hp*1.7, maxHp:d.hp*1.7, speed:d.speed*0.92,
+    r:9, hp:d.hp*1.7*1.3, maxHp:d.hp*1.7*1.3, speed:d.speed*0.92,   // ★체력 30%↑
     wobble:Math.random()*6.28, dmgCd:0, shootCd:0, moving:true,
     standUntil:0, nextPause:frame+90+Math.random()*240,
     vomitUntil:0, vomitFired:false, fuseUntil:0, remove:false, partner:null });
@@ -2514,7 +2515,7 @@ const BOSS_CHARS=[
     intro:"He can't talk. He only broadcasts.\nEvery word at full blast, no volume knob,\nand once he's drunk it's an all-night karaoke encore\nyou never asked for." },   // 고성방가(소리지르며 대화+취해서 노래)
 ];
 /* ===== 보스 스폰 (3분 스케줄, 매번 강해짐) ===== */
-function spawnBoss(forceIdx){   // forceIdx: 샌드박스에서 특정 보스 지정(없으면 순환 셔플백)
+function spawnBoss(forceIdx, hpOverride){   // forceIdx: 샌드박스 지정 / hpOverride: 있으면 그 체력으로(20분↑ 1/4체력 추가보스용)
   bossCount++;
   const d=DIFF(), p=edgePos();
   // 강함 = 보스 횟수 + 경과 시간(분당 +22%)에 비례해 계속 증가. 오래 버틸수록 보스가 더 강해짐.
@@ -2524,15 +2525,18 @@ function spawnBoss(forceIdx){   // forceIdx: 샌드박스에서 특정 보스 �
   const sizeGrow = Math.pow(1.02, bossCount-1);          // 보스마다 2%씩 계속 커짐(복리)
   const won = bossWon(bossCount);
   const bc = BOSS_CHARS[(forceIdx!=null && BOSS_CHARS[forceIdx]) ? forceIdx : nextBossIdx()];   // 지정 보스 or 랜덤(셔플백)
-  enemies.push({ id:enemyId++, x:p.x, y:p.y, type:'boss', tier, bossNo:bossCount,
+  const hp = (hpOverride!=null) ? hpOverride : d.hp*strength;   // 추가보스는 지정 체력(현재 보스의 1/4)
+  const boss = { id:enemyId++, x:p.x, y:p.y, type:'boss', tier, bossNo:bossCount,
     bossChar:bc.sprite, nickname:bc.nick, moving:true,
     won, billSprite:billSpriteFor(won),
     r: (tier===1?16:tier===2?22:30) * sizeGrow,
-    hp:d.hp*strength, maxHp:d.hp*strength,
-    speed:d.speed*(tier===3?0.7:0.55), wobble:Math.random()*6.28, dmgCd:0 });
+    hp:hp, maxHp:hp,
+    speed:d.speed*(tier===3?0.7:0.55), wobble:Math.random()*6.28, dmgCd:0 };
+  enemies.push(boss);
   bossBanner(bc.nick, bc.intro);     // 별명(크게) + 재치 멘트(작게)
   bossAlertUntil = gameTime + 2.2;   // 긴박한 빨간 플래시
   playBossAlarm();                    // 같은 알람음 6번 연속
+  return boss;
 }
 /* ===== 보스 공격 =====
    보스마다 고유 공격. 발사체 공격력은 접촉데미지(D.dmg*4.4)의 반(D.dmg*2.2).
@@ -3019,7 +3023,7 @@ function fireCocktail(key, lv){
     if(pp && (ex.pierce==null || ex.pierce<99)) ex.pierce=(ex.pierce!=null?ex.pierce:1)+pp;
     if(evo){ if(ex.cExplode) ex.cExplode=Math.round(ex.cExplode*1.7); if(ex.cFreeze) ex.cFreeze=Math.round(ex.cFreeze*1.6);
       if(ex.cSlow) ex.cSlow=Math.round(ex.cSlow*1.6); if(ex.cMint) ex.cMint+=2; }
-    const lvNerf = 1.4;   // ★게틀링 칵테일 공격력 +40%
+    const lvNerf = 1.61;   // ★게틀링 칵테일 공격력 +61% (기존 +40%에서 15% 더: 1.4×1.15)
     for(let i=0;i<n;i++) gatStream.push({ at:frame+i*2, dmg:dmgC*P*1.2*lvNerf, r:(ex.r||7), life, pk, spread, sp, ex, evo }); };
   switch(key){
     // ── 단검→⚡전기 체인: 가장 가까운 적에서 시작해 근처 적들로 번개가 튄다. 레벨업마다 ×1.8 더 많이 감전.
@@ -3069,13 +3073,16 @@ function fireCocktail(key, lv){
         add({ vx:Math.cos(ang)*8, vy:Math.sin(ang)*8, dmg:38*P, r:11, pierce:99, life:120, bounce:1+Math.floor(lv/4), cExplode:32 }); } break; }   // 튕김↓(1~3)·수명↓(200→120)로 화면에 덜 쌓이게
     // ── 붉은 채찍(뱀서 채찍): 거대 보드카 크랜베리 2개가 좌우로 뻗었다 되돌아옴(립스틱 인/아웃). 흡혈 특화. 아주 느림. ──
     case 'vodkacranberry': {
-      // 회복: 명중당 0.2(Lv1)→0.5(Lv6). 진화면 더. 피사체당 상한 2 → 좌우 2개면 공격당 최대 4.
+      // 회복: 명중당 0.2(Lv1)→0.5(Lv6). 진화면 더. 피사체당 상한 2.
       const steal = evo ? Math.min(0.65, 0.5 + slv*0.02) : Math.min(0.5, 0.2 + (lv-1)*0.06);
-      const outSp = 6, life = 44;              // 좌우로 뻗는 속도 / 왕복 수명(반은 나가고 반은 복귀)
-      for(const dir of [1, -1]){               // 오른쪽(+1)·왼쪽(-1) 양옆으로 밀어냄
-        add({ vx:dir*outSp, vy:0, dmg:110*P, r:26, pierce:99, life, life0:life,
-              boom:true, boomSp:10, cFreeze:45, lifesteal:steal, healBudget:2, whip:true }); }
-      break; }   // 크기(r)는 add에서 S(레벨·진화·글로벌크기) 자동 반영 → 만렙·슈퍼일수록 거대
+      const outSp = 6, life = 44;              // 뻗는 속도 / 왕복 수명(반은 나가고 반은 복귀)
+      const dmg = 110 * P * (evo ? 2 : 1);     // ★슈퍼면 공격력 2배
+      // Lv1~5: 바라보는 방향(좌/우 하나)으로 1개, 크기만 성장 / Lv6·슈퍼: 양옆 2개
+      const dirs = (evo || lv >= 6) ? [1, -1] : [ (player.facing||1) >= 0 ? 1 : -1 ];
+      for(const dir of dirs){
+        add({ vx:dir*outSp, vy:0, dmg, r:26, pierce:99, life, life0:life,
+              boom:true, boomSp:10, cFreeze:45, lifesteal:steal, healBudget:2, whip:true, whipDir:dir }); }
+      break; }   // 크기(r)는 add에서 S(레벨·진화·글로벌크기) 자동 반영
     // ── 성수(재해석): 무공격 병이 포물선으로 날아가 랜덤 착지 → 그 자리에 민트 장판. Lv1=1개 → 2레벨마다 +1 ──
     case 'southside': {   // ★파란 불꽃 레인: 떨어진 자리에 파란 불꽃 장판(지속 데미지+빙결). 레벨업 → 발수+2·범위↑·근처·원형화
       const count = 3 + Math.floor((lv-1)/2);                   // ★피사체 완화: 2레벨당 +1 (Lv1 3 → Lv6 5) — 너무 많던 것 하향
@@ -3105,13 +3112,15 @@ function updateGinTonic(){
   const sMul=evo?0.85*Math.pow(1.166,slv-1):1;                   // 슈퍼: Lv1=0.85배 → Lv8=2.5배
   // ★이미지·범위를 플레이어 중심에 고정(이동 방향 따라 안 도는·안 뒤집히게) + 사이즈 2배
   player.gtx=player.x; player.gty=player.y;
-  player.gtr=(22+lv*5)*(player.sizeMul||1)*(evo?1.5:1)*2;        // ★2배 확대(레벨업에도 적용)
-  const dmg=(3.3+lv*1.8)*player.dmgMul*sMul*1.5;                  // ★공격력 +50%
+  player.gtr=(22+lv*5)*(player.sizeMul||1)*(evo?1.5:1)*2.5;      // ★2배 + 25% 더 넓게(2→2.5)
+  const dmg=(3.3+lv*1.8)*player.dmgMul*sMul*3;                    // ★공격력 2배(1.5→3)
   const tick=Math.max(4, (evo?12:18)-lv);                        // 데미지 주기
   for(const e of enemies){ if(Math.hypot(e.x-player.gtx,e.y-player.gty) < player.gtr+e.r){
     if(frame>=(e.gtNext||0)){ dealDmg(e, dmg); e.gtNext=frame+tick; }
-    // ★프리즈: 범위에 들어오면 1초(60f) 빙결. 한 번 걸리면 5초(300f) 뒤 다시 가능(적별 쿨다운)
-    if(frame>=(e.gtFrzNext||0)){ e.frozenUntil=Math.max(e.frozenUntil||0, frame+60); e.gtFrzNext=frame+300; burst(e.x,e.y,'#bfe6ff',5); }
+    // ★프리즈: 범위 안이면 계속 빙결(연속). 그리고 다른 빙결보다 30% 더 강한 슬로우(gtSlowUntil → 속도 0.224).
+    e.frozenUntil=Math.max(e.frozenUntil||0, frame+10);   // 시각 빙결 링 + 기본 슬로우 유지
+    e.gtSlowUntil=frame+10;                                 // 진토닉 강슬로우 마커(매 프레임 갱신 = 범위 안 계속)
+    if(frame>=(e.gtFrzNext||0)){ e.gtFrzNext=frame+24; burst(e.x,e.y,'#bfe6ff',5); }   // 빙결 파티클은 가끔만
     // ★독: 범위 안이면 1.5초 독 갱신(나가도 잔류 데미지). 토닉의 쓴맛.
     e.poison={ until:frame+90, dmg:dmg*0.5 };
   } }
@@ -3133,7 +3142,8 @@ function weaponCd(key, lv){
   if(key==='gimlet'){ const cd=Math.round(232/(1+0.10*(lv-1)));   // ⚡전기체인: 기본 공속 50%↓ + 레벨당 +10% (Lv1 232 → Lv6 155)
     return (player&&player.evolved&&player.evolved.has('gimlet')) ? Math.round(cd/2) : cd; }   // ★슈퍼(진화)면 공속 2배(cd 절반)
   if(key==='southside') return 121;      // 파란불꽃 레인: 공속 고정(레벨 스케일 제거) · 추가로 10% 더 느리게(110→121)
-  if(key==='vodkacranberry') return Math.round(170 - lv*8);   // ★붉은 채찍: 아주 느린 공속 (Lv1 162 → Lv6 122). 진화도 동일(대신 크기·흡혈↑)
+  if(key==='vodkacranberry'){ const cd = Math.round((170 - lv*8) * 0.5);   // ★붉은 채찍: 공속 50% 빠르게 (Lv1 81 → Lv6 61)
+    return (player&&player.evolved&&player.evolved.has('vodkacranberry')) ? Math.round(cd/2) : cd; }   // 슈퍼면 공속 2배(cd 절반)
   if(COCKTAILS[key]) return Math.max(30, (COCKTAIL_CD[key]||80) - lv*4);   // 칵테일 공속: 하한 30f(빠른 칵테일도 Lv8에서 ~15% 느려짐)
   if(SPIRITS[key]) return spiritCd(key,lv);
   if(key==='trio') return Math.round(58*(1-(lv-1)/6));   // 시트러스 트리오: Lv1=58 → Lv4=29(공속 2배)
@@ -3338,7 +3348,9 @@ function update(){
   const inSurge = !bossOnField && gameTime < surgeUntil;               // 보스 있으면 진행중 러쉬도 멈춤
 
   // 보스 등장 타이밍: 90초마다 (매번 더 강함). 러쉬는 120초마다(별도). 5분 레이드는 제거됨.
-  if(gameTime>=nextBoss){ spawnBoss(); nextBoss+=BOSS_GAP; }
+  if(gameTime>=nextBoss){ const b=spawnBoss(); nextBoss+=BOSS_GAP;
+    if(gameTime>=1200 && b){ extraBossAt=gameTime+15; extraBossHp=b.hp*0.25; } }   // ★20분(1200초)↑: 15초 뒤 현재 보스 1/4체력 보스 추가 예약
+  if(extraBossAt && gameTime>=extraBossAt){ spawnBoss(null, extraBossHp); extraBossAt=0; extraBossHp=0; }   // 예약된 추가보스 스폰
   // 만취 손님: 1분마다 3마리 한꺼번에 낙하 (게임 18분까지만)
   if(gameTime<=1080 && gameTime>=nextDrunkWave){ spawnDrunkWave(); nextDrunkWave+=60; }
   // 예고 마커: 시간 되면 그 자리에 낙하 (drunk=만취손님 / again=Madame 데미지 낙하)
@@ -3483,7 +3495,9 @@ function update(){
     if(e.dmgCd>0) e.dmgCd--;
     e.wobble+=0.12;
     if(e.poison && frame<e.poison.until && frame%18===0) dealDmg(e, e.poison.dmg);   // gin 독 DoT
-    const _spd0=e.speed; if(frame<(e.frozenUntil||0)) e.speed=_spd0*0.32;            // vodka 빙결 슬로우(루프 끝에서 복구)
+    const _spd0=e.speed;                                                              // (루프 끝에서 복구)
+    if(frame<(e.gtSlowUntil||0)) e.speed=_spd0*0.224;        // ★진토닉: 다른 빙결보다 30% 더 느리게(0.32×0.7)
+    else if(frame<(e.frozenUntil||0)) e.speed=_spd0*0.32;    // 일반 빙결(vodka 등)
     const a=Math.atan2(player.y-e.y, player.x-e.x);
     const dist=Math.hypot(player.x-e.x, player.y-e.y);
     if(e.thrower){
@@ -4778,7 +4792,8 @@ function drawProj(p){
   if(p.kind && p.kind.indexOf('cocktail_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*2.6, W=H*im.width/im.height;
     if(p.evo){ ctx.save(); ctx.globalAlpha=0.5+0.3*Math.sin(frame*0.3); const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,H*0.9);
       g.addColorStop(0,'rgba(255,215,90,0.9)'); g.addColorStop(1,'rgba(255,215,90,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,H*0.9,0,6.28); ctx.fill(); ctx.restore(); }   // 슈퍼 = 금빛 글로우
-    drawImgC(im, p.x, p.y, W, H, frame*0.12); return; }   // 칵테일 궁극기 피사체
+    const rot = p.whip ? (p.whipDir>0 ? Math.PI/2 : -Math.PI/2) : frame*0.12;   // ★채찍(보드카크랜베리)은 안 돌고 옆으로 누움(립스틱). 나머지는 뱅글뱅글
+    drawImgC(im, p.x, p.y, W, H, rot); return; }   // 칵테일 궁극기 피사체
   if(p.kind==='rainbow' && spr('rainbow_proj')){ const im=spr('rainbow_proj'), H=p.r*1.7, W=H*im.width/im.height, ang=Math.atan2(p.vy,p.vx); drawImgC(im, p.x, p.y, W, H, ang); return; }   // 레인보우 탄(진행방향으로 회전)
   // 스피릿 = 각자 전용 샷잔 이미지 (gin=허브/vodka=얼음/tequila=라임/whiskey=노징/brandy=스니프터, rum=브라운).
   if(SPIRITS[p.kind]){
@@ -5034,7 +5049,7 @@ try{ cloudFetch('time'); }catch(e){}  // 시작화면 최고기록을 공유 시
 let plaza=null;
 /* 🍎 Apple AI 주소 — plaza-ai Worker 배포 후 여기에 넣으면 자유 대화 ON.
    비워두면(또는 실패하면) 아래 로컬 추천(규칙 기반)으로 자동 폴백해서 그래도 동작한다. */
-const APPLE_AI_URL = 'https://plaza-ai.showjojo100.workers.dev';
+const APPLE_AI_URL = '';   // 비움 = 광장 Apple이 내장 로컬 답변 사용(외부 AI 미연결). Render 연결 시 여기에 https://plaza-ai.onrender.com 넣기.
 function pzEsc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pzTyping(){ const a=document.activeElement; return !!(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA')); }
 function plazaName(){ let n=''; try{ n=localStorage.getItem('paco_pzname')||''; }catch(e){}
