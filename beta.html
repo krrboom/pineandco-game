@@ -374,6 +374,9 @@
   #recipeBtn:active{ transform:translate(2px,2px); box-shadow:0 0 0 #000; }
   .rec-box{ max-width:min(92vw,520px); width:92vw; }
   .rec-hint{ font-size:8px; color:var(--dim); margin:6px 0 10px; line-height:1.6; }
+  #recTabs{ flex-wrap:wrap; gap:4px; margin:2px 0 8px; }   /* RECIPES+4개 탭이 좁은 박스에서 줄바꿈되게 */
+  #recTabs .bt-tab{ font-size:9px; padding:6px 8px; }
+  #recipePanel .mindex{ max-width:none; }   /* 박스 폭에 맞춤(인덱스가 좁은 박스 안) */
   .rec-list{ max-height:62vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px; width:100%; }
   .rec-row{ display:flex; align-items:center; gap:9px; background:rgba(0,0,0,.4); border:1px solid #2a2e26; border-radius:5px; padding:6px 8px; text-align:left; }
   .rec-out{ width:34px; height:34px; flex:0 0 34px; object-fit:contain; image-rendering:pixelated; }
@@ -490,7 +493,7 @@
   /* 시작화면 하단 작은 부제목 버튼 (HIGHSCORE / BOTTOMS UP / MONSTER INDEX) */
   .sub-btn-row{ gap:clamp(8px,3vw,20px); margin-top:0; }
   /* 두 버튼 동일 캔버스(260x94)로 슬라이스됨 → 같은 width면 크기 동일. START/MENU(132~205)보다 작게. */
-  .subbtn img{ width:clamp(92px,24vw,138px); height:auto; image-rendering:pixelated; display:block; filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5)); }
+  .subbtn img{ width:clamp(132px,35vw,205px); height:auto; image-rendering:pixelated; display:block; filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55)); }   /* ★START/MENU와 동일 크기로 확대(INDEX 버튼 제거로 2개만 남음) */
   .subbtn:active{ transform:translateY(2px); }
   .subbtn:hover img{ filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(111,207,143,.6)); }
   /* 몬스터 인덱스 */
@@ -696,9 +699,17 @@
   </div>
   <div id="recipePanel" class="settings hidden">
     <div class="set-box rec-box">
-      <h3>✦ RECIPE BOOK ✦</h3>
-      <p class="rec-hint">Make up to 6 (cocktails + hidden). Base spirit Lv5 + ingredients maxed.</p>
+      <h3>✦ BOOK · RECIPES &amp; INDEX ✦</h3>
+      <div class="board-tabs" id="recTabs">
+        <button class="bt-tab active" data-rt="recipes" onclick="showRecTab('recipes')">RECIPES</button>
+        <button class="bt-tab" data-rt="monsters" onclick="showRecTab('monsters')">MONSTERS</button>
+        <button class="bt-tab" data-rt="chars" onclick="showRecTab('chars')">BARTENDERS</button>
+        <button class="bt-tab" data-rt="skills" onclick="showRecTab('skills')">INGREDIENTS</button>
+        <button class="bt-tab" data-rt="cocktails" onclick="showRecTab('cocktails')">COCKTAILS</button>
+      </div>
+      <p class="rec-hint" id="recHint">Make up to 6 (cocktails + hidden). Base spirit Lv5 + ingredients maxed.</p>
       <div class="rec-list" id="recipeList"></div>
+      <div class="mindex" id="mindexList" style="display:none;max-height:62vh;overflow-y:auto"></div>
       <button class="btn" onclick="closeRecipe()">CLOSE</button>
     </div>
   </div>
@@ -735,7 +746,7 @@
     <div class="row sub-btn-row">
       <button class="imgbtn subbtn" onclick="openHighscore()"><img src="assets/btn_highscore.png" alt="HIGHSCORE"></button>
       <button class="imgbtn subbtn" onclick="openBottomsUp()"><img src="assets/btn_bottomsup.png" alt="BOTTOMS UP"></button>
-      <button class="imgbtn subbtn" onclick="openIndex()"><img src="assets/btn_index.png" alt="PINE&CO INDEX"></button>
+      <!-- PINE&CO INDEX 버튼 제거: 인덱스는 게임 중 📖(RECIPE BOOK) 안 탭으로 통합됨 -->
     </div>
     <div class="row"><button class="plaza-btn" onclick="openPlaza()">🌲 THE PLAZA · 광장</button></div>
     <div class="hint">PC: WASD / ARROWS · MOBILE: DRAG SCREEN</div>
@@ -753,17 +764,7 @@
     <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
 
-  <div class="screen crt hidden" id="indexScreen">
-    <h2 class="title" style="color:var(--pine-light)">PINE&CO INDEX</h2>
-    <div class="board-tabs">
-      <button class="bt-tab active" data-it="monsters" onclick="showIndexTab('monsters')">MONSTERS</button>
-      <button class="bt-tab" data-it="chars" onclick="showIndexTab('chars')">BARTENDERS</button>
-      <button class="bt-tab" data-it="skills" onclick="showIndexTab('skills')">INGREDIENTS</button>
-      <button class="bt-tab" data-it="cocktails" onclick="showIndexTab('cocktails')">COCKTAILS</button>
-    </div>
-    <div class="scrollbox"><div class="mindex" id="mindexList"></div></div>
-    <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
-  </div>
+  <!-- PINE&CO INDEX 화면 제거: 내용은 게임 중 📖(RECIPE BOOK)의 탭으로 통합됨(#mindexList는 recipePanel 안으로 이동) -->
 
   <div class="screen hidden crt" id="selectScreen">
     <h2 class="title">SELECT BARTENDER</h2>
@@ -1367,7 +1368,7 @@ const CRAFT_FX = {
   gintonic:'A gin & tonic aura locked around you (2x size). Enemies inside are frozen (1s, recharges in 5s) and poisoned (lingering damage).',
   highball:'A continuous gatling stream of fizzy splashes (low pierce) that freeze, each a small blast. Super: each shot explodes bigger.',
   vodkatonic:'A wide spread of homing, freezing ice bolts.',
-  vodkacranberry:'A long-flying crimson comet that pierces a whole line, freezes it, and heals you for part of the damage (lifesteal).',
+  vodkacranberry:'Two giant crimson whips lash out to your sides and snap back (like lipstick in and out), freezing enemies and draining life on every hit (lifesteal). Very slow, sustain-focused.',
   southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
   margarita:'Giant salt boomerangs that fly out and back.',
   drymartini:'Olives orbit you (one more each level, wider orbit). Enemies within the orbit range are slowed.',
@@ -1393,7 +1394,18 @@ function openRecipe(){ try{ initAudio(); }catch(e){} paused=true; playSelect&&pl
   for(const k of PASSIVE_KEYS){ const info=weaponInfo(k);
     html += recRow(info.img, info.name, [], INGREDIENTS[k]?INGREDIENTS[k].desc:(ORBIT[k]?'Wider pickup (magnet)':'')); }
   document.getElementById('recipeList').innerHTML = html;
+  showRecTab('recipes');   // 열 때 항상 RECIPES(조합법) 탭부터
   document.getElementById('recipePanel').classList.remove('hidden'); }
+/* 📖 안 탭 전환: RECIPES(조합법) ↔ 인덱스(몬스터/바텐더/재료/칵테일). 인덱스는 renderIndex()가 #mindexList에 그림. */
+function showRecTab(tab){
+  const isRec = (tab==='recipes');
+  const rl=document.getElementById('recipeList'), mi=document.getElementById('mindexList'), h=document.getElementById('recHint');
+  if(rl) rl.style.display = isRec ? '' : 'none';
+  if(mi) mi.style.display = isRec ? 'none' : '';
+  if(h)  h.style.display  = isRec ? '' : 'none';
+  document.querySelectorAll('#recTabs .bt-tab').forEach(b=>b.classList.toggle('active', b.dataset.rt===tab));
+  if(!isRec){ curIndexTab=tab; renderIndex(); }
+}
 function closeRecipe(){ paused=false; document.getElementById('recipePanel').classList.add('hidden'); playSelect&&playSelect(); }
 function setMusicVol(v){ musicVol=Math.max(0,Math.min(1,v/100)); document.getElementById('musicVal').textContent=Math.round(musicVol*100);
   if(musicBus){ try{ musicBus.gain.value=musicVol; }catch(e){} }   // iOS 포함 실제 음량 반영
@@ -1827,7 +1839,7 @@ function show(id){ document.getElementById(id).classList.remove('hidden'); }
 function hide(id){ document.getElementById(id).classList.add('hidden'); }
 function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','introScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen','indexScreen'].forEach(hide); }
 function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
-function openIndex(){ initAudio(); playSelect(); state='index'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); showIndexTab('monsters'); show('indexScreen'); }
+function openIndex(){ openRecipe(); showRecTab('monsters'); }   // INDEX는 이제 📖(RECIPE BOOK) 안 탭으로 통합됨(안전 별칭)
 /* 몬스터 족보 */
 const MONSTER_INDEX=[
   { img:'enemy_drunk_stand',   name:'TIPSY PATRON',    t:'Basic stumbler, comes in two looks. Weak but endless.' },
@@ -2778,8 +2790,11 @@ function dealDmg(e, base){ let dmg=base; if(player.crit && Math.random()<player.
     crits.push({ x:e.x, y:e.y-e.r-4, life:26 }); burst(e.x,e.y,'#ffd24a',6); } e.hp-=dmg; }
 /* 스피릿별 명중 효과: vodka=빙결 / gin=독 / whiskey·rum=폭발 / tequila=라임 궤도 추가타 */
 function onHit(p, e){
-  // 흡혈(보드카 크랜베리): 준 데미지의 일부만큼 회복(피격당 상한). 관통 무기라 상한으로 밸런스.
-  if(p.lifesteal && player.hp>0 && !player.noSustain){ const heal=Math.min(1.75, p.dmg*p.lifesteal);   // ★흡혈 상한 5→1.75(65%↓)
+  // 흡혈(보드카 크랜베리 채찍): healBudget 있으면 명중당 고정 회복(피사체당 상한). 없으면 구모델(데미지 비례).
+  if(p.lifesteal && player.hp>0 && !player.noSustain){
+    let heal;
+    if(p.healBudget!=null){ heal=Math.min(p.lifesteal, p.healBudget); p.healBudget-=heal; }   // ★채찍: 명중당 고정 회복(0.2~0.5), 피사체당 상한 2 → 좌우 2개면 공격당 최대 4
+    else heal=Math.min(1.75, p.dmg*p.lifesteal);                                               // (구모델 호환)
     player.hp=Math.min(player.maxHp, player.hp+heal);
     if(frame%3===0) burst(player.x, player.y, '#ff5a7a', 3); }
   // 칵테일 범용 명중 효과(플래그)
@@ -2836,6 +2851,7 @@ function addExtraShots(n0){
   // 코인트로/EXTRA SHOT = 발사체 +1씩 추가(볼리 전체 복제 아님). 이번 발사에 딱 ex개(=코인트로 레벨)만 더 얹는다.
   // → 방사형이든 기관총이든 최대 +3발만 늘어나 화면 폭주/밸런스 붕괴 없음.
   for(let c=1;c<=ex;c++){ const src=added[(c-1)%base];              // 원본 발사체를 돌아가며 하나씩 복제
+    if(src.whip) continue;                                          // ★보드카 크랜베리 채찍은 좌우 2개 고정(복제 안 함)
     const sp=Math.hypot(src.vx,src.vy); if(sp<0.01) continue;
     const off=(c%2?1:-1)*0.17*Math.ceil(c/2), ang=Math.atan2(src.vy,src.vx)+off;
     projectiles.push(Object.assign({}, src, { vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, hit:new Set() })); }
@@ -3051,9 +3067,15 @@ function fireCocktail(key, lv){
     case 'sidecar': { const n=1+Math.floor((lv-1)/5);   // 발수 완화: Lv1~5=1발, Lv6~8=2발
       for(let i=0;i<n;i++){ const ang=a+i*1.1;
         add({ vx:Math.cos(ang)*8, vy:Math.sin(ang)*8, dmg:38*P, r:11, pierce:99, life:120, bounce:1+Math.floor(lv/4), cExplode:32 }); } break; }   // 튕김↓(1~3)·수명↓(200→120)로 화면에 덜 쌓이게
-    // ── 혜성: 초고속 라인관통+빙결. Lv1=1발 → Lv5부터 2발 ──
-    case 'vodkacranberry': { const n=1+(lv>=5?1:0);
-      fanAt(a, n, 5.5, 0.14, { dmg:60*P, r:13, pierce:99, life:200, cFreeze:55, lifesteal:0.028 }); break; }   // ★흡혈 65%↓(0.08→0.028, 상한도 1.75) · 속도 50%↓(11→5.5)
+    // ── 붉은 채찍(뱀서 채찍): 거대 보드카 크랜베리 2개가 좌우로 뻗었다 되돌아옴(립스틱 인/아웃). 흡혈 특화. 아주 느림. ──
+    case 'vodkacranberry': {
+      // 회복: 명중당 0.2(Lv1)→0.5(Lv6). 진화면 더. 피사체당 상한 2 → 좌우 2개면 공격당 최대 4.
+      const steal = evo ? Math.min(0.65, 0.5 + slv*0.02) : Math.min(0.5, 0.2 + (lv-1)*0.06);
+      const outSp = 6, life = 44;              // 좌우로 뻗는 속도 / 왕복 수명(반은 나가고 반은 복귀)
+      for(const dir of [1, -1]){               // 오른쪽(+1)·왼쪽(-1) 양옆으로 밀어냄
+        add({ vx:dir*outSp, vy:0, dmg:110*P, r:26, pierce:99, life, life0:life,
+              boom:true, boomSp:10, cFreeze:45, lifesteal:steal, healBudget:2, whip:true }); }
+      break; }   // 크기(r)는 add에서 S(레벨·진화·글로벌크기) 자동 반영 → 만렙·슈퍼일수록 거대
     // ── 성수(재해석): 무공격 병이 포물선으로 날아가 랜덤 착지 → 그 자리에 민트 장판. Lv1=1개 → 2레벨마다 +1 ──
     case 'southside': {   // ★파란 불꽃 레인: 떨어진 자리에 파란 불꽃 장판(지속 데미지+빙결). 레벨업 → 발수+2·범위↑·근처·원형화
       const count = 3 + Math.floor((lv-1)/2);                   // ★피사체 완화: 2레벨당 +1 (Lv1 3 → Lv6 5) — 너무 많던 것 하향
@@ -3111,6 +3133,7 @@ function weaponCd(key, lv){
   if(key==='gimlet'){ const cd=Math.round(232/(1+0.10*(lv-1)));   // ⚡전기체인: 기본 공속 50%↓ + 레벨당 +10% (Lv1 232 → Lv6 155)
     return (player&&player.evolved&&player.evolved.has('gimlet')) ? Math.round(cd/2) : cd; }   // ★슈퍼(진화)면 공속 2배(cd 절반)
   if(key==='southside') return 121;      // 파란불꽃 레인: 공속 고정(레벨 스케일 제거) · 추가로 10% 더 느리게(110→121)
+  if(key==='vodkacranberry') return Math.round(170 - lv*8);   // ★붉은 채찍: 아주 느린 공속 (Lv1 162 → Lv6 122). 진화도 동일(대신 크기·흡혈↑)
   if(COCKTAILS[key]) return Math.max(30, (COCKTAIL_CD[key]||80) - lv*4);   // 칵테일 공속: 하한 30f(빠른 칵테일도 Lv8에서 ~15% 느려짐)
   if(SPIRITS[key]) return spiritCd(key,lv);
   if(key==='trio') return Math.round(58*(1-(lv-1)/6));   // 시트러스 트리오: Lv1=58 → Lv4=29(공속 2배)
@@ -3137,7 +3160,7 @@ function updateOrbits(){
         if(frame >= (e.orbNext||0)){ dealDmg(e, dmg); e.orbNext=frame+12; burst(e.x,e.y,o.color,3); } } }
     }
   }
-  // ★보드카 크랜베리: 플레이어 주위를 돌던 크랜베리 6개 제거 → 이제 붉은 혜성 발사만(fireCocktail)
+  // ★보드카 크랜베리: 플레이어 주위를 돌던 크랜베리 6개 제거 → 이제 붉은 채찍(좌우 왕복)만(fireCocktail)
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
 }
 function drawOrbits(){
@@ -3388,6 +3411,7 @@ function update(){
     if(player.wt[key]<=0){
       // ★마가리타: 이전 부메랑이 완전히 돌아와 사라진 뒤에만 새로 발사(겹침 방지)
       if(key==='margarita' && projectiles.some(p=>p.boom && p.kind==='cocktail_margarita')){ player.wt[key]=6; continue; }
+      if(key==='vodkacranberry' && projectiles.some(p=>p.whip)){ player.wt[key]=6; continue; }   // ★채찍: 좌우 2개가 완전히 돌아온 뒤 재발사(겹침 방지)
       const n0=projectiles.length;
       if(COCKTAILS[key]) fireCocktail(key,lv); else if(SPIRITS[key]) fireSpirit(key,lv); else if(INGREDIENTS[key]) fireIngredient(key,lv);
       addExtraShots(n0);   // EXTRA SHOT: 이 무기가 쏜 피사체를 각도 틀어 복제(모든 무기에 적용)
@@ -3570,6 +3594,7 @@ function update(){
       if(p.ay) p.vy+=p.ay;                  // 위스키/도끼 포물선
       // 데킬라(마가리타·십자가): 부메랑 — 후반 절반엔 플레이어에게 되돌아옴
       if(p.boom && p.life < p.life0*0.5){
+        if(p.whip && !p._ret){ p._ret=1; p.hit.clear(); }   // ★채찍: 되돌아올 때 hit 초기화 → 나갈 때+올 때 2번 스침
         const a=Math.atan2(player.y-p.y, player.x-p.x), sp=p.boomSp||7;   // 복귀 속도(마가리타는 5)
         p.vx += (Math.cos(a)*sp - p.vx)*0.12; p.vy += (Math.sin(a)*sp - p.vy)*0.12;
         if(Math.hypot(player.x-p.x,player.y-p.y)<14) p.life=0; // 손에 돌아오면 소멸
@@ -5009,7 +5034,7 @@ try{ cloudFetch('time'); }catch(e){}  // 시작화면 최고기록을 공유 시
 let plaza=null;
 /* 🍎 Apple AI 주소 — plaza-ai Worker 배포 후 여기에 넣으면 자유 대화 ON.
    비워두면(또는 실패하면) 아래 로컬 추천(규칙 기반)으로 자동 폴백해서 그래도 동작한다. */
-const APPLE_AI_URL = '';
+const APPLE_AI_URL = 'https://plaza-ai.showjojo100.workers.dev';
 function pzEsc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pzTyping(){ const a=document.activeElement; return !!(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA')); }
 function plazaName(){ let n=''; try{ n=localStorage.getItem('paco_pzname')||''; }catch(e){}
