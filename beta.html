@@ -4022,8 +4022,8 @@ function equipRainbow(){
   player.weapons={}; player.wt={};                   // 기존 무기·스킬·칵테일 전부 제거
   burst(player.x, player.y, '#ff66cc', 46);
   playRainbowJingle();                               // 8비트 승리 팡파레
-  showNotice('✦ RAINBOW GUN ✦','rainbow_icon',
-    'You maxed out SIX super cocktails.<br>They fuse into the <b>RAINBOW GUN</b>: absurd power, absurd fire rate.<br>Level it up to add firing directions — cross → 6 → 8 → 10 → 12 → 14.<br>But the bosses never stop growing... how long can you hold the line?', true);
+  showNotice('✦ RAINBOW GUN — GET! ✦','rainbow_icon',
+    'You maxed out SIX super cocktails, and they fuse into the <b>RAINBOW GUN</b>.<br><b>Honestly? This thing is stupidly, absurdly overpowered.</b> Every other weapon just became a joke — insane damage, insane fire rate.<br>Level it up to add firing directions — cross → 6 → 8 → 10 → 12 → 14.<br>But the bosses never stop growing... how long can you hold the line?', true);
   updateWeaponChips();
 }
 // 일반 안내 팝업(예: 대쉬 해금) — 화면 멈추고 사용법 알려줌
@@ -5415,7 +5415,7 @@ function sbWall(){ try{ spawnWall(); }catch(e){} }   // 노부킹 무리(가로 
 function sbFinale(){ if(!player) return; try{ if(!finale.active) startFinale(); }catch(e){} }   // 30분 피날레(라이벌 바텐더 등장) 즉시 미리보기
 function sbGodToggle(){ sbGod=!sbGod; if(sbGod&&player) player.hp=player.maxHp; sbRefresh(); }
 function sbCharSwap(){ const next=(player&&player.key==='pat')?'joe':'pat'; try{ startGame(next); }catch(e){} sbRefresh(); }
-function sbRainbow(){ if(!player) return; player.rainbow=true; player.rainbowLv=1; player.weapons={}; player.wt={}; try{ initAudio(); playRainbowJingle(); }catch(e){} try{ updateWeaponChips(); }catch(e){} sbRefresh(); }   // 레인보우 건 즉시 장착(테스트) + 8비트 징글
+function sbRainbow(){ if(!player) return; try{ initAudio(); }catch(e){} try{ equipRainbow(); }catch(e){} sbRefresh(); }   // 테스트: 실제 등장 연출(스핀+GET 문구+8비트 징글) 그대로 재생
 function sbRefresh(){
   const panel=document.getElementById('sbPanel'); if(!panel) return;
   for(const w of sbWeaponList()){ const b=document.getElementById('sbw_'+w.k); if(b){ const lv=(player&&player.weapons&&player.weapons[w.k])||0; b.classList.toggle('on',lv>0); const s=b.querySelector('.sbl'); if(s) s.textContent='L'+lv+'/'+w.max; } }
