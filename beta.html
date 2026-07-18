@@ -5415,7 +5415,7 @@ function sbWall(){ try{ spawnWall(); }catch(e){} }   // 노부킹 무리(가로 
 function sbFinale(){ if(!player) return; try{ if(!finale.active) startFinale(); }catch(e){} }   // 30분 피날레(라이벌 바텐더 등장) 즉시 미리보기
 function sbGodToggle(){ sbGod=!sbGod; if(sbGod&&player) player.hp=player.maxHp; sbRefresh(); }
 function sbCharSwap(){ const next=(player&&player.key==='pat')?'joe':'pat'; try{ startGame(next); }catch(e){} sbRefresh(); }
-function sbRainbow(){ if(!player) return; player.rainbow=true; player.weapons={}; player.wt={}; try{ updateWeaponChips(); }catch(e){} sbRefresh(); }   // 레인보우 건 즉시 장착(테스트)
+function sbRainbow(){ if(!player) return; player.rainbow=true; player.rainbowLv=1; player.weapons={}; player.wt={}; try{ initAudio(); playRainbowJingle(); }catch(e){} try{ updateWeaponChips(); }catch(e){} sbRefresh(); }   // 레인보우 건 즉시 장착(테스트) + 8비트 징글
 function sbRefresh(){
   const panel=document.getElementById('sbPanel'); if(!panel) return;
   for(const w of sbWeaponList()){ const b=document.getElementById('sbw_'+w.k); if(b){ const lv=(player&&player.weapons&&player.weapons[w.k])||0; b.classList.toggle('on',lv>0); const s=b.querySelector('.sbl'); if(s) s.textContent='L'+lv+'/'+w.max; } }
