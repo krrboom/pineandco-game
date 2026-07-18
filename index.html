@@ -1952,8 +1952,8 @@ const SKILL_INDEX=[
   { img:'cranberry',     name:'CRANBERRY · MAGNET',     t:'Wider cash & item pickup range each level.' },
   { img:'ing_angostura', name:'ANGOSTURA · +XP · DASH', t:'+XP gain each level, and unlocks DASH — double-tap a direction to blink forward.' },
   // ── 촉매 & 진화 & 필살기 ──
-  { ic:'🥃', name:'SPIRITS · field drops', t:'The 6 spirits still drop on the field and fire as extra bonus weapons if you grab them. They are NOT required to evolve cocktails, and NOT required for the Rainbow Gun anymore — that now comes purely from turning every cocktail you own into a super.' },
-  { ic:'✨', name:'EVOLUTION · Super cocktails', t:'Fully upgrade your BASE ATTACK (max level) + get the cocktail to Lv6 + max its ONE key ingredient. No spirits needed. Then, the moment you grab a BOSS TIP, any ready cocktail auto-evolves into a far stronger SUPER version — it spins into being with a ding — and the tip\'s normal upgrade still appears. Supers glow gold and level 1→8 far beyond the base. And once EVERY cocktail you own has become a super, they all fuse into the endgame RAINBOW GUN.' },
+  { ic:'🥃', name:'SPIRITS · field drops', t:'The 6 spirits still drop on the field and fire as extra bonus weapons if you grab them. They are NOT required to evolve cocktails, and NOT required for the Rainbow Gun anymore — that now comes from maxing out six or more super cocktails (super Lv8).' },
+  { ic:'✨', name:'EVOLUTION · Super cocktails', t:'Fully upgrade your BASE ATTACK (max level) + get the cocktail to Lv6 + max its ONE key ingredient. No spirits needed. Then, the moment you grab a BOSS TIP, any ready cocktail auto-evolves into a far stronger SUPER version — it spins into being with a ding — and the tip\'s normal upgrade still appears. Supers glow gold and level 1→8 far beyond the base. And once you have SIX or more supers fully maxed (super Lv8), they all fuse into the endgame RAINBOW GUN.' },
   { ic:'🌀', name:'ULTIMATE UP · max Lv6', t:'Strengthens your ultimate. Ready once every 105s — tap the ⚡ button when it lights up.' },
   { ic:'🔔', name:'CLOSING TIME · 30:00', t:'Last for 30 minutes and the OTHER bartender clocks in — Joe if you play Pat, Pat if you play Joe — walks in behind the bar and ends your shift. Nobody outlasts closing time.' },
 ];
@@ -1973,7 +1973,7 @@ const COCKTAIL_INDEX=[
   { img:'cocktail_tequila',       name:'MARGARITA',       t:'Tequila · Cointreau · lime · salt rim. Sunshine with a kick.' },
   { img:'cocktail_gin',           name:'DRY MARTINI',     t:'Gin · a whisper of dry vermouth · olive. However you order it, you still look serious.' },
   { img:'cocktail_vodkamartini',  name:'VODKA MARTINI',   t:'Vodka · dry vermouth · twist. Shaken, stirred, debated forever.' },
-  { img:'rainbow_icon', name:'RAINBOW GUN · ENDGAME FUSION', t:'Not on the menu. Evolve EVERY cocktail you are holding into its SUPER form — the moment none are left un-evolved, they all fuse into one weapon: the Rainbow Gun. Every other weapon vanishes, replaced by absurd damage and an absurd fire rate. Level it up to add firing directions — a cross at Lv1, then 6, 8, 10, 12, and 14 at Lv6. No spirits needed. From then on the bosses never stop scaling — the last drink you will ever pour.' },
+  { img:'rainbow_icon', name:'RAINBOW GUN · ENDGAME FUSION', t:'Not on the menu. Max out SIX or more super cocktails (each fully leveled to super Lv8) and they fuse into one weapon: the Rainbow Gun. Every other weapon vanishes, replaced by absurd damage and an absurd fire rate. Level it up to add firing directions — a cross at Lv1, then 6, 8, 10, 12, and 14 at Lv6. No spirits needed. From then on the bosses never stop scaling — the last drink you will ever pour.' },
 ];
 let curIndexTab='monsters';
 function showIndexTab(t){ curIndexTab=t;
@@ -4013,10 +4013,9 @@ function cancelCraft(){
 // 모든 스피릿(Lv8) + 모든 칵테일(Lv4) 풀업 → 레인보우 건으로 전부 융합. 기본공격·스킬·칵테일 다 사라지고 레인보우건만.
 function tryRainbow(){
   if(!player || player.rainbow || state!=='playing') return;
-  // ★조건: 보유한 칵테일을 하나도 빠짐없이 전부 슈퍼(진화)로 만들면 발동. (기주 조건 제거)
-  const owned = COCKTAIL_KEYS.filter(k=> player.weapons[k]);
-  const allSuper = owned.length>0 && owned.every(k=> player.evolved && player.evolved.has(k));
-  if(allSuper) equipRainbow();
+  // ★조건: 슈퍼 칵테일을 6개 이상 '만렙(슈퍼 Lv8)'으로 만들면 발동.
+  const maxedSupers = COCKTAIL_KEYS.filter(k=> player.evolved && player.evolved.has(k) && ((player.superLv&&player.superLv[k])||1) >= 8).length;
+  if(maxedSupers >= 6) equipRainbow();
 }
 function equipRainbow(){
   player.rainbow=true; player.rainbowLv=1;
@@ -4024,7 +4023,7 @@ function equipRainbow(){
   burst(player.x, player.y, '#ff66cc', 46);
   playRainbowJingle();                               // 8비트 승리 팡파레
   showNotice('✦ RAINBOW GUN ✦','rainbow_icon',
-    'Every cocktail you own is now a SUPER.<br>They all fuse into the <b>RAINBOW GUN</b>: absurd power, absurd fire rate.<br>Level it up to add firing directions — cross → 6 → 8 → 10 → 12 → 14.<br>But the bosses never stop growing... how long can you hold the line?', true);
+    'You maxed out SIX super cocktails.<br>They fuse into the <b>RAINBOW GUN</b>: absurd power, absurd fire rate.<br>Level it up to add firing directions — cross → 6 → 8 → 10 → 12 → 14.<br>But the bosses never stop growing... how long can you hold the line?', true);
   updateWeaponChips();
 }
 // 일반 안내 팝업(예: 대쉬 해금) — 화면 멈추고 사용법 알려줌
