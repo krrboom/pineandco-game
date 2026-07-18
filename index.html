@@ -225,6 +225,14 @@
   /* 레인보우건 등장: 가운데서 뱅글뱅글 돌면서 커지며 나타남 */
   @keyframes rbReveal{ 0%{ transform:scale(0) rotate(0deg); opacity:0; } 55%{ transform:scale(1.25) rotate(1000deg); opacity:1; } 100%{ transform:scale(1) rotate(1080deg); opacity:1; } }
   .craft-result.rbspin{ animation:rbReveal 1.15s cubic-bezier(.15,.85,.25,1) both; transform-origin:50% 50%; }
+  /* 🍎 우상단 Apple 코너 도우미(베타): 저해상도 캐릭터 + 픽셀폰트 말풍선, 누르면 챗 열림 */
+  #appleCorner{ position:fixed; top:8px; right:8px; z-index:40; display:none; align-items:center; gap:5px; cursor:pointer; }
+  #appleCorner .ac-bubble{ font-family:inherit; font-size:8px; line-height:1.3; color:#2c3e2d; background:#fafaf7;
+    border:2px solid #2c3e2d; border-radius:6px; padding:5px 7px; white-space:nowrap; position:relative; box-shadow:2px 2px 0 rgba(0,0,0,.35); }
+  #appleCorner .ac-bubble::after{ content:''; position:absolute; right:-6px; top:50%; transform:translateY(-50%); border:5px solid transparent; border-left-color:#2c3e2d; }
+  #appleCorner canvas{ width:46px; height:auto; image-rendering:pixelated; filter:drop-shadow(2px 2px 0 rgba(0,0,0,.4)); animation:acBob 1.7s ease-in-out infinite; }
+  #appleCorner:active canvas{ transform:translateY(2px); }
+  @keyframes acBob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
   .craft-choice{ display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer;
     background:#1a1f1a; border:2px solid #c89a3c; border-radius:8px; padding:8px 10px; min-width:80px; }
   .craft-choice:active{ transform:translateY(2px); }
@@ -720,6 +728,12 @@
       <input id="pzInput" maxlength="60" placeholder="채팅 입력 후 Enter…" autocomplete="off">
       <button class="pz-send" onclick="plazaSend()">SEND</button>
     </div>
+  </div>
+
+  <!-- 🍎 우상단 Apple 코너(베타 전용): 저해상도 캐릭터 + "need help?" 픽셀 말풍선, 클릭 시 챗 오픈 -->
+  <div id="appleCorner" onclick="openApple()" role="button" aria-label="Apple help">
+    <div class="ac-bubble">need help?</div>
+    <canvas id="acCanvas" width="20" height="35"></canvas>
   </div>
 
   <!-- 🍎 Apple 도우미: 버튼으로 열어서 추천/도움 받기. 답변마다 감정 표정이 바뀐다. -->
@@ -4185,7 +4199,7 @@ function applyUpgrade(u){
     if(!STAT_UP[u.n]){ player.gen=player.gen||{}; player.gen[u.n]=player.gen[u.n]||{n:0,img:u.img,ic:u.ic}; player.gen[u.n].n++; } }
   else if(u.type==='base'){ player.baseLv++; applyBaseLevel(); }
   else if(u.type==='weapon' || u.type==='passive' || u.type==='spirit'){ const mx=weaponInfo(u.key).max||8; player.weapons[u.key]=Math.min(mx,(player.weapons[u.key]||0)+1); if(player.wt[u.key]==null) player.wt[u.key]=0; }
-  else if(u.type==='evolve'){ player.evolved.add(u.key); if(!player.superLv) player.superLv={}; player.superLv[u.key]=1; burst(player.x,player.y,'#ffd24a',34); banner('★ SUPER '+COCKTAILS[u.key].name+'! (Lv1)', true); }
+  else if(u.type==='evolve'){ player.evolved.add(u.key); if(!player.superLv) player.superLv={}; player.superLv[u.key]=1; burst(player.x,player.y,'#ffd24a',34); try{ playRainbowJingle(); }catch(e){} banner('★ SUPER '+COCKTAILS[u.key].name+'! (Lv1)', true); }
   else if(u.type==='super'){ if(!player.superLv) player.superLv={}; player.superLv[u.key]=Math.min(8,(player.superLv[u.key]||1)+1); burst(player.x,player.y,'#ffd24a',22); }
   else if(u.type==='gold'){ money += 2000; }
   else if(u.type==='rainbowup'){ player.rainbowLv=Math.min(6,(player.rainbowLv||1)+1); burst(player.x,player.y,'#ff66cc',22); }
@@ -4213,7 +4227,7 @@ function startTip(){
     player.superLv=player.superLv||{}; player.superLv[ck]=1;
     tipFx.superKeys.push(ck);
   } }
-  if(tipFx.superKeys.length){ recalcStats(); tipFx.cocktail=tipFx.superKeys[0]; burst(player.x,player.y,'#ffd24a',40); playDing(); }
+  if(tipFx.superKeys.length){ recalcStats(); tipFx.cocktail=tipFx.superKeys[0]; burst(player.x,player.y,'#ffd24a',40); try{ playRainbowJingle(); }catch(e){ playDing(); } }   // 슈퍼 생성음 = 레인보우건과 동일
   const r=Math.random();
   const n = r<0.60?1 : r<0.85?2 : r<0.97?3 : 4;   // 1개60% / 2개25% / 3개12% / 4개3%
   tipFx.rewards=[]; for(let i=0;i<n;i++) tipFx.rewards.push('skill');  // 팁 보상 = 보유 능력치 강화(진화는 위에서 자동 처리됨)
@@ -5138,7 +5152,8 @@ let plaza=null;
 const APPLE_AI_URL = /beta|localhost|127\.0\.0\.1/i.test(location.href) ? 'https://plaza-ai.onrender.com' : '';
 // 🌲 광장/Apple은 준비되기 전까지 프로덕션에 노출하지 않는다 → beta/localhost에서만 광장 버튼 표시(APPLE_AI_URL과 동일 조건).
 (function(){ const show=/beta|localhost|127\.0\.0\.1/i.test(location.href);
-  function gate(){ const pr=document.getElementById('plazaRow'); if(pr) pr.style.display = show ? '' : 'none'; }
+  function gate(){ const pr=document.getElementById('plazaRow'); if(pr) pr.style.display = show ? '' : 'none';
+    const ac=document.getElementById('appleCorner'); if(ac){ ac.style.display = show ? 'flex' : 'none'; if(show) drawAppleCorner(); } }
   if(document.readyState!=='loading') gate(); else document.addEventListener('DOMContentLoaded', gate); })();
 function pzEsc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pzTyping(){ const a=document.activeElement; return !!(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA')); }
@@ -5224,6 +5239,16 @@ function openApple(){ try{ initAudio(); }catch(e){}
   setTimeout(()=>{ const i=document.getElementById('ahInput'); if(i) i.focus(); }, 60);
 }
 function closeApple(){ const el=document.getElementById('appleHelper'); if(el) el.classList.add('hidden'); }
+// 우상단 코너 Apple을 아주 낮은 해상도로 그린다(작은 캔버스에 축소 → CSS 픽셀 확대 = 저화질 픽셀아트 느낌)
+function drawAppleCorner(){
+  const cv=document.getElementById('acCanvas'); if(!cv) return;
+  const im=(typeof spr==='function') && (spr('apple_happygrin')||spr('apple_neutral'));
+  if(!im || !im.complete || !im.width){ setTimeout(drawAppleCorner,250); return; }
+  const c=cv.getContext('2d'); c.imageSmoothingEnabled=false; c.clearRect(0,0,cv.width,cv.height);
+  const ar=im.width/im.height; let w=cv.width, h=Math.round(w/ar);
+  if(h>cv.height){ h=cv.height; w=Math.round(h*ar); }
+  c.drawImage(im, Math.round((cv.width-w)/2), cv.height-h, w, h);   // 하단 정렬(캐릭터 발 기준)
+}
 async function appleHelperSend(){
   const inp=document.getElementById('ahInput'); if(!inp) return;
   const q=inp.value.trim().slice(0,120); if(!q) return; inp.value='';
