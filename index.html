@@ -228,10 +228,11 @@
   @keyframes rbReveal{ 0%{ transform:scale(0) rotate(0deg); opacity:0; } 55%{ transform:scale(1.25) rotate(1000deg); opacity:1; } 100%{ transform:scale(1) rotate(1080deg); opacity:1; } }
   .craft-result.rbspin{ animation:rbReveal 1.15s cubic-bezier(.15,.85,.25,1) both; transform-origin:50% 50%; }
   /* 🍎 우상단 Apple 코너 도우미(베타): 저해상도 캐릭터 + 픽셀폰트 말풍선, 누르면 챗 열림 */
-  #appleCorner{ position:fixed; top:6px; right:6px; z-index:40; display:none; align-items:center; gap:4px; cursor:pointer; }
+  /* 우하단 세로 배치(폭 좁게) → 시작·메뉴 화면에서 다른 버튼/이미지와 안 겹침 */
+  #appleCorner{ position:fixed; bottom:6px; right:6px; z-index:40; display:none; flex-direction:column; align-items:flex-end; gap:2px; cursor:pointer; }
   #appleCorner .ac-bubble{ font-family:inherit; font-size:6px; line-height:1.3; color:#2c3e2d; background:#fafaf7;
-    border:1.5px solid #2c3e2d; border-radius:5px; padding:3px 5px; white-space:nowrap; position:relative; box-shadow:1.5px 1.5px 0 rgba(0,0,0,.35); }
-  #appleCorner .ac-bubble::after{ content:''; position:absolute; right:-5px; top:50%; transform:translateY(-50%); border:4px solid transparent; border-left-color:#2c3e2d; }
+    border:1.5px solid #2c3e2d; border-radius:5px; padding:3px 5px; white-space:nowrap; position:relative; box-shadow:1.5px 1.5px 0 rgba(0,0,0,.35); margin-right:3px; }
+  #appleCorner .ac-bubble::after{ content:''; position:absolute; bottom:-5px; right:9px; border:4px solid transparent; border-top-color:#2c3e2d; }
   #appleCorner canvas{ width:30px; height:auto; image-rendering:pixelated; filter:drop-shadow(1.5px 1.5px 0 rgba(0,0,0,.4)); animation:acBob 1.7s ease-in-out infinite; }
   #appleCorner:active canvas{ transform:translateY(2px); }
   @keyframes acBob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
@@ -1921,8 +1922,8 @@ function drawSprite(c, char, scale){
 document.querySelectorAll('.ava').forEach(av=> drawSprite(av.getContext('2d'), av.dataset.char, 4));
 
 /* ===== 화면 전환 ===== */
-function show(id){ const e=document.getElementById(id); if(e) e.classList.remove('hidden'); }   // ★null 안전(없는 요소 무시)
-function hide(id){ const e=document.getElementById(id); if(e) e.classList.add('hidden'); }      // ★null 안전(없는 요소 무시)
+function show(id){ const e=document.getElementById(id); if(e) e.classList.remove('hidden'); if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }   // ★null 안전 + 코너 갱신
+function hide(id){ const e=document.getElementById(id); if(e) e.classList.add('hidden'); if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }      // ★null 안전 + 코너 갱신
 function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','introScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen'].forEach(hide); }   // indexScreen 제거(📖로 통합됨)
 function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
 function openIndex(){ openRecipe(); showRecTab('monsters'); }   // INDEX는 이제 📖(RECIPE BOOK) 안 탭으로 통합됨(안전 별칭)
@@ -5160,7 +5161,8 @@ const APPLE_AI_URL = /beta|localhost|127\.0\.0\.1/i.test(location.href) ? 'https
 // 🌲 광장/Apple은 준비되기 전까지 프로덕션에 노출하지 않는다 → beta/localhost에서만 광장 버튼 표시(APPLE_AI_URL과 동일 조건).
 (function(){ const show=/beta|localhost|127\.0\.0\.1/i.test(location.href);
   function gate(){ const pr=document.getElementById('plazaRow'); if(pr) pr.style.display = show ? '' : 'none';
-    const ac=document.getElementById('appleCorner'); if(ac){ ac.style.display = show ? 'flex' : 'none'; if(show) drawAppleCorner(); } }
+    if(show) drawAppleCorner();          // 캔버스 1회 렌더 — 실제 표시 여부는 refreshAppleCorner가 화면별로 제어
+    if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }
   if(document.readyState!=='loading') gate(); else document.addEventListener('DOMContentLoaded', gate); })();
 function pzEsc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pzTyping(){ const a=document.activeElement; return !!(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA')); }
@@ -5276,6 +5278,14 @@ function drawAppleCorner(){
   const ar=im.width/im.height; let w=cv.width, h=Math.round(w/ar);
   if(h>cv.height){ h=cv.height; w=Math.round(h*ar); }
   c.drawImage(im, Math.round((cv.width-w)/2), cv.height-h, w, h);   // 하단 정렬(캐릭터 발 기준)
+}
+// 코너 Apple은 '시작화면(titleScreen)'과 '메뉴(menuScreen)'에서만 뜬다(베타 전용). 게임 중엔 숨김.
+function refreshAppleCorner(){
+  const ac=document.getElementById('appleCorner'); if(!ac) return;
+  const beta=/beta|localhost|127\.0\.0\.1/i.test(location.href);
+  const ts=document.getElementById('titleScreen'), ms=document.getElementById('menuScreen');
+  const on = beta && ((ts && !ts.classList.contains('hidden')) || (ms && !ms.classList.contains('hidden')));
+  ac.style.display = on ? 'flex' : 'none';
 }
 async function appleHelperSend(){
   const inp=document.getElementById('ahInput'); if(!inp) return;
