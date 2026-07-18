@@ -784,7 +784,7 @@
       <button class="imgbtn subbtn" onclick="openBottomsUp()"><img src="assets/btn_bottomsup.png" alt="BOTTOMS UP"></button>
       <!-- PINE&CO INDEX 버튼 제거: 인덱스는 게임 중 📖(RECIPE BOOK) 안 탭으로 통합됨 -->
     </div>
-    <div class="row"><button class="plaza-btn" onclick="openPlaza()">🌲 THE PLAZA · 광장</button></div>
+    <div class="row" id="plazaRow" style="display:none"><button class="plaza-btn" onclick="openPlaza()">🌲 THE PLAZA · 광장</button></div>
     <div class="hint">PC: WASD / ARROWS · MOBILE: DRAG SCREEN</div>
     <div class="hint">HI-SCORE &nbsp; <span id="hiTitle" style="color:var(--amber)">0:00</span></div>
   </div>
@@ -2785,7 +2785,7 @@ function landDrunk(m){
 function spawnWall(){
   const d=DIFF();
   const timeScale = 1 + (gameTime/60)*0.22;
-  const hp = d.hp * 28 * timeScale;            // 같은 시기 일반 보스보다 확실히 더 단단하게
+  const hp = d.hp * 42 * timeScale;            // 같은 시기 일반 보스보다 확실히 더 단단하게 (28→42, 체력 +50%)
   const fromTop = Math.random()<0.5;
   const won = 150000;
   enemies.push({ id:enemyId++, type:'boss', wall:true, bossChar:'boss_nobook',
@@ -3031,7 +3031,7 @@ function fireCocktail(key, lv){
   const slv = evo ? ((player.superLv && player.superLv[key]) || 1) : 0;   // 슈퍼 레벨 1~8 (진화 후 재성장)
   // ★슈퍼: 기본 최종(Lv8) 대비 슈퍼Lv1=×2 → 슈퍼Lv8=×12. 진화하는 순간부터 확 세지고 레벨업마다 대폭↑
   const P = evo
-    ? (0.33*Math.pow(1.42,7)) * (0.85*Math.pow(1.166, slv-1)) * player.dmgMul   // ★슈퍼Lv1=기본Lv8의 0.85배(더 약함) → 슈퍼Lv8=기본Lv8의 2.5배
+    ? (0.33*Math.pow(1.42,7)) * (0.85*Math.pow(1.166, slv-1)) * player.dmgMul * 1.1   // ★슈퍼 전체 공격력 +10%. 슈퍼Lv1≈기본Lv8의 0.94배 → 슈퍼Lv8≈2.75배
     : 0.33 * Math.pow(1.42, lv-1) * player.dmgMul;   // 기본: Lv1 약함 → Lv8
   const S = 0.68 * Math.pow(1.22, lv-1) * (player.sizeMul||1) * (evo ? 1.25 + (slv-1)*0.05 : 1);   // 슈퍼는 더 크게(레벨업마다 조금 더)
   const pp = Math.floor((player.pas&&player.pas.pierce)||0) + (evo?3:0);   // 관통: tonic 패시브 + 슈퍼 +3
@@ -5104,6 +5104,10 @@ let plaza=null;
    비워두면(또는 실패하면) 아래 로컬 추천(규칙 기반)으로 자동 폴백해서 그래도 동작한다. */
 // ★beta/localhost에서만 Render Apple(제미나이) 연결, 프로덕션(index.html)은 내장 로컬 답변. 나중에 프로덕션도 켜려면 아래 삼항 대신 그냥 주소만.
 const APPLE_AI_URL = /beta|localhost|127\.0\.0\.1/i.test(location.href) ? 'https://plaza-ai.onrender.com' : '';
+// 🌲 광장/Apple은 준비되기 전까지 프로덕션에 노출하지 않는다 → beta/localhost에서만 광장 버튼 표시(APPLE_AI_URL과 동일 조건).
+(function(){ const show=/beta|localhost|127\.0\.0\.1/i.test(location.href);
+  function gate(){ const pr=document.getElementById('plazaRow'); if(pr) pr.style.display = show ? '' : 'none'; }
+  if(document.readyState!=='loading') gate(); else document.addEventListener('DOMContentLoaded', gate); })();
 function pzEsc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pzTyping(){ const a=document.activeElement; return !!(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA')); }
 function plazaName(){ let n=''; try{ n=localStorage.getItem('paco_pzname')||''; }catch(e){}
