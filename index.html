@@ -189,8 +189,10 @@
   #appleHelper .ah-x{ position:absolute; top:6px; right:10px; background:none; border:0; color:#dfe; font-size:18px; cursor:pointer; line-height:1; }
   #appleHelper .ah-portrait{ width:118px; height:150px; display:flex; align-items:flex-end; justify-content:center; }
   #appleHelper .ah-portrait img{ max-width:100%; max-height:100%; image-rendering:pixelated; filter:drop-shadow(2px 3px 0 rgba(0,0,0,.45)); }
-  #appleHelper .ah-name{ color:var(--gold,#c89a3c); font-size:12px; letter-spacing:1px; margin:2px 0 8px; }
-  #appleHelper .ah-name small{ color:#9db8a0; font-size:9.5px; letter-spacing:0; }
+  #appleHelper .ah-lang{ display:flex; gap:6px; justify-content:center; margin:4px 0 9px; }
+  #appleHelper .ah-lang button{ font-family:inherit; font-size:8px; letter-spacing:.5px; color:#cde6d2; cursor:pointer;
+    background:rgba(20,32,18,.9); border:1.5px solid #3a5a3e; border-radius:6px; padding:5px 10px; }
+  #appleHelper .ah-lang button.on{ color:#12210c; background:var(--gold,#c89a3c); border-color:var(--gold,#c89a3c); font-weight:bold; }
   #appleHelper .ah-log{ width:100%; max-height:32vh; min-height:56px; overflow-y:auto; background:rgba(0,0,0,.32);
     border-radius:7px; padding:8px 10px; font-size:12px; line-height:1.55; color:#eafbe9; }
   #appleHelper .ah-log .u{ color:#bfe6ff; margin:6px 0 1px; } #appleHelper .ah-log .a{ color:#fff; margin:0 0 6px; }
@@ -226,11 +228,11 @@
   @keyframes rbReveal{ 0%{ transform:scale(0) rotate(0deg); opacity:0; } 55%{ transform:scale(1.25) rotate(1000deg); opacity:1; } 100%{ transform:scale(1) rotate(1080deg); opacity:1; } }
   .craft-result.rbspin{ animation:rbReveal 1.15s cubic-bezier(.15,.85,.25,1) both; transform-origin:50% 50%; }
   /* 🍎 우상단 Apple 코너 도우미(베타): 저해상도 캐릭터 + 픽셀폰트 말풍선, 누르면 챗 열림 */
-  #appleCorner{ position:fixed; top:8px; right:8px; z-index:40; display:none; align-items:center; gap:5px; cursor:pointer; }
-  #appleCorner .ac-bubble{ font-family:inherit; font-size:8px; line-height:1.3; color:#2c3e2d; background:#fafaf7;
-    border:2px solid #2c3e2d; border-radius:6px; padding:5px 7px; white-space:nowrap; position:relative; box-shadow:2px 2px 0 rgba(0,0,0,.35); }
-  #appleCorner .ac-bubble::after{ content:''; position:absolute; right:-6px; top:50%; transform:translateY(-50%); border:5px solid transparent; border-left-color:#2c3e2d; }
-  #appleCorner canvas{ width:46px; height:auto; image-rendering:pixelated; filter:drop-shadow(2px 2px 0 rgba(0,0,0,.4)); animation:acBob 1.7s ease-in-out infinite; }
+  #appleCorner{ position:fixed; top:6px; right:6px; z-index:40; display:none; align-items:center; gap:4px; cursor:pointer; }
+  #appleCorner .ac-bubble{ font-family:inherit; font-size:6px; line-height:1.3; color:#2c3e2d; background:#fafaf7;
+    border:1.5px solid #2c3e2d; border-radius:5px; padding:3px 5px; white-space:nowrap; position:relative; box-shadow:1.5px 1.5px 0 rgba(0,0,0,.35); }
+  #appleCorner .ac-bubble::after{ content:''; position:absolute; right:-5px; top:50%; transform:translateY(-50%); border:4px solid transparent; border-left-color:#2c3e2d; }
+  #appleCorner canvas{ width:30px; height:auto; image-rendering:pixelated; filter:drop-shadow(1.5px 1.5px 0 rgba(0,0,0,.4)); animation:acBob 1.7s ease-in-out infinite; }
   #appleCorner:active canvas{ transform:translateY(2px); }
   @keyframes acBob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
   .craft-choice{ display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer;
@@ -740,8 +742,11 @@
   <div id="appleHelper" class="hidden">
     <div class="ah-box">
       <button class="ah-x" onclick="closeApple()" aria-label="close">✕</button>
-      <div class="ah-portrait"><img id="ahImg" src="assets/apple_neutral.png" alt="Apple"></div>
-      <div class="ah-name">🍎 APPLE <small>· 파인앤코 바텐더</small></div>
+      <div class="ah-portrait"><img id="ahImg" src="assets/apple_neutral.png" alt=""></div>
+      <div class="ah-lang" id="ahLang">
+        <button type="button" data-l="ko" onclick="appleSetLang('ko')">한국어</button>
+        <button type="button" data-l="en" onclick="appleSetLang('en')">English</button>
+      </div>
       <div class="ah-log" id="ahLog"></div>
       <div class="ah-inbar">
         <input id="ahInput" maxlength="120" placeholder="칵테일·가격·추천 뭐든 물어보세요…" autocomplete="off"
@@ -5228,15 +5233,34 @@ const AH_EMOS=['neutral','happy','wink','happygrin','surprised','sad','confused'
 let ahHist=[];
 function ahSetEmotion(e){ const img=document.getElementById('ahImg'); if(!img) return; if(!AH_EMOS.includes(e)) e='neutral'; img.src='assets/apple_'+e+'.png'; }
 function ahAdd(who,text){ const lg=document.getElementById('ahLog'); if(!lg) return null;
-  const d=document.createElement('div'); d.className=who; d.textContent=(who==='u'?'나  ':'🍎  ')+text;
+  const d=document.createElement('div'); d.className=who; d.textContent=(who==='u'?'나  ':'')+text;
   lg.appendChild(d); while(lg.children.length>40) lg.removeChild(lg.firstChild); lg.scrollTop=lg.scrollHeight; return d; }
 function openApple(){ try{ initAudio(); }catch(e){}
   const el=document.getElementById('appleHelper'); if(!el) return;
   el.classList.remove('hidden');
   const lg=document.getElementById('ahLog');
-  if(lg && !lg.children.length){ ahSetEmotion('happygrin');
-    ahAdd('a','어서 오세요. 뭐 마실지 고민되면 제가 골라드릴게요. 단 거? 상큼한 거? 아니면 센 거?'); }
+  if(lg && !lg.children.length){ appleSetLang(appleLang); }
+  else { document.querySelectorAll('#ahLang button').forEach(b=>b.classList.toggle('on', b.dataset.l===appleLang)); }
   setTimeout(()=>{ const i=document.getElementById('ahInput'); if(i) i.focus(); }, 60);
+}
+// 언어 상태 + 언어별 환영/UI 문구
+let appleLang = (function(){ try{ return localStorage.getItem('paco_applelang')||'ko'; }catch(e){ return 'ko'; } })();
+const AH_TXT = {
+  ko: { welcome:'파인앤코에 오신 걸 환영합니다. 어떻게 도와드릴까요? 무엇이든지 물어보세요.', ph:'무엇이든지 물어보세요…', send:'물어보기' },
+  en: { welcome:'Welcome to Pine & Co. How can I help you? Ask me anything.', ph:'Ask me anything…', send:'Ask' }
+};
+// 언어 선택 → 그 언어로 처음부터 다시 시작(대화 초기화 + 그 언어 환영)
+function appleSetLang(lang){
+  appleLang = (lang==='en') ? 'en' : 'ko';
+  try{ localStorage.setItem('paco_applelang', appleLang); }catch(e){}
+  document.querySelectorAll('#ahLang button').forEach(b=>b.classList.toggle('on', b.dataset.l===appleLang));
+  const inp=document.getElementById('ahInput'); if(inp) inp.placeholder=AH_TXT[appleLang].ph;
+  const sb=document.querySelector('#appleHelper .ah-send'); if(sb) sb.textContent=AH_TXT[appleLang].send;
+  const lg=document.getElementById('ahLog'); if(lg) lg.innerHTML='';
+  ahHist=[];
+  ahSetEmotion('happygrin');
+  ahAdd('a', AH_TXT[appleLang].welcome);
+  if(inp) inp.focus();
 }
 function closeApple(){ const el=document.getElementById('appleHelper'); if(el) el.classList.add('hidden'); }
 // 우상단 코너 Apple을 아주 낮은 해상도로 그린다(작은 캔버스에 축소 → CSS 픽셀 확대 = 저화질 픽셀아트 느낌)
@@ -5256,7 +5280,7 @@ async function appleHelperSend(){
   let answer='', emotion='';
   if(APPLE_AI_URL){
     try{ const r=await fetch(APPLE_AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ question:q, history:ahHist.slice(-6) }) });
+        body:JSON.stringify({ question:q, history:ahHist.slice(-6), lang:appleLang }) });
       const j=await r.json(); if(j && j.answer){ answer=j.answer; emotion=j.emotion||''; } }catch(e){}
   }
   if(!answer) answer=appleLocalAnswer(q);            // 서버 없음/오류 → 로컬 폴백(진짜 메뉴 데이터)
