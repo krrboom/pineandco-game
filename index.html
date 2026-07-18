@@ -3476,7 +3476,7 @@ function update(){
   }
 
   // 기본 무기
-  player.fireTimer--; if(player.fireTimer<=0){ fireBase(); player.fireTimer = player.rainbow ? 5 : player.fireCd*player.cdMul; }   // 레인보우건은 초고속 고정
+  player.fireTimer--; if(player.fireTimer<=0){ fireBase(); player.fireTimer = player.rainbow ? 10 : player.fireCd*player.cdMul; }   // 레인보우건 연사 절반(5→10프레임)
 
   // 무기 발사 — 스피릿(샷잔) + 재료(레몬 등). 궤도무기(크랜베리/코스모)는 updateOrbits에서 처리.
   for(const key in player.weapons){
@@ -5482,8 +5482,10 @@ function buildSandbox(){
 function initSandbox(){ try{ startGame('pat'); skipIntro(); }catch(e){} sbGod=true; sbNoDrop=true; buildSandbox(); }   // 크롤 건너뛰고 바로 테스트 · 드랍 기본 끔
 function sbDropToggle(){ sbNoDrop=!sbNoDrop; if(sbNoDrop) pickups.length=0; sbRefresh(); }   // 드랍 껐다 켰다(끄면 필드 아이템도 정리)
 if(SANDBOX){ window.addEventListener('load', ()=> setTimeout(initSandbox, 60)); }
-// 브라우저 자동재생 정책: 첫 사용자 입력에 오디오/음악 잠금 해제
-['pointerdown','keydown','touchstart'].forEach(ev=> addEventListener(ev, unlockMusic));
+// 브라우저 자동재생 정책: 첫 사용자 입력에 오디오/음악 잠금 해제.
+// 캡처 단계(true)로 등록 → 게임/샌드박스 입력 핸들러가 전파를 막아도 window가 먼저 받아 확실히 깨움. + 명시적 resume.
+function _unlockAudio(){ try{ initAudio(); if(typeof audioCtx!=='undefined' && audioCtx && audioCtx.state==='suspended') audioCtx.resume(); unlockMusic(); }catch(e){} }
+['pointerdown','mousedown','keydown','touchstart','click'].forEach(ev=> addEventListener(ev, _unlockAudio, true));
 
 /* ===== 반응형 ===== */
 function resize(){ const size=Math.min(window.innerWidth,window.innerHeight)-16;
