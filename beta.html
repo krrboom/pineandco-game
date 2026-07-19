@@ -1220,6 +1220,7 @@ const ASSET_MANIFEST = {
   bottle_tequila:'assets/bottle_tequila.png', bottle_vodka:'assets/bottle_vodka.png',
   bottle_gin:'assets/bottle_gin.png', bottle_rum:'assets/bottle_rum.png',
   bottle_whiskey:'assets/bottle_whiskey.png', bottle_brandy:'assets/bottle_brandy.png',
+  apple_small:'assets/apple_small.png',
   apple_neutral:'assets/apple_neutral.png', apple_happy:'assets/apple_happy.png', apple_happygrin:'assets/apple_happygrin.png',
   apple_wink:'assets/apple_wink.png', apple_wink2:'assets/apple_wink2.png', apple_surprised:'assets/apple_surprised.png',
   apple_sad:'assets/apple_sad.png', apple_confused:'assets/apple_confused.png', apple_sleeping:'assets/apple_sleeping.png',
@@ -5272,7 +5273,7 @@ function closeApple(){ const el=document.getElementById('appleHelper'); if(el) e
 // 우상단 코너 Apple을 아주 낮은 해상도로 그린다(작은 캔버스에 축소 → CSS 픽셀 확대 = 저화질 픽셀아트 느낌)
 function drawAppleCorner(){
   const cv=document.getElementById('acCanvas'); if(!cv) return;
-  const im=(typeof spr==='function') && (spr('apple_happygrin')||spr('apple_neutral'));
+  const im=(typeof spr==='function') && (spr('apple_small')||spr('apple_happygrin')||spr('apple_neutral'));
   if(!im || !im.complete || !im.width){ setTimeout(drawAppleCorner,250); return; }
   const c=cv.getContext('2d'); c.imageSmoothingEnabled=false; c.clearRect(0,0,cv.width,cv.height);
   const ar=im.width/im.height; let w=cv.width, h=Math.round(w/ar);
