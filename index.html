@@ -2602,7 +2602,7 @@ function spawnEnemy(type){
   else if(type==='runner'){ e.r=6; e.hp=d.hp*0.55; e.speed=d.speed*1.65; e.sprite='runner'; }
   else if(type==='bomber'){ e.r=11; e.hp=d.hp*1.8; e.speed=d.speed*0.5; e.bomb=true; e.sprite='bomber'; e.blast=56; }
   else if(type==='thrower'){ e.r=8; e.hp=d.hp*0.6; e.speed=d.speed*0.7; e.thrower=true; e.sprite='thrower'; }
-  e.hp *= 1.3; e.maxHp=e.hp;   // ★기본 몬스터 체력 30%↑
+  e.hp *= 1.95; e.maxHp=e.hp;   // ★기본 몬스터 체력 30%→95%↑(한 방에 안 죽게 +50%)
   e.r *= 0.9;                  // ★전체 크기 10%↓
   enemies.push(e);
 }
@@ -3332,11 +3332,12 @@ function updateGinTonic(){
     // ★독: 범위 안이면 1.5초 독 갱신(나가도 잔류 데미지). 토닉의 쓴맛.
     e.poison={ until:frame+90, dmg:dmg*0.5 };
   } }
-  // ★진토닉 넉백: 1.5초마다 범위 안 적/보스를 바깥으로 밀어냄
+  // ★진토닉 넉백: 1.5초마다 범위 안 잡몹을 바깥으로 밀어냄 (보스·만취·노부킹 벽은 안 밀림 — 버그 수정)
   if(frame>=(player.gtKnockNext||0)){ player.gtKnockNext=frame+90;
     let pushed=false;
-    for(const e of enemies){ const dx=e.x-player.gtx, dy=e.y-player.gty, d=Math.hypot(dx,dy);
-      if(d < player.gtr+e.r){ const a=d>0.001?Math.atan2(dy,dx):Math.random()*6.28; const kb=e.type==='boss'?26:60;   // 보스는 덜 밀림
+    for(const e of enemies){ if(e.type==='boss'||e.type==='passout'||e.wall) continue;   // ★보스류는 제외
+      const dx=e.x-player.gtx, dy=e.y-player.gty, d=Math.hypot(dx,dy);
+      if(d < player.gtr+e.r){ const a=d>0.001?Math.atan2(dy,dx):Math.random()*6.28; const kb=60;
         e.x+=Math.cos(a)*kb; e.y+=Math.sin(a)*kb; e.frozenUntil=Math.max(e.frozenUntil||0, frame+8); pushed=true; } }
     if(pushed){ burst(player.gtx,player.gty,'#bfe6ff',12); }
   }
