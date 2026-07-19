@@ -3332,15 +3332,7 @@ function updateGinTonic(){
     // ★독: 범위 안이면 1.5초 독 갱신(나가도 잔류 데미지). 토닉의 쓴맛.
     e.poison={ until:frame+90, dmg:dmg*0.5 };
   } }
-  // ★진토닉 넉백: 1.5초마다 범위 안 잡몹을 바깥으로 밀어냄 (보스·만취·노부킹 벽은 안 밀림 — 버그 수정)
-  if(frame>=(player.gtKnockNext||0)){ player.gtKnockNext=frame+90;
-    let pushed=false;
-    for(const e of enemies){ if(e.type==='boss'||e.type==='passout'||e.wall) continue;   // ★보스류는 제외
-      const dx=e.x-player.gtx, dy=e.y-player.gty, d=Math.hypot(dx,dy);
-      if(d < player.gtr+e.r){ const a=d>0.001?Math.atan2(dy,dx):Math.random()*6.28; const kb=60;
-        e.x+=Math.cos(a)*kb; e.y+=Math.sin(a)*kb; e.frozenUntil=Math.max(e.frozenUntil||0, frame+8); pushed=true; } }
-    if(pushed){ burst(player.gtx,player.gty,'#bfe6ff',12); }
-  }
+  // (진토닉 넉백 제거 — 밀기 없음)
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
 }
 /* ★블러디메리: 칵테일 1잔이 플레이어 주위를 8자로 돌며 방사형으로 고추를 던짐(피사체는 fireCocktail에서) */
