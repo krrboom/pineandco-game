@@ -1498,6 +1498,7 @@ function showRecTab(tab){
 function closeRecipe(){ paused=false; document.getElementById('recipePanel').classList.add('hidden'); playSelect&&playSelect(); }
 function setMusicVol(v){ musicVol=Math.max(0,Math.min(1,v/100)); document.getElementById('musicVal').textContent=Math.round(musicVol*100);
   if(musicBus){ try{ musicBus.gain.value=musicVol; }catch(e){} }   // iOS 포함 실제 음량 반영
+  if(typeof bottomsBgm!=='undefined' && bottomsBgm){ try{ bottomsBgm.volume=Math.max(0,Math.min(1,musicVol*0.5)); }catch(e){} }   // Bottoms Up 음악도 설정 슬라이더로 실시간 반영
   try{ localStorage.setItem('paco_mvol',musicVol); }catch(e){} }
 function setSfxVol(v){ sfxVol=Math.max(0,Math.min(1,v/100)); document.getElementById('sfxVal').textContent=Math.round(sfxVol*100);
   try{ localStorage.setItem('paco_svol',sfxVol); }catch(e){} if(sfxVol>0) playSfx('select',0.6); }   // 미리듣기
