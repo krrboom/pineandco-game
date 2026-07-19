@@ -942,6 +942,7 @@
   <div class="screen hidden" id="levelScreen">
     <img class="levelup-banner" src="assets/levelup_banner.png" alt="LEVEL UP">
     <div class="up-row" id="upRow"></div>
+    <button class="btn" id="rerollBtn" style="display:none; margin-top:6px; background:#d9a441; color:#2a1a0e; border-color:#b8842e;" onclick="rerollLevel()"></button>
   </div>
 
   <div class="screen hidden" id="tipScreen">
@@ -1232,7 +1233,7 @@ const ASSET_MANIFEST = {
   cocktail_moscowmule:'assets/cocktail_moscowmule.png', cocktail_whiskysour:'assets/cocktail_whiskysour.png', cocktail_negroni:'assets/cocktail_negroni.png',
   cocktail_bloodymary:'assets/cocktail_bloodymary.png', cocktail_espressomartini:'assets/cocktail_espressomartini.png',
   proj_mule_l:'assets/proj_mule_l.png', proj_mule_r:'assets/proj_mule_r.png',
-  ing_tomato:'assets/ing_tomato.png', ing_coffee:'assets/ing_coffee.png', ing_campari:'assets/ing_campari.png',
+  ing_tomato:'assets/ing_tomato.png', ing_coffee:'assets/ing_coffee.png', ing_campari:'assets/ing_campari.png', ing_gingerbeer:'assets/ing_gingerbeer.png',
   lightning_0:'assets/lightning_0.png', lightning_1:'assets/lightning_1.png', proj_chili:'assets/proj_chili.png',
   bottle_tequila:'assets/bottle_tequila.png', bottle_vodka:'assets/bottle_vodka.png',
   bottle_gin:'assets/bottle_gin.png', bottle_rum:'assets/bottle_rum.png',
@@ -1459,7 +1460,7 @@ function closeSettings(){ paused=false; document.getElementById('settingsPanel')
 const CRAFT_FX = {
   syrup:'Slow bottle that bursts into a wide AoE slow.',
   trio:'Fires lemon+lime+orange wheels at once · 8 pierce · Lv4: 5 shots, 2x dmg & speed.',
-  sodagun:'Infinite soda! Gatling water stream that locks one target until it drops.',
+  sodagun:'Soda + Ginger Beer + Tonic (all maxed). Gatling fizz that locks one target until it drops. Hits hard, about half a Fire Cross.',
   blackver:'One huge black wormwood damage aura around you.',
   gimlet:'⚡ Electric chain: lightning leaps from the nearest enemy to nearby ones, more each level (x1.8). Slow, hard-hitting like an Old Fashioned.',
   manhattan:'A heavy cherry bomb with a huge explosion. Hits harder than the Old Fashioned.',
@@ -1472,11 +1473,11 @@ const CRAFT_FX = {
   vodkatonic:'A wide spread of homing, freezing ice bolts.',
   vodkacranberry:'A giant crimson glass whips out sideways the way you face and snaps back (like lipstick in and out), freezing and draining life on hit (lifesteal). Grows each level; at Lv6 it lashes from BOTH sides. Super: 2x speed & damage.',
   southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
-  moscowmule:'Donkey KICK! Fires one hoof at a time (alternating), a fast straight piercing knife-kick with a little slow.',
-  whiskysour:'A tall yellow lemon beam sweeps across the way you face, cutting through everything it passes.',
+  moscowmule:'Donkey KICK! A hoof lashes out the way you face and snaps back (like lipstick in and out), knocking enemies away and slowing them. Grows each level; at Lv6 it kicks from BOTH sides. Super: 2x damage.',
+  whiskysour:'A long yellow lemon beam fires straight the way you face, all the way to the screen edge. Anything the line touches is fully FROZEN in place. No damage, pure lockdown. Levels up faster and thicker.',
   negroni:'Defensive. Projects a red shield with its own HP that soaks damage before your health. Regenerates when unhit, and rebuilds if broken. Leveling raises defense and shield HP.',
-  bloodymary:'A bloody-mary bird-bomber circles wide around you and periodically drops explosive bombs. More birds as it levels.',
-  espressomartini:'Brown lightning ring: bolts strike random spots, each a small AoE that also freezes.',
+  bloodymary:'One bloody-mary glass loops around you in a wide slow figure-8, flinging chili peppers in all directions. Peppers pierce 2 and leave a burning DoT. More peppers as it levels.',
+  espressomartini:'Brown lightning strikes from the top of the screen onto enemies below, a strong AoE that also freezes. Slow to fire but the hardest-hitting cocktail.',
   margarita:'Giant salt boomerangs that fly out and back.',
   drymartini:'Olives orbit you (one more each level, wider orbit). Enemies within the orbit range are slowed.',
   vodkamartini:'A continuous gatling stream of freezing olive shots (low pierce) + a freezing shockwave. Super: shots scatter behind the enemy they hit.',
@@ -1579,7 +1580,7 @@ const INGREDIENTS = {
   dryver:   { name:'DRY VERMOUTH',   ic:'🍸', img:'ing_dryver',   color:'#cfd6e0', max:6, pas:{stat:'crit',per:0.01}, desc:'+crit chance & crit dmg (×2 base, +50%/lv → Lv6 ×4.5)' },
   angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', max:6, pas:{stat:'xp',per:0.06},   desc:'+XP gain' },
   // ★새 재료 4종
-  gingerbeer:{ name:'GINGER BEER', ic:'🫚', img:'ing_soda',    color:'#d9a441', max:6, pas:{stat:'cd',per:0.02},   desc:'Fizzy — attacks fire faster (Moscow Mule key)' },
+  gingerbeer:{ name:'GINGER BEER', ic:'🫚', img:'ing_gingerbeer', color:'#d9a441', max:6, pas:{stat:'cd',per:0.01}, reroll:true, desc:'RE-ROLL: each level gives one re-roll of your level-up choices (Moscow Mule / Soda Gun key)' },
   coffee:    { name:'COFFEE BEANS', ic:'☕', img:'ing_coffee',   color:'#5a3a22', max:6, pas:{stat:'edur',per:0.14}, revive:true, desc:'Effects last longer (orbit/aura). Grants ONE revive!' },
   tomato:    { name:'TOMATO JUICE', ic:'🍅', img:'ing_tomato',   color:'#c0392b', max:6, pas:{stat:'ultcd',per:0},   desc:'Cuts ultimate cooldown (1/8 → 1/3 at max)' },
   campari:   { name:'CAMPARI',     ic:'🅱️', img:'ing_campari',  color:'#b81e2c', max:6, pas:{stat:'enemydef',per:0.08}, desc:'Nearby enemies take more damage (defense down)' },
@@ -1624,7 +1625,7 @@ function weaponSlotMax(){ let n=WEAPON_MAX; if(player&&player.weapons){ if(playe
 // 뱀서식 개편: 방향형·연사형은 빠르게, 궤도(상시유지)/한방형은 느리게. 코스모·보드카마티니는 소다건식 연사(weaponCd 특수처리)
 const COCKTAIL_CD = { gimlet:120, highball:39, mojito:55, vodkatonic:51, sidecar:90, margarita:67,   // gimlet=전기체인(올드패션드급 느린 공속 120). sidecar 공속 너프 64→90
   manhattan:76, vodkacranberry:83, southside:130, oldfashioned:120, drymartini:115, gintonic:46,   // southside=민트레인(느린 공속 130) · oldfashioned 공속 너프 92→120
-  moscowmule:30, whiskysour:70, negroni:60, bloodymary:95, espressomartini:80 };   // 모스코뮬=나이프(빠름) · 위스키사워=세로빔 · 네그로니=방어오라 · 블러디메리=새폭격 · 에스프레소=라이트닝링
+  moscowmule:30, whiskysour:70, negroni:60, bloodymary:95, espressomartini:160 };   // ★에스프레소 공속 50%↓(80→160)   // 모스코뮬=나이프(빠름) · 위스키사워=세로빔 · 네그로니=방어오라 · 블러디메리=새폭격 · 에스프레소=라이트닝링
 function weaponInfo(key){
   if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail weapon — unique attack, levels to 6', max:6}; }   // 칵테일=무기, Lv6까지
   if(SPIRITS[key]) return {name:SPIRITS[key].name, ic:SPIRITS[key].ic, img:'bottle_'+key, desc:SPIRITS[key].desc, max:MAX_WLV};  // 칩/카드 = 스피릿 바틀 이미지
@@ -1695,6 +1696,7 @@ function recalcStats(){
   const tlv=player.weapons.tomato||0;                    // 토마토: 필살기 쿨 1/8(lv1) → 1/3(lv6)
   player.ultCdMul = tlv ? (1 - (0.125 + (tlv-1)*((0.3333-0.125)/5))) : 1;
   player.reviveCharges = (player.weapons.coffee && !player.reviveUsed) ? 1 : 0;   // 커피: 1회 부활
+  player.rerollMax = player.weapons.gingerbeer || 0;              // ★진저비어: 레벨당 레벨업 리롤 1회
   // ★네그로니 실드: 최대 체력 = 레벨별. 현재값은 update에서 재생/재건 관리(여기선 상한만 갱신)
   player.shieldMax = _negLv>0 ? (50 + _negLv*35) : 0;
   if(player.shield==null) player.shield = player.shieldMax;
@@ -2950,6 +2952,8 @@ function onHit(p, e){
   if(p.cSlow){ e.frozenUntil = Math.max(e.frozenUntil||0, frame + p.cSlow); }
   if(p.cStop){ e.stopUntil = Math.max(e.stopUntil||0, frame + p.cStop); e.frozenUntil = Math.max(e.frozenUntil||0, frame + p.cStop);
     if(!p._stpFx){ p._stpFx=1; icyBoom(e.x, e.y, 40); } }   // 완전 동결(위스키사워)
+  if(p.knockback){ const ka=Math.atan2(p.vy,p.vx), kb=(e.type==='boss'?12:34);   // ★모스코뮬/보드카크랜베리: 진행 방향으로 밀어냄(보스는 덜)
+    e.x+=Math.cos(ka)*kb; e.y+=Math.sin(ka)*kb; }
   if(p.cPoison){ e.poison = { dmg: Math.max(3, p.dmg*0.3), until: frame + p.cPoison }; }
   if(p.cExplode){ explodeAt(p.x, p.y, p.dmg*0.7, p.cExplode); }
   // ★슈퍼 게틀링(코스모/보드카마티니): 명중 시 뒤(진행 방향)로 작은 분산탄 3발이 퍼져나감
@@ -3110,7 +3114,7 @@ function fireIngredient(key, lv){
     const tg = player.sodaTarget; if(!tg) return;
     const ta = Math.atan2(tg.y-player.y, tg.x-player.x);
     const n = Math.round(3 + (lv-1)*(4/3));               // Lv1=3 → Lv4=7발
-    const dmg = (player.dmg||10) * player.dmgMul * 0.1;   // 발당 기본공격의 10%(많이 쏘는 만큼 약하게)
+    const dmg = (110 + lv*12) * player.dmgMul;            // ★강화: 발당 고정 데미지(십자가 400의 절반 수준 DPS). Lv1 122 → Lv4 158
     // 게틀링 난사: 부채꼴이 아니라 타겟 쪽으로 한 줄 스트림 + 약간의 흩어짐(난사 느낌)
     for(let i=0;i<n;i++){
       const ang = ta + (Math.random()-0.5)*0.13;          // 살짝 흩뿌려지는 정도
@@ -3241,7 +3245,7 @@ function fireCocktail(key, lv){
       const dirs = (evo || lv >= 6) ? [1, -1] : [ (player.facing||1) >= 0 ? 1 : -1 ];
       for(const dir of dirs){
         add({ vx:dir*outSp, vy:0, dmg, r:26, pierce:99, life, life0:life,
-              boom:true, boomSp:10, cFreeze:45, lifesteal:steal, healBudget:2, whip:true, whipDir:dir }); }
+              boom:true, boomSp:10, cFreeze:45, lifesteal:steal, healBudget:2, whip:true, whipDir:dir, knockback:true }); }   // ★밀어내기 추가
       break; }   // 크기(r)는 add에서 S(레벨·진화·글로벌크기) 자동 반영
     // ── 성수(재해석): 무공격 병이 포물선으로 날아가 랜덤 착지 → 그 자리에 민트 장판. Lv1=1개 → 2레벨마다 +1 ──
     case 'southside': {   // ★파란 불꽃 레인: 떨어진 자리에 파란 불꽃 장판(지속 데미지+빙결). 레벨업 → 발수+2·범위↑·근처·원형화
@@ -3262,23 +3266,20 @@ function fireCocktail(key, lv){
       gatling('ing_olive', 26, 8.5, 0.1, 75, { pierce:0, cFreeze:55, scatter:1 }); break;   // 저관통+빙결 · 슈퍼=명중 시 뒤로 분산탄
     // ── 마늘(재해석): 플레이어 뒤 반투명 진토닉 = updateGinTonic()에서 상시 처리 ──
     case 'gintonic': break;
-    // ── ★모스코뮬: 당나귀 발차기. 양발 한번에 안 나가고 좌/우 한 발씩 교대. 직선 관통(나이프). ──
+    // ── ★모스코뮬: 당나귀 발차기(채찍식). 보드카 크랜베리처럼 발이 립스틱처럼 나갔다 되돌아옴 + 넉백. ──
     case 'moscowmule': {
-      // 나이프식: 발차기 여러 개가 '일직선'으로 줄지어 날아감(처음 2개 → 레벨업마다 늘어남). 속도 절반.
-      const dir = t ? a : aim;
-      const n = 2 + Math.floor((lv-1)*0.8);   // Lv1=2 → Lv6=6개
-      const spd = 5.7;                         // 기존 11.5의 절반
-      for(let i=0;i<n;i++){ player.mmAlt=!player.mmAlt;
-        add({ kind: player.mmAlt?'proj_mule_l':'proj_mule_r', vx:Math.cos(dir)*spd, vy:Math.sin(dir)*spd,
-              dmg:30*P, r:15, pierce:99, life:150, muleRot:dir, cSlow:20,
-              x: player.x - Math.cos(dir)*i*26, y: player.y - Math.sin(dir)*i*26 }); }   // 뒤로 줄지어 = 일직선
+      const outSp = 6, life = 44;                         // 뻗는 속도 / 왕복 수명(반은 나가고 반은 복귀)
+      const dmg = 60 * P * (evo ? 2 : 1);                 // ★슈퍼면 2배
+      const dirs = (evo || lv >= 6) ? [1, -1] : [ (player.facing||1) >= 0 ? 1 : -1 ];   // Lv1~5 한쪽, Lv6·슈퍼 양쪽
+      for(const dir of dirs){ player.mmAlt = !player.mmAlt;
+        add({ kind: player.mmAlt?'proj_mule_l':'proj_mule_r', vx:dir*outSp, vy:0, dmg, r:24, pierce:99, life, life0:life,
+              boom:true, boomSp:10, cSlow:40, knockback:true, whip:true, whipDir:dir }); }   // 채찍 인/아웃 + 밀어내기
       break; }
-    // ── ★위스키사워: 바라보는 방향으로 노란 레몬 세로빔이 쓸고 나감(세로 긴 벽). ──
+    // ── ★위스키사워: 적을 조준하지 않고 바라보는 방향으로 '일자'로 화면 끝까지 노란 빔. 닿으면 완전 정지. ──
     case 'whiskysour': {
-      // 플레이어로부터 바깥으로 일직선 노란 빔. 관통6, 데미지 0, 맞으면 완전 정지(동결). 레벨↑ 빔 커짐.
-      const dir = t ? a : aim;
-      const len = (150 + lv*40) * (player.sizeMul||1);
-      // 정지형 빔: 플레이어에 고정(beamFromPlayer)되어 진행 방향으로 뻗음. 선분 판정(아래 히트 로직). 관통6·완전정지.
+      // 표적을 안 고르고 항상 바라보는(이동) 방향으로 발사. 빔은 화면 끝까지(고정 길이). 관통6·데미지0·완전정지.
+      const dir = aim;                    // ★t(표적) 무시 → 조준 안 함
+      const len = 1200;                   // 화면 끝까지(캔버스 어느 방향이든 덮음)
       add({ noScale:true, kind:'wsbeam', vx:0, vy:0, dmg:0, r:11+lv*2, beamLen:len, beamAng:dir, pierce:6, life:26+lv*3, cStop:130, beamFromPlayer:true });
       break; }
     // ── ★네그로니: 방어형. 주기적으로 피격 1회를 막는 충전(MISS). 빨간 오라. ──
@@ -3288,9 +3289,10 @@ function fireCocktail(key, lv){
       // 블러디메리 잔 1개가 플레이어 주위를 8자로 날아다니며(updateBloodyMary), 여기서 고추를 방사형으로 뿌림.
       const bx = player.bmx!=null?player.bmx:player.x, by = player.bmy!=null?player.bmy:player.y;
       const n = 5 + (lv-1);        // 5발 → 레벨마다 +1
-      const dmg = 24*P, base=frame*0.02;
+      const dmg = 24*P, base=frame*0.02, rr = 11*(player.sizeMul||1);
       for(let i=0;i<n;i++){ const ang = base + i*(6.28/n);   // 모든 방향(레인보우식)
-        add({ x:bx, y:by, kind:'proj_chili', vx:Math.cos(ang)*6.2, vy:Math.sin(ang)*6.2, dmg, r:11, pierce:2, life:105, cPoison:130 }); }   // 맞으면 지속 데미지(cPoison)
+        // ★직접 push = 관통 정확히 2(tonic 패시브 pierce 안 붙음). cPoison 지속피해.
+        projectiles.push({ x:bx, y:by, kind:'proj_chili', vx:Math.cos(ang)*6.2, vy:Math.sin(ang)*6.2, dmg, r:rr, splash:0, pierce:2, hit:new Set(), life:105, cPoison:Math.round(130*(player.durMul||1)) }); }
       break; }
     // ── ★에스프레소 마티니: 갈색 라이트닝 링. 랜덤 지점에 낙뢰(AoE + 빙결). ──
     case 'espressomartini': {
@@ -3341,8 +3343,8 @@ function updateGinTonic(){
 /* ★블러디메리: 칵테일 1잔이 플레이어 주위를 8자로 돌며 방사형으로 고추를 던짐(피사체는 fireCocktail에서) */
 function updateBloodyMary(){
   if(!player || !player.weapons || !player.weapons.bloodymary){ if(player){ player.bmx=null; player.bmy=null; } return; }
-  const R=(70+ (player.weapons.bloodymary)*6)*(player.sizeMul||1);
-  const t=frame*0.045;                                   // 8자(제로노 렘니스케이트) 궤적
+  const R=(120+ (player.weapons.bloodymary)*8)*(player.sizeMul||1);   // ★8자 더 크게
+  const t=frame*0.022;                                   // ★8자 더 천천히(0.045→0.022, 절반 이하)
   player.bmx = player.x + Math.cos(t)*R;
   player.bmy = player.y + Math.sin(t)*Math.cos(t)*R;
 }
@@ -4113,10 +4115,10 @@ const RECIPES = [
     ok:()=> (player.weapons.lemon||0)>=4 && (player.weapons.lime||0)>=4 && (player.weapons.orange||0)>=4,
     title:'✦ CITRUS TRIO ✦',
     desc:'Lemon + Lime + Orange all maxed → <b>CITRUS TRIO</b>.<br>Three citrus wheels <b>orbit around you</b>, hitting everything they pass — same damage as GIN TONIC.<br>Lv4: 5 wheels, wider & stronger.' },
-  { result:'sodagun', consume:['soda','tonic'], eq:['ing_soda','ing_tonic','ing_sodagun'],
-    ok:()=> (player.weapons.soda||0)>=4 && (player.weapons.tonic||0)>=4,
+  { result:'sodagun', consume:['soda','gingerbeer','tonic'], eq:['ing_soda','ing_gingerbeer','ing_tonic','ing_sodagun'],
+    ok:()=> (player.weapons.soda||0)>=4 && (player.weapons.gingerbeer||0)>=4 && (player.weapons.tonic||0)>=4,
     title:'✦ SODA GUN ✦',
-    desc:'Soda + Tonic both maxed → <b>SODA GUN</b>. Infinite soda!<br>Gatling water droplets that lock one target until it drops, then move on.<br>3 shots → 7 at Lv4, fast and relentless.' },
+    desc:'Soda + Ginger Beer + Tonic all maxed → <b>SODA GUN</b>. Infinite fizz!<br>Gatling droplets that lock one target until it drops, then move on.<br>Hits hard — about half a Fire Cross. 3 shots → 7 at Lv4.' },
   { result:'blackver', consume:['sweetver','dryver'], eq:['ing_sweetver','ing_dryver','ing_wormwood'],
     ok:()=> (player.weapons.sweetver||0)>=4 && (player.weapons.dryver||0)>=4,
     title:'✦ BLACK VERMOUTH ✦',
@@ -4152,7 +4154,21 @@ function applyCraft(rc){
   return player.weapons[rc.result];
 }
 let craftChoiceList=[];
-function tryCrafts(){ /* 크래프팅 제거됨(VS식: 칵테일=직접 무기, 재료=패시브) */ }
+// ★히든 조합(소다건/트리오/검정버무스/시럽): 재료가 준비되면 확인창을 띄운다. 한 번에 하나.
+function tryCrafts(){
+  if(!player || state!=='playing') return;
+  const slotsFull = craftedSlotsUsed() >= weaponSlotMax();
+  for(const rc of RECIPES){
+    if(rc.cocktail) continue;                                   // 칵테일은 보스 팁에서
+    if(everCrafted.has(rc.result)) continue;                    // 이미 만든 것
+    if((player.weapons[rc.result]||0) > 0) continue;
+    if(declinedCraft.has(rc.result)) continue;                  // 이번 판 거절
+    if(!rc.ok()) continue;                                      // 재료 조건 미충족
+    if(SLOT_KEYS.includes(rc.result) && slotsFull) continue;    // 슬롯 없음(시럽은 슬롯 아님 → 통과)
+    openCraft(rc, false);                                       // 만들래?/말래? 확인창 → confirmCraft → applyCraft
+    return;
+  }
+}
 // 지금 만들/올릴 수 있는 칵테일들(재료 준비됨, 만렙 아님, 슬롯 여유). 보스 팁에서 선택.
 function craftableCocktails(){
   if(!player) return [];
@@ -4342,13 +4358,7 @@ function buildLevelChoices(){
   if(!out.length) out.push({type:'gold', ic:'💰', n:'CASH', d:'+2000', isNew:false});
   return _shuf(out).slice(0,4);
 }
-function levelUp(){
-  player.xp-=player.xpNeed; player.level++; player.xpNeed=xpForLevel(player.level);
-  recalcStats();                                                          // ★새 레벨 반영: 최대체력 pat+2 / joe+1
-  player.hp = Math.min(player.maxHp, player.hp + (player.key==='pat'?2:1)); // 현재 체력도 같이 +2/+1 회복
-  bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; hide('dropBanner');   // 획득 문구 치워서 레벨업 카드와 안 겹치게
-  state='levelup';
-  const pick = buildLevelChoices();   // 재료 1~2 + 스킬업 2~3
+function renderLevelCards(pick){
   document.getElementById('upRow').innerHTML = pick.map((u,i)=>`
     <div class="up-card ${(u.evo||u.sup)?'evo':(u.isNew?'new':'')}" onclick="pickUpgrade(${i})">
       <div class="up-inner">
@@ -4359,7 +4369,31 @@ function levelUp(){
       </div>
       <img class="upframe-img" src="assets/levelup_frame.png" alt="">
     </div>`).join('');
-  window._pool=pick; show('levelScreen'); lvSel=0; updateCardHighlight();
+  window._pool=pick; lvSel=0; updateCardHighlight();
+}
+function refreshRerollBtn(){
+  const b=document.getElementById('rerollBtn'); if(!b) return;
+  const left=player.rerollsLeft||0;
+  if(left>0){ b.style.display=''; b.textContent='🫚 RE-ROLL ('+left+')'; }
+  else b.style.display='none';
+}
+function rerollLevel(){   // ★진저비어: 레벨업 선택지를 완전히 새로 뽑음
+  if(!player.rerollsLeft || player.rerollsLeft<=0) return;
+  player.rerollsLeft--;
+  playSelect();
+  renderLevelCards(buildLevelChoices());
+  refreshRerollBtn();
+}
+function levelUp(){
+  player.xp-=player.xpNeed; player.level++; player.xpNeed=xpForLevel(player.level);
+  recalcStats();                                                          // ★새 레벨 반영: 최대체력 pat+2 / joe+1
+  player.hp = Math.min(player.maxHp, player.hp + (player.key==='pat'?2:1)); // 현재 체력도 같이 +2/+1 회복
+  bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; hide('dropBanner');   // 획득 문구 치워서 레벨업 카드와 안 겹치게
+  state='levelup';
+  player.rerollsLeft = player.rerollMax || 0;   // ★이번 레벨업 리롤 횟수(진저비어 레벨)
+  renderLevelCards(buildLevelChoices());        // 재료 1~2 + 스킬업 2~3
+  refreshRerollBtn();
+  show('levelScreen');
 }
 // ★능력치업(POWER/MOVE SPEED/EXTRA SHOT 등) 카드 전부 삭제 — 이제 모든 능력치는 '재료(패시브)'로만 올라감.
 const GENERIC=[];
@@ -5109,7 +5143,7 @@ function drawProj(p){
     if(im){ const H=p.y-topY, W=H*im.width/im.height*0.5; ctx.save(); ctx.globalAlpha=0.92; ctx.imageSmoothingEnabled=false; ctx.drawImage(im, p.x-W/2, topY, W, H); ctx.restore(); }
     else { ctx.save(); ctx.strokeStyle='#5fc9ff'; ctx.lineWidth=4; ctx.beginPath(); let yy=topY,xx=p.x; ctx.moveTo(xx,yy); for(let s=0;s<8;s++){ yy+=(p.y-topY)/8; xx=p.x+((s%2)?1:-1)*8; ctx.lineTo(xx,yy); } ctx.stroke(); ctx.restore(); }
     return; }
-  if(p.kind==='proj_chili' && spr('proj_chili')){ const im=spr('proj_chili'), H=p.r*3.0, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)+0.6); return; }   // ★고추(진행 방향)
+  if(p.kind==='proj_chili' && spr('proj_chili')){ const im=spr('proj_chili'), H=p.r*1.5, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)+0.6); return; }   // ★고추(진행 방향) 크기 50%↓
   if(p.kind && p.kind.indexOf('cocktail_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*2.6, W=H*im.width/im.height;
     if(p.evo){ ctx.save(); ctx.globalAlpha=0.5+0.3*Math.sin(frame*0.3); const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,H*0.9);
       g.addColorStop(0,'rgba(255,215,90,0.9)'); g.addColorStop(1,'rgba(255,215,90,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,H*0.9,0,6.28); ctx.fill(); ctx.restore(); }   // 슈퍼 = 금빛 글로우
@@ -5715,7 +5749,15 @@ function sbWall(){ try{ spawnWall(); }catch(e){} }   // 노부킹 무리(가로 
 function sbFinale(){ if(!player) return; try{ if(!finale.active) startFinale(); }catch(e){} }   // 30분 피날레(라이벌 바텐더 등장) 즉시 미리보기
 function sbGodToggle(){ sbGod=!sbGod; if(sbGod&&player) player.hp=player.maxHp; sbRefresh(); }
 function sbCharSwap(){ const next=(player&&player.key==='pat')?'joe':'pat'; try{ startGame(next); }catch(e){} sbRefresh(); }
-function sbRainbow(){ if(!player) return; try{ initAudio(); }catch(e){} try{ equipRainbow(); }catch(e){} sbRefresh(); }   // 테스트: 실제 등장 연출(스핀+GET 문구+8비트 징글) 그대로 재생
+function sbRainbow(){ if(!player) return; try{ initAudio(); }catch(e){}
+  if(!player.rainbow){ try{ equipRainbow(); }catch(e){} }              // 처음엔 장착(연출 재생)
+  else { player.rainbowLv=Math.min(6,(player.rainbowLv||1)+1); burst(player.x,player.y,'#ff66cc',18); }   // ★이후 클릭마다 +1 레벨(만렙 6까지 풀업)
+  updateWeaponChips(); sbRefresh(); }
+function sbSuperAll(){ if(!player) return;   // ★샌드박스: 모든 칵테일을 슈퍼(진화)로 만들고 슈퍼레벨 만렙
+  player.evolved=player.evolved||new Set(); player.superLv=player.superLv||{};
+  for(const ck of COCKTAIL_KEYS){ if(!player.weapons[ck]){ player.weapons[ck]=6; player.wt[ck]=0; } else player.weapons[ck]=Math.max(6,player.weapons[ck]);
+    player.evolved.add(ck); player.superLv[ck]=8; }
+  recalcStats(); updateWeaponChips(); burst(player.x,player.y,'#ffd24a',40); try{ playRainbowJingle(); }catch(e){} sbRefresh(); }
 function sbRefresh(){
   const panel=document.getElementById('sbPanel'); if(!panel) return;
   for(const w of sbWeaponList()){ const b=document.getElementById('sbw_'+w.k); if(b){ const lv=(player&&player.weapons&&player.weapons[w.k])||0; b.classList.toggle('on',lv>0); const s=b.querySelector('.sbl'); if(s) s.textContent='L'+lv+'/'+w.max; } }
@@ -5768,12 +5810,15 @@ function buildSandbox(){
       <div class="sbrow">
         <button class="sbbtn" onclick="sbClear()">CLEAR</button>
         <button class="sbbtn" onclick="sbMaxAll()">MAX ALL</button>
-        <button class="sbbtn" onclick="sbRainbow()">RAINBOW</button>
+      </div>
+      <div class="sbrow">
+        <button class="sbbtn" onclick="sbRainbow()">RAINBOW+</button>
+        <button class="sbbtn" onclick="sbSuperAll()">SUPER ALL</button>
       </div>
       <div class="sbgrid">
         ${W.map(w=>`<button class="sbw" id="sbw_${w.k}" onclick="sbGrant('${w.k}')">${w.label}<span class="sbl">L0/${w.max}</span></button>`).join('')}
       </div>
-      <div class="sbhint">Pick a boss → ▶ SPAWN BOSS (⚔ = has a real attack). CLR BOSS wipes bosses. Tap a weapon = equip/+1 level. GOD on by default.</div>
+      <div class="sbhint">Pick a boss → ▶ SPAWN BOSS (⚔ = has a real attack). CLR BOSS wipes bosses. Tap a weapon = equip/+1 level. RAINBOW+ = equip then tap again to level up (to Lv6). SUPER ALL = every cocktail evolved to max Super. GOD on by default.</div>
     </div>`;
   document.body.appendChild(wrap);
   sbRefresh();
