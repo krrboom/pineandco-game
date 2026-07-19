@@ -3239,13 +3239,13 @@ function fireCocktail(key, lv){
     case 'vodkacranberry': {
       // 회복: 명중당 0.2(Lv1)→0.5(Lv6). 진화면 더. 피사체당 상한 2.
       const steal = evo ? Math.min(0.65, 0.5 + slv*0.02) : Math.min(0.5, 0.2 + (lv-1)*0.06);
-      const outSp = 6, life = 44;              // 뻗는 속도 / 왕복 수명(반은 나가고 반은 복귀)
+      const outSp = 3, life = 44;              // ★사정거리 절반(6→3) · 왕복 수명(반은 나가고 반은 복귀)
       const dmg = 110 * P * (evo ? 2 : 1);     // ★슈퍼면 공격력 2배
       // Lv1~5: 바라보는 방향(좌/우 하나)으로 1개, 크기만 성장 / Lv6·슈퍼: 양옆 2개
       const dirs = (evo || lv >= 6) ? [1, -1] : [ (player.facing||1) >= 0 ? 1 : -1 ];
       for(const dir of dirs){
-        add({ vx:dir*outSp, vy:0, dmg, r:26, pierce:99, life, life0:life,
-              boom:true, boomSp:10, cFreeze:45, lifesteal:steal, healBudget:2, whip:true, whipDir:dir, knockback:true }); }   // ★밀어내기 추가
+        add({ vx:dir*outSp, vy:0, dmg, r:26, pierce:99, life, life0:life, ox:player.x, oy:player.y,
+              boom:true, boomSp:10, cFreeze:45, lifesteal:steal, healBudget:2, whip:true, whipDir:dir, knockback:true }); }   // ★밀어내기 + 립스틱 클립(ox/oy)
       break; }   // 크기(r)는 add에서 S(레벨·진화·글로벌크기) 자동 반영
     // ── 성수(재해석): 무공격 병이 포물선으로 날아가 랜덤 착지 → 그 자리에 민트 장판. Lv1=1개 → 2레벨마다 +1 ──
     case 'southside': {   // ★파란 불꽃 레인: 떨어진 자리에 파란 불꽃 장판(지속 데미지+빙결). 레벨업 → 발수+2·범위↑·근처·원형화
@@ -3273,8 +3273,8 @@ function fireCocktail(key, lv){
       const dmg = 66 * P * (evo ? 2 : 1);                 // ★슈퍼면 2배(발 하나 되어 데미지 소폭↑)
       const dir = (player.facing||1) >= 0 ? 1 : -1;       // 항상 한쪽(한 발)
       player.mmAlt = !player.mmAlt;
-      add({ kind: player.mmAlt?'proj_mule_l':'proj_mule_r', vx:dir*outSp, vy:0, dmg, r:24, pierce:99, life, life0:life,
-            boom:true, boomSp:12, cSlow:40, knockback:true, whip:true, whipDir:dir });
+      add({ kind: player.mmAlt?'proj_mule_l':'proj_mule_r', vx:dir*outSp, vy:0, dmg, r:24, pierce:99, life, life0:life, ox:player.x, oy:player.y,
+            boom:true, boomSp:12, cSlow:40, knockback:true, whip:true, whipDir:dir });   // ★립스틱 클립(ox/oy)
       break; }
     // ── ★위스키사워: 가장 가까운 적을 조준해 그 방향으로 화면 끝까지 노란 빔. 닿으면 완전 정지. ──
     case 'whiskysour': {
@@ -5130,6 +5130,16 @@ function drawEnemy(e){
     ctx.fillStyle='#ffcf3c'; ctx.fillText('BOSS '+e.bossNo, e.x, by-5);
   }
 }
+// ★립스틱 클립: 채찍(whip) 피사체를 발사 원점(ox) 바깥쪽만 보이게 잘라, 원점에서 스르륵 나왔다 다시 들어가는 것처럼.
+// clip 적용 시 ctx.save()가 걸리므로 호출부에서 그린 뒤 반드시 ctx.restore(). (적용 안 되면 false 반환)
+function whipClip(p){
+  if(!p.whip || p.ox==null) return false;
+  ctx.save(); ctx.beginPath();
+  if((p.whipDir||1) >= 0) ctx.rect(p.ox, -4000, 8000, 8000);   // 원점 오른쪽만
+  else                    ctx.rect(p.ox-8000, -4000, 8000, 8000); // 원점 왼쪽만
+  ctx.clip();
+  return true;
+}
 function drawProj(p){
   // ★민트 레인 폭탄: 착지 예정 지점에 그림자 표시(어디 떨어질지 미리 보임)
   if(p.land!=null){ ctx.save(); ctx.globalAlpha=0.32; ctx.fillStyle='#5a8a5e';
@@ -5147,7 +5157,9 @@ function drawProj(p){
   if((p.kind==='proj_mule_l'||p.kind==='proj_mule_r') && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.2, W=H*im.width/im.height;
     // ★발사 방향으로 회전 '고정'(whipDir): 나갈 때/돌아올 때 이미지가 안 바뀜(예전엔 vx가 반대라 뒤집혔음)
     const ang = (p.whipDir!==undefined ? (p.whipDir<0?Math.PI:0) : Math.atan2(p.vy,p.vx)) - 1.57;
-    drawImgC(im, p.x, p.y, W, H, ang); return; }   // ★당나귀 발차기
+    const clip = whipClip(p);              // ★립스틱: 원점(ox)에서 나왔다 들어감(원점 안쪽은 잘림)
+    drawImgC(im, p.x, p.y, W, H, ang);
+    if(clip) ctx.restore(); return; }   // ★당나귀 발차기
   if(p.kind==='wsbeam'){ const L=p.beamLen||100, ang=p.beamAng||Math.atan2(p.vy,p.vx); ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);   // ★노란 빔(플레이어에서 앞으로만 뻗음)
     ctx.globalAlpha=0.55+0.25*Math.sin(frame*0.5);
     const g=ctx.createLinearGradient(0,-p.r,0,p.r); g.addColorStop(0,'rgba(244,208,63,0)'); g.addColorStop(0.5,'#ffe86a'); g.addColorStop(1,'rgba(244,208,63,0)');
@@ -5163,7 +5175,9 @@ function drawProj(p){
     if(p.evo){ ctx.save(); ctx.globalAlpha=0.5+0.3*Math.sin(frame*0.3); const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,H*0.9);
       g.addColorStop(0,'rgba(255,215,90,0.9)'); g.addColorStop(1,'rgba(255,215,90,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,H*0.9,0,6.28); ctx.fill(); ctx.restore(); }   // 슈퍼 = 금빛 글로우
     const rot = p.whip ? (p.whipDir>0 ? Math.PI/2 : -Math.PI/2) : frame*0.12;   // ★채찍(보드카크랜베리)은 안 돌고 옆으로 누움(립스틱). 나머지는 뱅글뱅글
-    drawImgC(im, p.x, p.y, W, H, rot); return; }   // 칵테일 궁극기 피사체
+    const clip = whipClip(p);              // ★립스틱: 원점(ox)에서 나왔다 들어감
+    drawImgC(im, p.x, p.y, W, H, rot);
+    if(clip) ctx.restore(); return; }   // 칵테일 궁극기 피사체
   if(p.kind==='rainbow' && spr('rainbow_proj')){ const im=spr('rainbow_proj'), H=p.r*1.7, W=H*im.width/im.height, ang=Math.atan2(p.vy,p.vx); drawImgC(im, p.x, p.y, W, H, ang); return; }   // 레인보우 탄(진행방향으로 회전)
   // 스피릿 = 각자 전용 샷잔 이미지 (gin=허브/vodka=얼음/tequila=라임/whiskey=노징/brandy=스니프터, rum=브라운).
   if(SPIRITS[p.kind]){
