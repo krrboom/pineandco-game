@@ -5138,7 +5138,10 @@ function drawProj(p){
   if(p.kind==='barspoon' && spr('proj_barspoon')){ const im=spr('proj_barspoon'), H=p.r*5.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 바스푼(올린 이미지)
   if(p.kind==='mixglass' && spr('proj_mixglass')){ const im=spr('proj_mixglass'), H=p.r*5.0, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.16); return; }   // 믹싱글라스(올린 이미지)
   if(p.kind && p.kind.indexOf('ing_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 재료 피사체(올린 이미지)
-  if((p.kind==='proj_mule_l'||p.kind==='proj_mule_r') && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.2, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)-1.57); return; }   // ★당나귀 발차기(진행 방향으로 회전)
+  if((p.kind==='proj_mule_l'||p.kind==='proj_mule_r') && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.2, W=H*im.width/im.height;
+    // ★발사 방향으로 회전 '고정'(whipDir): 나갈 때/돌아올 때 이미지가 안 바뀜(예전엔 vx가 반대라 뒤집혔음)
+    const ang = (p.whipDir!==undefined ? (p.whipDir<0?Math.PI:0) : Math.atan2(p.vy,p.vx)) - 1.57;
+    drawImgC(im, p.x, p.y, W, H, ang); return; }   // ★당나귀 발차기
   if(p.kind==='wsbeam'){ const L=p.beamLen||100, ang=p.beamAng||Math.atan2(p.vy,p.vx); ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(ang);   // ★노란 빔(플레이어에서 앞으로만 뻗음)
     ctx.globalAlpha=0.55+0.25*Math.sin(frame*0.5);
     const g=ctx.createLinearGradient(0,-p.r,0,p.r); g.addColorStop(0,'rgba(244,208,63,0)'); g.addColorStop(0.5,'#ffe86a'); g.addColorStop(1,'rgba(244,208,63,0)');
