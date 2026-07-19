@@ -1625,7 +1625,7 @@ function weaponSlotMax(){ let n=WEAPON_MAX; if(player&&player.weapons){ if(playe
 // 뱀서식 개편: 방향형·연사형은 빠르게, 궤도(상시유지)/한방형은 느리게. 코스모·보드카마티니는 소다건식 연사(weaponCd 특수처리)
 const COCKTAIL_CD = { gimlet:120, highball:39, mojito:55, vodkatonic:51, sidecar:90, margarita:67,   // gimlet=전기체인(올드패션드급 느린 공속 120). sidecar 공속 너프 64→90
   manhattan:76, vodkacranberry:83, southside:130, oldfashioned:120, drymartini:115, gintonic:46,   // southside=민트레인(느린 공속 130) · oldfashioned 공속 너프 92→120
-  moscowmule:30, whiskysour:70, negroni:60, bloodymary:95, espressomartini:160 };   // ★에스프레소 공속 50%↓(80→160)   // 모스코뮬=나이프(빠름) · 위스키사워=세로빔 · 네그로니=방어오라 · 블러디메리=새폭격 · 에스프레소=라이트닝링
+  moscowmule:42, whiskysour:70, negroni:60, bloodymary:95, espressomartini:160 };   // ★모스코뮬 공속 살짝↓(30→42) · 에스프레소 공속 50%↓(80→160)   // 모스코뮬=나이프(빠름) · 위스키사워=세로빔 · 네그로니=방어오라 · 블러디메리=새폭격 · 에스프레소=라이트닝링
 function weaponInfo(key){
   if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail weapon — unique attack, levels to 6', max:6}; }   // 칵테일=무기, Lv6까지
   if(SPIRITS[key]) return {name:SPIRITS[key].name, ic:SPIRITS[key].ic, img:'bottle_'+key, desc:SPIRITS[key].desc, max:MAX_WLV};  // 칩/카드 = 스피릿 바틀 이미지
@@ -1692,7 +1692,7 @@ function recalcStats(){
   // ★새 재료 파생 스탯
   player.durMul = 1 + pas.edur;                          // 커피: 궤도·오라 지속시간↑
   player.enemyDefDown = pas.enemydef;                    // 캄파리: 주위 적 방어↓(데미지 배수 보너스)
-  player.campariR = player.weapons.campari ? (110 + (player.weapons.campari)*16)*(player.sizeMul||1) : 0;   // 캄파리 오라 반경
+  player.campariR = player.weapons.campari ? (110 + (player.weapons.campari)*16)*(player.sizeMul||1)*0.6 : 0;   // 캄파리 오라 반경(★40%↓)
   const tlv=player.weapons.tomato||0;                    // 토마토: 필살기 쿨 1/8(lv1) → 1/3(lv6)
   player.ultCdMul = tlv ? (1 - (0.125 + (tlv-1)*((0.3333-0.125)/5))) : 1;
   player.reviveCharges = (player.weapons.coffee && !player.reviveUsed) ? 1 : 0;   // 커피: 1회 부활
@@ -2952,7 +2952,7 @@ function onHit(p, e){
   if(p.cSlow){ e.frozenUntil = Math.max(e.frozenUntil||0, frame + p.cSlow); }
   if(p.cStop){ e.stopUntil = Math.max(e.stopUntil||0, frame + p.cStop); e.frozenUntil = Math.max(e.frozenUntil||0, frame + p.cStop);
     if(!p._stpFx){ p._stpFx=1; icyBoom(e.x, e.y, 40); } }   // 완전 동결(위스키사워)
-  if(p.knockback){ const ka=Math.atan2(p.vy,p.vx), kb=(e.type==='boss'?12:34);   // ★모스코뮬/보드카크랜베리: 진행 방향으로 밀어냄(보스는 덜)
+  if(p.knockback && e.type!=='drunk'){ const ka=Math.atan2(p.vy,p.vx), kb=(e.type==='boss'?6:17);   // ★모스코뮬/보드카크랜베리: 진행 방향으로 밀어냄. drunk(잡몹)은 안 밀림 · 세기 절반
     e.x+=Math.cos(ka)*kb; e.y+=Math.sin(ka)*kb; }
   if(p.cPoison){ e.poison = { dmg: Math.max(3, p.dmg*0.3), until: frame + p.cPoison }; }
   if(p.cExplode){ explodeAt(p.x, p.y, p.dmg*0.7, p.cExplode); }
@@ -3230,7 +3230,7 @@ function fireCocktail(key, lv){
       const n=Math.min(5, 2+Math.floor(lv/2));
       const sz=24*(1+(lv-1)*0.1)*(player.sizeMul||1);
       for(let i=0;i<n;i++){ const ang=(i/n)*6.28318;   // 3시(0)부터 균등 방사(플레이어 기준 고정 방향)
-        add({ noScale:true, vx:Math.cos(ang)*4.6, vy:Math.sin(ang)*4.6, dmg:40*P*(1+(lv-1)*0.03), r:sz, pierce:99, life:84, life0:84, boom:true, boomSp:8, cSlow:60 }); } break; }   // 나가는 거리 절반(느린 out)·복귀 빠르게(손까지 완전히 돌아옴)
+        add({ noScale:true, vx:Math.cos(ang)*4.6, vy:Math.sin(ang)*4.6, dmg:56*P*(1+(lv-1)*0.03), r:sz, pierce:99, life:84, life0:84, boom:true, boomSp:8, cSlow:60 }); } break; }   // ★공격력 40%↑(40→56) · 나가는 거리 절반·복귀 빠르게
     // ── 룬트레이서: 벽 튕김. Lv1=1발·2튕김 → 레벨업마다 튕김↑, 4레벨마다 +1발 ──
     case 'sidecar': { const n=1+Math.floor((lv-1)/5);   // 발수 완화: Lv1~5=1발, Lv6~8=2발
       for(let i=0;i<n;i++){ const ang=a+i*1.1;
@@ -3268,17 +3268,18 @@ function fireCocktail(key, lv){
     case 'gintonic': break;
     // ── ★모스코뮬: 당나귀 발차기(채찍식). 보드카 크랜베리처럼 발이 립스틱처럼 나갔다 되돌아옴 + 넉백. ──
     case 'moscowmule': {
-      const outSp = 6, life = 44;                         // 뻗는 속도 / 왕복 수명(반은 나가고 반은 복귀)
-      const dmg = 60 * P * (evo ? 2 : 1);                 // ★슈퍼면 2배
-      const dirs = (evo || lv >= 6) ? [1, -1] : [ (player.facing||1) >= 0 ? 1 : -1 ];   // Lv1~5 한쪽, Lv6·슈퍼 양쪽
-      for(const dir of dirs){ player.mmAlt = !player.mmAlt;
-        add({ kind: player.mmAlt?'proj_mule_l':'proj_mule_r', vx:dir*outSp, vy:0, dmg, r:24, pierce:99, life, life0:life,
-              boom:true, boomSp:10, cSlow:40, knockback:true, whip:true, whipDir:dir }); }   // 채찍 인/아웃 + 밀어내기
+      // ★발 하나만, 바라보는 방향으로. 사거리 줄임(느린 속도+짧은 수명). 채찍 인/아웃 + 넉백.
+      const outSp = 4.4, life = 32;                       // 사거리↓ (6→4.4 · 44→32)
+      const dmg = 66 * P * (evo ? 2 : 1);                 // ★슈퍼면 2배(발 하나 되어 데미지 소폭↑)
+      const dir = (player.facing||1) >= 0 ? 1 : -1;       // 항상 한쪽(한 발)
+      player.mmAlt = !player.mmAlt;
+      add({ kind: player.mmAlt?'proj_mule_l':'proj_mule_r', vx:dir*outSp, vy:0, dmg, r:24, pierce:99, life, life0:life,
+            boom:true, boomSp:12, cSlow:40, knockback:true, whip:true, whipDir:dir });
       break; }
-    // ── ★위스키사워: 적을 조준하지 않고 바라보는 방향으로 '일자'로 화면 끝까지 노란 빔. 닿으면 완전 정지. ──
+    // ── ★위스키사워: 가장 가까운 적을 조준해 그 방향으로 화면 끝까지 노란 빔. 닿으면 완전 정지. ──
     case 'whiskysour': {
-      // 표적을 안 고르고 항상 바라보는(이동) 방향으로 발사. 빔은 화면 끝까지(고정 길이). 관통6·데미지0·완전정지.
-      const dir = aim;                    // ★t(표적) 무시 → 조준 안 함
+      // ★가장 가까운 적 쪽으로 조준(없으면 바라보는 방향). 빔은 화면 끝까지. 관통6·데미지0·완전정지.
+      const dir = t ? a : aim;            // 표적 우선 조준
       const len = 1200;                   // 화면 끝까지(캔버스 어느 방향이든 덮음)
       add({ noScale:true, kind:'wsbeam', vx:0, vy:0, dmg:0, r:11+lv*2, beamLen:len, beamAng:dir, pierce:6, life:26+lv*3, cStop:130, beamFromPlayer:true });
       break; }
@@ -3289,10 +3290,11 @@ function fireCocktail(key, lv){
       // 블러디메리 잔 1개가 플레이어 주위를 8자로 날아다니며(updateBloodyMary), 여기서 고추를 방사형으로 뿌림.
       const bx = player.bmx!=null?player.bmx:player.x, by = player.bmy!=null?player.bmy:player.y;
       const n = 5 + (lv-1);        // 5발 → 레벨마다 +1
+      const pierce = lv>=6 ? 4 : 2;   // ★만렙(Lv6)이면 관통 4, 그 전엔 2
       const dmg = 24*P, base=frame*0.02, rr = 11*(player.sizeMul||1);
       for(let i=0;i<n;i++){ const ang = base + i*(6.28/n);   // 모든 방향(레인보우식)
-        // ★직접 push = 관통 정확히 2(tonic 패시브 pierce 안 붙음). cPoison 지속피해.
-        projectiles.push({ x:bx, y:by, kind:'proj_chili', vx:Math.cos(ang)*6.2, vy:Math.sin(ang)*6.2, dmg, r:rr, splash:0, pierce:2, hit:new Set(), life:105, cPoison:Math.round(130*(player.durMul||1)) }); }
+        // ★직접 push = 관통 고정(tonic 패시브 pierce 안 붙음). cPoison 지속피해.
+        projectiles.push({ x:bx, y:by, kind:'proj_chili', vx:Math.cos(ang)*6.2, vy:Math.sin(ang)*6.2, dmg, r:rr, splash:0, pierce, hit:new Set(), life:105, cPoison:Math.round(130*(player.durMul||1)) }); }
       break; }
     // ── ★에스프레소 마티니: 갈색 라이트닝 링. 랜덤 지점에 낙뢰(AoE + 빙결). ──
     case 'espressomartini': {
@@ -3367,6 +3369,7 @@ function weaponCd(key, lv){
   if(key==='vodkacranberry'){ const cd = Math.round((170 - lv*8) * 0.5);   // ★붉은 채찍: 공속 50% 빠르게 (Lv1 81 → Lv6 61)
     return (player&&player.evolved&&player.evolved.has('vodkacranberry')) ? Math.round(cd/2) : cd; }   // 슈퍼면 공속 2배(cd 절반)
   if(key==='whiskysour') return Math.max(90, 210 - (lv-1)*18);   // ★위스키사워 빔: Lv1=3.5s(210f), 레벨당 -0.3s(-18f)
+  if(key==='moscowmule') return Math.max(38, 50 - lv*3);         // ★모스코뮬 채찍: 살짝 느리게(Lv1 47 → Lv6 38)
   if(COCKTAILS[key]) return Math.max(30, (COCKTAIL_CD[key]||80) - lv*4);   // 칵테일 공속: 하한 30f(빠른 칵테일도 Lv8에서 ~15% 느려짐)
   if(SPIRITS[key]) return spiritCd(key,lv);
   if(key==='trio') return Math.round(58*(1-(lv-1)/6));   // 시트러스 트리오: Lv1=58 → Lv4=29(공속 2배)
@@ -4174,7 +4177,7 @@ function craftableCocktails(){
   if(!player) return [];
   const slotsFull = craftedSlotsUsed() >= weaponSlotMax();
   return RECIPES.filter(rc=> rc.cocktail && rc.ok() && (player.weapons[rc.result]||0) < weaponInfo(rc.result).max
-    && !(slotsFull && !player.weapons[rc.result]));
+    && !(slotsFull && !player.weapons[rc.result]) && !conflictBlocked(rc.result));
 }
 let craftChoiceMode='craft';   // 'craft'(히든 융합 즉시) / 'tip'(칵테일은 팁 스핀으로 완성)
 function openCraftChoice(recipes, mode){
@@ -4329,6 +4332,9 @@ function baseUltPool(){ const p=[];
   if(player.rainbow && (player.rainbowLv||1) < 6){ p.push({ type:'rainbowup', ic:'🌈', img:'rainbow_icon', n:'RAINBOW GUN UP', d:'+2 firing directions (cross → 6 → 8 → 10 → 12 → 14)', lv:player.rainbowLv||1, maxlv:6 }); }
   return p;
 }
+// ★상호 배타: 둘 중 하나를 보유하면 나머지는 등장 안 함(중복 보유 금지)
+const CONFLICTS = { moscowmule:'vodkacranberry', vodkacranberry:'moscowmule' };
+function conflictBlocked(k){ const c=CONFLICTS[k]; return !!(c && (player.weapons[c]||0)>0); }
 function buildLevelChoices(){
   // ※ 진화(슈퍼 칵테일)는 레벨업에 안 뜸 → 보스 팁에서만.
   const weaponFull = ownedCount(COCKTAIL_KEYS) >= weaponSlotMax();
@@ -4339,7 +4345,7 @@ function buildLevelChoices(){
     COCKTAIL_KEYS.filter(k=>player.weapons[k] && !(player.evolved&&player.evolved.has(k)) && player.weapons[k]<6).map(k=>weaponCard(k))
     .concat(COCKTAIL_KEYS.filter(k=>player.evolved && player.evolved.has(k) && ((player.superLv&&player.superLv[k])||1)<8).map(k=>superCard(k)))
   );
-  const newCk=weaponFull?[]:_shuf(COCKTAIL_KEYS.filter(k=>!player.weapons[k]).map(k=>weaponCard(k)));
+  const newCk=weaponFull?[]:_shuf(COCKTAIL_KEYS.filter(k=>!player.weapons[k] && !conflictBlocked(k)).map(k=>weaponCard(k)));
   const weaponPick=[];
   if(ownedUp.length) weaponPick.push(ownedUp.shift());          // 보유 칵테일 강화 최소 1개 보장
   const restW=_shuf(ownedUp.concat(newCk));
