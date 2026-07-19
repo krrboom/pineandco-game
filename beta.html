@@ -3357,18 +3357,23 @@ function updateVodkaTonic(){
   const lv=player.weapons.vodkatonic;
   const evo=player.evolved && player.evolved.has('vodkatonic'), slv=evo?((player.superLv&&player.superLv.vodkatonic)||1):0;
   const P = evo ? (0.33*Math.pow(1.42,7))*(0.85*Math.pow(1.166,slv-1))*player.dmgMul*1.1 : 0.33*Math.pow(1.42,lv-1)*player.dmgMul;
-  const dmg = 41 * P * 1.5;                     // ★공격력 50%↑
-  const want = Math.min(4, lv);                 // ★최대 4개(레벨당 +1)
+  const dmg = 41 * P * 1.5 * (evo ? 1.8 : 1);   // ★공격력 50%↑ · 슈퍼는 훨씬 더 강하게(×1.8)
+  const want = evo ? Math.min(8, 4 + slv) : Math.min(4, lv);   // ★기본 최대 4 · 슈퍼는 레벨업마다 +1(최대 8)
+  const sizeBoost = evo ? (1.3 + slv*0.07) : 1;   // ★슈퍼는 피사체 크게
   while(vtDrones.length < want) vtDrones.push({ x:player.x+(Math.random()-0.5)*50, y:player.y+(Math.random()-0.5)*50, vx:0, vy:0, hit:{} });
   while(vtDrones.length > want) vtDrones.pop();
-  const R=24*(player.sizeMul||1);
-  for(const d of vtDrones){
+  const R=24*(player.sizeMul||1)*sizeBoost;
+  const SEP=R*1.6;   // ★드론끼리 안 겹치게(분리 반경)
+  for(const d of vtDrones){ d.size=sizeBoost;   // 렌더용 크기 저장
     let tgt=null, nd=1e9;
     for(const e of enemies){ if(e.type==='passout') continue; const dd=(e.x-d.x)**2+(e.y-d.y)**2; if(dd<nd){ nd=dd; tgt=e; } }
     if(tgt){ const dist=Math.sqrt(nd), sp=dist<50?2.0:3.4;   // ★가까우면 감속(넓게 안 돌고 확실히 명중)
       const ang=Math.atan2(tgt.y-d.y, tgt.x-d.x); d.vx += (Math.cos(ang)*sp - d.vx)*0.14; d.vy += (Math.sin(ang)*sp - d.vy)*0.14; }
     else { const ang=Math.atan2(player.y-d.y, player.x-d.x), dist=Math.hypot(player.x-d.x,player.y-d.y);   // 적 없으면 플레이어 근처를 맴돎
       const want2=dist>60?2:-1.2; d.vx += (Math.cos(ang)*want2 - d.vx)*0.08; d.vy += (Math.sin(ang)*want2 - d.vy)*0.08; }
+    // ★드론끼리 밀어내기(서로 안 겹침)
+    for(const o of vtDrones){ if(o===d) continue; const dx=d.x-o.x, dy=d.y-o.y, dd=Math.hypot(dx,dy);
+      if(dd>0.01 && dd<SEP){ const push=(SEP-dd)/SEP*0.9; d.vx += (dx/dd)*push; d.vy += (dy/dd)*push; } }
     d.x += d.vx; d.y += d.vy;
     for(const e of enemies){ if(e.type==='passout') continue;
       if(Math.hypot(e.x-d.x, e.y-d.y) < R + e.r && frame >= (d.hit[e.id]||0)){
@@ -3915,7 +3920,11 @@ function update(){
           for(const e of enemies){ if(Math.hypot(e.x-lx,e.y-ly) < p.landR+e.r){
             e.frozenUntil=Math.max(e.frozenUntil||0, frame+(p.cSlow||0));
             if(p.cPoison) e.poison={ dmg:Math.max(3,p.dmg*0.3), until:frame+p.cPoison }; } }
-          burst(lx,ly,'#8fd14f',14);
+          if(p.kind==='espbolt'){   // ★에스프레소: 갈색 낙뢰 잔상이 조금 더 오래 남게(너무 빨리 사라지지 않게)
+            boltFx.push({ x:lx, y:ly, life:26, life0:26, boltImg:p.boltImg, landR:p.landR });
+            explosions.push({ x:lx, y:ly, r:p.landR*0.9, life:20, max:20, col:'#7a4a1e', ring:'#caa06a', flash:true });
+            burst(lx,ly,'#caa06a',16);
+          } else burst(lx,ly,'#8fd14f',14);
         }
         for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
         projectiles.splice(i,1);
@@ -4952,12 +4961,12 @@ function draw(){
     drawEprojectiles();   // ★보스/적 발사체를 플레이어 발사체 위에 그림(후반 난장판에서도 잘 보이게)
     // ★보드카 토닉: 로밍 얼음 familiar(작은 토닉 잔 + 빙결 글로우)
     if(vtDrones.length){ const vim=spr('cocktail_vodkatonic');
-      for(const d of vtDrones){ ctx.save();
-        ctx.globalAlpha=0.5+0.2*Math.sin(frame*0.2+d.x); const gr=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,20);
-        gr.addColorStop(0,'rgba(160,225,255,0.8)'); gr.addColorStop(1,'rgba(160,225,255,0)'); ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(d.x,d.y,20,0,6.28); ctx.fill();
+      for(const d of vtDrones){ const sc=d.size||1; ctx.save();
+        ctx.globalAlpha=0.5+0.2*Math.sin(frame*0.2+d.x); const gR=20*sc, gr=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,gR);
+        gr.addColorStop(0,'rgba(160,225,255,0.8)'); gr.addColorStop(1,'rgba(160,225,255,0)'); ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(d.x,d.y,gR,0,6.28); ctx.fill();
         ctx.globalAlpha=1;
-        if(vim){ const H=26, W=H*vim.width/vim.height; drawImgC(vim, d.x, d.y, W, H, Math.atan2(d.vy,d.vx)+1.57); }
-        else { ctx.fillStyle='#bfe6ff'; ctx.beginPath(); ctx.arc(d.x,d.y,7,0,6.28); ctx.fill(); }
+        if(vim){ const H=26*sc, W=H*vim.width/vim.height; drawImgC(vim, d.x, d.y, W, H, Math.atan2(d.vy,d.vx)+1.57); }
+        else { ctx.fillStyle='#bfe6ff'; ctx.beginPath(); ctx.arc(d.x,d.y,7*sc,0,6.28); ctx.fill(); }
         ctx.restore(); } }
     // tequila 라임 궤도
     for(const L of limes){ const R=22, lx=L.x+Math.cos(L.ang)*R, ly=L.y+Math.sin(L.ang)*R;
@@ -4975,11 +4984,22 @@ function draw(){
     // 파티클
     for(const pt of particles){ ctx.globalAlpha=pt.life/18; ctx.fillStyle=pt.color;
       ctx.fillRect(pt.x-2,pt.y-2,4,4); ctx.globalAlpha=1; }
-    // ★에스프레소 낙뢰: 갈색 세로 지그재그 볼트(위에서 내리꽂힘)
-    for(const bf of boltFx){ ctx.save(); ctx.globalAlpha=Math.min(1,bf.life/8); ctx.strokeStyle='#caa06a'; ctx.lineWidth=3; ctx.lineJoin='round';
-      ctx.beginPath(); let by=bf.y-120, bx=bf.x; ctx.moveTo(bx,by);
-      for(let s=0;s<6;s++){ by+=20; bx=bf.x+((s%2)?1:-1)*(8-s); ctx.lineTo(bx,by); }
-      ctx.lineTo(bf.x,bf.y); ctx.stroke(); ctx.strokeStyle='#fff0d0'; ctx.lineWidth=1; ctx.stroke(); ctx.restore(); }
+    // ★에스프레소 낙뢰 잔상: 갈색으로 빛나는 번개 이미지 + 갈색 글로우(조금 더 오래 남았다 페이드)
+    for(const bf of boltFx){ const t=bf.life0?bf.life/bf.life0:Math.min(1,bf.life/8); ctx.save();
+      const im=spr(bf.boltImg)||spr('lightning_0');
+      // 착지점 갈색 글로우(맥동)
+      const gr=ctx.createRadialGradient(bf.x,bf.y,0,bf.x,bf.y,(bf.landR||40)*(0.7+0.5*(1-t)));
+      gr.addColorStop(0,'rgba(160,110,50,'+(0.5*t)+')'); gr.addColorStop(0.5,'rgba(202,160,106,'+(0.3*t)+')'); gr.addColorStop(1,'rgba(202,160,106,0)');
+      ctx.globalAlpha=1; ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(bf.x,bf.y,(bf.landR||40)*(0.7+0.5*(1-t)),0,6.28); ctx.fill();
+      // 번개 이미지(위에서 착지점까지) — 갈색 곱하기로 물들임
+      if(im){ const topY=-20, H=bf.y-topY, Wd=H*im.width/im.height*0.5;
+        ctx.globalAlpha=0.6*t; ctx.imageSmoothingEnabled=false; ctx.drawImage(im, bf.x-Wd/2, topY, Wd, H);
+        ctx.globalCompositeOperation='source-atop'; ctx.globalAlpha=0.5*t; ctx.fillStyle='#7a4a1e'; ctx.fillRect(bf.x-Wd/2, topY, Wd, H); }   // 갈색 틴트
+      // 밝은 갈색 지그재그 코어
+      ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=Math.min(1,t*1.2); ctx.strokeStyle='#e6c48a'; ctx.lineWidth=2.5; ctx.lineJoin='round';
+      ctx.beginPath(); let by=-16, bx=bf.x; ctx.moveTo(bx,by);
+      for(let s=0;s<8;s++){ by+=(bf.y+16)/8; bx=bf.x+((s%2)?1:-1)*(9-s); ctx.lineTo(bx,by); }
+      ctx.lineTo(bf.x,bf.y); ctx.stroke(); ctx.restore(); }
     // 크리티컬 팝업
     for(const c of crits){ ctx.globalAlpha=Math.min(1,c.life/12); ctx.font='bold 11px monospace'; ctx.textAlign='center';
       const _t=c.txt||'CRIT!'; ctx.lineWidth=3; ctx.strokeStyle='#000'; ctx.strokeText(_t, c.x, c.y); ctx.fillStyle=c.col||'#ffd24a'; ctx.fillText(_t, c.x, c.y); ctx.globalAlpha=1; }
@@ -5203,8 +5223,14 @@ function drawProj(p){
     ctx.globalAlpha=0.9; ctx.fillStyle='#fff6c0'; ctx.beginPath(); ctx.arc(L,0,p.r*0.7,0,6.28); ctx.fill();   // 빔 끝 광점
     ctx.restore(); return; }
   if(p.kind==='espbolt'){ const im=spr(p.boltImg)||spr('lightning_0'); const topY = -20;   // ★번개: 화면 위(잘림 없이)에서 현재 y까지 세로로
-    if(im){ const H=p.y-topY, W=H*im.width/im.height*0.5; ctx.save(); ctx.globalAlpha=0.92; ctx.imageSmoothingEnabled=false; ctx.drawImage(im, p.x-W/2, topY, W, H); ctx.restore(); }
-    else { ctx.save(); ctx.strokeStyle='#5fc9ff'; ctx.lineWidth=4; ctx.beginPath(); let yy=topY,xx=p.x; ctx.moveTo(xx,yy); for(let s=0;s<8;s++){ yy+=(p.y-topY)/8; xx=p.x+((s%2)?1:-1)*8; ctx.lineTo(xx,yy); } ctx.stroke(); ctx.restore(); }
+    if(im){ const H=p.y-topY, W=H*im.width/im.height*0.5; ctx.save(); ctx.imageSmoothingEnabled=false;
+      // 낙하 지점 갈색 글로우
+      const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,44); gr.addColorStop(0,'rgba(202,160,106,0.7)'); gr.addColorStop(1,'rgba(202,160,106,0)');
+      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(p.x,p.y,44,0,6.28); ctx.fill();
+      ctx.globalAlpha=0.95; ctx.drawImage(im, p.x-W/2, topY, W, H);
+      ctx.globalCompositeOperation='source-atop'; ctx.globalAlpha=0.45; ctx.fillStyle='#8a5a24'; ctx.fillRect(p.x-W/2, topY, W, H);   // ★갈색 틴트
+      ctx.restore(); }
+    else { ctx.save(); ctx.strokeStyle='#caa06a'; ctx.lineWidth=4; ctx.beginPath(); let yy=topY,xx=p.x; ctx.moveTo(xx,yy); for(let s=0;s<8;s++){ yy+=(p.y-topY)/8; xx=p.x+((s%2)?1:-1)*8; ctx.lineTo(xx,yy); } ctx.stroke(); ctx.restore(); }
     return; }
   if(p.kind==='proj_chili' && spr('proj_chili')){ const im=spr('proj_chili'), H=p.r*1.5, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)+0.6); return; }   // ★고추(진행 방향) 크기 50%↓
   if(p.kind && p.kind.indexOf('cocktail_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*2.6, W=H*im.width/im.height;
