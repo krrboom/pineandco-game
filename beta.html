@@ -5158,11 +5158,11 @@ let plaza=null;
 /* 🍎 Apple AI 주소 — plaza-ai Worker 배포 후 여기에 넣으면 자유 대화 ON.
    비워두면(또는 실패하면) 아래 로컬 추천(규칙 기반)으로 자동 폴백해서 그래도 동작한다. */
 // ★beta/localhost에서만 Render Apple(제미나이) 연결, 프로덕션(index.html)은 내장 로컬 답변. 나중에 프로덕션도 켜려면 아래 삼항 대신 그냥 주소만.
-const APPLE_AI_URL = /beta|localhost|127\.0\.0\.1/i.test(location.href) ? 'https://plaza-ai.onrender.com' : '';
+const APPLE_AI_URL = 'https://plaza-ai.onrender.com';   // Apple 챗은 프로덕션 포함 제미나이 연결(도배방지 5초/IP·시간당 30). 없거나 오류면 로컬 폴백.
 // 🌲 광장/Apple은 준비되기 전까지 프로덕션에 노출하지 않는다 → beta/localhost에서만 광장 버튼 표시(APPLE_AI_URL과 동일 조건).
-(function(){ const show=/beta|localhost|127\.0\.0\.1/i.test(location.href);
+(function(){ const show=/beta|localhost|127\.0\.0\.1/i.test(location.href);   // 광장 버튼만 베타 전용
   function gate(){ const pr=document.getElementById('plazaRow'); if(pr) pr.style.display = show ? '' : 'none';
-    if(show) drawAppleCorner();          // 캔버스 1회 렌더 — 실제 표시 여부는 refreshAppleCorner가 화면별로 제어
+    drawAppleCorner();                    // 코너 캔버스 1회 렌더(프로덕션 포함) — 표시 여부는 refreshAppleCorner가 화면별로 제어
     if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }
   if(document.readyState!=='loading') gate(); else document.addEventListener('DOMContentLoaded', gate); })();
 function pzEsc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -5280,12 +5280,11 @@ function drawAppleCorner(){
   if(h>cv.height){ h=cv.height; w=Math.round(h*ar); }
   c.drawImage(im, Math.round((cv.width-w)/2), cv.height-h, w, h);   // 하단 정렬(캐릭터 발 기준)
 }
-// 코너 Apple은 '시작화면(titleScreen)'과 '메뉴(menuScreen)'에서만 뜬다(베타 전용). 게임 중엔 숨김.
+// 코너 Apple은 '시작화면(titleScreen)'과 '메뉴(menuScreen)'에서만 뜬다(프로덕션 포함). 게임 중엔 숨김. (※광장 버튼은 여전히 베타 전용)
 function refreshAppleCorner(){
   const ac=document.getElementById('appleCorner'); if(!ac) return;
-  const beta=/beta|localhost|127\.0\.0\.1/i.test(location.href);
   const ts=document.getElementById('titleScreen'), ms=document.getElementById('menuScreen');
-  const on = beta && ((ts && !ts.classList.contains('hidden')) || (ms && !ms.classList.contains('hidden')));
+  const on = (ts && !ts.classList.contains('hidden')) || (ms && !ms.classList.contains('hidden'));
   ac.style.display = on ? 'flex' : 'none';
 }
 async function appleHelperSend(){
