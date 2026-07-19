@@ -185,7 +185,11 @@
     background:rgba(8,10,8,.6); pointer-events:auto; }
   #appleHelper.hidden{ display:none; }
   #appleHelper .ah-box{ position:relative; width:min(94vw,410px); background:#182417; border:3px solid var(--pine,#5a8a5e);
-    box-shadow:6px 6px 0 #000; border-radius:12px; padding:14px 14px 12px; display:flex; flex-direction:column; align-items:center; }
+    box-shadow:6px 6px 0 #000; border-radius:12px; padding:14px 14px 12px; display:flex; flex-direction:column; align-items:center;
+    max-height:calc(100% - 12px); overflow:hidden; }
+  /* 폰 키보드 뜨면 초상화·언어버튼 접어 로그+입력창이 보이게 */
+  #appleHelper.kbd .ah-portrait{ height:0; margin:0; }
+  #appleHelper.kbd .ah-lang{ display:none; }
   #appleHelper .ah-x{ position:absolute; top:6px; right:10px; background:none; border:0; color:#dfe; font-size:18px; cursor:pointer; line-height:1; }
   #appleHelper .ah-portrait{ width:118px; height:150px; display:flex; align-items:flex-end; justify-content:center; }
   #appleHelper .ah-portrait img{ max-width:100%; max-height:100%; image-rendering:pixelated; filter:drop-shadow(2px 3px 0 rgba(0,0,0,.45)); }
@@ -193,7 +197,7 @@
   #appleHelper .ah-lang button{ font-family:inherit; font-size:8px; letter-spacing:.5px; color:#cde6d2; cursor:pointer;
     background:rgba(20,32,18,.9); border:1.5px solid #3a5a3e; border-radius:6px; padding:5px 10px; }
   #appleHelper .ah-lang button.on{ color:#12210c; background:var(--gold,#c89a3c); border-color:var(--gold,#c89a3c); font-weight:bold; }
-  #appleHelper .ah-log{ width:100%; max-height:32vh; min-height:56px; overflow-y:auto; background:rgba(0,0,0,.32);
+  #appleHelper .ah-log{ width:100%; flex:1 1 auto; max-height:32vh; min-height:0; overflow-y:auto; background:rgba(0,0,0,.32);
     border-radius:7px; padding:8px 10px; font-size:12px; line-height:1.55; color:#eafbe9; }
   #appleHelper .ah-log .u{ color:#bfe6ff; margin:6px 0 1px; } #appleHelper .ah-log .a{ color:#fff; margin:0 0 6px; }
   #appleHelper .ah-inbar{ display:flex; gap:6px; width:100%; margin-top:8px; }
@@ -5235,18 +5239,39 @@ async function appleAsk(q){
 }
 /* 🍎 Apple 도우미(버튼) — 감정 표정 대화창. APPLE_AI_URL(beta/localhost) 있으면 제미나이, 없으면 로컬 폴백. */
 const AH_EMOS=['neutral','happy','wink','happygrin','surprised','sad','confused','sleeping','scared','determined','angry','shivering','wink2'];
-let ahHist=[];
+let ahHist=[], ahTypeTimer=null;
 function ahSetEmotion(e){ const img=document.getElementById('ahImg'); if(!img) return; if(!AH_EMOS.includes(e)) e='neutral'; img.src='assets/apple_'+e+'.png'; }
 function ahAdd(who,text){ const lg=document.getElementById('ahLog'); if(!lg) return null;
   const d=document.createElement('div'); d.className=who; d.textContent=(who==='u'?'나  ':'')+text;
   lg.appendChild(d); while(lg.children.length>40) lg.removeChild(lg.firstChild); lg.scrollTop=lg.scrollHeight; return d; }
+// Apple 답변을 한 글자씩 타자기처럼 출력(말하는 느낌). 빠른 속도.
+function ahTypeAnswer(text){
+  const lg=document.getElementById('ahLog'); if(!lg) return;
+  if(ahTypeTimer){ clearTimeout(ahTypeTimer); ahTypeTimer=null; }
+  const d=document.createElement('div'); d.className='a'; lg.appendChild(d);
+  while(lg.children.length>40) lg.removeChild(lg.firstChild);
+  let i=0;
+  const step=()=>{ i=Math.min(text.length, i+1); d.textContent=text.slice(0,i);
+    const stick = lg.scrollHeight-lg.scrollTop-lg.clientHeight < 40; if(stick) lg.scrollTop=lg.scrollHeight;
+    if(i<text.length) ahTypeTimer=setTimeout(step, 16); else ahTypeTimer=null; };
+  step();
+}
 function openApple(){ try{ initAudio(); }catch(e){}
   const el=document.getElementById('appleHelper'); if(!el) return;
   el.classList.remove('hidden');
   const lg=document.getElementById('ahLog');
   if(lg && !lg.children.length){ appleSetLang(appleLang); }
   else { document.querySelectorAll('#ahLang button').forEach(b=>b.classList.toggle('on', b.dataset.l===appleLang)); }
-  setTimeout(()=>{ const i=document.getElementById('ahInput'); if(i) i.focus(); }, 60);
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize', ahFitViewport); window.visualViewport.addEventListener('scroll', ahFitViewport); }
+  ahFitViewport();
+  setTimeout(()=>{ const i=document.getElementById('ahInput'); if(i) i.focus(); ahFitViewport(); }, 60);
+}
+// 폰 키보드가 뜨면 채팅창을 '보이는 영역(visualViewport)'에 맞춰 축소·이동 → 화면 짤림 방지
+function ahFitViewport(){
+  const el=document.getElementById('appleHelper'); if(!el || el.classList.contains('hidden')) return;
+  const vv=window.visualViewport;
+  if(vv){ el.style.height=vv.height+'px'; el.style.top=vv.offsetTop+'px'; el.style.bottom='auto';
+    el.classList.toggle('kbd', vv.height < window.innerHeight*0.8); }
 }
 // 언어 상태 + 언어별 환영/UI 문구
 let appleLang = (function(){ try{ return localStorage.getItem('paco_applelang')||'ko'; }catch(e){ return 'ko'; } })();
@@ -5269,7 +5294,9 @@ function appleSetLang(lang){
   ahAdd('a', AH_TXT[appleLang].welcome);
   if(inp) inp.focus();
 }
-function closeApple(){ const el=document.getElementById('appleHelper'); if(el) el.classList.add('hidden'); }
+function closeApple(){ const el=document.getElementById('appleHelper'); if(el){ el.classList.add('hidden'); el.classList.remove('kbd'); el.style.height=''; el.style.top=''; el.style.bottom=''; }
+  if(window.visualViewport){ window.visualViewport.removeEventListener('resize', ahFitViewport); window.visualViewport.removeEventListener('scroll', ahFitViewport); }
+  if(ahTypeTimer){ clearTimeout(ahTypeTimer); ahTypeTimer=null; } }
 // 우상단 코너 Apple을 아주 낮은 해상도로 그린다(작은 캔버스에 축소 → CSS 픽셀 확대 = 저화질 픽셀아트 느낌)
 function drawAppleCorner(){
   const cv=document.getElementById('acCanvas'); if(!cv) return;
@@ -5290,6 +5317,7 @@ function refreshAppleCorner(){
 async function appleHelperSend(){
   const inp=document.getElementById('ahInput'); if(!inp) return;
   const q=inp.value.trim().slice(0,120); if(!q) return; inp.value='';
+  if(ahTypeTimer){ clearTimeout(ahTypeTimer); ahTypeTimer=null; }   // 이전 답변 타이핑 중이면 중단
   ahAdd('u', q); ahSetEmotion('sleeping'); const dots=ahAdd('a','…');
   let answer='', emotion='';
   if(APPLE_AI_URL){
@@ -5300,7 +5328,7 @@ async function appleHelperSend(){
   if(!answer) answer=appleLocalAnswer(q);            // 서버 없음/오류 → 로컬 폴백(진짜 메뉴 데이터)
   if(dots && dots.parentNode) dots.parentNode.removeChild(dots);
   ahSetEmotion(emotion || 'happy');
-  ahAdd('a', answer);
+  ahTypeAnswer(answer);              // 한 글자씩 타자기 출력(말하는 느낌)
   ahHist.push({role:'user',content:q},{role:'assistant',content:answer});
   if(ahHist.length>12) ahHist=ahHist.slice(-12);
 }
