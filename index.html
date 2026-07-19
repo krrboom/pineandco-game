@@ -246,6 +246,13 @@
   .craft-choice img{ height:46px; image-rendering:pixelated; }
   .craft-choice span{ font-size:8.5px; color:#f0ebe0; line-height:1.2; }
   .scrollbox{ max-height:55vh; overflow-y:auto; width:100%; padding-right:8px; }
+  /* 📱 메뉴 화면: 상단(언어·대분류·프로모션)을 작게 눌러 칵테일 목록 공간 확보 */
+  #menuScreen .menu-lang{ margin:0 auto 5px; }
+  #menuScreen .menu-lang button{ font-size:11px; padding:5px 12px; }
+  #menuScreen .menu-nav{ margin:2px auto 5px; }
+  #menuScreen .menu-nav button{ font-size:8px; padding:4px 8px; }
+  #menuScreen .promo-btn{ margin:2px auto 6px; padding:6px 10px; font-size:11px; }
+  #menuScreen .scrollbox{ max-height:70vh; }
   .scrollbox::-webkit-scrollbar{ width:8px; } .scrollbox::-webkit-scrollbar-thumb{ background:var(--pine); }
   /* 레벨업: 배너 + 액자 카드 4개 (모바일 2×2 / 데스크톱 4열), 글씨가 프레임 안에 안 겹치게 */
   #levelScreen{ gap:clamp(8px,2vh,20px); padding:18px 8px; }
@@ -904,7 +911,6 @@
       <div class="letter" id="menuLetter"></div>
       <button class="letter-skip" id="letterSkip" onclick="menuSkipIntro()">VIEW MENU ▸</button>
     </div>
-    <h2 class="title">— MENU —</h2>
     <div class="menu-lang js-langbar"></div>
     <div class="menu-nav" id="menuNav"></div>
     <button class="promo-btn" onclick="openPromo()">🥃 HENNESSY MY WAY <span class="promo-tag">PROMOTION</span></button>
@@ -2698,7 +2704,7 @@ function bossAttack(e, a, dist, D){
           if(perp < 63+player.r && !isInvuln()){ hurtPlayer(rl.dmg); if(player.hp<=0){ gameOver(); return; } } }
         try{ playBossAlarm(); }catch(_){} }
     } else if(R.st==='dash'){
-      const ds=Math.max((frame<(e.frozenUntil||0)?5:17), e.speed*13);                 // ★질주 — 단, 빙결 중이면 확 느려짐(보스 상태이상 잘 먹히게)
+      const ds=Math.max(17, e.speed*13);                                              // ★질주(돌진 중엔 빙결 무시 — 아래 속도감소에서 제외됨)
       e.x+=R.dx*ds; e.y+=R.dy*ds; e.moving=true; R.t--;
       if(frame%2===0) burst(e.x, e.y, '#ff5a4d', 3);                                   // 질주 잔상(속도감)
       if(R.t<=0 || e.x<-46||e.x>W+46||e.y<-46||e.y>H+46){                              // 가장자리 도달 → 돌진 끝 + 그 도로 제거
@@ -3596,8 +3602,10 @@ function update(){
     e.wobble+=0.12;
     if(e.poison && frame<e.poison.until && frame%18===0) dealDmg(e, e.poison.dmg + (e.type==='boss'? e.maxHp*0.004 : 0));   // gin 독 DoT (보스는 최대HP 0.4%/틱 추가 → 잘 먹힘)
     const _spd0=e.speed;                                                              // (루프 끝에서 복구)
+    const _dashing=(e.bossChar==='boss_sprinter' && e.rush && e.rush.st==='dash');    // ★돌진 보스는 달려나갈 때 빙결 무시
     const _fz=(e.type==='boss')?0.7:1;                        // ★보스는 슬로우/빙결 더 강하게 먹힘(추가 0.7배)
-    if(frame<(e.gtSlowUntil||0)) e.speed=_spd0*0.224*_fz;     // ★진토닉: 다른 빙결보다 30% 더 느리게(0.32×0.7)
+    if(_dashing){ /* 빙결 무시 — 속도 그대로 */ }
+    else if(frame<(e.gtSlowUntil||0)) e.speed=_spd0*0.224*_fz;// ★진토닉: 다른 빙결보다 30% 더 느리게(0.32×0.7)
     else if(frame<(e.frozenUntil||0)) e.speed=_spd0*0.32*_fz; // 일반 빙결(vodka 등)
     const a=Math.atan2(player.y-e.y, player.x-e.x);
     const dist=Math.hypot(player.x-e.x, player.y-e.y);
