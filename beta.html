@@ -1228,6 +1228,11 @@ const ASSET_MANIFEST = {
   cocktail_southside:'assets/cocktail_southside.png', cocktail_vodkamartini:'assets/cocktail_vodkamartini.png',
   cocktail_cosmopolitan:'assets/cocktail_cosmopolitan.png', cocktail_drymartini:'assets/cocktail_drymartini.png', cocktail_mojito:'assets/cocktail_mojito.png',
   cocktail_highball:'assets/cocktail_highball.png', cocktail_margarita:'assets/cocktail_margarita.png', cocktail_sidecar:'assets/cocktail_sidecar.png',
+  // ★새 칵테일 5종 + 재료 3종 + 모스코뮬 발차기(좌/우)
+  cocktail_moscowmule:'assets/cocktail_moscowmule.png', cocktail_whiskysour:'assets/cocktail_whiskysour.png', cocktail_negroni:'assets/cocktail_negroni.png',
+  cocktail_bloodymary:'assets/cocktail_bloodymary.png', cocktail_espressomartini:'assets/cocktail_espressomartini.png',
+  proj_mule_l:'assets/proj_mule_l.png', proj_mule_r:'assets/proj_mule_r.png',
+  ing_tomato:'assets/ing_tomato.png', ing_coffee:'assets/ing_coffee.png', ing_campari:'assets/ing_campari.png',
   bottle_tequila:'assets/bottle_tequila.png', bottle_vodka:'assets/bottle_vodka.png',
   bottle_gin:'assets/bottle_gin.png', bottle_rum:'assets/bottle_rum.png',
   bottle_whiskey:'assets/bottle_whiskey.png', bottle_brandy:'assets/bottle_brandy.png',
@@ -1466,6 +1471,11 @@ const CRAFT_FX = {
   vodkatonic:'A wide spread of homing, freezing ice bolts.',
   vodkacranberry:'A giant crimson glass whips out sideways the way you face and snaps back (like lipstick in and out), freezing and draining life on hit (lifesteal). Grows each level; at Lv6 it lashes from BOTH sides. Super: 2x speed & damage.',
   southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
+  moscowmule:'Donkey KICK! Fires one hoof at a time (alternating), a fast straight piercing knife-kick with a little slow.',
+  whiskysour:'A tall yellow lemon beam sweeps across the way you face, cutting through everything it passes.',
+  negroni:'Defensive. Builds up a red shield that blocks incoming hits — a hit is negated with a MISS. More charges as it levels.',
+  bloodymary:'A bloody-mary bird-bomber circles wide around you and periodically drops explosive bombs. More birds as it levels.',
+  espressomartini:'Brown lightning ring: bolts strike random spots, each a small AoE that also freezes.',
   margarita:'Giant salt boomerangs that fly out and back.',
   drymartini:'Olives orbit you (one more each level, wider orbit). Enemies within the orbit range are slowed.',
   vodkamartini:'A continuous gatling stream of freezing olive shots (low pierce) + a freezing shockwave. Super: shots scatter behind the enemy they hit.',
@@ -1567,6 +1577,11 @@ const INGREDIENTS = {
   sweetver: { name:'SWEET VERMOUTH', ic:'🍷', img:'ing_sweetver', color:'#a83b3b', max:6, pas:{stat:'hp',per:12},  desc:'+max HP · +1 cocktail slot' },
   dryver:   { name:'DRY VERMOUTH',   ic:'🍸', img:'ing_dryver',   color:'#cfd6e0', max:6, pas:{stat:'crit',per:0.01}, desc:'+crit chance & crit dmg (×2 base, +50%/lv → Lv6 ×4.5)' },
   angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', max:6, pas:{stat:'xp',per:0.06},   desc:'+XP gain' },
+  // ★새 재료 4종
+  gingerbeer:{ name:'GINGER BEER', ic:'🫚', img:'ing_soda',    color:'#d9a441', max:6, pas:{stat:'cd',per:0.02},   desc:'Fizzy — attacks fire faster (Moscow Mule key)' },
+  coffee:    { name:'COFFEE BEANS', ic:'☕', img:'ing_coffee',   color:'#5a3a22', max:6, pas:{stat:'edur',per:0.14}, revive:true, desc:'Effects last longer (orbit/aura). Grants ONE revive!' },
+  tomato:    { name:'TOMATO JUICE', ic:'🍅', img:'ing_tomato',   color:'#c0392b', max:6, pas:{stat:'ultcd',per:0},   desc:'Cuts ultimate cooldown (1/8 → 1/3 at max)' },
+  campari:   { name:'CAMPARI',     ic:'🅱️', img:'ing_campari',  color:'#b81e2c', max:6, pas:{stat:'enemydef',per:0.08}, desc:'Nearby enemies take more damage (defense down)' },
   // 검정 버무스 = 드라이+스윗 버무스 둘 다 Lv4일 때 만들어지는 히든 조합. 훨씬 강한 검정 오라.
   blackver: { name:'BLACK VERMOUTH', ic:'🖤', img:'ing_wormwood', color:'#1f1830', attack:'aura', cd:60, max:4, desc:'Huge black damage aura' },
 };
@@ -1586,6 +1601,12 @@ const COCKTAILS = {
   margarita:     { name:'MARGARITA',       img:'cocktail_margarita',      spirit:'tequila', ing:['cointreau','lime'] },
   drymartini:    { name:'DRY MARTINI',     img:'cocktail_drymartini',     spirit:'gin',     ing:['dryver','olive'] },
   vodkamartini:  { name:'VODKA MARTINI',   img:'cocktail_vodkamartini',   spirit:'vodka',   ing:['dryver'] },
+  // ★새 칵테일 5종
+  moscowmule:    { name:'MOSCOW MULE',     img:'cocktail_moscowmule',     spirit:'vodka',   ing:['gingerbeer','lime'] },
+  whiskysour:    { name:'WHISKY SOUR',     img:'cocktail_whiskysour',     spirit:'whiskey', ing:['lemon','sugar'] },
+  negroni:       { name:'NEGRONI',         img:'cocktail_negroni',        spirit:'gin',     ing:['campari','sweetver'] },
+  bloodymary:    { name:'BLOODY MARY',     img:'cocktail_bloodymary',     spirit:'vodka',   ing:['tomato'] },
+  espressomartini:{ name:'ESPRESSO MARTINI',img:'cocktail_espressomartini',spirit:'vodka',  ing:['coffee'] },
 };
 const COCKTAIL_KEYS = Object.keys(COCKTAILS);
 // VS식: 재료 패시브 키 (발사 안 하고 스탯만) — 6칸 패시브 슬롯 대상
@@ -1593,14 +1614,16 @@ const PASSIVE_KEYS = Object.keys(INGREDIENTS).filter(k=>INGREDIENTS[k].pas).conc
 // 진화(슈퍼 칵테일): 칵테일 Lv8 + 기주 스피릿 보유 + 대표 재료(패시브) Lv8
 const EVO_ING = { gimlet:'lime', margarita:'orange', manhattan:'sweetver', oldfashioned:'angostura', highball:'water',
   sidecar:'cointreau', mojito:'sugar', southside:'mint', gintonic:'tonic', drymartini:'olive',
-  cosmopolitan:'orange', vodkacranberry:'cranberry', vodkatonic:'tonic', vodkamartini:'dryver' };
+  cosmopolitan:'orange', vodkacranberry:'cranberry', vodkatonic:'tonic', vodkamartini:'dryver',
+  moscowmule:'gingerbeer', whiskysour:'lemon', negroni:'campari', bloodymary:'tomato', espressomartini:'coffee' };
 const WEAPON_MAX = 6, PASSIVE_MAX = 8;   // 무기(칵테일) 기본 6칸 + 패시브(재료) 8칸(6→8)
 // 칵테일 슬롯 = 기본 6 + 스윗버무스 보유(+1) + 오렌지 보유(+1). 두 재료를 먹으면 칸이 늘어남(HUD에도 빈 칸으로 보임).
 function weaponSlotMax(){ let n=WEAPON_MAX; if(player&&player.weapons){ if(player.weapons.sweetver) n++; if(player.weapons.orange) n++; } return n; }
 // 칵테일별 고유 기본 쿨다운(작을수록 빠름) — VS식으로 무기마다 공속이 다름
 // 뱀서식 개편: 방향형·연사형은 빠르게, 궤도(상시유지)/한방형은 느리게. 코스모·보드카마티니는 소다건식 연사(weaponCd 특수처리)
 const COCKTAIL_CD = { gimlet:120, highball:39, mojito:55, vodkatonic:51, sidecar:90, margarita:67,   // gimlet=전기체인(올드패션드급 느린 공속 120). sidecar 공속 너프 64→90
-  manhattan:76, vodkacranberry:83, southside:130, oldfashioned:120, drymartini:115, gintonic:46 };   // southside=민트레인(느린 공속 130) · oldfashioned 공속 너프 92→120
+  manhattan:76, vodkacranberry:83, southside:130, oldfashioned:120, drymartini:115, gintonic:46,   // southside=민트레인(느린 공속 130) · oldfashioned 공속 너프 92→120
+  moscowmule:30, whiskysour:70, negroni:60, bloodymary:95, espressomartini:80 };   // 모스코뮬=나이프(빠름) · 위스키사워=세로빔 · 네그로니=방어오라 · 블러디메리=새폭격 · 에스프레소=라이트닝링
 function weaponInfo(key){
   if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail weapon — unique attack, levels to 6', max:6}; }   // 칵테일=무기, Lv6까지
   if(SPIRITS[key]) return {name:SPIRITS[key].name, ic:SPIRITS[key].ic, img:'bottle_'+key, desc:SPIRITS[key].desc, max:MAX_WLV};  // 칩/카드 = 스피릿 바틀 이미지
@@ -1641,7 +1664,7 @@ function recalcStats(){
   if(!player) return;
   const c=CHARACTERS[player.key];
   // 재료 패시브 합산 (보유 레벨 × per)
-  const pas={dmg:0,cd:0,area:0,speed:0,magnet:0,amount:0,armor:0,hp:0,crit:0,regen:0,xp:0,pierce:0,luck:0};
+  const pas={dmg:0,cd:0,area:0,speed:0,magnet:0,amount:0,armor:0,hp:0,crit:0,regen:0,xp:0,pierce:0,luck:0,edur:0,ultcd:0,enemydef:0};
   const add=(key)=>{ const g=INGREDIENTS[key]||ORBIT[key]; if(!g||!g.pas) return; const lv=player.weapons[key]||0; if(lv>0) pas[g.pas.stat]+=g.pas.per*lv; };
   for(const k in INGREDIENTS) add(k); add('cranberry');
   player.pas=pas;
@@ -1663,6 +1686,13 @@ function recalcStats(){
   const newMax = capped + lvHp;
   player.maxHp = newMax; if(player.hp>newMax) player.hp=newMax;
   player.hasDash=true;   // 대쉬는 기본 제공(앙고스투라 불필요)
+  // ★새 재료 파생 스탯
+  player.durMul = 1 + pas.edur;                          // 커피: 궤도·오라 지속시간↑
+  player.enemyDefDown = pas.enemydef;                    // 캄파리: 주위 적 방어↓(데미지 배수 보너스)
+  player.campariR = player.weapons.campari ? (110 + (player.weapons.campari)*16)*(player.sizeMul||1) : 0;   // 캄파리 오라 반경
+  const tlv=player.weapons.tomato||0;                    // 토마토: 필살기 쿨 1/8(lv1) → 1/3(lv6)
+  player.ultCdMul = tlv ? (1 - (0.125 + (tlv-1)*((0.3333-0.125)/5))) : 1;
+  player.reviveCharges = (player.weapons.coffee && !player.reviveUsed) ? 1 : 0;   // 커피: 1회 부활
 }
 
 /* ===== 메뉴 (★ 실제 파인앤코 메뉴로 교체) ===== */
@@ -1887,6 +1917,7 @@ let player, enemies, projectiles, eprojectiles, pickups, zones, particles, explo
 let mintRain=[];   // 사우스사이드 민트 레인: 하늘에서 한발씩 떨어질 폭탄 예약 큐
 let lightning=[];  // 김렛 전기 체인: 번개 아크 이펙트 큐 (짧게 반짝이고 사라짐)
 let gatStream=[];  // 게틀링 연속 스트림: 한 발씩 시간차로 뿜어져 나가는 탄 예약 큐 (진짜 게틀링건 느낌)
+let boltFx=[];     // ★에스프레소 마티니 낙뢰 볼트(세로 지그재그) 시각효과
 let dropMarks=[];  // 만취 손님 낙하 예고 마커: 2초 전 빨간 표시 → 시간 되면 그 자리에 passout 낙하(서로 안 겹침)
 let roadLines=[];  // Last-Call Linebacker 돌진 도로: 화면 가로지르는 빨간 두꺼운 줄(닿으면 접촉데미지)
 let gameTime=0, killCount=0, money=0, spawnTimer=0, frame=0, enemyId=0;   // ★0으로 초기화: 게임 시작 전(타이틀→광장 직행)에도 frame이 NaN 안 되게
@@ -2338,7 +2369,7 @@ function startGame(charKey){
     regenBonus:0, noSustain:false,                 // HEAL 강화로 쌓이는 패시브 회복(둘 다) · noSustain=피날레 시 회복/흡혈 정지
     weapons:{}, wt:{}, evolved:new Set(), superLv:{}, hasDash:false };  // weapons: 무기/재료 레벨, evolved: 진화 칵테일, superLv: 슈퍼 레벨(1~8)
   applyBaseLevel(); recalcStats();
-  enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[]; gatStream=[]; dropMarks=[]; roadLines=[];
+  enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[]; gatStream=[]; dropMarks=[]; roadLines=[]; boltFx=[];
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; bossAlertUntil=0; keys={};
   nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set(); declinedCraft=new Set(); pendingCraft=null; pendingFromTip=false;
@@ -2891,7 +2922,9 @@ function fireBase(){
   }
 }
 /* 크리티컬: 명중 시점에 player.crit 확률로 데미지 critMul배. 적에게 적용 + 노란 숫자 팝업 */
-function dealDmg(e, base){ let dmg=base; if(player.crit && Math.random()<player.crit){ dmg=base*(player.critMul||2);
+function dealDmg(e, base){ let dmg=base;
+  if(player.enemyDefDown && (player.campariR||0)>0 && Math.hypot(e.x-player.x,e.y-player.y) < player.campariR) dmg *= (1+player.enemyDefDown);   // ★캄파리: 주위 적 방어↓ → 데미지↑
+  if(player.crit && Math.random()<player.crit){ dmg *= (player.critMul||2);
     crits.push({ x:e.x, y:e.y-e.r-4, life:26 }); burst(e.x,e.y,'#ffd24a',6); } e.hp-=dmg; }
 /* 스피릿별 명중 효과: vodka=빙결 / gin=독 / whiskey·rum=폭발 / tequila=라임 궤도 추가타 */
 function onHit(p, e){
@@ -3095,7 +3128,7 @@ function fireCocktail(key, lv){
   const P = evo
     ? (0.33*Math.pow(1.42,7)) * (0.85*Math.pow(1.166, slv-1)) * player.dmgMul * 1.1   // ★슈퍼 전체 공격력 +10%. 슈퍼Lv1≈기본Lv8의 0.94배 → 슈퍼Lv8≈2.75배
     : 0.33 * Math.pow(1.42, lv-1) * player.dmgMul;   // 기본: Lv1 약함 → Lv8
-  const S = 0.68 * Math.pow(1.22, lv-1) * (player.sizeMul||1) * (evo ? 1.25 + (slv-1)*0.05 : 1);   // 슈퍼는 더 크게(레벨업마다 조금 더)
+  const S = 0.68 * (1 + (Math.pow(1.22, lv-1)-1)*0.6) * (player.sizeMul||1) * (evo ? 1.25 + (slv-1)*0.05 : 1);   // ★레벨업 커지는 크기 -40%(성장분 ×0.6). 슈퍼는 더 크게
   const pp = Math.floor((player.pas&&player.pas.pierce)||0) + (evo?3:0);   // 관통: tonic 패시브 + 슈퍼 +3
   const img = COCKTAILS[key].img;
   const t = nearestEnemy();
@@ -3112,6 +3145,11 @@ function fireCocktail(key, lv){
       if(p.cPoison)  p.cPoison =Math.round(p.cPoison*1.6);
       if(p.splash)   p.splash *=1.6;
       if(p.cMint)    p.cMint  +=2;
+    }
+    if(player.durMul>1){   // ★커피: 상태이상 지속시간↑
+      if(p.cFreeze) p.cFreeze=Math.round(p.cFreeze*player.durMul);
+      if(p.cSlow)   p.cSlow  =Math.round(p.cSlow*player.durMul);
+      if(p.cPoison) p.cPoison=Math.round(p.cPoison*player.durMul);
     }
     projectiles.push(p); };
   const fanAt = (baseAng,n,spd,spread,o)=>{ for(let i=0;i<n;i++){ const ang=baseAng+(i-(n-1)/2)*spread; add(Object.assign({ vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd }, o)); } };
@@ -3207,6 +3245,45 @@ function fireCocktail(key, lv){
       gatling('ing_olive', 26, 8.5, 0.1, 75, { pierce:0, cFreeze:55, scatter:1 }); break;   // 저관통+빙결 · 슈퍼=명중 시 뒤로 분산탄
     // ── 마늘(재해석): 플레이어 뒤 반투명 진토닉 = updateGinTonic()에서 상시 처리 ──
     case 'gintonic': break;
+    // ── ★모스코뮬: 당나귀 발차기. 양발 한번에 안 나가고 좌/우 한 발씩 교대. 직선 관통(나이프). ──
+    case 'moscowmule': {
+      player.mmAlt = !player.mmAlt;
+      const dir = t ? a : aim;
+      add({ kind: player.mmAlt?'proj_mule_l':'proj_mule_r', vx:Math.cos(dir)*11.5, vy:Math.sin(dir)*11.5,
+            dmg:34*P, r:15, pierce:99, life:64, muleRot:dir, cSlow:22 });
+      break; }
+    // ── ★위스키사워: 바라보는 방향으로 노란 레몬 세로빔이 쓸고 나감(세로 긴 벽). ──
+    case 'whiskysour': {
+      const fx = (player.facing||1);
+      const beamH = (66 + lv*16) * S;
+      add({ noScale:true, kind:'wsbeam', vx:fx*8.5, vy:0, dmg:24*P, r:19, beamH, pierce:999, life:70, cSlow:26 });
+      break; }
+    // ── ★네그로니: 방어형. 주기적으로 피격 1회를 막는 충전(MISS). 빨간 오라. ──
+    case 'negroni': {
+      const maxCh = 1 + Math.floor(lv/2);      // Lv1=1 → Lv6=4 충전
+      player.negLv = lv;
+      player.negBlock = Math.min(maxCh, (player.negBlock||0)+1);
+      break; }
+    // ── ★블러디메리: 새 폭격기. 넓게 도는 동반자가 지나며 때리고 주기적으로 폭탄 투하. ──
+    case 'bloodymary': {
+      orbitCast(1+Math.floor(lv/2), 92+lv*6, 0.045, { dmg:20*P, r:22, bomber:true,
+        bombCd: Math.max(38, 92-lv*7), bombDmg:44*P, bombR:(58+lv*8) });
+      break; }
+    // ── ★에스프레소 마티니: 갈색 라이트닝 링. 랜덤 지점에 낙뢰(AoE + 빙결). ──
+    case 'espressomartini': {
+      const n = 2 + Math.floor(lv/2);
+      const dmg = 60*P, R = 44+lv*6;
+      const cand = enemies.filter(e=>e.type!=='passout');
+      for(let i=0;i<n;i++){
+        let sx, sy;
+        if(cand.length){ const e=cand[Math.floor(Math.random()*cand.length)]; sx=e.x; sy=e.y; }
+        else { sx=player.x+(Math.random()-0.5)*420; sy=player.y+(Math.random()-0.5)*420; }
+        for(const e of enemies){ if(Math.hypot(e.x-sx,e.y-sy) < R+e.r){ dealDmg(e, dmg); e.frozenUntil=Math.max(e.frozenUntil||0, frame+30); } }
+        explosions.push({ x:sx, y:sy, r:R, life:16, max:16, col:'#6a4420', ring:'#caa06a' });   // 갈색 낙뢰 버스트
+        boltFx.push({ x:sx, y:sy, life:12 });   // 세로 지그재그 볼트
+      }
+      for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
+      break; }
   }
 }
 /* 마늘(진토닉) 재해석: 플레이어 '뒤'(조준 반대편)에 반투명 진토닉 잔을 두고, 닿는 적에게 지속 데미지.
@@ -3714,6 +3791,11 @@ function update(){
     if(p.orbit){                          // 궤도(성경/비둘기/검은비둘기): 플레이어 주위를 회전, 주기적으로 재타격
       p.oa+=p.oav; p.x=player.x+Math.cos(p.oa)*p.oR; p.y=player.y+Math.sin(p.oa)*p.oR;
       if(frame%12===0) p.hit.clear(); p.life--;
+      if(p.bomber && frame >= (p._bombNext||0)){ p._bombNext = frame + (p.bombCd||70);   // ★블러디메리 새폭격: 주기적 폭탄 투하
+        explodeAt(p.x, p.y, p.bombDmg||p.dmg, p.bombR||60);
+        explosions.push({ x:p.x, y:p.y, r:p.bombR||60, life:18, max:18, col:'#a01e2c', ring:'#ff6b7a' }); burst(p.x,p.y,'#e0485a',12);
+        for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
+      }
     } else {
       if(p.ay) p.vy+=p.ay;                  // 위스키/도끼 포물선
       // 데킬라(마가리타·십자가): 부메랑 — 후반 절반엔 플레이어에게 되돌아옴
@@ -3772,7 +3854,9 @@ function update(){
       if(!e) continue;                 // onHit 폭발이 적을 제거했을 수 있음(가드)
       if(p.hit.has(e.id)) continue;
       // 가로 벽 보스는 화면 전체 폭의 '띠' → x 무관, y만 띠 두께 안이면 명중(중심 원 판정이면 좌우 이동 시 빗나감)
-      const hitE = e.wall ? (Math.abs(e.y-p.y) < e.r+p.r) : (Math.hypot(e.x-p.x,e.y-p.y) < e.r+p.r);
+      const hitE = e.wall ? (Math.abs(e.y-p.y) < e.r+p.r)
+        : p.beamH ? (Math.abs(e.x-p.x) < p.r+e.r && Math.abs(e.y-p.y) < p.beamH+e.r)   // ★위스키사워 세로빔: 세로 박스 판정
+        : (Math.hypot(e.x-p.x,e.y-p.y) < e.r+p.r);
       if(hitE){
         if(p.splash>0){ const col=p.kind==='rum'?'#8fd14f':'#ffb347'; burst(p.x,p.y,col,16); playHit();
           explosions.push({ x:p.x, y:p.y, r:p.splash, life:16, max:16, col }); // 스플래시 이펙트(링)
@@ -3837,6 +3921,7 @@ function update(){
   for(let i=particles.length-1;i>=0;i--){ const pt=particles[i];
     pt.x+=pt.vx; pt.y+=pt.vy; pt.vx*=0.9; pt.vy*=0.9; pt.life--; if(pt.life<=0) particles.splice(i,1); }
   for(let i=crits.length-1;i>=0;i--){ const c=crits[i]; c.y-=0.7; c.life--; if(c.life<=0) crits.splice(i,1); }   // 크리티컬 숫자 떠오름
+  for(let i=boltFx.length-1;i>=0;i--){ boltFx[i].life--; if(boltFx[i].life<=0) boltFx.splice(i,1); }   // ★에스프레소 낙뢰 볼트
   // tequila 라임 궤도: 잠깐 도는 라임이 추가 데미지
   for(let i=limes.length-1;i>=0;i--){ const L=limes[i]; L.ang+=0.32; L.life--; if(L.life<=0){ limes.splice(i,1); continue; }
     const R=22, lx=L.x+Math.cos(L.ang)*R, ly=L.y+Math.sin(L.ang)*R;
@@ -3847,7 +3932,15 @@ function update(){
   updateHUD();
 }
 
-function hurtPlayer(d){ if(sbGod) return; d=Math.max(1, d-(player.defense||0)); player.hp-=d; player.invuln=38; burst(player.x,player.y,'#ff4444',8); playHurt(); }   // 방어력만큼 경감(최소 1)
+function hurtPlayer(d){ if(sbGod) return;
+  if(player.negBlock>0){ player.negBlock--; crits.push({x:player.x,y:player.y-player.r-6,life:30,txt:'MISS',col:'#8fd4ff'}); burst(player.x,player.y,'#e0485a',7); return; }   // ★네그로니: 방어 충전으로 피격 무효
+  d=Math.max(1, d-(player.defense||0)); player.hp-=d; player.invuln=38; burst(player.x,player.y,'#ff4444',8); playHurt();   // 방어력만큼 경감(최소 1)
+  if(player.hp<=0 && player.reviveCharges>0 && !player.reviveUsed) doRevive();   // ★커피: 1회 부활
+}
+function doRevive(){ player.reviveUsed=true; player.reviveCharges=0; player.hp=player.maxHp; player.invuln=100;
+  burst(player.x,player.y,'#ffd24a',44); try{ playRainbowJingle(); }catch(e){}   // 슈퍼칵테일 만들 때와 같은 효과
+  crits.push({x:player.x,y:player.y-player.r-12,life:70,txt:'REVIVE!',col:'#ffd24a'}); banner('✦ REVIVE! ✦', true);
+}
 /* 무적 판정: 피격 직후(invuln) 또는 Joe 필살기(ultUntil) 중 */
 function isInvuln(){ return player.invuln>0 || gameTime < (player.ultUntil||0) || gameTime < (player.ultSpiralUntil||0); }   // Joe 무적(ultUntil) + Pat 회오리(ultSpiralUntil) 동안 무적. gameTime(초) 기반
 function ultActiveNow(){ if(!player) return false; return player.key==='joe' ? gameTime<(player.ultUntil||0) : gameTime<(player.ultSpiralUntil||0); }
@@ -3855,7 +3948,7 @@ function ultActiveNow(){ if(!player) return false; return player.key==='joe' ? g
 function useUltimate(){
   if(!player || state!=='playing' || paused) return;
   if(gameTime < player.ultReadyAt) return;      // 아직 쿨타임 (80초마다 1번)
-  player.ultReadyAt = gameTime + ULT_CD;        // 다음 사용까지 80초
+  player.ultReadyAt = gameTime + ULT_CD*(player.ultCdMul||1);   // 다음 사용까지 80초 × 토마토 감소
   player.ultFxUntil = frame + 70;               // 반짝 이펙트(공통)
   playSelect();
   if(player.key==='pat'){
@@ -3925,7 +4018,7 @@ function dropSpirit(x,y){
   }
 }
 /* 루프 재료 드랍 (안 가졌거나 만렙 아닌 것만, 다 차면 동전) */
-const LOOSE_ING = ['lemon','lime','orange','sugar','mint','water','cranberry','cointreau','soda','tonic','olive','sweetver','dryver','angostura'];
+const LOOSE_ING = ['lemon','lime','orange','sugar','mint','water','cranberry','cointreau','soda','tonic','olive','sweetver','dryver','angostura','gingerbeer','coffee','tomato','campari'];
 const CITRUS_KEYS = ['lemon','lime','orange'];
 // 기초 재료(많이 필요한 것들)는 드랍 시 가중치 ↑ → 더 자주 나옴
 const ING_WEIGHT = { lemon:2.4, lime:2.4, orange:2.4, sugar:2.4, water:2.4 };
@@ -4326,7 +4419,7 @@ function wicImg(imgKey, emoji){
   return spr(imgKey) ? `<img class="wic" src="assets/${imgKey}.png" alt="">` : `<div class="wic">${emoji}</div>`;
 }
 // 재료(좌상단 띠에 개수 표시). 나머지 보유 무기는 스피릿(우상단) / 조합·칵테일(하단 중앙).
-const TOP_ING = ['lemon','lime','orange','sugar','water','mint','cranberry','cointreau','soda','tonic','olive','sweetver','dryver','angostura'];
+const TOP_ING = ['lemon','lime','orange','sugar','water','mint','cranberry','cointreau','soda','tonic','olive','sweetver','dryver','angostura','gingerbeer','coffee','tomato','campari'];
 function updateWeaponChips(){
   const ingRow=document.getElementById('ingRow'), skillRow=document.getElementById('skillRow');
   if(!ingRow||!player) return;
@@ -4692,6 +4785,16 @@ function draw(){
       else { ctx.fillStyle='rgba(150,220,255,.5)'; ctx.beginPath(); ctx.arc(player.gtx,player.gty,player.gtr,0,6.28); ctx.fill(); }
       ctx.globalAlpha=0.35; ctx.strokeStyle='#bfe6ff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(player.gtx,player.gty,player.gtr,0,6.28); ctx.stroke();
       ctx.restore(); }
+    // ★캄파리: 주위 적 방어↓ 오라(붉은 필드)
+    if(player.campariR>0){ ctx.save(); const cr=player.campariR;
+      const g=ctx.createRadialGradient(player.x,player.y,cr*0.4,player.x,player.y,cr); g.addColorStop(0,'rgba(200,30,44,0)'); g.addColorStop(1,'rgba(200,30,44,'+(0.12+0.05*Math.sin(frame*0.1))+')');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(player.x,player.y,cr,0,6.28); ctx.fill();
+      ctx.globalAlpha=0.3; ctx.strokeStyle='#e0485a'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(player.x,player.y,cr,0,6.28); ctx.stroke(); ctx.restore(); }
+    // ★네그로니: 방어 충전 시 붉은 실드 링(피격 1회 막음)
+    if(player.negBlock>0){ ctx.save(); const rr=player.r+16+2*Math.sin(frame*0.2);
+      ctx.globalAlpha=0.5+0.2*Math.sin(frame*0.25); ctx.strokeStyle='#ff5a6e'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(player.x,player.y-4,rr,0,6.28); ctx.stroke();
+      for(let b=0;b<player.negBlock;b++){ const ba=frame*0.03+b*(6.28/Math.max(1,player.negBlock)); ctx.globalAlpha=0.9; ctx.fillStyle='#ff8a9a';
+        ctx.beginPath(); ctx.arc(player.x+Math.cos(ba)*rr, player.y-4+Math.sin(ba)*rr, 3, 0, 6.28); ctx.fill(); } ctx.restore(); }
     // 내 투사체
     for(const p of projectiles){ drawProj(p); }
     drawOrbits();   // 궤도 무기(크랜베리/코스모)
@@ -4712,9 +4815,14 @@ function draw(){
     // 파티클
     for(const pt of particles){ ctx.globalAlpha=pt.life/18; ctx.fillStyle=pt.color;
       ctx.fillRect(pt.x-2,pt.y-2,4,4); ctx.globalAlpha=1; }
+    // ★에스프레소 낙뢰: 갈색 세로 지그재그 볼트(위에서 내리꽂힘)
+    for(const bf of boltFx){ ctx.save(); ctx.globalAlpha=Math.min(1,bf.life/8); ctx.strokeStyle='#caa06a'; ctx.lineWidth=3; ctx.lineJoin='round';
+      ctx.beginPath(); let by=bf.y-120, bx=bf.x; ctx.moveTo(bx,by);
+      for(let s=0;s<6;s++){ by+=20; bx=bf.x+((s%2)?1:-1)*(8-s); ctx.lineTo(bx,by); }
+      ctx.lineTo(bf.x,bf.y); ctx.stroke(); ctx.strokeStyle='#fff0d0'; ctx.lineWidth=1; ctx.stroke(); ctx.restore(); }
     // 크리티컬 팝업
     for(const c of crits){ ctx.globalAlpha=Math.min(1,c.life/12); ctx.font='bold 11px monospace'; ctx.textAlign='center';
-      ctx.lineWidth=3; ctx.strokeStyle='#000'; ctx.strokeText('CRIT!', c.x, c.y); ctx.fillStyle='#ffd24a'; ctx.fillText('CRIT!', c.x, c.y); ctx.globalAlpha=1; }
+      const _t=c.txt||'CRIT!'; ctx.lineWidth=3; ctx.strokeStyle='#000'; ctx.strokeText(_t, c.x, c.y); ctx.fillStyle=c.col||'#ffd24a'; ctx.fillText(_t, c.x, c.y); ctx.globalAlpha=1; }
 
     // 필살기 반짝임: 충전 완료(대기) 또는 사용 중일 때 플레이어 주위 금빛 반짝
     if(player){
@@ -4912,6 +5020,10 @@ function drawProj(p){
   if(p.kind==='barspoon' && spr('proj_barspoon')){ const im=spr('proj_barspoon'), H=p.r*5.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 바스푼(올린 이미지)
   if(p.kind==='mixglass' && spr('proj_mixglass')){ const im=spr('proj_mixglass'), H=p.r*5.0, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.16); return; }   // 믹싱글라스(올린 이미지)
   if(p.kind && p.kind.indexOf('ing_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 재료 피사체(올린 이미지)
+  if((p.kind==='proj_mule_l'||p.kind==='proj_mule_r') && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.2, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)-1.57); return; }   // ★당나귀 발차기(진행 방향으로 회전)
+  if(p.kind==='wsbeam'){ const bh=p.beamH||60; ctx.save(); ctx.globalAlpha=0.5+0.28*Math.sin(frame*0.5);   // ★노란 레몬 세로빔
+    const g=ctx.createLinearGradient(p.x-p.r,0,p.x+p.r,0); g.addColorStop(0,'rgba(244,208,63,0)'); g.addColorStop(0.5,'#ffe86a'); g.addColorStop(1,'rgba(244,208,63,0)');
+    ctx.fillStyle=g; ctx.fillRect(p.x-p.r, p.y-bh, p.r*2, bh*2); ctx.globalAlpha=0.9; ctx.fillStyle='#fff6c0'; ctx.fillRect(p.x-2, p.y-bh, 4, bh*2); ctx.restore(); return; }
   if(p.kind && p.kind.indexOf('cocktail_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*2.6, W=H*im.width/im.height;
     if(p.evo){ ctx.save(); ctx.globalAlpha=0.5+0.3*Math.sin(frame*0.3); const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,H*0.9);
       g.addColorStop(0,'rgba(255,215,90,0.9)'); g.addColorStop(1,'rgba(255,215,90,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,H*0.9,0,6.28); ctx.fill(); ctx.restore(); }   // 슈퍼 = 금빛 글로우
