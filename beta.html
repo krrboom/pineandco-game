@@ -1556,7 +1556,7 @@ const INGREDIENTS = {
   cointreau:{ name:'COINTREAU', ic:'🍊', img:'ing_cointreau', color:'#c8731f', max:3, pas:{stat:'amount',per:1}, desc:'+1 projectile per level, added one at a time (max 3, every weapon)' },
   soda:     { name:'SODA WATER',ic:'🫧', img:'ing_soda',      color:'#7fb5d6', max:6, pas:{stat:'cd',per:0.025},   desc:'Attacks fire faster' },
   tonic:    { name:'TONIC',     ic:'🟩', img:'ing_tonic',     color:'#4f9a4f', max:6, pas:{stat:'pierce',per:2},   desc:'+2 pierce per level' },
-  olive:    { name:'OLIVE',     ic:'🫒', img:'ing_olive',     color:'#7a8c3a', max:6, pas:{stat:'armor',per:2},    desc:'Armor: take less contact dmg' },
+  olive:    { name:'OLIVE',     ic:'🫒', img:'ing_olive',     color:'#7a8c3a', max:6, pas:{stat:'armor',per:4},    desc:'Armor: take less damage (×2 effect)' },
   sweetver: { name:'SWEET VERMOUTH', ic:'🍷', img:'ing_sweetver', color:'#a83b3b', max:6, pas:{stat:'hp',per:12},  desc:'+max HP · +1 cocktail slot' },
   dryver:   { name:'DRY VERMOUTH',   ic:'🍸', img:'ing_dryver',   color:'#cfd6e0', max:6, pas:{stat:'crit',per:0.01}, desc:'+crit chance & crit dmg (×2 base, +50%/lv → Lv6 ×4.5)' },
   angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', max:6, pas:{stat:'xp',per:0.06},   desc:'+XP gain' },
@@ -1645,7 +1645,7 @@ function recalcStats(){
   player.sizeMul   = Math.min(2.4, Math.pow(1.2, player.upSize||0)) * (1+pas.area);
   player.extraProj = Math.min(3, (player.upExtra||0) + Math.floor(pas.amount));
   player.pickupR   = 72 + 45*(player.upPickup||0) + pas.magnet;
-  player.defense   = Math.min(25, 3*(player.upDefense||0) + pas.armor);
+  player.defense   = Math.min(50, 3*(player.upDefense||0) + pas.armor);   // 상한 25→50(올리브 효과 실감나게)
   player.crit      = Math.min(0.5, Math.min(0.08, 0.01*(player.upCrit||0)) + pas.crit);
   player.critMul   = [0,2,3.5,4,7,12,18][Math.min(6, player.weapons.dryver||0)] || 2;   // 크리 데미지: 드라이버무스 레벨별 ×2 / ×3.5 / ×4 / ×7 / ×12 / ×18 (확률은 그대로)
   player.regenBonus= 0.25*(player.upRegen||0) + pas.regen;
@@ -1938,7 +1938,7 @@ const MONSTER_INDEX=[
   { img:'enemy_drunk_stand',   name:'TIPSY PATRON',    t:'Basic stumbler, comes in two looks. Weak but endless.' },
   { img:'enemy_runner_stand',  name:'BAR SPRINTER',    t:'Small & fast. Hard to dodge, low HP.' },
   { img:'enemy_bomber_stand',  name:'ANGRY DRUNK',     t:'Get close → flashes red → SELF-DESTRUCTS in 2s. Stay out of the blast!' },
-  { img:'enemy_thrower_stand', name:'GREEN HURLER',    t:'Keeps distance, vomits saliva blobs. Shoot the blobs down.' },
+  { img:'enemy_thrower_stand', name:'GREEN HURLER',    t:'Keeps distance and vomits saliva blobs that fly through — you can’t shoot them down, so dodge.' },
   { img:'enemy_genzf_stand',   name:'GEN-Z GIRL',      t:'Rolls as a couple. While the two stay together they chill a freeze field that slows you down.' },
   { img:'enemy_genzm_stand',   name:'GEN-Z GUY',       t:'Split the couple up — apart, the freeze field dies. Tanky together.' },
   { img:'drunk_0', name:'BOSS · THE PASS-OUTS', t:'Too gone to remember their own address, their friends bailed hours ago, their phone died, and they never closed the tab. Shake them all you want — they are NOT waking up. Just a wall of dead weight you have to go around.', boss:1 },
@@ -2635,7 +2635,7 @@ function spawnBoss(forceIdx, hpOverride){   // forceIdx: 샌드박스 지정 / h
    보스마다 고유 공격. 발사체 공격력은 접촉데미지(D.dmg*4.4)의 반(D.dmg*2.2).
    구현: Get-a-Room Gang(하트) / Smooth Operator(전화번호 유도) / Madame(Again! 낙하) / Last-Call Linebacker(돌진+도로). */
 function bossAttack(e, a, dist, D){
-  const halfContact = D.dmg*2.2*1.2;   // 접촉데미지의 반 + ★피사체 공격력 20%↑
+  const halfContact = D.dmg*2.2*0.84;   // 보스 발사체 공격력 -30%(1.2→0.84)
 
   // ── Get-a-Room Gang: 하트를 1~4발 랜덤으로 일직선 발사(플레이어 공격 안 통함) ──
   if(e.bossChar==='boss_couple'){
@@ -2655,14 +2655,14 @@ function bossAttack(e, a, dist, D){
 
   // ── Smooth Operator: "010-1234-1234" 전화번호를 약하게 유도해 발사(스쳐가면 화면밖, 공격 안 통함) ──
   if(e.bossChar==='boss_pickup'){
-    if(e.phoneCd==null) e.phoneCd = 110;
+    if(e.phoneCd==null) e.phoneCd = 91;
     e.phoneCd--;
     if(e.phoneCd<=0 && dist<540){
       const spd=2.8;
       eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
-        r:13, life:340, kind:'phone', hp:1, noKill:true, home:60, spd, dmg:halfContact });   // ★유도 약화(105→60프레임, 회전율도 절반)
+        r:8, life:340, kind:'phone', hp:1, noKill:true, home:60, spd, dmg:halfContact });   // ★크기 -40%(r13→8)
       burst(e.x, e.y, '#ffd24a', 8); try{ playSfx('select', 0.35); }catch(_){}
-      e.phoneCd = 130 + Math.random()*60;   // ★공격속도 30%↓(쿨다운 ×1.3)
+      e.phoneCd = 108 + Math.random()*50;   // ★공격속도 +20%(쿨다운 단축)
     }
     return;
   }
@@ -2698,7 +2698,7 @@ function bossAttack(e, a, dist, D){
           if(perp < 63+player.r && !isInvuln()){ hurtPlayer(rl.dmg); if(player.hp<=0){ gameOver(); return; } } }
         try{ playBossAlarm(); }catch(_){} }
     } else if(R.st==='dash'){
-      const ds=Math.max(17, e.speed*13);                                              // ★엄청 빠른 질주
+      const ds=Math.max((frame<(e.frozenUntil||0)?5:17), e.speed*13);                 // ★질주 — 단, 빙결 중이면 확 느려짐(보스 상태이상 잘 먹히게)
       e.x+=R.dx*ds; e.y+=R.dy*ds; e.moving=true; R.t--;
       if(frame%2===0) burst(e.x, e.y, '#ff5a4d', 3);                                   // 질주 잔상(속도감)
       if(R.t<=0 || e.x<-46||e.x>W+46||e.y<-46||e.y>H+46){                              // 가장자리 도달 → 돌진 끝 + 그 도로 제거
@@ -3594,10 +3594,11 @@ function update(){
     if(player.timeStopUntil && frame<player.timeStopUntil){ e.moving=false; continue; }   // ⏱️ 시간 멈추기: 모든 적 정지
     if(e.dmgCd>0) e.dmgCd--;
     e.wobble+=0.12;
-    if(e.poison && frame<e.poison.until && frame%18===0) dealDmg(e, e.poison.dmg);   // gin 독 DoT
+    if(e.poison && frame<e.poison.until && frame%18===0) dealDmg(e, e.poison.dmg + (e.type==='boss'? e.maxHp*0.004 : 0));   // gin 독 DoT (보스는 최대HP 0.4%/틱 추가 → 잘 먹힘)
     const _spd0=e.speed;                                                              // (루프 끝에서 복구)
-    if(frame<(e.gtSlowUntil||0)) e.speed=_spd0*0.224;        // ★진토닉: 다른 빙결보다 30% 더 느리게(0.32×0.7)
-    else if(frame<(e.frozenUntil||0)) e.speed=_spd0*0.32;    // 일반 빙결(vodka 등)
+    const _fz=(e.type==='boss')?0.7:1;                        // ★보스는 슬로우/빙결 더 강하게 먹힘(추가 0.7배)
+    if(frame<(e.gtSlowUntil||0)) e.speed=_spd0*0.224*_fz;     // ★진토닉: 다른 빙결보다 30% 더 느리게(0.32×0.7)
+    else if(frame<(e.frozenUntil||0)) e.speed=_spd0*0.32*_fz; // 일반 빙결(vodka 등)
     const a=Math.atan2(player.y-e.y, player.x-e.x);
     const dist=Math.hypot(player.x-e.x, player.y-e.y);
     if(e.thrower){
@@ -3607,7 +3608,7 @@ function update(){
         if(!e.vomitFired && frame >= e.vomitUntil-16){    // 토악질 정점에 발사
           e.vomitFired=true;
           eprojectiles.push({ x:e.x+Math.cos(a)*e.r, y:e.y+Math.sin(a)*e.r,
-            vx:Math.cos(a)*2.7, vy:Math.sin(a)*2.7, r:9, life:170, spin:Math.random()*6.28, hp:1 });
+            vx:Math.cos(a)*2.7, vy:Math.sin(a)*2.7, r:9, life:170, spin:Math.random()*6.28, hp:1, noKill:true });   // ★공격으로 못 없앰(통과)
         }
       } else {
         const move = dist>175?1 : dist<120?-0.6 : 0;
@@ -3668,8 +3669,8 @@ function update(){
       // ★만취 손님은 벽: 상대 몬스터를 경계 밖으로 완전히 밀어냄(못 넘어가게)
       if(A.type==='passout' || B.type==='passout'){
         if(A.type==='passout' && B.type==='passout') continue;   // 만취끼리는 서로 안 밀어냄
-        const other = A.type==='passout' ? B : A;                // ★돌진 중 Linebacker는 만취 손님 통과(안 막힘)
-        if(other.bossChar==='boss_sprinter' && other.rush && other.rush.st==='dash') continue;
+        const other = A.type==='passout' ? B : A;                // ★돌진 중 Linebacker + no-booking 벽은 만취 손님 통과(안 막힘)
+        if((other.bossChar==='boss_sprinter' && other.rush && other.rush.st==='dash') || other.wall) continue;
         const need=A.r+B.r;
         if(d2>0.0001 && d2<need*need){ const d=Math.sqrt(d2);
           if(A.type==='passout'){ B.x=A.x+dx/d*need; B.y=A.y+dy/d*need; }   // B를 A(만취) 밖으로
@@ -3798,7 +3799,7 @@ function update(){
   // 성수(사우스사이드) 민트 장판: 범위 안 적에게 지속 데미지 + 슬로우 + 독
   for(let i=zones.length-1;i>=0;i--){ const z=zones[i]; z.life--;
     if(frame % (z.tick||12) === 0){
-      for(const e of enemies){ if(Math.hypot(e.x-z.x,e.y-z.y) < z.r+e.r){ dealDmg(e, z.dmg);
+      for(const e of enemies){ if(Math.hypot(e.x-z.x,e.y-z.y) < z.r+e.r){ dealDmg(e, z.dmg + (e.type==='boss'? e.maxHp*0.006 : 0));   // 화상 장판: 보스는 최대HP 0.6%/틱 추가
         if(z.slow) e.frozenUntil = Math.max(e.frozenUntil||0, frame+z.slow);
         if(z.poison) e.poison = { dmg:Math.max(3, z.dmg*0.5), until:frame+z.poison }; } }
       for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
