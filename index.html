@@ -1625,7 +1625,7 @@ function weaponSlotMax(){ let n=WEAPON_MAX; if(player&&player.weapons){ if(playe
 // 뱀서식 개편: 방향형·연사형은 빠르게, 궤도(상시유지)/한방형은 느리게. 코스모·보드카마티니는 소다건식 연사(weaponCd 특수처리)
 const COCKTAIL_CD = { gimlet:120, highball:39, mojito:55, vodkatonic:51, sidecar:90, margarita:67,   // gimlet=전기체인(올드패션드급 느린 공속 120). sidecar 공속 너프 64→90
   manhattan:76, vodkacranberry:83, southside:130, oldfashioned:120, drymartini:115, gintonic:46,   // southside=민트레인(느린 공속 130) · oldfashioned 공속 너프 92→120
-  moscowmule:42, whiskysour:70, negroni:60, bloodymary:95, espressomartini:160 };   // ★모스코뮬 공속 살짝↓(30→42) · 에스프레소 공속 50%↓(80→160)   // 모스코뮬=나이프(빠름) · 위스키사워=세로빔 · 네그로니=방어오라 · 블러디메리=새폭격 · 에스프레소=라이트닝링
+  moscowmule:42, whiskysour:70, negroni:60, bloodymary:95, espressomartini:128 };   // ★모스코뮬 공속 살짝↓(30→42) · 에스프레소 공속(160→128, 20%↑)   // 모스코뮬=나이프(빠름) · 위스키사워=세로빔 · 네그로니=방어오라 · 블러디메리=새폭격 · 에스프레소=라이트닝링
 function weaponInfo(key){
   if(COCKTAILS[key]){ const c=COCKTAILS[key]; return {name:c.name, ic:'🍸', img:c.img, desc:'Cocktail weapon — unique attack, levels to 6', max:6}; }   // 칵테일=무기, Lv6까지
   if(SPIRITS[key]) return {name:SPIRITS[key].name, ic:SPIRITS[key].ic, img:'bottle_'+key, desc:SPIRITS[key].desc, max:MAX_WLV};  // 칩/카드 = 스피릿 바틀 이미지
@@ -3999,7 +3999,8 @@ function hurtPlayer(d){ if(sbGod) return;
   d=Math.max(1, d-(player.defense||0));   // 방어력만큼 경감(최소 1)
   player.lastHitFrame = frame;   // ★네그로니 실드 재생 타이머
   if((player.shield||0)>0){   // ★네그로니 실드가 먼저 피해를 흡수
-    player.shield -= d; player.invuln=38; burst(player.x,player.y,'#e0485a',9);
+    player.shield -= d; player.invuln=38; burst(player.x,player.y,'#ff5a6e',14);
+    player.shieldFlash = frame + 16;   // ★피격 반짝임 타이머
     crits.push({x:player.x,y:player.y-player.r-6,life:26,txt:'SHIELD',col:'#ff9aa8'});
     if(player.shield<0){ player.hp += player.shield; player.shield=0; }   // 실드 초과분은 체력으로
     if(player.hp<=0 && player.reviveCharges>0 && !player.reviveUsed) doRevive();
@@ -4904,9 +4905,14 @@ function draw(){
       ctx.globalAlpha=0.3; ctx.strokeStyle='#e0485a'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(player.x,player.y,cr,0,6.28); ctx.stroke(); ctx.restore(); }
     // ★네그로니: 체력 있는 방어막(실드) — 링 세기가 실드 잔량에 비례 + 아래 실드 체력바
     if((player.shieldMax||0)>0){ const frac=Math.max(0,(player.shield||0)/player.shieldMax);
+      const flashing = frame < (player.shieldFlash||0);
       if(frac>0){ ctx.save(); const rr=player.r+15+2*Math.sin(frame*0.2);
         ctx.globalAlpha=(0.28+0.5*frac)+0.12*Math.sin(frame*0.25); ctx.strokeStyle='#ff5a6e'; ctx.lineWidth=3+2*frac; ctx.beginPath(); ctx.arc(player.x,player.y-4,rr,0,6.28); ctx.stroke();
         ctx.globalAlpha=0.10+0.14*frac; ctx.fillStyle='#ff5a6e'; ctx.beginPath(); ctx.arc(player.x,player.y-4,rr,0,6.28); ctx.fill(); ctx.restore(); }
+      if(flashing){ const t=(player.shieldFlash-frame)/16;   // ★피격 반짝임: 밝은 흰/분홍 링 + 채움이 확 커졌다 사라짐
+        ctx.save(); const rr=player.r+15+(1-t)*14;
+        ctx.globalAlpha=0.85*t; ctx.strokeStyle='#ffffff'; ctx.lineWidth=4+4*t; ctx.beginPath(); ctx.arc(player.x,player.y-4,rr,0,6.28); ctx.stroke();
+        ctx.globalAlpha=0.35*t; ctx.fillStyle='#ffd0d8'; ctx.beginPath(); ctx.arc(player.x,player.y-4,rr,0,6.28); ctx.fill(); ctx.restore(); }
       // 실드 체력바(플레이어 아래)
       ctx.save(); const bw=44, bh=5, bx=player.x-bw/2, by=player.y+player.r+8;
       ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(bx-1,by-1,bw+2,bh+2);
