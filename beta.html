@@ -229,7 +229,7 @@
   .craft-result.rbspin{ animation:rbReveal 1.15s cubic-bezier(.15,.85,.25,1) both; transform-origin:50% 50%; }
   /* 🍎 우상단 Apple 코너 도우미(베타): 저해상도 캐릭터 + 픽셀폰트 말풍선, 누르면 챗 열림 */
   /* 우하단 세로 배치(폭 좁게) → 시작·메뉴 화면에서 다른 버튼/이미지와 안 겹침 */
-  #appleCorner{ position:fixed; bottom:6px; right:6px; z-index:40; display:none; flex-direction:column; align-items:flex-end; gap:2px; cursor:pointer; }
+  #appleCorner{ position:fixed; bottom:calc(8px + env(safe-area-inset-bottom,0px)); right:calc(8px + env(safe-area-inset-right,0px)); z-index:40; display:none; flex-direction:column; align-items:flex-end; gap:2px; cursor:pointer; }
   #appleCorner .ac-bubble{ font-family:inherit; font-size:6px; line-height:1.3; color:#2c3e2d; background:#fafaf7;
     border:1.5px solid #2c3e2d; border-radius:5px; padding:3px 5px; white-space:nowrap; position:relative; box-shadow:1.5px 1.5px 0 rgba(0,0,0,.35); margin-right:3px; }
   #appleCorner .ac-bubble::after{ content:''; position:absolute; bottom:-5px; right:9px; border:4px solid transparent; border-top-color:#2c3e2d; }
