@@ -417,12 +417,13 @@
     width:40px; height:40px; font-size:19px; line-height:1; background:rgba(0,0,0,.55); color:var(--pine-light);
     border:2px solid var(--pine); border-radius:7px; cursor:pointer; box-shadow:2px 2px 0 #000; padding:0; }
   #recipeBtn:active{ transform:translate(2px,2px); box-shadow:0 0 0 #000; }
-  .rec-box{ max-width:min(92vw,520px); width:92vw; }
-  .rec-hint{ font-size:8px; color:var(--dim); margin:6px 0 10px; line-height:1.6; }
-  #recTabs{ flex-wrap:wrap; gap:4px; margin:2px 0 8px; }   /* RECIPES+4개 탭이 좁은 박스에서 줄바꿈되게 */
-  #recTabs .bt-tab{ font-size:9px; padding:6px 8px; }
+  .rec-box{ max-width:min(97vw,540px); width:97vw; }   /* ★탭 한 줄 들어가게 살짝 넓힘 */
+  .rec-hint{ font-size:7px; color:var(--dim); margin:3px 0 5px; line-height:1.45; }
+  #recipePanel .rec-box h3{ margin:2px 0 5px; font-size:clamp(11px,3vw,15px); }   /* 헤더 여백 축소 → 스크롤 영역 확보 */
+  #recTabs{ flex-wrap:nowrap; gap:3px; margin:2px 0 5px; width:100%; box-sizing:border-box; overflow-x:auto; }   /* ★한 줄 고정(줄바꿈 없음) */
+  #recTabs .bt-tab{ font-size:clamp(6.5px,1.9vw,11px); padding:6px 1px; letter-spacing:0; flex:1 1 0; min-width:0; text-align:center; box-shadow:1px 1px 0 #000; white-space:nowrap; overflow:hidden; }   /* ★균등 정렬(각 탭 동일 폭) · 한 줄 안에 다 들어가게 */
   #recipePanel .mindex{ max-width:none; }   /* 박스 폭에 맞춤(인덱스가 좁은 박스 안) */
-  .rec-list{ max-height:62vh; min-height:0; flex:1 1 auto; overflow-y:auto; display:flex; flex-direction:column; gap:6px; width:100%; }
+  .rec-list{ max-height:72vh; min-height:0; flex:1 1 auto; overflow-y:auto; display:flex; flex-direction:column; gap:6px; width:100%; }
   .rec-row{ display:flex; align-items:center; gap:9px; background:rgba(0,0,0,.4); border:1px solid #2a2e26; border-radius:5px; padding:6px 8px; text-align:left; }
   .rec-out{ width:34px; height:34px; flex:0 0 34px; object-fit:contain; image-rendering:pixelated; }
   .rec-info{ flex:1; min-width:0; }
@@ -775,14 +776,14 @@
       <h3>✦ BOOK · RECIPES &amp; INDEX ✦</h3>
       <div class="board-tabs" id="recTabs">
         <button class="bt-tab active" data-rt="recipes" onclick="showRecTab('recipes')">RECIPES</button>
-        <button class="bt-tab" data-rt="monsters" onclick="showRecTab('monsters')">MONSTERS</button>
-        <button class="bt-tab" data-rt="chars" onclick="showRecTab('chars')">BARTENDERS</button>
-        <button class="bt-tab" data-rt="skills" onclick="showRecTab('skills')">INGREDIENTS</button>
-        <button class="bt-tab" data-rt="cocktails" onclick="showRecTab('cocktails')">COCKTAILS</button>
+        <button class="bt-tab" data-rt="monsters" onclick="showRecTab('monsters')">MOBS</button>
+        <button class="bt-tab" data-rt="chars" onclick="showRecTab('chars')">STAFF</button>
+        <button class="bt-tab" data-rt="skills" onclick="showRecTab('skills')">ITEMS</button>
+        <button class="bt-tab" data-rt="cocktails" onclick="showRecTab('cocktails')">DRINKS</button>
       </div>
       <p class="rec-hint" id="recHint">Make up to 6 (cocktails + hidden). Base spirit Lv5 + ingredients maxed.</p>
       <div class="rec-list" id="recipeList"></div>
-      <div class="mindex" id="mindexList" style="display:none;max-height:62vh;min-height:0;flex:1 1 auto;overflow-y:auto;width:100%"></div>
+      <div class="mindex" id="mindexList" style="display:none;max-height:72vh;min-height:0;flex:1 1 auto;overflow-y:auto;width:100%"></div>
       <button class="btn" onclick="closeRecipe()">CLOSE</button>
     </div>
   </div>
