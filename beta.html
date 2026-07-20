@@ -2907,10 +2907,10 @@ function fireRainbow(){
   const cnt=2+lv*2;                          // Lv1=4(십자가) · 2=6 · 3=8 · 4=10 · 5=12 · 6=14 방향
   for(let i=0;i<cnt;i++){ const ang=i*(6.28/cnt);   // 고정 방사(회전 없음) → Lv1은 상하좌우 십자 모양
     projectiles.push({ x:player.x, y:player.y, vx:Math.cos(ang)*9.5, vy:Math.sin(ang)*9.5,
-      dmg:1260*player.dmgMul, r:9, splash:0, pierce:99, hit:new Set(), life:55, kind:'rainbow' }); }   // ★공격력 3배(420→1260)
+      dmg:1260*player.dmgMul, r:9, splash:0, pierce:99, hit:new Set(), life:55, kind:'rainbow', cSlow:50 }); }   // ★공격력 3배(420→1260) · 맞으면 슬로우(보스 체감)
   const t=nearestEnemy(); if(t){ const a=Math.atan2(t.y-player.y, t.x-player.x); player.facing = t.x<player.x?-1:1;
     projectiles.push({ x:player.x, y:player.y, vx:Math.cos(a)*12, vy:Math.sin(a)*12,
-      dmg:3000*player.dmgMul, r:12, splash:0, pierce:99, hit:new Set(), life:62, kind:'rainbow' }); }   // ★3배(1000→3000)
+      dmg:3000*player.dmgMul, r:12, splash:0, pierce:99, hit:new Set(), life:62, kind:'rainbow', cSlow:50 }); }   // ★3배(1000→3000) · 슬로우
 }
 function fireBase(){
   if(player.rainbow){ fireRainbow(); return; }
@@ -3271,10 +3271,11 @@ function fireCocktail(key, lv){
       // ★나갈 때 빠르고(outSp 큼) 들어올 때 느림(boomSp 작음+boomRet). Lv1~5 한 발, Lv6·슈퍼 양쪽.
       const outSp = 9, life = 30;
       const dmg = 66 * P * (evo ? 2 : 1);                 // ★슈퍼면 2배
+      const steal = evo ? Math.min(0.65, 0.5 + slv*0.02) : Math.min(0.5, 0.2 + (lv-1)*0.06);   // ★흡혈량 보드카크랜베리와 동일
       const dirs = (evo || lv >= 6) ? [1, -1] : [ (player.facing||1) >= 0 ? 1 : -1 ];   // ★만렙/슈퍼 양방향
       for(const dir of dirs){ player.mmAlt = !player.mmAlt;
         add({ kind: player.mmAlt?'proj_mule_l':'proj_mule_r', vx:dir*outSp, vy:0, dmg, r:24, pierce:99, life, life0:life, ox:player.x, oy:player.y,
-              boom:true, boomSp:3.5, boomRet:0.72, cSlow:40, knockback:true, whip:true, whipDir:dir }); }   // 빠른 아웃/느린 인 · 립스틱 클립
+              boom:true, boomSp:3.5, boomRet:0.72, cSlow:40, knockback:true, whip:true, whipDir:dir, lifesteal:steal, healBudget:2 }); }   // 빠른 아웃/느린 인 · 립스틱 · 흡혈
       break; }
     // ── ★위스키사워: 가장 가까운 적을 조준해 그 방향으로 화면 끝까지 노란 빔. 닿으면 완전 정지. ──
     case 'whiskysour': {
@@ -3390,10 +3391,10 @@ function weaponCd(key, lv){
   if(key==='gimlet'){ const cd=Math.round(232/(1+0.10*(lv-1)));   // ⚡전기체인: 기본 공속 50%↓ + 레벨당 +10% (Lv1 232 → Lv6 155)
     return (player&&player.evolved&&player.evolved.has('gimlet')) ? Math.round(cd/2) : cd; }   // ★슈퍼(진화)면 공속 2배(cd 절반)
   if(key==='southside') return 121;      // 파란불꽃 레인: 공속 고정(레벨 스케일 제거) · 추가로 10% 더 느리게(110→121)
-  if(key==='vodkacranberry'){ const cd = Math.round((170 - lv*8) * 0.5);   // ★붉은 채찍: 공속 50% 빠르게 (Lv1 81 → Lv6 61)
-    return (player&&player.evolved&&player.evolved.has('vodkacranberry')) ? Math.round(cd/2) : cd; }   // 슈퍼면 공속 2배(cd 절반)
+  if(key==='moscowmule' || key==='vodkacranberry'){   // ★모스코뮬·보드카크랜베리 공속 동일 + 15% 더 느리게(Lv1 79 → Lv6 63)
+    const cd = Math.max(63, 83 - lv*4);
+    return (player&&player.evolved&&player.evolved.has(key)) ? Math.round(cd/2) : cd; }   // 슈퍼면 공속 2배(cd 절반)
   if(key==='whiskysour') return Math.max(90, 210 - (lv-1)*18);   // ★위스키사워 빔: Lv1=3.5s(210f), 레벨당 -0.3s(-18f)
-  if(key==='moscowmule') return Math.max(54, 71 - lv*4);         // ★모스코뮬 채찍: 공속 -30%(Lv1 67 → Lv6 54)
   if(COCKTAILS[key]) return Math.max(30, (COCKTAIL_CD[key]||80) - lv*4);   // 칵테일 공속: 하한 30f(빠른 칵테일도 Lv8에서 ~15% 느려짐)
   if(SPIRITS[key]) return spiritCd(key,lv);
   if(key==='trio') return Math.round(58*(1-(lv-1)/6));   // 시트러스 트리오: Lv1=58 → Lv4=29(공속 2배)
