@@ -3913,10 +3913,10 @@ function update(){
           for(const e of enemies){ if(Math.hypot(e.x-lx,e.y-ly) < p.landR+e.r){
             e.frozenUntil=Math.max(e.frozenUntil||0, frame+(p.cSlow||0));
             if(p.cPoison) e.poison={ dmg:Math.max(3,p.dmg*0.3), until:frame+p.cPoison }; } }
-          if(p.kind==='espbolt'){   // ★에스프레소: 갈색 낙뢰 잔상이 조금 더 오래 남게(너무 빨리 사라지지 않게)
+          if(p.kind==='espbolt'){   // ★에스프레소: 진한 커피색 낙뢰 잔상이 조금 더 오래 남게
             boltFx.push({ x:lx, y:ly, life:26, life0:26, boltImg:p.boltImg, landR:p.landR });
-            explosions.push({ x:lx, y:ly, r:p.landR*0.9, life:20, max:20, col:'#7a4a1e', ring:'#caa06a', flash:true });
-            burst(lx,ly,'#caa06a',16);
+            explosions.push({ x:lx, y:ly, r:p.landR*0.9, life:20, max:20, col:'#3a230e', ring:'#6b4423', flash:true });
+            burst(lx,ly,'#5a3a1a',16);
           } else burst(lx,ly,'#8fd14f',14);
         }
         for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
@@ -4982,14 +4982,14 @@ function draw(){
       const im=spr(bf.boltImg)||spr('lightning_0');
       // 착지점 갈색 글로우(맥동)
       const gr=ctx.createRadialGradient(bf.x,bf.y,0,bf.x,bf.y,(bf.landR||40)*(0.7+0.5*(1-t)));
-      gr.addColorStop(0,'rgba(160,110,50,'+(0.5*t)+')'); gr.addColorStop(0.5,'rgba(202,160,106,'+(0.3*t)+')'); gr.addColorStop(1,'rgba(202,160,106,0)');
+      gr.addColorStop(0,'rgba(90,55,25,'+(0.6*t)+')'); gr.addColorStop(0.5,'rgba(110,66,28,'+(0.32*t)+')'); gr.addColorStop(1,'rgba(110,66,28,0)');
       ctx.globalAlpha=1; ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(bf.x,bf.y,(bf.landR||40)*(0.7+0.5*(1-t)),0,6.28); ctx.fill();
-      // 번개 이미지(위에서 착지점까지) — 갈색 곱하기로 물들임
+      // 번개 이미지(위에서 착지점까지) — 진한 커피색으로 물들임
       if(im){ const topY=-20, H=bf.y-topY, Wd=H*im.width/im.height*0.5;
         ctx.globalAlpha=0.6*t; ctx.imageSmoothingEnabled=false; ctx.drawImage(im, bf.x-Wd/2, topY, Wd, H);
-        ctx.globalCompositeOperation='source-atop'; ctx.globalAlpha=0.5*t; ctx.fillStyle='#7a4a1e'; ctx.fillRect(bf.x-Wd/2, topY, Wd, H); }   // 갈색 틴트
-      // 밝은 갈색 지그재그 코어
-      ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=Math.min(1,t*1.2); ctx.strokeStyle='#e6c48a'; ctx.lineWidth=2.5; ctx.lineJoin='round';
+        ctx.globalCompositeOperation='source-atop'; ctx.globalAlpha=0.7*t; ctx.fillStyle='#3a230e'; ctx.fillRect(bf.x-Wd/2, topY, Wd, H); }   // 진한 커피 갈색 틴트
+      // 커피색 지그재그 코어
+      ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=Math.min(1,t*1.2); ctx.strokeStyle='#c9a06a'; ctx.lineWidth=2.5; ctx.lineJoin='round';
       ctx.beginPath(); let by=-16, bx=bf.x; ctx.moveTo(bx,by);
       for(let s=0;s<8;s++){ by+=(bf.y+16)/8; bx=bf.x+((s%2)?1:-1)*(9-s); ctx.lineTo(bx,by); }
       ctx.lineTo(bf.x,bf.y); ctx.stroke(); ctx.restore(); }
@@ -5151,7 +5151,12 @@ function drawEnemy(e){
   const im = key && spr(key);
   if(im){ const face = player && player.x < e.x; // 플레이어가 왼쪽이면 왼쪽 보기
     const EH = e.type==='boss' ? e.r*3.7 : (42 + e.r*0.8)*0.9, aspect=im.width/im.height; // 보스는 훨씬 크게 · 기본몹 10%↓
+    const wsFrozen = frame < (e.stopUntil||0);   // ★위스키사워 완전정지 = 파랗게
+    if(wsFrozen) ctx.filter='brightness(0.9) sepia(1) hue-rotate(175deg) saturate(5)';   // 스프라이트만 파랗게 틴트
     drawImgC(im, e.x+jx, e.y+jy - EH*0.28, EH*aspect, EH, 0, face);
+    if(wsFrozen){ ctx.filter='none';   // 얼음 광택 오라
+      ctx.save(); ctx.globalAlpha=0.35+0.15*Math.sin(frame*0.3); ctx.strokeStyle='#8fd4ff'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(e.x, e.y-EH*0.18, EH*0.42, 0, 6.28); ctx.stroke(); ctx.restore(); }
     if(e.bomb && e.fuseUntil>0 && Math.sin(frame*0.6)>0){   // 빨강 점멸(울그락불그락)
       ctx.globalAlpha=0.34; ctx.fillStyle='#ff3020';
       ctx.beginPath(); ctx.arc(e.x+jx, e.y+jy - EH*0.18, EH*0.4, 0,6.28); ctx.fill(); ctx.globalAlpha=1; }
@@ -5217,13 +5222,13 @@ function drawProj(p){
     ctx.restore(); return; }
   if(p.kind==='espbolt'){ const im=spr(p.boltImg)||spr('lightning_0'); const topY = -20;   // ★번개: 화면 위(잘림 없이)에서 현재 y까지 세로로
     if(im){ const H=p.y-topY, W=H*im.width/im.height*0.5; ctx.save(); ctx.imageSmoothingEnabled=false;
-      // 낙하 지점 갈색 글로우
-      const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,44); gr.addColorStop(0,'rgba(202,160,106,0.7)'); gr.addColorStop(1,'rgba(202,160,106,0)');
+      // 낙하 지점 커피색 글로우
+      const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,44); gr.addColorStop(0,'rgba(110,66,28,0.8)'); gr.addColorStop(1,'rgba(90,55,25,0)');
       ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(p.x,p.y,44,0,6.28); ctx.fill();
       ctx.globalAlpha=0.95; ctx.drawImage(im, p.x-W/2, topY, W, H);
-      ctx.globalCompositeOperation='source-atop'; ctx.globalAlpha=0.45; ctx.fillStyle='#8a5a24'; ctx.fillRect(p.x-W/2, topY, W, H);   // ★갈색 틴트
+      ctx.globalCompositeOperation='source-atop'; ctx.globalAlpha=0.7; ctx.fillStyle='#3a230e'; ctx.fillRect(p.x-W/2, topY, W, H);   // ★진한 커피 갈색 틴트
       ctx.restore(); }
-    else { ctx.save(); ctx.strokeStyle='#caa06a'; ctx.lineWidth=4; ctx.beginPath(); let yy=topY,xx=p.x; ctx.moveTo(xx,yy); for(let s=0;s<8;s++){ yy+=(p.y-topY)/8; xx=p.x+((s%2)?1:-1)*8; ctx.lineTo(xx,yy); } ctx.stroke(); ctx.restore(); }
+    else { ctx.save(); ctx.strokeStyle='#6b4423'; ctx.lineWidth=4; ctx.beginPath(); let yy=topY,xx=p.x; ctx.moveTo(xx,yy); for(let s=0;s<8;s++){ yy+=(p.y-topY)/8; xx=p.x+((s%2)?1:-1)*8; ctx.lineTo(xx,yy); } ctx.stroke(); ctx.restore(); }
     return; }
   if(p.kind==='proj_chili' && spr('proj_chili')){ const im=spr('proj_chili'), H=p.r*1.5, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)+0.6); return; }   // ★고추(진행 방향) 크기 50%↓
   if(p.kind && p.kind.indexOf('cocktail_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*2.6, W=H*im.width/im.height;
