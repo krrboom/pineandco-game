@@ -56,9 +56,20 @@
     letter-spacing:1px;
   }
   #backBtn:active{ transform:translate(3px,3px); box-shadow:0 0 0 #1c2a1e; }
+  /* 사운드 토글 버튼 (항상 우상단) */
+  #soundBtn{
+    position:fixed; top:10px; right:12px; z-index:60;
+    font-family:inherit; font-size:13px; color:#0d0f0c; background:#a9d9b8;
+    border:none; padding:10px 12px; cursor:pointer; box-shadow:3px 3px 0 #1c2a1e; line-height:1;
+  }
+  #soundBtn:active{ transform:translate(3px,3px); box-shadow:0 0 0 #1c2a1e; }
+  #soundBtn.off{ background:#7a5c5c; color:#f0e0e0; }
 </style>
 </head>
 <body>
+
+  <!-- 사운드 ON/OFF (미니게임 효과음 + Bottoms Up 음악) -->
+  <button id="soundBtn" onclick="toggleSound()" aria-label="Sound">🔊</button>
 
   <!-- 게임 고르기 -->
   <div id="choose">
@@ -84,6 +95,21 @@
 
 <script>
   var frame = document.getElementById('gameFrame');
+  // ===== 사운드 ON/OFF (같은 오리진 localStorage 공유 → 미니게임이 읽음) + 부모(메인게임) 음악 제어 =====
+  function buMuted(){ try{ return localStorage.getItem('buMuted')==='1'; }catch(e){ return false; } }
+  function applySoundIcon(){ var b=document.getElementById('soundBtn'); if(!b) return;
+    var m=buMuted(); b.textContent=m?'🔇':'🔊'; b.classList.toggle('off',m); }
+  function applyMuteToChild(){ try{ var w=frame.contentWindow, doc=frame.contentDocument, m=buMuted();
+    if(doc) doc.querySelectorAll('audio,video').forEach(function(a){ a.muted=m; });
+    if(w && typeof w.__buApplyMute==='function') w.__buApplyMute(m);   // 게임이 제공한 훅(있으면)
+  }catch(e){} }
+  function toggleSound(){ var m=!buMuted();
+    try{ localStorage.setItem('buMuted', m?'1':'0'); }catch(e){}
+    applySoundIcon(); applyMuteToChild();
+    try{ window.parent.postMessage({type:'buMute', muted:m}, '*'); }catch(e){}   // 메인게임 Bottoms Up 음악도 음소거
+  }
+  applySoundIcon();
+  frame.addEventListener('load', applyMuteToChild);   // 미니게임 로드될 때마다 현재 설정 반영
   function openGame(src){
     frame.setAttribute('src', src);
     document.getElementById('choose').classList.add('hidden');

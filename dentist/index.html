@@ -300,7 +300,12 @@ function spawnPoof(fx,fy){ const d=document.createElement('div'); d.className='p
 
 /* ---------- 사운드 ---------- */
 let actx=null;
-function ac(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } return actx; }
+function _buMuted(){ try{ return localStorage.getItem('buMuted')==='1'; }catch(e){ return false; } }   // ★Bottoms Up 사운드 설정(같은 오리진 공유)
+function ac(){ if(_buMuted()){ if(actx){ try{actx.suspend();}catch(e){} } return null; }   // 음소거면 소리 안 냄
+  if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} }
+  else { try{ if(actx.state==='suspended') actx.resume(); }catch(e){} }
+  return actx; }
+window.__buApplyMute=function(m){ try{ if(actx){ m?actx.suspend():actx.resume(); } }catch(e){} };   // 허브가 즉시 반영
 function blip(f,dur){ const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain();
   o.type='triangle'; o.frequency.value=f; o.connect(g); g.connect(c.destination);
   g.gain.setValueAtTime(.0001,c.currentTime); g.gain.exponentialRampToValueAtTime(.25,c.currentTime+.01);

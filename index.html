@@ -5575,8 +5575,14 @@ async function appleAsk(q){
 const AH_EMOS=['neutral','happy','wink','happygrin','surprised','sad','confused','sleeping','scared','determined','angry','shivering','wink2'];
 let ahHist=[], ahTypeTimer=null;
 function ahSetEmotion(e){ const img=document.getElementById('ahImg'); if(!img) return; if(!AH_EMOS.includes(e)) e='neutral'; img.src='assets/apple_'+e+'.png'; }
+// ★Apple 답변 속 URL을 클릭 가능한 링크로(HTML 이스케이프 후 링크화). 예약 링크 등 눌러서 이동.
+function appleLinkify(text){
+  const esc=String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return esc.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#7fd0ff;text-decoration:underline;word-break:break-all">$1</a>');
+}
 function ahAdd(who,text){ const lg=document.getElementById('ahLog'); if(!lg) return null;
-  const d=document.createElement('div'); d.className=who; d.textContent=(who==='u'?'나  ':'')+text;
+  const d=document.createElement('div'); d.className=who;
+  if(who==='u') d.textContent='나  '+text; else d.innerHTML=appleLinkify(text);   // Apple 답변만 링크화(사용자 입력은 안전하게 textContent)
   lg.appendChild(d); while(lg.children.length>40) lg.removeChild(lg.firstChild); lg.scrollTop=lg.scrollHeight; return d; }
 // Apple 답변을 한 글자씩 타자기처럼 출력(말하는 느낌). 빠른 속도.
 function ahTypeAnswer(text){
@@ -5587,7 +5593,7 @@ function ahTypeAnswer(text){
   let i=0;
   const step=()=>{ i=Math.min(text.length, i+1); d.textContent=text.slice(0,i);
     const stick = lg.scrollHeight-lg.scrollTop-lg.clientHeight < 40; if(stick) lg.scrollTop=lg.scrollHeight;
-    if(i<text.length) ahTypeTimer=setTimeout(step, 16); else ahTypeTimer=null; };
+    if(i<text.length) ahTypeTimer=setTimeout(step, 16); else { ahTypeTimer=null; d.innerHTML=appleLinkify(text); if(stick) lg.scrollTop=lg.scrollHeight; } };   // 완성되면 URL 링크화
   step();
 }
 function openApple(){ try{ initAudio(); }catch(e){}
@@ -5957,12 +5963,16 @@ addEventListener('keydown', function(e){
 /* Bottoms Up 전용 BGM: audioCtx는 suspend되므로 독립 HTML5 오디오로 재생 →
    허브 안 미니게임(럭키투스·병돌리기)을 플레이하는 동안에도 부모에서 계속 흐르고,
    Bottoms Up을 나가면(close) 딱 멈춘다. */
-let bottomsBgm=null;
+let bottomsBgm=null, bottomsMuted=false;
 function playBottomsBgm(){ try{
   if(!bottomsBgm){ bottomsBgm=new Audio('assets/music_bottomsup.mp3'); bottomsBgm.loop=true; }
+  bottomsBgm.muted=bottomsMuted;
   bottomsBgm.volume=Math.max(0,Math.min(1, musicVol*0.5)); bottomsBgm.currentTime=0;
   bottomsBgm.play().catch(function(){});
 }catch(e){} }
+// ★Bottoms Up 허브(iframe)의 사운드 토글 → 배경음악 음소거 반영
+window.addEventListener('message', function(ev){ if(ev&&ev.data&&ev.data.type==='buMute'){
+  bottomsMuted=!!ev.data.muted; try{ if(bottomsBgm) bottomsBgm.muted=bottomsMuted; }catch(e){} } });
 function stopBottomsBgm(){ try{ if(bottomsBgm){ bottomsBgm.pause(); bottomsBgm.currentTime=0; } }catch(e){} }
 function openBottomsUp(){
   try{ initAudio(); playSelect(); }catch(e){}
