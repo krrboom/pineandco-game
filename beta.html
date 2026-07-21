@@ -1476,7 +1476,7 @@ const CRAFT_FX = {
   southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
   moscowmule:'Donkey KICK! A hoof lashes out the way you face and snaps back (like lipstick in and out), knocking enemies away and slowing them. Grows each level; at Lv6 it kicks from BOTH sides. Super: 2x damage.',
   whiskysour:'A long yellow lemon beam fires straight the way you face, all the way to the screen edge. Anything the line touches is fully FROZEN in place. No damage, pure lockdown. Levels up faster and thicker.',
-  negroni:'Defensive. Projects a red shield with its own HP that soaks damage before your health. Regenerates when unhit, and rebuilds if broken. Leveling raises defense and shield HP.',
+  negroni:'Defensive. 20% chance to dodge a hit outright, plus a red shield with its own HP that soaks damage before your health. The shield regenerates slowly when unhit and rebuilds if broken. Leveling raises shield HP.',
   bloodymary:'One bloody-mary glass loops around you in a wide slow figure-8, flinging chili peppers in all directions. Peppers pierce 2 and leave a burning DoT. More peppers as it levels.',
   espressomartini:'Brown lightning strikes from the top of the screen onto enemies below, a strong AoE that also freezes. Slow to fire but the hardest-hitting cocktail.',
   margarita:'Giant salt boomerangs that fly out and back.',
@@ -1679,7 +1679,7 @@ function recalcStats(){
   player.extraProj = Math.min(3, (player.upExtra||0) + Math.floor(pas.amount));
   player.pickupR   = 72 + 45*(player.upPickup||0) + pas.magnet;
   const _negLv=player.weapons.negroni||0;   // ★네그로니: 레벨업마다 방어력 + 실드HP
-  player.defense   = Math.min(60, 3*(player.upDefense||0) + pas.armor + _negLv*4);   // 상한 25→50→60(올리브+네그로니)
+  player.defense   = Math.min(60, 3*(player.upDefense||0) + pas.armor);   // ★네그로니 아머 제거(0)
   player.crit      = Math.min(0.5, Math.min(0.08, 0.01*(player.upCrit||0)) + pas.crit);
   player.critMul   = [0,2,3.5,4,7,12,18][Math.min(6, player.weapons.dryver||0)] || 2;   // 크리 데미지: 드라이버무스 레벨별 ×2 / ×3.5 / ×4 / ×7 / ×12 / ×18 (확률은 그대로)
   player.regenBonus= 0.25*(player.upRegen||0) + pas.regen;
@@ -1699,7 +1699,7 @@ function recalcStats(){
   player.reviveCharges = (player.weapons.coffee && !player.reviveUsed) ? 1 : 0;   // 커피: 1회 부활
   player.rerollMax = player.weapons.gingerbeer || 0;              // ★진저비어: 레벨당 레벨업 리롤 1회
   // ★네그로니 실드: 최대 체력 = 레벨별. 현재값은 update에서 재생/재건 관리(여기선 상한만 갱신)
-  player.shieldMax = _negLv>0 ? (50 + _negLv*35) : 0;
+  player.shieldMax = _negLv>0 ? (20 + _negLv*14) : 0;   // ★실드 체력 60%↓
   if(player.shield==null) player.shield = player.shieldMax;
   if(player.shield>player.shieldMax) player.shield = player.shieldMax;   // 만렙에서 하향 시
   if(_negLv>0 && player.shield<player.shieldMax && (player._negWasZero)) player.shield=player.shieldMax;   // 방금 습득 시 채움
@@ -2366,7 +2366,7 @@ function spPrice(it){ const f=n=>'₩ '+(n*1000).toLocaleString();
 function startGame(charKey){
   initAudio(); playSelect(); setMusic('intro');   // 캐릭터 선택 사운드 + 에필로그 크롤 음악(크롤 끝나면 revealGame에서 play로 전환)
   const c=CHARACTERS[charKey];
-  player={ key:charKey, x:W/2, y:H/2, r:6, speed:c.moveSpeed, hp:c.maxHp, maxHp:c.maxHp,
+  player={ key:charKey, x:W/2, y:H/2, r:7.2, speed:c.moveSpeed, hp:c.maxHp, maxHp:c.maxHp,
     base:c.base, projKind:c.projKind, fireTimer:0, projSpeed:c.projSpeed, projR:c.projR, basePierce:c.pierce||0,
     pickupR:72, color:c.color, dmgMul:1, cdMul:1, sizeMul:1, extraProj:0, facing:1, moving:false, throwTimer:0,
     upSpeed:0, upPower:0, upHealth:0, upRapid:0, upSize:0, upPickup:0, upCrit:0, upExtra:0, pas:{},   // 스탯 카운터(VS식 재계산)
@@ -2595,7 +2595,7 @@ function spawnEnemy(type){
   const d=DIFF(); const p=edgePos();
   type = type || chooseType();
   if(type==='genz'){ spawnGenzPair(d,p); return; }   // 젠지는 남녀 2인 1조로 스폰
-  let e={ id:enemyId++, x:p.x, y:p.y, type, wobble:Math.random()*6.28, dmgCd:0, shootCd:(120+Math.random()*60)*0.87,   // ★공속 +15%
+  let e={ id:enemyId++, x:p.x, y:p.y, type, wobble:Math.random()*6.28, dmgCd:0, shootCd:(120+Math.random()*60)*0.91,   // ★공속 +15%
     // 애니메이션 상태: 평소 걷다가 가끔 멈춰서 서기 모션
     moving:true, standUntil:0, nextPause:frame+90+Math.random()*240, vomitUntil:0, vomitFired:false, fuseUntil:0, remove:false };
   if(type==='drunk'){ e.r=8; e.hp=d.hp; e.speed=d.speed*(0.8+Math.random()*0.4);
@@ -2604,13 +2604,13 @@ function spawnEnemy(type){
   else if(type==='bomber'){ e.r=11; e.hp=d.hp*1.8; e.speed=d.speed*0.5; e.bomb=true; e.sprite='bomber'; e.blast=56; }
   else if(type==='thrower'){ e.r=8; e.hp=d.hp*0.6; e.speed=d.speed*0.7; e.thrower=true; e.sprite='thrower'; }
   e.hp *= 2.145; e.maxHp=e.hp;   // ★체력 추가 +10%   // ★기본 몬스터 체력 30%→95%↑(한 방에 안 죽게 +50%)
-  e.r *= 0.675;                // ★전체 크기 10%→25% 추가↓(맵 넓어 보이게)
+  e.r *= 0.81; e.speed *= 0.9;   // ★크기 10%↓ · 이동속도 10%↓                // ★전체 크기 10%→25% 추가↓(맵 넓어 보이게)
   enemies.push(e);
 }
 /* 젠지 남녀 한 쌍: 서로 partner로 묶임. 둘이 붙어 있을 때만 프리즈(슬로우) 장이 켜진다. */
 function spawnGenzPair(d,p){
   const mk=(sprite,ox)=>({ id:enemyId++, x:p.x+ox, y:p.y, type:'genz', sprite,
-    r:9, hp:d.hp*1.7*1.3, maxHp:d.hp*1.7*1.3, speed:d.speed*0.92,   // ★체력 30%↑
+    r:9, hp:d.hp*1.7*1.3, maxHp:d.hp*1.7*1.3, speed:d.speed*0.92*0.9,   // ★체력 30%↑ · 이동속도 10%↓
     wobble:Math.random()*6.28, dmgCd:0, shootCd:0, moving:true,
     standUntil:0, nextPause:frame+90+Math.random()*240,
     vomitUntil:0, vomitFired:false, fuseUntil:0, remove:false, partner:null });
@@ -2672,9 +2672,9 @@ function spawnBoss(forceIdx, hpOverride){   // forceIdx: 샌드박스 지정 / h
   const boss = { id:enemyId++, x:p.x, y:p.y, type:'boss', tier, bossNo:bossCount,
     bossChar:bc.sprite, nickname:bc.nick, moving:true,
     won, billSprite:billSpriteFor(won),
-    r: (tier===1?16:tier===2?22:30) * sizeGrow * 0.675,   // ★보스 크기 25% 추가↓
+    r: (tier===1?16:tier===2?22:30) * sizeGrow * 0.81,   // ★보스 크기 25% 추가↓
     hp:hp, maxHp:hp,
-    speed:d.speed*(tier===3?0.7:0.55), wobble:Math.random()*6.28, dmgCd:0 };
+    speed:d.speed*(tier===3?0.7:0.55)*0.9, wobble:Math.random()*6.28, dmgCd:0 };
   enemies.push(boss);
   bossBanner(bc.nick, bc.intro);     // 별명(크게) + 재치 멘트(작게)
   bossAlertUntil = gameTime + 2.2;   // 긴박한 빨간 플래시
@@ -2698,7 +2698,7 @@ function bossAttack(e, a, dist, D){
         eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
           r:11, life:260, kind:'heart', hp:1, noKill:true, spin:Math.random()*6.28, dmg:halfContact }); }
       burst(e.x, e.y, '#ff77a3', 8); try{ playSfx('select', 0.4); }catch(_){}
-      e.heartCd = (78 + Math.random()*34)*0.87;   // ★공속 +15%
+      e.heartCd = (78 + Math.random()*34)*0.91;   // ★공속 +15%
     }
     return;
   }
@@ -2712,7 +2712,7 @@ function bossAttack(e, a, dist, D){
       eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
         r:8, life:340, kind:'phone', hp:1, noKill:true, home:60, spd, dmg:halfContact });   // ★크기 -40%(r13→8)
       burst(e.x, e.y, '#ffd24a', 8); try{ playSfx('select', 0.35); }catch(_){}
-      e.phoneCd = (108 + Math.random()*50)*0.87;   // ★공속 +15%   // ★공격속도 +20%(쿨다운 단축)
+      e.phoneCd = (108 + Math.random()*50)*0.91;   // ★공속 +15%   // ★공격속도 +20%(쿨다운 단축)
     }
     return;
   }
@@ -2728,7 +2728,7 @@ function bossAttack(e, a, dist, D){
         e.againLeft--; e.againGap=48;                     // 다음 낙하 간격도 살짝 빠르게(0.8초)
       }
     } else { e.againCd--;
-      if(e.againCd<=0 && dist<640){ e.againLeft=8; e.againGap=0; e.againCd=278; } }   // ★낙하 +3발, 공속 +15%   // 5개 볼리 시작(다음 볼리까지 ~5초)
+      if(e.againCd<=0 && dist<640){ e.againLeft=7; e.againGap=0; e.againCd=291; } }   // ★낙하 +30%(5→7), 공속 +10%   // ★낙하 +3발, 공속 +15%   // 5개 볼리 시작(다음 볼리까지 ~5초)
     return;
   }
 
@@ -2769,7 +2769,7 @@ function bossAttack(e, a, dist, D){
       eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
         r:22, life:300, kind:'cocktailthrow', img:COCKTAILS[ck].img, hp:1, noKill:true, spin:Math.random()*6.28, dmg:halfContact });   // 크게(r22) 일직선
       burst(e.x, e.y, '#cfe', 8); try{ playSfx('select',0.4); }catch(_){}
-      e.glassCd = (60 + Math.random()*27)*0.87;   // ★공속 +15%   // ★공격속도 1.5배(cd ÷1.5)
+      e.glassCd = (60 + Math.random()*27)*0.91;   // ★공속 +15%   // ★공격속도 1.5배(cd ÷1.5)
     }
     return;
   }
@@ -2782,9 +2782,9 @@ function bossAttack(e, a, dist, D){
       const n=8, spread=0.26, spd=2.9;   // ★5→8발(+3)
       for(let i=0;i<n;i++){ const off=(i-(n-1)/2)*spread, ang=a+off;
         eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
-          r:21, life:320, kind:'amaro', img:'amaro_'+i, hp:1, noKill:true, spin:(Math.random()-0.5)*0.15, dmg:halfContact }); }   // ★크기 50%↑(14→21)
+          r:21, life:320, kind:'amaro', img:'amaro_'+(i%5), hp:1, noKill:true, spin:(Math.random()-0.5)*0.15, dmg:halfContact }); }   // ★크기 50%↑(14→21)
       burst(e.x, e.y, '#c0392b', 10); try{ playSfx('select',0.4); }catch(_){}
-      e.amaroCd = (115 + Math.random()*45)*0.87;   // ★공속 +15%
+      e.amaroCd = (115 + Math.random()*45)*0.91;   // ★공속 +15%
     }
     return;
   }
@@ -2796,7 +2796,7 @@ function bossAttack(e, a, dist, D){
       if(e.selfieGap<=0){ const x=52+Math.random()*(W-104), y=62+Math.random()*(H-124);
         dropMarks.push({ x, y, r:52, at:gameTime+0.9, tele:0.9, kind:'selfie', img:'selfie', dmg:player.maxHp*0.35 });
         e.selfieLeft--; e.selfieGap=54; } }
-    else { e.selfieCd--; if(e.selfieCd<=0 && dist<640){ e.selfieLeft=7; e.selfieGap=0; e.selfieCd=261; } }   // ★낙하 +3발, 공속 +15%
+    else { e.selfieCd--; if(e.selfieCd<=0 && dist<640){ e.selfieLeft=5; e.selfieGap=0; e.selfieCd=273; } }   // ★낙하 +30%(4→5), 공속 +10%   // ★낙하 +3발, 공속 +15%
     return;
   }
 
@@ -2808,12 +2808,13 @@ function bossAttack(e, a, dist, D){
       const wob=Math.sin(e.wobble)*0.3; e.x+=Math.cos(a+wob)*e.speed; e.y+=Math.sin(a+wob)*e.speed; e.moving=true;   // 걷기(공격 안 함)
       if(e.kt<=0){ e.kstate='stop'; e.kt=36; e.moving=false;                                                        // 멈춰서 공격 1발
         const spd=2.3;   // ★Pat 기본공격(4.6)의 절반
-        eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd, r:18, life0:340, life:340, kind:'rainbowshout', img:'eproj_rainbow', hp:1, noKill:true, dmg:halfContact });   // 무지개: 나가며 커짐
-        for(const o of [-0.34,0.34,-0.62,0.62,-0.9]){ const ang=a+o;   // ★음표 2→5(+3)                                                               // 양옆 음표
+        for(const ro of [-0.16,0.16]){ const rang=a+ro;   // ★와이파이(무지개) ×2 방사형
+          eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(rang)*spd, vy:Math.sin(rang)*spd, r:18, life0:340, life:340, kind:'rainbowshout', img:'eproj_rainbow', hp:1, noKill:true, dmg:halfContact }); }
+        for(const o of [-0.40,0.40,-0.70,0.70]){ const ang=a+o;   // ★음표 ×2 방사형(2→4)
           eprojectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, r:12, life:300, kind:'note', img:(o<0?'eproj_note1':'eproj_note2'), hp:1, noKill:true, bob:Math.random()*6.28, dmg:halfContact*0.5 }); }
         burst(e.x, e.y-e.r, '#ffd24a', 10); try{ playSfx('select',0.5); }catch(_){}
       }
-    } else { e.moving=false; if(e.kt<=0){ e.kstate='walk'; e.kt=104; } }   // ★공속 +15%   // 0.6초 멈춤 후 다시 2초 걷기
+    } else { e.moving=false; if(e.kt<=0){ e.kstate='walk'; e.kt=109; } }   // ★공속 +10%   // ★공속 +15%   // 0.6초 멈춤 후 다시 2초 걷기
     return;
   }
 }
@@ -2848,7 +2849,7 @@ function spawnDrunkWave(){
   const hp=d.hp*strength*2;                                         // ★보스의 2배 (3마리 모두 동일)
   const won=Math.round(600 + gameTime*5);                           // 처치 시 큰 경험치 지폐
   const tipIdx=Math.floor(Math.random()*3);                         // ★3명 중 1명만 팁
-  const r=41, drawH=82;                                             // 1.7배 고정(일반 ~48px→~82px), 원=이미지 크기(반경 41)
+  const r=36.9, drawH=73.8;   // ★크기 10%↓                                             // 1.7배 고정(일반 ~48px→~82px), 원=이미지 크기(반경 41)
   // ★서로 겹치지 않는 낙하 지점 3곳(기존 만취 손님·예고 마커와도 안 겹치게)
   const gap=r*2+10;
   const taken=[];
@@ -2890,9 +2891,9 @@ function spawnWall(){
   const won = 150000;
   enemies.push({ id:enemyId++, type:'boss', wall:true, bossChar:'boss_nobook',
     x:W/2, y: fromTop ? -70 : H+70, dir: fromTop ? 1 : -1,
-    r:48,                                       // 충돌 띠 절반 두께(전체 폭 가로 띠로 동작)
+    r:43.2,                                     // ★10%↓ 충돌 띠 절반 두께
     won, billSprite:billSpriteFor(won),
-    hp, maxHp:hp, speed:0.42,                   // 아주 천천히
+    hp, maxHp:hp, speed:0.378,                  // ★이동속도 10%↓
     nickname:'NO-BOOKING MOB', moving:false, dmgCd:0 });
   bossBanner('THE NO-BOOKING MOB',
     "A whole party, zero reservations.\nPrime Friday, they 'just showed up'\nand want the booth you saved for weeks.\nYou will not get past. Neither will they.", 1);   // 낮은 우선순위(일반 보스 설명 먼저)
@@ -2929,7 +2930,7 @@ function fireBase(){
   for(let i=0;i<cnt;i++){
     const off=(i-(cnt-1)/2)*spread, ang=a+off;
     projectiles.push({ x:player.x, y:player.y, vx:Math.cos(ang)*player.projSpeed, vy:Math.sin(ang)*player.projSpeed,
-      dmg:player.dmg*player.dmgMul, r:player.projR*player.sizeMul*0.75, splash:player.splash*player.sizeMul, splashMax:player.splashMax,   // ★기본공격 피사체 25%↓
+      dmg:player.dmg*player.dmgMul, r:player.projR*player.sizeMul*0.9, splash:player.splash*player.sizeMul, splashMax:player.splashMax,   // ★기본공격 피사체 25%↓
       pierce:player.splash>0?0:(player.basePierce||1), hit:new Set(), life:80, kind });
   }
 }
@@ -3153,7 +3154,7 @@ function fireCocktail(key, lv){
     ? (0.33*Math.pow(1.42,7)) * (0.85*Math.pow(1.166, slv-1)) * player.dmgMul * 1.1   // 슈퍼: 슈퍼Lv1≈기본Lv8의 0.94배 → 슈퍼Lv8≈2.75배
     : 0.33 * Math.pow(1.42, lv-1) * player.dmgMul) * 0.8;   // 기본: Lv1 약함 → Lv8 · ×0.8(공격력 20%↓)
   // ★크기(사거리·범위): 전체 25%↓(맵 넓어 보이게) + 칵테일 공격범위 추가 10%↓
-  const S = 0.68 * (1 + (Math.pow(1.22, lv-1)-1)*0.6) * (player.sizeMul||1) * (evo ? 1.25 + (slv-1)*0.05 : 1) * 0.75 * 0.9;
+  const S = 0.68 * (1 + (Math.pow(1.22, lv-1)-1)*0.6) * (player.sizeMul||1) * (evo ? 1.25 + (slv-1)*0.05 : 1) * 0.9 * 0.9;
   const pp = Math.floor((player.pas&&player.pas.pierce)||0) + (evo?3:0);   // 관통: tonic 패시브 + 슈퍼 +3
   const img = COCKTAILS[key].img;
   const t = nearestEnemy();
@@ -3263,7 +3264,7 @@ function fireCocktail(key, lv){
       gatling('cranberry', 20, 8, 0.12, 70, { pierce:0, cFreeze:45, scatter:1 }); break;   // 저관통+빙결 · 슈퍼=명중 시 뒤로 분산탄
     // ── 성경: 올리브 궤도(유일한 회전 무기). Lv1=1개 → 2레벨마다 +1 ──
     case 'drymartini':
-      orbitCast(lv, (46+lv*8)*0.675, 0.10, { dmg:28*P, r:11 }); break;   // ★궤도반경 전체25%↓+범위10%↓
+      orbitCast(lv, (46+lv*8)*0.81, 0.10, { dmg:28*P, r:11 }); break;   // ★궤도반경 전체25%↓+범위10%↓
     // ── 검은비둘기→소다건식: 보드카마티니 = 올리브 연사(빙결). Lv1=1발 → Lv8=5발 ──
     case 'vodkamartini':
       gatling('ing_olive', 26, 8.5, 0.1, 75, { pierce:0, cFreeze:55, scatter:1 }); break;   // 저관통+빙결 · 슈퍼=명중 시 뒤로 분산탄
@@ -3324,7 +3325,7 @@ function updateGinTonic(){
   const sMul=evo?0.85*Math.pow(1.166,slv-1):1;                   // 슈퍼: Lv1=0.85배 → Lv8=2.5배
   // ★이미지·범위를 플레이어 중심에 고정(이동 방향 따라 안 도는·안 뒤집히게) + 사이즈 2배
   player.gtx=player.x; player.gty=player.y;
-  player.gtr=(22+lv*5)*(player.sizeMul||1)*(evo?1.5:1)*2.5*0.675;   // ★전체 25%↓ + 칵테일 범위 10%↓
+  player.gtr=(22+lv*5)*(player.sizeMul||1)*(evo?1.5:1)*2.5*0.81;   // ★전체 25%↓ + 칵테일 범위 10%↓
   const dmg=(3.3+lv*1.8)*player.dmgMul*sMul*3;                    // ★공격력 2배(1.5→3)
   const tick=Math.max(4, (evo?12:18)-lv);                        // 데미지 주기
   for(const e of enemies){ if(Math.hypot(e.x-player.gtx,e.y-player.gty) < player.gtr+e.r){
@@ -3359,7 +3360,7 @@ function updateVodkaTonic(){
   const sizeBoost = evo ? (1.3 + slv*0.07) : 1;   // ★슈퍼는 피사체 크게
   while(vtDrones.length < want) vtDrones.push({ x:player.x+(Math.random()-0.5)*50, y:player.y+(Math.random()-0.5)*50, vx:0, vy:0, hit:{} });
   while(vtDrones.length > want) vtDrones.pop();
-  const R=24*(player.sizeMul||1)*sizeBoost*0.675;   // ★전체 25%↓ + 칵테일 범위 10%↓
+  const R=24*(player.sizeMul||1)*sizeBoost*0.81;   // ★전체 25%↓ + 칵테일 범위 10%↓
   const SEP=R*1.6;   // ★드론끼리 안 겹치게(분리 반경)
   for(const d of vtDrones){ d.size=sizeBoost;   // 렌더용 크기 저장
     let tgt=null, nd=1e9;
@@ -3672,7 +3673,7 @@ function update(){
   if((player.shieldMax||0)>0){
     const sinceHit = frame - (player.lastHitFrame||-9999);
     if(player.shield>0){
-      if(sinceHit>120 && player.shield<player.shieldMax) player.shield = Math.min(player.shieldMax, player.shield + player.shieldMax*0.004);   // 2초 후 초당 ~24%
+      if(sinceHit>120 && player.shield<player.shieldMax) player.shield = Math.min(player.shieldMax, player.shield + player.shieldMax*0.0016);   // ★재생 60%↓   // 2초 후 초당 ~24%
     } else {
       if(sinceHit>300){ player.shield = player.shieldMax; burst(player.x,player.y,'#ff9aa8',20); crits.push({x:player.x,y:player.y-player.r-10,life:40,txt:'SHIELD UP',col:'#ff9aa8'}); }   // 5초 후 완전 재건
     }
@@ -3741,7 +3742,7 @@ function update(){
       const arms = 2 + (player.ultLevel||1);              // 레벨업으로 팔(갈래) 증가
       for(let a=0;a<arms;a++){ const ang = player.ultSpiralAng + a*(6.28/arms);
         projectiles.push({ x:player.x, y:player.y, vx:Math.cos(ang)*5.6, vy:Math.sin(ang)*5.6,
-          dmg:player.dmg*player.dmgMul*4.8*Math.pow(2,(player.ultLevel||1)-1), r:8*player.sizeMul*0.75, splash:36*player.sizeMul, splashMax:7,   // ★필살기 피사체 25%↓   // 현재의 2배(2.4→4.8) + 업그레이드마다 2배씩(×2^lv)
+          dmg:player.dmg*player.dmgMul*4.8*Math.pow(2,(player.ultLevel||1)-1), r:8*player.sizeMul*0.9, splash:36*player.sizeMul, splashMax:7,   // ★필살기 피사체 25%↓   // 현재의 2배(2.4→4.8) + 업그레이드마다 2배씩(×2^lv)
           pierce:0, hit:new Set(), life:82, kind:player.projKind }); }
     }
   }
@@ -3782,7 +3783,7 @@ function update(){
         e.moving=false;                                  // 토하는 동안 멈춤
         if(!e.vomitFired && frame >= e.vomitUntil-16){    // 토악질 정점에 발사
           e.vomitFired=true;
-          for(let _i=0;_i<4;_i++){ const _ang=a+(_i-1.5)*0.20;   // ★피사체 1→4발(+3) 부채꼴
+          for(let _i=0;_i<1;_i++){ const _ang=a;   // ★피사체 1개로 고정
             eprojectiles.push({ x:e.x+Math.cos(_ang)*e.r, y:e.y+Math.sin(_ang)*e.r,
               vx:Math.cos(_ang)*2.7, vy:Math.sin(_ang)*2.7, r:9, life:170, spin:Math.random()*6.28, hp:1, noKill:true }); }   // ★공격으로 못 없앰(통과)
         }
@@ -3790,7 +3791,7 @@ function update(){
         const move = dist>175?1 : dist<120?-0.6 : 0;
         if(move!==0){ e.x+=Math.cos(a)*e.speed*move; e.y+=Math.sin(a)*e.speed*move; e.moving=true; } else e.moving=false;
         e.shootCd--;
-        if(e.shootCd<=0 && dist<300){ e.vomitUntil=frame+34; e.vomitFired=false; e.shootCd=(150+Math.random()*70)*0.87; }   // ★공속 +15%
+        if(e.shootCd<=0 && dist<300){ e.vomitUntil=frame+34; e.vomitFired=false; e.shootCd=(150+Math.random()*70)*0.91; }   // ★공속 +15%
       }
     } else if(e.wall){
       // 가로 벽: 수직으로만 천천히 횡단. 충돌 중심 x를 플레이어에 맞춰 어디로 가도 막힘.
@@ -3861,7 +3862,7 @@ function update(){
 
   // 적 침(미사일)
   for(let i=eprojectiles.length-1;i>=0;i--){ const p=eprojectiles[i];
-    if(!p._sc){ p._sc=1; p.r*=0.75; }   // ★적/보스 피사체 크기 25%↓(그리기도 p.r 기반이라 함께 축소)
+    if(!p._sc){ p._sc=1; p.r*=0.9; p.vx*=0.9; p.vy*=0.9; }   // ★크기·속도 10%↓   // ★적/보스 피사체 크기 25%↓(그리기도 p.r 기반이라 함께 축소)
     if(!(player.timeStopUntil && frame<player.timeStopUntil)){
       // ★Smooth Operator 전화번호: 약하게 유도(home 프레임 동안만) → 스쳐지나가면 그대로 화면밖
       if(p.home>0){ p.home--; const want=Math.atan2(player.y-p.y, player.x-p.x), cur=Math.atan2(p.vy,p.vx);
@@ -4037,6 +4038,8 @@ function update(){
 
 function hurtPlayer(d){ if(sbGod) return;
   d=Math.max(1, d-(player.defense||0));   // 방어력만큼 경감(최소 1)
+  if((player.shieldMax||0)>0 && Math.random()<0.20){   // ★네그로니: 20% 회피(피해 완전 무효)
+    player.invuln=38; crits.push({x:player.x,y:player.y-player.r-6,life:28,txt:'MISS',col:'#8fd4ff'}); burst(player.x,player.y,'#8fd4ff',8); return; }
   player.lastHitFrame = frame;   // ★네그로니 실드 재생 타이머
   if((player.shield||0)>0){   // ★네그로니 실드가 먼저 피해를 흡수
     player.shield -= d; player.invuln=38; burst(player.x,player.y,'#ff5a6e',14);
@@ -4935,7 +4938,7 @@ function draw(){
     // ★블러디메리: 8자로 도는 동반 잔(고추 방사)
     if(player.weapons&&player.weapons.bloodymary&&player.bmx!=null){ const bim=spr('cocktail_bloodymary');
       ctx.save(); const bob=Math.sin(frame*0.2)*2;
-      if(bim){ const asp=(bim.naturalWidth||bim.width)/(bim.naturalHeight||bim.height||1), bh=42, bw=bh*asp; drawImgC(bim, player.bmx, player.bmy+bob, bw, bh); }
+      if(bim){ const asp=(bim.naturalWidth||bim.width)/(bim.naturalHeight||bim.height||1), bh=38, bw=bh*asp; drawImgC(bim, player.bmx, player.bmy+bob, bw, bh); }   // ★크기 10%↓
       else { ctx.fillStyle='#c02020'; ctx.beginPath(); ctx.arc(player.bmx,player.bmy,13,0,6.28); ctx.fill(); }
       ctx.restore(); }
     // ★캄파리: 주위 적 방어↓ 오라(붉은 필드)
@@ -4969,7 +4972,7 @@ function draw(){
         ctx.globalAlpha=0.5+0.2*Math.sin(frame*0.2+d.x); const gR=20*sc, gr=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,gR);
         gr.addColorStop(0,'rgba(160,225,255,0.8)'); gr.addColorStop(1,'rgba(160,225,255,0)'); ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(d.x,d.y,gR,0,6.28); ctx.fill();
         ctx.globalAlpha=1;
-        if(vim){ const H=26*sc, W=H*vim.width/vim.height; drawImgC(vim, d.x, d.y, W, H, Math.atan2(d.vy,d.vx)+1.57); }
+        if(vim){ const H=23.4*sc, W=H*vim.width/vim.height; drawImgC(vim, d.x, d.y, W, H, Math.atan2(d.vy,d.vx)+1.57); }   // ★크기 10%↓
         else { ctx.fillStyle='#bfe6ff'; ctx.beginPath(); ctx.arc(d.x,d.y,7*sc,0,6.28); ctx.fill(); }
         ctx.restore(); } }
     // tequila 라임 궤도
@@ -4996,7 +4999,7 @@ function draw(){
       gr.addColorStop(0,'rgba(90,55,25,'+(0.6*t)+')'); gr.addColorStop(0.5,'rgba(110,66,28,'+(0.32*t)+')'); gr.addColorStop(1,'rgba(110,66,28,0)');
       ctx.globalAlpha=1; ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(bf.x,bf.y,(bf.landR||40)*(0.7+0.5*(1-t)),0,6.28); ctx.fill();
       // 번개 이미지(위에서 착지점까지) — 진한 커피색으로 물들임
-      if(im){ const topY=-20, H=bf.y-topY, Wd=H*im.width/im.height*0.5;
+      if(im){ const topY=-20, H=bf.y-topY, Wd=260*im.width/im.height*0.5;   // ★너비 고정
         ctx.globalAlpha=0.6*t; ctx.imageSmoothingEnabled=false; ctx.drawImage(im, bf.x-Wd/2, topY, Wd, H);
         ctx.globalCompositeOperation='source-atop'; ctx.globalAlpha=0.7*t; ctx.fillStyle='#3a230e'; ctx.fillRect(bf.x-Wd/2, topY, Wd, H); }   // 진한 커피 갈색 틴트
       // 커피색 지그재그 코어
@@ -5041,7 +5044,7 @@ function draw(){
     if(player && state!=='tip' && !(player.invuln>0 && frame%6<3)){
       const pim=spr(playerFrameKey()) || spr(player.key);
       if(pim){
-        const DH=33, aspect=pim.width/pim.height;       // ★캐릭터 25%↓ (44→33)
+        const DH=40, aspect=pim.width/pim.height;       // ★캐릭터 10%↓ (44→40)
         drawImgC(pim, player.x, player.y-6, DH*aspect, DH, 0, player.facing<0);
         // 레인보우 건 장착 — 플레이어 손 쪽에 들고 있게(바라보는 방향)
         if(player.rainbow){ const gi=spr('rainbow_gun'); if(gi){ const gh=15, gw=gh*gi.width/gi.height;
@@ -5161,7 +5164,7 @@ function drawEnemy(e){
   const key = enemyFrameKey(e);
   const im = key && spr(key);
   if(im){ const face = player && player.x < e.x; // 플레이어가 왼쪽이면 왼쪽 보기
-    const EH = e.type==='boss' ? e.r*3.7 : (42 + e.r*0.8)*0.675, aspect=im.width/im.height; // 보스는 훨씬 크게 · 기본몹 10%↓
+    const EH = e.type==='boss' ? e.r*3.7 : (42 + e.r*0.8)*0.81, aspect=im.width/im.height; // 보스는 훨씬 크게 · 기본몹 10%↓
     const wsFrozen = frame < (e.stopUntil||0);   // ★위스키사워 완전정지 = 파랗게
     if(wsFrozen) ctx.filter='brightness(0.9) sepia(1) hue-rotate(175deg) saturate(5)';   // 스프라이트만 파랗게 틴트
     drawImgC(im, e.x+jx, e.y+jy - EH*0.28, EH*aspect, EH, 0, face);
@@ -5232,7 +5235,7 @@ function drawProj(p){
     ctx.globalAlpha=0.9; ctx.fillStyle='#fff6c0'; ctx.beginPath(); ctx.arc(L,0,p.r*0.7,0,6.28); ctx.fill();   // 빔 끝 광점
     ctx.restore(); return; }
   if(p.kind==='espbolt'){ const im=spr(p.boltImg)||spr('lightning_0'); const topY = -20;   // ★번개: 화면 위(잘림 없이)에서 현재 y까지 세로로
-    if(im){ const H=p.y-topY, W=H*im.width/im.height*0.5; ctx.save(); ctx.imageSmoothingEnabled=false;
+    if(im){ const H=p.y-topY, W=260*im.width/im.height*0.5; ctx.save(); ctx.imageSmoothingEnabled=false;   // ★너비 고정(위에서 때리는 크기)
       // 낙하 지점 커피색 글로우
       const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,44); gr.addColorStop(0,'rgba(110,66,28,0.8)'); gr.addColorStop(1,'rgba(90,55,25,0)');
       ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(p.x,p.y,44,0,6.28); ctx.fill();
@@ -5391,7 +5394,7 @@ function sparkle(x,y,rad,seed){
   }
 }
 function drawPickup(g){   // ★드랍 아이템 전체 25%↓(중심 기준 스케일)
-  ctx.save(); ctx.translate(g.x,g.y); ctx.scale(0.75,0.75); ctx.translate(-g.x,-g.y);
+  ctx.save(); ctx.translate(g.x,g.y); ctx.scale(0.9,0.9); ctx.translate(-g.x,-g.y);
   drawPickupInner(g); ctx.restore(); }
 function drawPickupInner(g){
   // 자석 — 빨강 글로우 + 둥실 (전체 동전 흡수 아이템)
