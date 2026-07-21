@@ -1476,7 +1476,7 @@ const CRAFT_FX = {
   southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
   moscowmule:'Donkey KICK! A hoof lashes out the way you face and snaps back (like lipstick in and out), knocking enemies away and slowing them. Grows each level; at Lv6 it kicks from BOTH sides. Super: 2x damage.',
   whiskysour:'A long yellow lemon beam fires straight the way you face, all the way to the screen edge. Anything the line touches is fully FROZEN in place. No damage, pure lockdown. Levels up faster and thicker.',
-  negroni:'Defensive. 20% chance to dodge a hit outright, plus a red shield with its own HP that soaks damage before your health. The shield regenerates slowly when unhit and rebuilds if broken. Leveling raises shield HP.',
+  negroni:'Defensive. 5% chance to dodge a hit outright, plus a red shield with its own HP that soaks damage before your health. The shield regenerates slowly when unhit and rebuilds if broken. Leveling raises shield HP.',
   bloodymary:'One bloody-mary glass loops around you in a wide slow figure-8, flinging chili peppers in all directions. Peppers pierce 2 and leave a burning DoT. More peppers as it levels.',
   espressomartini:'Brown lightning strikes from the top of the screen onto enemies below, a strong AoE that also freezes. Slow to fire but the hardest-hitting cocktail.',
   margarita:'Giant salt boomerangs that fly out and back.',
@@ -4038,7 +4038,7 @@ function update(){
 
 function hurtPlayer(d){ if(sbGod) return;
   d=Math.max(1, d-(player.defense||0));   // 방어력만큼 경감(최소 1)
-  if((player.shieldMax||0)>0 && Math.random()<0.20){   // ★네그로니: 20% 회피(피해 완전 무효)
+  if((player.shieldMax||0)>0 && Math.random()<0.05){   // ★네그로니: 5% 회피(피해 완전 무효)
     player.invuln=38; crits.push({x:player.x,y:player.y-player.r-6,life:28,txt:'MISS',col:'#8fd4ff'}); burst(player.x,player.y,'#8fd4ff',8); return; }
   player.lastHitFrame = frame;   // ★네그로니 실드 재생 타이머
   if((player.shield||0)>0){   // ★네그로니 실드가 먼저 피해를 흡수
