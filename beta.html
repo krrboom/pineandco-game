@@ -3293,7 +3293,11 @@ function fireCocktail(key, lv){
     case 'negroni': break;   // ★방어막(패시브) — recalcStats/update/hurtPlayer에서 관리(체력 있는 실드 + 재생)
     // ── ★블러디메리: 새 폭격기. 넓게 도는 동반자가 지나며 때리고 주기적으로 폭탄 투하. ──
     case 'bloodymary': {
-      // 블러디메리 잔 1개가 플레이어 주위를 8자로 날아다니며(updateBloodyMary), 여기서 고추를 방사형으로 뿌림.
+      if(evo){   // ★슈퍼: 방사형 대신 고추 게틀링(연사) — 자동으로 가장 가까운 적을 유도 타격
+        gatling('proj_chili', 22, 6.2, 0.18, 120, { r:11, pierce:4, cPoison:Math.round(130*(player.durMul||1)), homing:true });
+        break;
+      }
+      // 기본(비진화): 블러디메리 잔 1개가 8자로 날며(updateBloodyMary) 고추를 방사형으로 뿌림.
       const bx = player.bmx!=null?player.bmx:player.x, by = player.bmy!=null?player.bmy:player.y;
       const n = 7 + (lv-1);        // ★7발 → 레벨마다 +1(기존 5발에서 +2)
       const pierce = lv>=6 ? 4 : 2;   // ★만렙(Lv6)이면 관통 4, 그 전엔 2
