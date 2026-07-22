@@ -1670,6 +1670,7 @@ function recalcStats(){
   const pas={dmg:0,cd:0,area:0,speed:0,magnet:0,amount:0,armor:0,hp:0,crit:0,regen:0,xp:0,pierce:0,luck:0,edur:0,ultcd:0,enemydef:0};
   const add=(key)=>{ const g=INGREDIENTS[key]||ORBIT[key]; if(!g||!g.pas) return; const lv=player.weapons[key]||0; if(lv>0) pas[g.pas.stat]+=g.pas.per*lv; };
   for(const k in INGREDIENTS) add(k); add('cranberry');
+  pas.dmg *= 0.85; pas.cd *= 0.85;   // ★재료 효과 15% 너프(공격력·공격속도)
   player.pas=pas;
   // 파생 스탯 (스킬 카운터 + 패시브)
   player.speed     = c.moveSpeed * Math.pow(1.14, player.upSpeed||0) * (1+pas.speed);
@@ -3152,7 +3153,7 @@ function fireCocktail(key, lv){
   // ★난이도 상향: 모든 칵테일(슈퍼 포함) 공격력 20%↓ (레인보우건은 별도 경로라 영향 없음)
   const P = (evo
     ? (0.33*Math.pow(1.42,7)) * (0.85*Math.pow(1.166, slv-1)) * player.dmgMul * 1.1   // 슈퍼: 슈퍼Lv1≈기본Lv8의 0.94배 → 슈퍼Lv8≈2.75배
-    : 0.33 * Math.pow(1.42, lv-1) * player.dmgMul) * 0.8;   // 기본: Lv1 약함 → Lv8 · ×0.8(공격력 20%↓)
+    : 0.33 * Math.pow(1.42, lv-1) * player.dmgMul) * 0.8 * 0.85;   // ★공격력 20%↓ + 추가 15%↓
   // ★크기(사거리·범위): 전체 25%↓(맵 넓어 보이게) + 칵테일 공격범위 추가 10%↓
   const S = 0.68 * (1 + (Math.pow(1.22, lv-1)-1)*0.6) * (player.sizeMul||1) * (evo ? 1.25 + (slv-1)*0.05 : 1) * 0.9 * 0.9;
   const pp = Math.floor((player.pas&&player.pas.pierce)||0) + (evo?3:0);   // 관통: tonic 패시브 + 슈퍼 +3
@@ -3392,7 +3393,7 @@ function drymartiniSlow(){
 // ★난이도 상향: 모든 칵테일(슈퍼 포함) 공격속도 10%↓ = 쿨다운 ×1.111. 재료/스피릿/트리오/소다건은 그대로.
 function weaponCd(key, lv){
   const cd = weaponCdBase(key, lv);
-  return COCKTAILS[key] ? Math.round(cd * 1.111) : cd;
+  return COCKTAILS[key] ? Math.round(cd * 1.111 * 1.176) : cd;   // ★칵테일 공속 -10% + 추가 -15%
 }
 function weaponCdBase(key, lv){
   if(key==='gintonic') return 40;   // 발사 자체는 no-op(실제 데미지는 updateGinTonic 상시)
@@ -3541,7 +3542,7 @@ function startFinale(){
   finale.active=true; finale.phase='chase'; finale.killed=false; finale.hitCd=0;
   const rk = (player.key==='joe') ? 'pat' : 'joe';
   const ep=edgePos();
-  finale.rival={ key:rk, x:ep.x, y:ep.y, spd:5.04 };   // ★이동속도 +40%(못 도망가게)   // Joe 기본이동(3.0)보다 빠름
+  finale.rival={ key:rk, x:ep.x, y:ep.y, spd:6.05 };   // ★이동속도 추가 +20%(5.04→6.05, 못 도망가게) · 별도 엔티티라 무적+빙결/슬로우/데미지 전부 무효
   enemies.length=0; eprojectiles.length=0; mintRain.length=0; gatStream.length=0; dropMarks.length=0; roadLines.length=0;
   spawnTimer=1e9; nextBoss=1e9; nextWall=1e9; nextSurge=1e9; nextDrunkWave=1e9;   // 추격 중 스폰 정지
   finale.phase='intro';   // ★등장 안내 동안 게임 정지 → 확인 눌러야 추격 시작(도망 기회)
