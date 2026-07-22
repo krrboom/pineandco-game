@@ -1471,15 +1471,15 @@ const CRAFT_FX = {
   cosmopolitan:'A continuous gatling stream of freezing pink darts (low pierce). Super: shots scatter behind the enemy they hit.',
   gintonic:'A wide gin & tonic aura locked around you. Enemies inside are continuously frozen — slowed harder than any other freeze — poisoned, and take heavy damage (2x).',
   highball:'A continuous gatling stream of fizzy splashes (low pierce) that freeze, each a small blast. Super: each shot explodes bigger.',
-  vodkatonic:'Summons roaming ice familiars (up to 4) that hunt nearby enemies on their own, striking and freezing them. They stay out and patrol instead of re-firing. Each level adds one, up to 4.',
+  vodkatonic:'Summons roaming ice familiars (up to 4) that hunt nearby enemies on their own, striking and freezing them. They stay out and patrol instead of re-firing. Each level adds one (up to 4). Super: more, bigger, far stronger familiars.',
   vodkacranberry:'A giant crimson glass whips out sideways the way you face and snaps back (like lipstick in and out), freezing and draining life on hit (lifesteal). Grows each level; at Lv6 it lashes from BOTH sides. Super: 2x speed & damage.',
   southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
-  moscowmule:'Donkey KICK! A hoof lashes out the way you face and snaps back (like lipstick in and out), knocking enemies away and slowing them. Grows each level; at Lv6 it kicks from BOTH sides. Super: 2x damage.',
-  whiskysour:'A long yellow lemon beam fires straight the way you face, all the way to the screen edge. Anything the line touches is fully FROZEN in place. No damage, pure lockdown. Levels up faster and thicker.',
+  moscowmule:'Donkey KICK! A hoof lashes out the way you face and snaps back (like lipstick in and out), knocking non-swarm enemies away, slowing them, and draining life on hit (lifesteal). Grows each level; at Lv6 it kicks from BOTH sides. Super: 2x damage.',
+  whiskysour:'A long yellow lemon beam locks onto the nearest enemy (or your facing direction) and fires straight to the screen edge, piercing 6. Anything the line touches is fully FROZEN in place. No damage, pure lockdown. Levels up faster and thicker.',
   negroni:'Defensive. 5% chance to dodge a hit outright, plus a red shield with its own HP that soaks damage before your health. The shield regenerates slowly when unhit and rebuilds if broken. Leveling raises shield HP.',
-  bloodymary:'One bloody-mary glass loops around you in a wide slow figure-8, flinging chili peppers in all directions. Peppers pierce 2 and leave a burning DoT. More peppers as it levels.',
+  bloodymary:'One bloody-mary glass loops around you in a wide slow figure-8, flinging 7 chili peppers in all directions. Peppers pierce 2 (4 at max level) and leave a burning DoT. More peppers as it levels.',
   espressomartini:'Brown lightning strikes from the top of the screen onto enemies below, a strong AoE that also freezes. Slow to fire but the hardest-hitting cocktail.',
-  margarita:'Giant salt boomerangs that fly out and back.',
+  margarita:'Salt boomerangs that fly out and come back, damaging enemies on BOTH the way out and the way back. More boomerangs as it levels.',
   drymartini:'Olives orbit you (one more each level, wider orbit). Enemies within the orbit range are slowed.',
   vodkamartini:'A continuous gatling stream of freezing olive shots (low pierce) + a freezing shockwave. Super: shots scatter behind the enemy they hit.',
 };
@@ -1560,7 +1560,7 @@ const ORBIT = {
 /* 발사형 재료(루프 재료): 각자 공격 패턴 + 올린 이미지. cranberry는 ORBIT(궤도). */
 /* 재료 = 패시브(VS 스탯). pas가 있으면 발사 안 하고 능력만 부여. Lv1~8. */
 const INGREDIENTS = {
-  lemon: { name:'LEMON', ic:'🍋', img:'ing_lemon', color:'#f4d03f', max:6, pas:{stat:'dmg',per:0.08},   desc:'+8% damage / Lv (all weapons)' },
+  lemon: { name:'LEMON', ic:'🍋', img:'ing_lemon', color:'#f4d03f', max:6, pas:{stat:'dmg',per:0.08},   desc:'+damage per level (all weapons)' },
   lime:  { name:'LIME',  ic:'🟢', img:'ing_lime',  color:'#7ac74f', max:6, pas:{stat:'cd',per:0.03},    desc:'Attacks fire faster' },
   orange:{ name:'ORANGE',ic:'🍊', img:'ing_orange',color:'#f29f3d', max:6, pas:{stat:'area',per:0.06},  desc:'Bigger attacks (area) · +1 cocktail slot' },
   sugar: { name:'SUGAR', ic:'🧊', img:'ing_sugar', color:'#eef2f5', max:6, pas:{stat:'luck',per:0.003}, desc:'+0.3% item drop rate per level (LUCK)' },
