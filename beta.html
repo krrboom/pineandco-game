@@ -3893,7 +3893,7 @@ function update(){
       if(p.ay) p.vy+=p.ay;                  // 위스키/도끼 포물선
       // 데킬라(마가리타·십자가): 부메랑 — 후반 절반엔 플레이어에게 되돌아옴
       if(p.boom && p.life < p.life0*(p.boomRet||0.5)){   // ★boomRet 높으면 일찍 복귀 시작 = 아웃 짧고 빠름 / 인 길고 느림
-        if(p.whip && !p._ret){ p._ret=1; p.hit.clear(); p.vx=0; p.vy=0; }   // ★채찍: 복귀 시작 시 속도 0으로 리셋(정점에서 멈췄다 천천히 복귀) + hit 초기화(왕복 2번 스침)
+        if(!p._ret){ p._ret=1; p.hit.clear(); if(p.whip){ p.vx=0; p.vy=0; } }   // ★부메랑(마가리타 포함): 복귀 시작 시 hit 초기화 → 돌아올 때도 피격. 채찍만 정점에서 속도 리셋.
         const a=Math.atan2(player.y-p.y, player.x-p.x), sp=p.boomSp||7;   // 복귀 속도(마가리타는 5)
         p.vx += (Math.cos(a)*sp - p.vx)*0.12; p.vy += (Math.sin(a)*sp - p.vy)*0.12;
         if(Math.hypot(player.x-p.x,player.y-p.y)<14) p.life=0; // 손에 돌아오면 소멸
