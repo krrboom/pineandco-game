@@ -417,6 +417,22 @@
     width:40px; height:40px; font-size:19px; line-height:1; background:rgba(0,0,0,.55); color:var(--pine-light);
     border:2px solid var(--pine); border-radius:7px; cursor:pointer; box-shadow:2px 2px 0 #000; padding:0; }
   #recipeBtn:active{ transform:translate(2px,2px); box-shadow:0 0 0 #000; }
+  #pauseBtn{ position:absolute; left:106px; bottom:10px; z-index:20;
+    width:40px; height:40px; font-size:18px; line-height:1; background:rgba(0,0,0,.55); color:var(--pine-light);
+    border:2px solid var(--pine); border-radius:7px; cursor:pointer; box-shadow:2px 2px 0 #000; padding:0; }
+  #pauseBtn:active{ transform:translate(2px,2px); box-shadow:0 0 0 #000; }
+  #pausePanel{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
+    background:rgba(10,14,10,.74); }
+  #pausePanel.hidden{ display:none; }
+  .pause-card{ background:rgba(20,26,18,.97); border:2px solid var(--pine); border-radius:14px; padding:22px 24px;
+    text-align:center; box-shadow:0 10px 40px rgba(0,0,0,.6); max-width:82vw; }
+  .pause-card h2{ color:#ffd24a; font-size:19px; margin:0 0 8px; letter-spacing:.5px; }
+  .pause-card p{ color:#cfe0cf; font-size:12.5px; margin:0 0 16px; line-height:1.55; }
+  .pause-btns{ display:flex; flex-direction:column; gap:10px; }
+  .pause-btns button{ font-size:15px; padding:12px 18px; border-radius:9px; border:2px solid var(--pine);
+    background:#2c3e2d; color:#f0ebe0; cursor:pointer; box-shadow:2px 2px 0 #000; }
+  .pause-btns button.primary{ background:#5a8a5e; color:#0a140a; font-weight:bold; }
+  .pause-btns button:active{ transform:translate(2px,2px); box-shadow:0 0 0 #000; }
   .rec-box{ max-width:min(97vw,540px); width:97vw; }   /* ★탭 한 줄 들어가게 살짝 넓힘 */
   .rec-hint{ font-size:7px; color:var(--dim); margin:3px 0 5px; line-height:1.45; }
   #recipePanel .rec-box h3{ margin:2px 0 5px; font-size:clamp(11px,3vw,15px); }   /* 헤더 여백 축소 → 스크롤 영역 확보 */
@@ -739,6 +755,18 @@
   <!-- 설정 버튼(왼쪽) + 음량조절 패널 -->
   <button id="gearBtn" onclick="openSettings()" aria-label="settings">⚙</button>
   <button id="recipeBtn" onclick="openRecipe()" aria-label="recipes">📖</button>
+  <button id="pauseBtn" onclick="pauseGame()" aria-label="pause">⏸</button>
+  <!-- 일시정지: 게임을 멈추고 손님 메뉴를 보거나 주문을 받는 시간 -->
+  <div id="pausePanel" class="hidden">
+    <div class="pause-card">
+      <h2>⏸ 일시정지 · PAUSED</h2>
+      <p>메뉴를 보거나 손님과 이야기한 뒤<br>이어서 플레이하세요. 그동안 게임은 멈춰 있어요.</p>
+      <div class="pause-btns">
+        <button onclick="pauseViewMenu()">📖 메뉴 보기 · VIEW MENU</button>
+        <button class="primary" onclick="resumeGame()">▶ 계속하기 · RESUME</button>
+      </div>
+    </div>
+  </div>
   <!-- 재료/스킬/칵테일/6칸 칩: 정사각형 '밖' 여백에 표시(뷰포트 기준) -->
   <div id="hudChips" class="hidden">
     <div id="ingRow" class="hudchips"></div>
@@ -944,7 +972,7 @@
     <div class="menu-nav" id="menuNav"></div>
     <button class="promo-btn" onclick="openPromo()">🥃 HENNESSY MY WAY <span class="promo-tag">PROMOTION</span></button>
     <div class="scrollbox"><div class="menu-list" id="menuList"></div></div>
-    <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
+    <button class="imgbtn backbtn" onclick="menuBack()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
     <!-- 프로모션 삽지: 헤네시 마이웨이 메뉴 이미지 -->
     <div id="promoModal" class="promo-modal hidden" onclick="closePromo()">
       <button class="promo-x" onclick="closePromo()">✕</button>
@@ -1579,6 +1607,16 @@ function showRecTab(tab){
   if(!isRec){ curIndexTab=tab; renderIndex(); }
 }
 function closeRecipe(){ paused=false; document.getElementById('recipePanel').classList.add('hidden'); playSelect&&playSelect(); }
+/* ★일시정지(PAUSE): 게임을 멈추고 손님 메뉴를 보거나 주문받는 시간. update()가 paused면 정지하므로 게임이 얼어붙는다. */
+let menuFromPause=false;
+function pauseGame(){ if(state!=='playing') return; try{ initAudio(); }catch(e){} paused=true; try{ playSelect(); }catch(e){} show('pausePanel'); }
+function resumeGame(){ menuFromPause=false; hide('pausePanel'); hide('menuScreen'); paused=false; try{ playSelect(); }catch(e){} }
+function pauseViewMenu(){   // 일시정지 상태에서 손님 메뉴(칵테일/음식/위스키)를 오버레이로 봄. state는 playing 유지 → 게임 안 버림.
+  menuFromPause=true; hide('pausePanel');
+  const mi=document.getElementById('menuIntro'); if(mi) mi.classList.add('hidden');   // 편지 인트로 스킵, 바로 메뉴
+  curMenuTab='cocktails'; renderMenu(); show('menuScreen'); try{ playSelect(); }catch(e){}
+}
+function menuBack(){ if(menuFromPause){ menuFromPause=false; hide('menuScreen'); show('pausePanel'); try{ playSelect(); }catch(e){} return; } backToTitle(); }
 function setMusicVol(v){ musicVol=Math.max(0,Math.min(1,v/100)); document.getElementById('musicVal').textContent=Math.round(musicVol*100);
   if(musicBus){ try{ musicBus.gain.value=musicVol; }catch(e){} }   // iOS 포함 실제 음량 반영
   if(typeof bottomsBgm!=='undefined' && bottomsBgm){ try{ bottomsBgm.volume=Math.max(0,Math.min(1,musicVol*0.5)); }catch(e){} }   // Bottoms Up 음악도 설정 슬라이더로 실시간 반영
@@ -1626,8 +1664,8 @@ const INGREDIENTS = {
   lemon: { name:'LEMON', ic:'🍋', img:'ing_lemon', color:'#f4d03f', max:6, pas:{stat:'dmg',per:0.08},   desc:'+damage per level (all weapons)' },
   lime:  { name:'LIME',  ic:'🟢', img:'ing_lime',  color:'#7ac74f', max:6, pas:{stat:'cd',per:0.03},    desc:'Attacks fire faster' },
   orange:{ name:'ORANGE',ic:'🍊', img:'ing_orange',color:'#f29f3d', max:6, pas:{stat:'area',per:0.06},  desc:'Bigger attacks (area) · +1 cocktail slot' },
-  sugar: { name:'SUGAR', ic:'🧊', img:'ing_sugar', color:'#eef2f5', max:6, pas:{stat:'luck',per:0.003}, desc:'+0.3% item drop rate per level (LUCK)' },
-  mint:  { name:'MINT',  ic:'🌿', img:'ing_mint',  color:'#3f9a45', max:6, pas:{stat:'speed',per:0.05}, desc:'Move faster' },
+  sugar: { name:'SUGAR', ic:'🧊', img:'ing_sugar', color:'#eef2f5', max:6, pas:{stat:'luck',per:0.005}, desc:'+0.5% item drop rate per level (LUCK)' },
+  mint:  { name:'MINT',  ic:'🌿', img:'ing_mint',  color:'#3f9a45', max:6, pas:{stat:'speed',per:0.05}, desc:'Move faster + shorter dash cooldown each level' },
   water: { name:'WATER', ic:'💧', img:'ing_water', color:'#aee6f5', max:6, pas:{stat:'regen',per:0.195}, desc:'Regenerate HP (faster)' },
   // 심플시럽 = 설탕(Lv3)+물(Lv3) 조합 결과물(공격 무기). 아주 느린 병을 던져 맞으면 터지며 광역 슬로우.
   syrup: { name:'SIMPLE SYRUP', ic:'🍯', img:'ing_syrup', color:'#e9c46a', attack:'syrup', cd:150, max:4, desc:'Lobbed bottle, AoE slow' },
@@ -1687,7 +1725,7 @@ const WEAPON_MAX = 6, PASSIVE_MAX = 8;   // 무기(칵테일) 기본 6칸 + 패�
 function weaponSlotMax(){ let n=WEAPON_MAX; if(player&&player.weapons){ if(player.weapons.sweetver) n++; if(player.weapons.orange) n++; } return n; }
 // 칵테일별 고유 기본 쿨다운(작을수록 빠름) — VS식으로 무기마다 공속이 다름
 // 뱀서식 개편: 방향형·연사형은 빠르게, 궤도(상시유지)/한방형은 느리게. 코스모·보드카마티니는 소다건식 연사(weaponCd 특수처리)
-const COCKTAIL_CD = { gimlet:120, highball:39, mojito:55, vodkatonic:51, sidecar:90, margarita:67,   // gimlet=전기체인(올드패션드급 느린 공속 120). sidecar 공속 너프 64→90
+const COCKTAIL_CD = { gimlet:120, highball:39, mojito:105, vodkatonic:51, sidecar:90, margarita:67,   // ★모히또=저격총(느린 공속 55→105). gimlet=전기체인(올드패션드급 느린 공속 120). sidecar 공속 너프 64→90
   manhattan:76, vodkacranberry:83, southside:130, oldfashioned:120, drymartini:115, gintonic:46,   // southside=민트레인(느린 공속 130) · oldfashioned 공속 너프 92→120
   moscowmule:42, whiskysour:70, negroni:60, bloodymary:95, espressomartini:128 };   // ★모스코뮬 공속 살짝↓(30→42) · 에스프레소 공속(160→128, 20%↑)   // 모스코뮬=나이프(빠름) · 위스키사워=세로빔 · 네그로니=방어오라 · 블러디메리=새폭격 · 에스프레소=라이트닝링
 function weaponInfo(key){
@@ -2090,10 +2128,10 @@ const SKILL_INDEX=[
   { img:'ing_lime',      name:'LIME · ATTACK SPEED',    t:'All attacks fire faster each level.' },
   { img:'ing_soda',      name:'SODA WATER · ATTACK SPEED', t:'All attacks fire faster each level.' },
   { img:'ing_orange',    name:'ORANGE · AREA · +SLOT',  t:'Bigger attacks (area/size) each level. Owning Orange also adds +1 cocktail slot (hold one more cocktail). It is also the key ingredient to evolve the SUPER MARGARITA.' },
-  { img:'ing_sugar',     name:'SUGAR · LUCK',           t:'+0.2% item drop rate each level. More luck = more items drop from enemies.' },
+  { img:'ing_sugar',     name:'SUGAR · LUCK',           t:'+0.5% item drop rate each level. Special drops (magnet / clock / fire-cross) are rare — stack Sugar to make them fall far more often.' },
   { img:'ing_cointreau', name:'COINTREAU · +PROJECTILE',t:'Adds 1 extra projectile to your volley per level, one at a time (max Lv3 = +3). A flat add, never a multiplier, so it never floods the screen.' },
   { img:'ing_tonic',     name:'TONIC · +PIERCE',        t:'+2 pierce per level (all weapons).' },
-  { img:'ing_mint',      name:'MINT · MOVE SPEED',      t:'Move faster each level.' },
+  { img:'ing_mint',      name:'MINT · MOVE SPEED + DASH',t:'Move faster each level, AND shortens your dash cooldown by 10% per level (up to 60% faster dashes).' },
   { img:'ing_water',     name:'WATER · REGEN',          t:'Regenerate HP each level (regen +30% overall).' },
   { img:'ing_olive',     name:'OLIVE · ARMOR',          t:'Take less contact damage each level.' },
   { img:'ing_sweetver',  name:'SWEET VERMOUTH · +MAX HP · +SLOT', t:'+max HP each level. Owning Sweet Vermouth also adds +1 cocktail slot (hold one more cocktail).' },
@@ -2507,7 +2545,9 @@ addEventListener('keydown', e=>{
     if(dashTap[k]!=null && (gameTime-dashTap[k])<0.3) tryDash(DASH_DIR[k][0], DASH_DIR[k][1]);
     dashTap[k]=gameTime; } });
 addEventListener('keyup',   e=>{ keys[e.key.toLowerCase()]=false; });
-function dashCd(lv){ return Math.max(1, 5 - (lv-1)*(4/3)); }          // Lv1=5s → Lv4=1s
+function dashCd(lv){ let cd = Math.max(1, 5 - (lv-1)*(4/3));          // Lv1=5s → Lv4=1s
+  const mlv=(player&&player.weapons&&player.weapons.mint)||0; cd *= Math.max(0.4, 1 - mlv*0.1);   // ★민트 레벨당 대쉬 쿨 -10%(최대 -60%)
+  return Math.max(0.5, cd); }
 function tryDash(dirx,diry){
   if(state!=='playing' || !player) return;
   const lv=player.baseLv||1;                                         // 대시 기본 제공 · 기본공격 레벨과 함께 강화(쿨↓)
@@ -3320,8 +3360,14 @@ function fireCocktail(key, lv){
     case 'highball':
       gatling(img, 32, 8.5, 0.16, 46, { r:11, pierce:0, cExplode:24, cFreeze:40 }); break;   // 저관통+빙결 · 슈퍼=피사체마다 폭발↑
     // ── 산탄콘→게틀링: 슬로우+민트 스프레이 연사. 발수 2배·+20%. ──
-    case 'mojito':
-      gatling(img, 24, 7, 0.24, 58, { r:9, pierce:0, cExplode:36, cMint:2, cFreeze:40, knockback:0.28 }); break;   // 저관통+빙결 · ★넉백 추가(뮬 0.7의 40%=0.28)
+    case 'mojito': {   // ★저격총: 필드에서 체력 가장 많은 몬스터/보스를 저격(느린 공속·초강력·직선 저격탄) + 산탄
+      const rt = highestHpEnemy() || t;
+      const ang = rt ? Math.atan2(rt.y-player.y, rt.x-player.x) : aim;
+      add({ kind:img, vx:Math.cos(ang)*17, vy:Math.sin(ang)*17, dmg: 360*P*(evo?2:1), r:9, pierce:99, life:70, cFreeze:34, cMint:2, snipe:true });   // 저격탄(관통 직선, 매우 강함)
+      const pel = 5 + Math.floor(lv/2);                                   // ★산탄: 맞은 몬스터도 피해
+      for(let i=0;i<pel;i++){ const pa = ang + (i-(pel-1)/2)*0.17;
+        add({ kind:img, vx:Math.cos(pa)*11, vy:Math.sin(pa)*11, dmg: 66*P*(evo?1.6:1), r:7, pierce:2, life:32, cMint:2, cFreeze:22, knockback:0.28 }); }
+      break; }
     // ── 마법지팡이: 유도 얼음볼트. Lv1=1발 → 2레벨마다 +1 ──
     case 'vodkatonic': break;   // ★로밍 자동사냥 familiar(최대 4개) — updateVodkaTonic()에서 상시 관리(재발사 안 함)
     // ── 불의지팡이: 랜덤 적 대형 폭탄. Lv1=1발 → 3레벨마다 +1 ──
@@ -3359,7 +3405,7 @@ function fireCocktail(key, lv){
       const landR = 40 + (lv-1)*9;                              // 장판(지속공격) 범위↑ (Lv1 40 → Lv6 85)
       const R = Math.max(70, 210 - (lv-1)*26);                  // 흩뿌림 반경: 레벨↑ 플레이어 근처로 (Lv1 210 → Lv6 80)
       const circ = Math.min(0.8, (lv-1)*0.16);                  // 원형화 정도: 레벨↑ 플레이어 주변 원형에 가깝게(0=완전랜덤)
-      for(let i=0;i<count;i++) mintRain.push({ at: frame + i*4, R, dmg:35*P, landR, cFreeze:18, circ, baseAng:(i/count)*6.28 });   // ★직격 빙결도 60% 약하게(70→18)로 통일
+      for(let i=0;i<count;i++) mintRain.push({ at: frame + i*4, R, dmg:44*P, landR, cFreeze:23, circ, baseAng:(i/count)*6.28 });   // ★공격력 +25%(35→44) · 직격 슬로우 +25%(18→23)
       break; }
     // ── 비둘기→소다건식: 코스모 = 크랜베리 연사(빙결). Lv1=1발 → Lv8=5발 ──
     case 'cosmopolitan':
@@ -3385,8 +3431,9 @@ function fireCocktail(key, lv){
       break; }
     // ── ★위스키사워: 가장 가까운 적을 조준해 그 방향으로 화면 끝까지 노란 빔. 닿으면 완전 정지. ──
     case 'whiskysour': {
-      // ★가장 가까운 적 쪽으로 조준(없으면 바라보는 방향). 빔은 화면 끝까지. 관통6·데미지0·완전정지.
-      const dir = t ? a : aim;            // 표적 우선 조준
+      // ★필드에서 체력 가장 많은 적을 조준(없으면 바라보는 방향). 빔은 화면 끝까지. 관통6·데미지0·완전정지.
+      const rt = highestHpEnemy() || t;
+      const dir = rt ? Math.atan2(rt.y-player.y, rt.x-player.x) : aim;   // 표적(최대체력) 우선 조준
       const len = 1200;                   // 화면 끝까지(캔버스 어느 방향이든 덮음)
       // ★슈퍼: 데미지 부여(슈퍼 칵테일 중 최강 260×P — 맨하탄 210보다 강함) + 관통 12. 비진화는 데미지0 락다운 빔 유지.
       add({ noScale:true, kind:'wsbeam', vx:0, vy:0, dmg: evo? 260*P : 0, r:11+lv*2, beamLen:len, beamAng:dir, pierce: evo?12:6, life:26+lv*3, cStop:130, beamFromPlayer:true });
@@ -3560,7 +3607,8 @@ function drymartiniSlow(){
 // ★난이도 상향: 모든 칵테일(슈퍼 포함) 공격속도 10%↓ = 쿨다운 ×1.111. 재료/스피릿/트리오/소다건은 그대로.
 function weaponCd(key, lv){
   let cd = weaponCdBase(key, lv);
-  if(key==='espressomartini' && player && player.evolved && player.evolved.has('espressomartini')) cd = cd/1.35;   // ★슈퍼 에스프레소마티니 공속 +35%
+  if(key==='espressomartini'){ cd = cd / (1 + 0.05*(lv-1));   // ★레벨당 공속 +5%(풀업 Lv6 = +25% 빠름)
+    if(player && player.evolved && player.evolved.has('espressomartini')) cd = cd/1.35; }   // ★슈퍼면 추가 +35% 가속
   return COCKTAILS[key] ? Math.round(cd * 1.111 * 1.176) : cd;   // ★칵테일 공속 -10% + 추가 -15%
 }
 function weaponCdBase(key, lv){
@@ -4107,7 +4155,7 @@ function update(){
       if(p.y>=p.land || p.life<=0){ const lx=p.x, ly=Math.min(p.land,p.y);
         if(p.sbFlame){
           // ★파란 불꽃 장판: 지속 데미지만(빙결 제거 — 너무 강했음). 폭발 아님(계속 타오름).
-          zones.push({ x:lx, y:ly, r:p.landR, life:160, dmg:p.dmg*0.6, tick:14, slow:18, kind:'sbflame' });   // ★파란불꽃 장판: 보스·기본몹에 지속 빙결(다른 빙결의 40%=60% 약하게)
+          zones.push({ x:lx, y:ly, r:p.landR, life:160, dmg:p.dmg*0.6, tick:14, slow:23, kind:'sbflame' });   // ★파란불꽃 장판: 지속 데미지+약화 슬로우 +25%(18→23), 보스·기본몹 적용
           explosions.push({ x:lx, y:ly, r:p.landR, life:16, max:16, col:'#5fc9e6', ring:'#bfefff', flash:true });
           burst(lx,ly,'#7fd8ff',12);
         } else {
@@ -4299,10 +4347,10 @@ function killEnemy(idx){
   } else {
     const rr=Math.random();   // ★강력 아이템 4종 + 동전. LUCK(sugar)이 드랍아이템 확률을 올림
     const lk=(player.pas&&player.pas.luck)||0;   // sugar 레벨당 +0.002(=0.2%) → 특수드랍 창이 넓어짐
-    if(rr<0.0015+lk*0.1) pickups.push({ x:e.x, y:e.y, kind:'firecross' });    // 0.15% 불뿜는 십자가(레인보우건급·5초)
-    else if(rr<0.005+lk*0.3) pickups.push({ x:e.x, y:e.y, kind:'timestop' }); // 0.35% 시간 멈추기(5초)
-    else if(rr<0.009+lk*0.5) pickups.push({ x:e.x, y:e.y, kind:'magnet' });   // 0.4% 자석
-    else if(rr<0.019+lk) pickups.push({ x:e.x, y:e.y, kind:'health' });       // 1% 에너지 회복 (+luck)
+    if(rr<0.00105+lk*0.1) pickups.push({ x:e.x, y:e.y, kind:'firecross' });    // ★십자가 -30%(0.15→0.105%). sugar(luck)로 확률 올리고 싶게
+    else if(rr<0.0035+lk*0.3) pickups.push({ x:e.x, y:e.y, kind:'timestop' }); // ★시계 -30%(0.35→0.245%)
+    else if(rr<0.0063+lk*0.5) pickups.push({ x:e.x, y:e.y, kind:'magnet' });   // ★자석 -30%(0.4→0.28%)
+    else if(rr<0.0163+lk) pickups.push({ x:e.x, y:e.y, kind:'health' });       // 1% 에너지 회복 유지 (+luck)
     else pickups.push({ x:e.x, y:e.y, kind:'coin' });
   }
   }
@@ -4483,7 +4531,11 @@ function tryRainbow(){
 }
 function equipRainbow(){
   player.rainbow=true; player.rainbowLv=1;
-  player.weapons={}; player.wt={};                   // 기존 무기·스킬·칵테일 전부 제거
+  // ★보유 중이던 패시브 재료(레몬·라임·토닉 등) 효과는 유지 → 레인보우가 그 위에 얹혀 강화됨. 칵테일·조합 무기만 제거.
+  const keepW={}, keepWt={};
+  for(const k in player.weapons){ if(PASSIVE_KEYS.includes(k)){ keepW[k]=player.weapons[k]; keepWt[k]=(player.wt&&player.wt[k])||0; } }
+  player.weapons=keepW; player.wt=keepWt;
+  if(typeof recalcStats==='function') recalcStats();   // 유지된 패시브로 스탯 재계산(dmgMul·공속 등 레인보우에 반영)
   burst(player.x, player.y, '#ff66cc', 46);
   playRainbowJingle();                               // 8비트 승리 팡파레
   showNotice('✦ RAINBOW GUN — GET! ✦','rainbow_icon',
