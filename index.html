@@ -1041,16 +1041,17 @@
     <div id="nameEntry" class="name-entry hidden">
       <div class="ne-title" id="neTitle">★ NEW RECORD! ENTER NAME ★</div>
       <div class="ne-row">
-        <input id="nameInput" maxlength="8" placeholder="NAME" autocomplete="off"
+        <input id="nameInput" maxlength="25" placeholder="NAME (A-Z, 25)" autocomplete="off"
           onkeydown="if(event.key==='Enter')saveScore()">
         <button class="btn amber" onclick="saveScore()">SAVE</button>
       </div>
     </div>
-    <div class="board-tabs">
+    <div class="board-tabs" id="boardTabs">
       <button class="bt-tab active" data-m="time" onclick="showBoard('time')">TIME</button>
       <button class="bt-tab" data-m="kills" onclick="showBoard('kills')">DOWNS</button>
       <button class="bt-tab" data-m="sales" onclick="showBoard('sales')">SALES</button>
     </div>
+    <div class="board-title" id="guestbookTitle" style="display:none;color:var(--amber,#c89a3c);font-weight:700;letter-spacing:1px;margin:4px 0">✍ GUESTBOOK</div>
     <div class="board board-out" id="boardList"></div>
     <div class="row">
       <button class="btn" onclick="goSelect()">▶ RETRY</button>
@@ -1103,7 +1104,7 @@ let boardHell=false;   // 순위표 표시 모드: false=일반, true=HELL
 /* 성적/욕설 이름 → "I'M IDIOT" */
 const PROFANITY=['DICK','SEX','COCK','PUSSY','FUCK','SHIT','PENIS','VAGINA','BOOBS','PORN','SLUT','WHORE','BITCH','NIGGER','FAGGOT','FAG','CUM','HORNY','NUDE','XXX','SUCKMY','BLOWJOB','ANAL','TITS'];
 function isProfane(nm){ const s=nm.replace(/[^A-Z]/g,''); return PROFANITY.some(w=>s.includes(w)); }
-function cleanName(raw){ let nm=(raw||'').trim().toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').slice(0,8);
+function cleanName(raw){ let nm=(raw||'').trim().toUpperCase().replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').slice(0,25);   // ★영문/숫자만, 25자
   if(!nm) nm='PINE&CO'; if(isProfane(nm)) nm="I'M IDIOT"; return nm; }
 function qualifiesAny(run){ return ['time','kills','sales'].some(m=>{ const b=BOARDS[m]; return run[m]>0 && (b.length<10 || run[m]>(b[b.length-1][m]||0)); }); }
 // 진짜 1등인지(어느 지표든 현 1위 기록을 넘어서면 1등). 클라우드 기록이 있으면 그것도 함께 비교.
@@ -1218,14 +1219,52 @@ function nameTaken(nm){
 function saveScore(){
   const raw=(document.getElementById('nameInput').value||'').trim();
   const nm=cleanName(raw);
-  // 사용자가 직접 친 이름만 중복 검사(빈칸→PINE&CO 자동저장은 중복 허용)
-  if(raw && nameTaken(nm)){ const t=document.getElementById('neTitle'); if(t) t.textContent='★ NAME TAKEN — TRY ANOTHER ★'; playSelect(); return; }
-  lastSavedName=nm;
-  addRun(nm, pendingRun);                 // 로컬(오프라인 백업)
-  cloudSubmit(nm, pendingRun);            // 구글 시트(공유 순위)
-  document.getElementById('nameInput').value=nm;
-  document.getElementById('nameEntry').classList.add('hidden');
-  renderBoard(); playSelect();
+  if(pendingRun && pendingRun.hell){
+    // ★HELL: 순위 등록(중복 검사) → CF Worker HELL 보드
+    if(raw && nameTaken(nm)){ const t=document.getElementById('neTitle'); if(t) t.textContent='★ NAME TAKEN — TRY ANOTHER ★'; playSelect(); return; }
+    lastSavedName=nm;
+    addRun(nm, pendingRun);                 // 로컬(오프라인 백업)
+    cloudSubmit(nm, pendingRun);            // CF Worker HELL 순위
+    document.getElementById('nameInput').value=nm;
+    document.getElementById('nameEntry').classList.add('hidden');
+    renderBoard(); playSelect();
+  } else {
+    // ★일반: 방명록(순위 아님, 중복 허용) — 이름만 남김
+    lastSavedName=nm;
+    guestbookSubmit(nm, pendingRun);
+    document.getElementById('nameInput').value=nm;
+    document.getElementById('nameEntry').classList.add('hidden');
+    playSelect();
+  }
+}
+/* ★방명록(GUESTBOOK): 일반 모드를 마친 사람들이 순위 없이 이름만 남긴다. CF Worker에 저장·조회. */
+let GUESTBOOK=[];
+function gbEsc(s){ return String(s||'').replace(/[<>&]/g,''); }
+function guestbookSubmit(name, run){
+  GUESTBOOK.unshift({ name, char:(run&&run.char)||'', time:(run&&run.time)||0 }); GUESTBOOK=GUESTBOOK.slice(0,30);
+  renderGuestbook();
+  try{ fetch(CLOUD_URL_HELL, { method:'POST', mode:'no-cors',
+    body: JSON.stringify({ secret:CLOUD_SECRET, name:name+charMark((run&&run.char)||''), char:(run&&run.char)||'', time:(run&&run.time)||0, kills:(run&&run.kills)||0, sales:(run&&run.sales)||0, guestbook:1 }) })
+    .then(()=>setTimeout(guestbookFetch,900)).catch(()=>{}); }catch(e){}
+}
+let _gbCbN=0;
+function guestbookFetch(){
+  const cb='__pineGb'+(_gbCbN++), s=document.createElement('script'); let done=false;
+  window[cb]=(data)=>{ done=true;
+    try{ if(data && data.ok && Array.isArray(data.guestbook)){
+      GUESTBOOK=data.guestbook.map(e=>{ const pc=parseCharName(String(e.name||'---'), String(e.char||'')); return { name:pc.name, char:pc.char, time:Number(e.time)||0 }; });
+      renderGuestbook(); } }catch(e){}
+    try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); };
+  s.onerror=()=>{ try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); };
+  s.src=CLOUD_URL_HELL+'?guestbook=1&callback='+cb+'&t='+Date.now();
+  document.body.appendChild(s);
+  setTimeout(()=>{ if(!done){ try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); } }, 8000);
+}
+function renderGuestbook(){
+  const rows = GUESTBOOK.length
+    ? GUESTBOOK.map(e=>`<div class="brow"><span class="bn">${gbEsc(e.name)}</span><span>${fmtTime(e.time||0)}</span>${charCell(e.char)}</div>`).join('')
+    : '<div class="brow" style="opacity:.6">Be the first to sign the guestbook…</div>';
+  document.querySelectorAll('#overScreen .board-out').forEach(el=> el.innerHTML=rows);
 }
 
 /* =====================================================================
@@ -2048,7 +2087,7 @@ let nextRaid, raidLeft, raidNextBoss;   // 5분마다 보스 레이드
 let finale={ active:false, until:0, rival:null, killed:false };   // 30분 피날레: 라이벌 바텐더 등장 → 교대(종료)
 let hellMode=false;   // ★HELL 모드: 피날레(30분) 후 진입 → 모든 잡몹·보스 2배 강함·2배 수
 let hellStartTime=0;  // ★HELL 진입 시각(스폰 페이싱을 '1분 느낌'으로 리셋하는 기준)
-const FINALE_AT = 1800;   // 30분(초)
+const FINALE_AT = 1200;   // ★20분(초) — 교대 종료 시점(30→20분)
 let nextDrunkWave, lastPassoutImg=-1;   // 만취 손님: 1분마다 3마리 한꺼번에 낙하(게임 18분까지)
 let bossCount, nextBoss, bossAlertUntil=0;
 let extraBossAt=0, extraBossHp=0;   // ★20분↑: 보스 스폰 15초 뒤 1/4체력 보스 추가 스폰 예약
@@ -2090,7 +2129,11 @@ document.querySelectorAll('.ava').forEach(av=> drawSprite(av.getContext('2d'), a
 function show(id){ const e=document.getElementById(id); if(e) e.classList.remove('hidden'); if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }   // ★null 안전 + 코너 갱신
 function hide(id){ const e=document.getElementById(id); if(e) e.classList.add('hidden'); if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }      // ★null 안전 + 코너 갱신
 function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','introScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen'].forEach(hide); }   // indexScreen 제거(📖로 통합됨)
-function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
+function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
+  boardHell=true;   // ★순위는 HELL 모드에만 존재 → 하이스코어는 HELL 보드를 기본 표시
+  const b=document.getElementById('hellToggleBtn'); if(b){ b.textContent='↩ NORMAL'; b.style.background='#7a1414'; b.style.color='#ffdede'; }
+  document.querySelectorAll('.title').forEach(t=>{ if(t.closest('#highscoreScreen')) t.textContent='🔥 HELL SCORES'; });
+  curBoardMetric='time'; showBoard('time'); show('highscoreScreen'); }
 function openIndex(){ openRecipe(); showRecTab('monsters'); }   // INDEX는 이제 📖(RECIPE BOOK) 안 탭으로 통합됨(안전 별칭)
 /* 몬스터 족보 */
 const MONSTER_INDEX=[
@@ -2142,7 +2185,7 @@ const SKILL_INDEX=[
   { ic:'🥃', name:'SPIRITS · field drops', t:'The 6 spirits still drop on the field and fire as extra bonus weapons if you grab them. They are NOT required to evolve cocktails, and NOT required for the Rainbow Gun anymore — that now comes from maxing out six or more super cocktails (super Lv6).' },
   { ic:'✨', name:'EVOLUTION · Super cocktails', t:'Fully upgrade your BASE ATTACK (max level) + get the cocktail to Lv6 + max its ONE key ingredient. No spirits needed. Then, the moment you grab a BOSS TIP, any ready cocktail auto-evolves into a far stronger SUPER version — it spins into being with a ding — and the tip\'s normal upgrade still appears. Supers glow gold and level 1→6 far beyond the base. And once you have SIX or more supers fully maxed (super Lv6), they all fuse into the endgame RAINBOW GUN.' },
   { ic:'🌀', name:'ULTIMATE UP · max Lv6', t:'Strengthens your ultimate. Ready once every 105s — tap the ⚡ button when it lights up.' },
-  { ic:'🔔', name:'CLOSING TIME · 30:00', t:'Last for 30 minutes and the OTHER bartender clocks in — Joe if you play Pat, Pat if you play Joe — walks in behind the bar and ends your shift. Nobody outlasts closing time.' },
+  { ic:'🔔', name:'CLOSING TIME · 20:00', t:'Last 20 minutes and the OTHER bartender clocks in — Joe if you play Pat, Pat if you play Joe. Then choose: clock out and sign the guestbook, or pull an after-hours shift (🔥 HELL) where the ranked leaderboard — and the Rainbow Gun — live.' },
 ];
 /* 칵테일 도감 — 새 시트(칵테일 new.png)에서 잘라낸 14종. 기주별 / 재료 표기. */
 const COCKTAIL_INDEX=[
@@ -3791,9 +3834,9 @@ function finaleEnd(){
   const el=document.getElementById('finaleMsg');
   if(el){ el.style.pointerEvents='auto';
     el.innerHTML=`<div class="fin-title">CLOSING TIME</div>`+
-      `<div class="fin-body">Your shift is over.<br>${(player.key==='joe')?'PAT':'JOE'} takes the bar from here.<br>Go home... or stay for the after-hours.</div>`+
-      `<button class="fin-continue" onclick="finaleContinue()">GO HOME ▸</button>`+
-      `<button class="fin-continue" style="background:#7a1414;border-color:#ff4d4d;color:#ffdede" onclick="enterHell()">🔥 ENTER HELL ▸</button>`;
+      `<div class="fin-body">Your 20-minute shift is over.<br>${(player.key==='joe')?'PAT':'JOE'} takes the bar from here.<br>Clock out and sign the guestbook — or pull an after-hours shift.</div>`+
+      `<button class="fin-continue" onclick="finaleContinue()">🏁 CLOCK OUT · SIGN GUESTBOOK ▸</button>`+
+      `<button class="fin-continue" style="background:#7a1414;border-color:#ff4d4d;color:#ffdede" onclick="enterHell()">🔥 AFTER-HOURS · HELL (ranked + Rainbow) ▸</button>`;
     el.classList.remove('hidden'); }
 }
 function finaleContinue(){ try{ const el=document.getElementById('finaleMsg'); el.style.pointerEvents='none'; el.classList.add('hidden'); }catch(e){} gameOver(); }
@@ -4917,14 +4960,25 @@ function gameOver(){ state='over'; setMusic('title'); const secs=Math.floor(game
   document.getElementById('overTime').textContent=fmtTime(secs);
   document.getElementById('overKill').textContent=killCount;
   document.getElementById('overMoney').textContent=money.toLocaleString();
-  const ne=document.getElementById('nameEntry');
-  if(qualifiesAny(pendingRun)){ ne.classList.remove('hidden'); const inp=document.getElementById('nameInput'); inp.value='';
-    const nt=document.getElementById('neTitle');
-    if(nt){ if(isFirstPlace(pendingRun)) nt.innerHTML='👑 You are the King of Bartender!<br>Congratulations! ENTER YOUR NAME';
-      else nt.innerHTML='NICE SHIFT! ENTER YOUR NAME<br><span style="font-size:.8em;opacity:.8">Keep it up, you\'ll top the board soon.</span>'; }
-    setTimeout(()=>inp.focus(),50); }
-  else ne.classList.add('hidden');
-  curBoardMetric='time'; showBoard('time');
+  const ne=document.getElementById('nameEntry'), tabs=document.getElementById('boardTabs'), gbT=document.getElementById('guestbookTitle');
+  const inp=document.getElementById('nameInput'), nt=document.getElementById('neTitle');
+  const titleEl=document.querySelector('#overScreen .title'); if(titleEl) titleEl.textContent = hellMode ? '🔥 HELL — CLOSING TIME' : 'CLOSING TIME';
+  if(hellMode){
+    // ★HELL: 순위 등록 + HELL 하이스코어
+    if(tabs) tabs.style.display=''; if(gbT) gbT.style.display='none';
+    if(qualifiesAny(pendingRun)){ ne.classList.remove('hidden'); inp.value='';
+      if(nt) nt.innerHTML = isFirstPlace(pendingRun) ? '👑 HELL KING! ENTER YOUR NAME' : '🔥 HELL RECORD! ENTER YOUR NAME';
+      setTimeout(()=>inp.focus(),50);
+    } else ne.classList.add('hidden');
+    curBoardMetric='time'; showBoard('time');
+  } else {
+    // ★일반: 순위 없이 방명록에 이름 남기기(항상)
+    if(tabs) tabs.style.display='none'; if(gbT) gbT.style.display='';
+    ne.classList.remove('hidden'); inp.value='';
+    if(nt) nt.innerHTML='✍ SHIFT COMPLETE · SIGN THE GUESTBOOK<br><span style="font-size:.8em;opacity:.8">Leave your name (English, up to 25).</span>';
+    setTimeout(()=>inp.focus(),50);
+    renderGuestbook(); guestbookFetch();
+  }
   hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); hide('dropBanner'); show('overScreen'); }
 
 /* 플레이어 애니메이션 프레임 선택: 던지기 > 걷기(A/B 교대) > 서기 */
