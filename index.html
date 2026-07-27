@@ -294,6 +294,14 @@
   /* ★하이스코어 방명록: back 버튼 위에서 자체 영역 스크롤(경계선) — 페이지 전체는 안 내려감 */
   #highscoreScreen .board-out{ max-height:60vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
     border:1px solid rgba(200,154,60,.45); border-radius:7px; padding:4px 6px; box-sizing:border-box; }
+  /* ★LASTCALL SURVIVORS: 기록마다 2줄(이름 전광판 + 메타) */
+  .gb-row{ padding:5px 3px; border-bottom:1px solid rgba(200,154,60,.18); }
+  .gb-name{ overflow:hidden; white-space:nowrap; width:100%; }
+  .gb-name span{ display:inline-block; padding-left:100%; color:var(--pine-light,#e8e4d0); font-weight:700;
+    font-size:clamp(11px,3.2vw,15px); letter-spacing:.5px; animation:gbMarquee 9s linear infinite; }
+  @keyframes gbMarquee{ from{ transform:translate(0,0); } to{ transform:translate(-100%,0); } }
+  .gb-meta{ display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:2px;
+    font-size:clamp(8px,2.3vw,11px); color:var(--dim,#9a9); font-variant-numeric:tabular-nums; }
   /* TOP RECORD: 1위를 이미지 안 크림 박스에 오버레이 */
   .top-record{ position:relative; width:clamp(240px,86vw,360px); margin:0 auto 12px; }
   .top-record img{ width:100%; display:block; image-rendering:pixelated; }
@@ -881,7 +889,6 @@
     </div>
     <div class="row" id="plazaRow" style="display:none"><button class="plaza-btn" onclick="openPlaza()">🌲 THE PLAZA · 광장</button></div>
     <div class="hint">PC: WASD / ARROWS · MOBILE: DRAG SCREEN</div>
-    <div class="hint">HI-SCORE &nbsp; <span id="hiTitle" style="color:var(--amber)">0:00</span></div>
   </div>
 
   <div class="screen crt hidden" id="highscoreScreen">
@@ -1190,7 +1197,8 @@ function charName(ch){ return ch==='pat'?'PAT':ch==='joe'?'JOE':''; }
 function charCell(ch){ const nm=charName(ch); if(!nm) return `<span class="bby">-</span>`;
   const col=ch==='pat'?'#e8746d':'#e6b450'; return `<span class="bby" style="color:${col}">${nm}</span>`; }
 function renderBoard(){
-  const CB=boardHell?HELL_CLOUD_BOARDS:CLOUD_BOARDS, LB=boardHell?HELL_BOARDS:BOARDS;   // ★HELL 토글
+  if(!boardHell){ renderGuestbook(); return; }   // ★일반 모드는 순위(top-record) 없이 방명록만 — HELL 보드 이미지가 끼어드는 것 방지
+  const CB=HELL_CLOUD_BOARDS, LB=HELL_BOARDS;   // HELL 전용
   const cloud=CB[curBoardMetric];
   const b=(cloud!==null) ? cloud : (LB[curBoardMetric]||[]);   // 선택한 지표로 정렬된 Top10(클라우드 우선, 없으면 로컬)
   const hot = m => curBoardMetric===m ? ' hot' : '';               // 정렬 중인 컬럼 강조
@@ -1272,11 +1280,14 @@ function guestbookFetch(){
 }
 function renderGuestbook(){
   // ★순위·top record 없음. 날짜 + 이름 + DOWNS + SALES + BY. 최대 50개.
-  const head=`<div class="brow bhead"><span class="bn">SURVIVOR</span><span>DATE</span><span>DOWNS</span><span>SALES</span><span class="bby">BY</span></div>`;
+  // ★기록마다 2줄: (1) 이름 전광판(마퀴) (2) 날짜·DOWNS·SALES·BY
   const rows = GUESTBOOK.length
-    ? GUESTBOOK.slice(0,50).map(e=>`<div class="brow"><span class="bn">${gbEsc(e.name)}</span><span>${gbDate(e.ts)}</span><span>${fmtCell('kills',e.kills||0)}</span><span>${fmtCell('sales',e.sales||0)}</span>${charCell(e.char)}</div>`).join('')
-    : '<div class="brow" style="opacity:.6">Be the first to sign the guestbook…</div>';
-  document.querySelectorAll('.board-out').forEach(el=> el.innerHTML=head+rows);
+    ? GUESTBOOK.slice(0,50).map(e=>{ const nm=gbEsc(e.name);
+        return `<div class="gb-row"><div class="gb-name"><span>${nm}</span></div>`
+          + `<div class="gb-meta"><span>${gbDate(e.ts)}</span><span>DOWN ${fmtCell('kills',e.kills||0)}</span><span>${fmtCell('sales',e.sales||0)}</span>${charCell(e.char)}</div></div>`;
+      }).join('')
+    : '<div class="gb-row" style="opacity:.6;text-align:center">Be the first to survive last call…</div>';
+  document.querySelectorAll('.board-out').forEach(el=> el.innerHTML=rows);
 }
 
 /* =====================================================================
@@ -2251,7 +2262,7 @@ function renderIndex(){
 }
 function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
   plaza=null; try{ hide('plazaUI'); }catch(e){}   // 🌲 광장에서 나가는 다른 경로 대비
-  document.getElementById('hiTitle').textContent=fmtTime(HI_SCORE); cloudFetch('time'); show('titleScreen'); }
+  { const h=document.getElementById('hiTitle'); if(h) h.textContent=fmtTime(HI_SCORE); } cloudFetch('time'); show('titleScreen'); }
 function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('selectScreen'); selIndex=0; updateSelectHighlight(); }
 // ★About(브랜드 소개서) 열기 — 모바일 확실히(새 탭 실패 시 같은 탭). 버튼 onclick 방식이라 터치 확실.
 function openAboutPage(){ try{ playSelect&&playSelect(); }catch(e){} try{ var w=window.open('about.html','_blank'); if(!w||w.closed||typeof w.closed==='undefined') location.href='about.html'; }catch(e){ location.href='about.html'; } return false; }
@@ -3583,7 +3594,7 @@ function updateBloodyMarySuper(){
   for(const d of bmChilis){
     let tgt=null, best=-1e9;   // 보드카토닉과 동일: 근처의 체력 많은 몬스터 우선
     for(const e of enemies){ if(e.type==='passout') continue;
-      const score = e.hp - Math.hypot(e.x-d.x, e.y-d.y)*0.2; if(score>best){ best=score; tgt=e; } }
+      const score = -Math.hypot(e.x-d.x, e.y-d.y); if(score>best){ best=score; tgt=e; } }   // ★가장 가까운 적 조준
     if(tgt){ const dist=Math.hypot(tgt.x-d.x,tgt.y-d.y), sp=dist<50?2.4:4.0;
       const ang=Math.atan2(tgt.y-d.y, tgt.x-d.x); d.vx += (Math.cos(ang)*sp - d.vx)*0.15; d.vy += (Math.sin(ang)*sp - d.vy)*0.15; }
     else { const ang=Math.atan2(player.y-d.y, player.x-d.x), dist=Math.hypot(player.x-d.x,player.y-d.y);
@@ -3616,7 +3627,7 @@ function updateVodkaTonic(){
   for(const d of vtDrones){ d.size=sizeBoost;   // 렌더용 크기 저장
     let tgt=null, best=-1e9;
     for(const e of enemies){ if(e.type==='passout') continue;   // ★근처의 '체력 많은' 몬스터 우선(체력 우선 + 거리 가산 → 탱커부터 순서대로 정리)
-      const score = e.hp - Math.hypot(e.x-d.x, e.y-d.y)*0.2; if(score>best){ best=score; tgt=e; } }
+      const score = -Math.hypot(e.x-d.x, e.y-d.y); if(score>best){ best=score; tgt=e; } }   // ★가장 가까운 적 조준
     if(tgt){ const dist=Math.hypot(tgt.x-d.x, tgt.y-d.y), sp=dist<50?2.0:3.4;   // ★가까우면 감속(넓게 안 돌고 확실히 명중)
       const ang=Math.atan2(tgt.y-d.y, tgt.x-d.x); d.vx += (Math.cos(ang)*sp - d.vx)*0.14; d.vy += (Math.sin(ang)*sp - d.vy)*0.14; }
     else { const ang=Math.atan2(player.y-d.y, player.x-d.x), dist=Math.hypot(player.x-d.x,player.y-d.y);   // 적 없으면 플레이어 근처를 맴돎
@@ -3669,7 +3680,7 @@ function corpseReviverStats(){
   const want=evo?(1+slv+extra):(lv+extra);
   const absMul=1+0.1*absLv, lvMul=evo?(2*Math.pow(1.3,slv-1)):Math.pow(1.2,lv-1);
   return { evo, slv, want,
-    atk:(player.dmg||72)*lvMul*absMul, maxHp:130*5*lvMul*absMul,
+    atk:(player.dmg||72)*lvMul*absMul*1.25, maxHp:130*5*lvMul*absMul*1.4,   // ★공격력 +25% · 체력 +40%
     atkCd:Math.max(16, Math.round((evo?34:44)/Math.pow(1.2,(evo?slv:lv)-1))),
     spd:(player.speed||1.9)*0.5, R:16*(player.sizeMul||1) };
 }
@@ -3698,7 +3709,7 @@ function updateCorpseReviver(){
     z.x+=z.vx; z.y+=z.vy; z.moving=Math.hypot(z.vx,z.vy)>0.35;
     for(const e of enemies){ if(e.type==='passout')continue;
       if(Math.hypot(e.x-z.x,e.y-z.y)<S.R+e.r && frame>=z.hurtAt){ z.hurtAt=frame+30; z.hp-=(e.dmg||8); z.lastHit=frame; break; } }
-    if(frame-z.lastHit>240) z.hp=Math.min(S.maxHp, z.hp+S.maxHp*0.02);   // 4초 미피격 시 회복
+    if(frame-z.lastHit>180) z.hp=Math.min(S.maxHp, z.hp+S.maxHp*0.004);   // ★3초 미피격 시 서서히 회복(0.4%/프레임, 한번에 완전회복 X)
   }
   for(let i=crZombies.length-1;i>=0;i--){ if(crZombies[i].hp<=0){ burst(crZombies[i].x,crZombies[i].y,'#6a7a3a',16); crZombies.splice(i,1); crNextSpawn=Math.max(crNextSpawn,frame+180); } }
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
@@ -4125,8 +4136,12 @@ function update(){
     else if(frame<(e.stopUntil||0)) e.speed=0;                // ★위스키사워: 완전 정지(동결)
     else if(frame<(e.gtSlowUntil||0)) e.speed=_spd0*0.224*_fz;// ★진토닉: 다른 빙결보다 30% 더 느리게(0.32×0.7)
     else if(frame<(e.frozenUntil||0)) e.speed=_spd0*0.32*_fz; // 일반 빙결(vodka 등)
-    const a=Math.atan2(player.y-e.y, player.x-e.x);
-    const dist=Math.hypot(player.x-e.x, player.y-e.y);
+    // ★타겟: 근처의 Corpse Reviver 좀비 동료 또는 플레이어 중 가장 가까운 쪽(좀비가 어그로를 끔)
+    let tX=player.x, tY=player.y;
+    if(typeof crZombies!=='undefined' && crZombies.length){ let bd=(player.x-e.x)**2+(player.y-e.y)**2;
+      for(const z of crZombies){ const zd=(z.x-e.x)**2+(z.y-e.y)**2; if(zd<bd){ bd=zd; tX=z.x; tY=z.y; } } }
+    const a=Math.atan2(tY-e.y, tX-e.x);
+    const dist=Math.hypot(tX-e.x, tY-e.y);
     if(e.thrower){
       // 투척수: 거리 유지하다 멈춰서 토하고(vomit) 침 발사
       if(frame < e.vomitUntil){
@@ -5031,6 +5046,7 @@ function gameOver(){ state='over'; setMusic('title'); const secs=Math.floor(game
   document.getElementById('overMoney').textContent=money.toLocaleString();
   const ne=document.getElementById('nameEntry'), tabs=document.getElementById('boardTabs'), gbT=document.getElementById('guestbookTitle');
   const inp=document.getElementById('nameInput'), nt=document.getElementById('neTitle');
+  boardHell=hellMode;   // ★일반=방명록 / HELL=순위 보드 동기화
   const titleEl=document.querySelector('#overScreen .title'); if(titleEl) titleEl.textContent = hellMode ? '🔥 HELL — CLOSING TIME' : 'CLOSING TIME';
   if(hellMode){
     // ★HELL: 순위 등록 + HELL 하이스코어
