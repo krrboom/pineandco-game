@@ -301,7 +301,8 @@
     font-size:clamp(11px,3.2vw,15px); letter-spacing:.5px; animation:gbMarquee 9s linear infinite; }
   @keyframes gbMarquee{ from{ transform:translate(0,0); } to{ transform:translate(-100%,0); } }
   .gb-meta{ display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:2px;
-    font-size:clamp(8px,2.3vw,11px); color:var(--dim,#9a9); font-variant-numeric:tabular-nums; }
+    font-size:clamp(9px,2.5vw,12px); color:var(--dim,#9a9); font-variant-numeric:tabular-nums;
+    font-family:'Segoe UI',system-ui,-apple-system,'Malgun Gothic',sans-serif; letter-spacing:.3px; }   /* ★숫자 또렷하게(픽셀폰트 6 뭉개짐 방지) */
   /* TOP RECORD: 1위를 이미지 안 크림 박스에 오버레이 */
   .top-record{ position:relative; width:clamp(240px,86vw,360px); margin:0 auto 12px; }
   .top-record img{ width:100%; display:block; image-rendering:pixelated; }
@@ -766,7 +767,7 @@
   <!-- 설정 버튼(왼쪽) + 음량조절 패널 -->
   <button id="gearBtn" onclick="openSettings()" aria-label="settings">⚙</button>
   <button id="recipeBtn" onclick="openRecipe()" aria-label="recipes">📖</button>
-  <button id="pauseBtn" onclick="pauseGame()" aria-label="pause">⏸</button>
+  <button id="pauseBtn" class="hidden" onclick="pauseGame()" aria-label="pause">⏸</button>
   <!-- 일시정지: 게임을 멈추고 손님 메뉴를 보거나 주문을 받는 시간 -->
   <div id="pausePanel" class="hidden">
     <div class="pause-card">
@@ -2162,7 +2163,7 @@ document.querySelectorAll('.ava').forEach(av=> drawSprite(av.getContext('2d'), a
 function show(id){ const e=document.getElementById(id); if(e) e.classList.remove('hidden'); if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }   // ★null 안전 + 코너 갱신
 function hide(id){ const e=document.getElementById(id); if(e) e.classList.add('hidden'); if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }      // ★null 안전 + 코너 갱신
 function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','introScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen'].forEach(hide); }   // indexScreen 제거(📖로 통합됨)
-function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
+function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
   boardHell=false;   // ★기본은 일반 모드 방명록(순위 없음)이 먼저 보임
   applyBoardMode(); show('highscoreScreen'); }
 function openIndex(){ openRecipe(); showRecTab('monsters'); }   // INDEX는 이제 📖(RECIPE BOOK) 안 탭으로 통합됨(안전 별칭)
@@ -2260,16 +2261,16 @@ function renderIndex(){
       <div class="minfo"><div class="mname">${mo.name}</div><div class="mtrait">${mo.t}</div></div>
     </div>`).join('');
 }
-function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
+function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
   plaza=null; try{ hide('plazaUI'); }catch(e){}   // 🌲 광장에서 나가는 다른 경로 대비
   { const h=document.getElementById('hiTitle'); if(h) h.textContent=fmtTime(HI_SCORE); } cloudFetch('time'); show('titleScreen'); }
-function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('selectScreen'); selIndex=0; updateSelectHighlight(); }
+function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('selectScreen'); selIndex=0; updateSelectHighlight(); }
 // ★About(브랜드 소개서) 열기 — 모바일 확실히(새 탭 실패 시 같은 탭). 버튼 onclick 방식이라 터치 확실.
 function openAboutPage(){ try{ playSelect&&playSelect(); }catch(e){} try{ var w=window.open('about.html','_blank'); if(!w||w.closed||typeof w.closed==='undefined') location.href='about.html'; }catch(e){ location.href='about.html'; } return false; }
 // ★손가락 조준: 화면마다 손끝→로고의 '&·C 사이'를 향해 회전 + 바브를 그 방향으로. 어느 기기에서도 정확히 가리킴.
 /* ★손가락 각도는 CSS 고정값(--fdeg:37deg)으로만 처리 → JS 재조준 제거(로딩 후 각도/위치 바뀜 원천 차단). */
 /* 세계 바텐더(준비중): 세계지도 화면으로. 해외 바텐더 이미지가 들어오면 여기서 선택 가능해질 예정. */
-function openMoreBartenders(){ initAudio(); playSelect(); state='world'; hideAllScreens(); hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('worldScreen'); }
+function openMoreBartenders(){ initAudio(); playSelect(); state='world'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('worldScreen'); }
 /* 칵테일 글라스 쉐입 — 흰색 라인아트 SVG(문구 없이 모양만). 메뉴의 미니멀 라인 스타일. */
 const GLASS_PATH = {
   martini:  'M5 5 L12 16 L19 5 M4 5 H20 M12 16 V27 M8 28 H16',
@@ -2579,9 +2580,9 @@ function startGame(charKey){
     xp:0, xpNeed:xpForLevel(1), level:1, invuln:0,
     ultReadyAt:ULT_CD, ultUntil:0, ultFxUntil:0, ultLevel:1, ultSpiralUntil:0, ultSpiralAng:0,   // 필살기: 80초 쿨타임(레벨업으로 위력만 강화)
     regenBonus:0, noSustain:false,                 // HEAL 강화로 쌓이는 패시브 회복(둘 다) · noSustain=피날레 시 회복/흡혈 정지
-    weapons:{}, wt:{}, evolved:new Set(), superLv:{}, hasDash:false };  // weapons: 무기/재료 레벨, evolved: 진화 칵테일, superLv: 슈퍼 레벨(1~8)
+    weapons:{}, wt:{}, evolved:new Set(), superLv:{}, absorbed:{}, hasDash:false };  // weapons: 무기/재료 레벨, absorbed: 조합에 흡수된 재료(효과유지·슬롯제외)
   applyBaseLevel(); recalcStats();
-  enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[]; gatStream=[]; dropMarks=[]; roadLines=[]; boltFx=[]; vtDrones=[]; bmChilis=[]; crZombies=[];
+  enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[]; gatStream=[]; dropMarks=[]; roadLines=[]; boltFx=[]; vtDrones=[]; bmChilis=[]; crZombies=[]; crRespawns=[];
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
   surgeUntil=0; nextSurge=SURGE_FIRST; bannerTimer=0; bannerQueue.length=0; curBannerPrio=0; bossAlertUntil=0; keys={};
   nextRaid=RAID_FIRST; raidLeft=0; raidNextBoss=0; everCrafted=new Set(); declinedCraft=new Set(); pendingCraft=null; pendingFromTip=false;
@@ -2607,7 +2608,7 @@ function revealGame(){
   const cr=document.getElementById('introCrawl'); if(cr) cr.onanimationend=null;
   document.getElementById('introScreen').classList.add('hidden');
   setMusic('play');   // ★에필로그 곡 종료 → 플레이 음악으로 전환
-  state='playing'; show('hud'); show('hudChips'); show('ultBtn'); show('statPanel'); hide('stick');
+  state='playing'; show('hud'); show('hudChips'); show('ultBtn'); show('statPanel'); show('pauseBtn'); hide('stick');
 }
 
 /* ===== 입력 ===== */
@@ -3673,25 +3674,28 @@ function updateBlackVermouth(){
 }
 /* ★Corpse Reviver No.2: 좀비 동료 소환. 근접만·이동 Pat의 1/2·공격력=플레이어 기본공격·체력=Pat×5·4초 미피격 시 회복.
    개수=Lv+코인트로(슈퍼=1+슈퍼Lv+코인트로). 레벨업 +20%(슈퍼 +30%, 기본 2배). 압생트 레벨당 +10%. walk/stay/attack 애니메이션. */
-let crZombies=[], crNextSpawn=0;
+let crZombies=[], crNextSpawn=0, crRespawns=[];   // crRespawns: 죽은 좀비 부활 예정 프레임(25초)
 function corpseReviverStats(){
   const lv=player.weapons.corpsereviver, evo=player.evolved&&player.evolved.has('corpsereviver');
   const slv=evo?((player.superLv&&player.superLv.corpsereviver)||1):0, absLv=(player.weapons.absinthe||0), extra=player.extraProj||0;
   const want=evo?(1+slv+extra):(lv+extra);
   const absMul=1+0.1*absLv, lvMul=evo?(2*Math.pow(1.3,slv-1)):Math.pow(1.2,lv-1);
+  const lvl = evo ? (6+slv) : lv;
   return { evo, slv, want,
-    atk:(player.dmg||72)*lvMul*absMul*1.25, maxHp:130*5*lvMul*absMul*1.4,   // ★공격력 +25% · 체력 +40%
+    atk:(player.dmg||72)*lvMul*absMul*1.25, maxHp:350*lvMul*absMul,   // ★체력 350 기준(50% 약화) · 공격력 +25%
     atkCd:Math.max(16, Math.round((evo?34:44)/Math.pow(1.2,(evo?slv:lv)-1))),
-    spd:(player.speed||1.9)*0.5, R:16*(player.sizeMul||1) };
+    spd:(player.speed||1.9)*0.5, R:16*(player.sizeMul||1),
+    leashR:(120 + lvl*22)*(player.sizeMul||1) };   // ★진토닉처럼 레벨업할수록 커지는 활동 반경(그 안에서만 이동)
 }
 function updateCorpseReviver(){
-  if(!player||!player.weapons||!player.weapons.corpsereviver){ crZombies.length=0; return; }
+  if(!player||!player.weapons||!player.weapons.corpsereviver){ crZombies.length=0; crRespawns.length=0; return; }
   const S=corpseReviverStats();
-  while(crZombies.length>S.want) crZombies.pop();
-  if(crZombies.length<S.want && frame>=crNextSpawn){
-    crZombies.push({ x:player.x+(Math.random()-0.5)*70, y:player.y+(Math.random()-0.5)*70, vx:0, vy:0, hp:S.maxHp, mhp:S.maxHp, lastHit:frame, atkAt:0, hurtAt:0, face:1, attacking:false, moving:false });
-    crNextSpawn=frame+60;
-  }
+  const spawnZ=()=>{ const ang=Math.random()*6.28, rr=Math.random()*S.leashR*0.4;
+    crZombies.push({ x:player.x+Math.cos(ang)*rr, y:player.y+Math.sin(ang)*rr, vx:0, vy:0, hp:S.maxHp, mhp:S.maxHp, lastHit:frame, atkAt:0, hurtAt:0, face:1, attacking:false, moving:false }); };
+  while(crZombies.length>S.want){ crZombies.pop(); }
+  while(crRespawns.length && crZombies.length+crRespawns.length>S.want){ crRespawns.pop(); }
+  while(crZombies.length+crRespawns.length < S.want) spawnZ();     // 레벨업으로 늘어난 빈 슬롯은 즉시 채움
+  for(let i=crRespawns.length-1;i>=0;i--){ if(frame>=crRespawns[i]){ crRespawns.splice(i,1); if(crZombies.length<S.want) spawnZ(); } }   // 25초 뒤 부활
   const SEP=S.R*1.9;
   for(const z of crZombies){
     z.mhp=S.maxHp; if(z.hp>S.maxHp)z.hp=S.maxHp;
@@ -3707,11 +3711,14 @@ function updateCorpseReviver(){
     for(const o of crZombies){ if(o===z)continue; const dx=z.x-o.x,dy=z.y-o.y,dd=Math.hypot(dx,dy);
       if(dd>0.01&&dd<SEP){ const p=(SEP-dd)/SEP*0.6; z.vx+=(dx/dd)*p; z.vy+=(dy/dd)*p; } }
     z.x+=z.vx; z.y+=z.vy; z.moving=Math.hypot(z.vx,z.vy)>0.35;
+    // ★진토닉식 리쉬: 플레이어 중심 원(leashR) 안에서만 이동 → 화면 밖 이탈 방지
+    const pdx=z.x-player.x, pdy=z.y-player.y, pd=Math.hypot(pdx,pdy);
+    if(pd>S.leashR){ z.x=player.x+pdx/pd*S.leashR; z.y=player.y+pdy/pd*S.leashR; z.vx*=0.4; z.vy*=0.4; }
     for(const e of enemies){ if(e.type==='passout')continue;
-      if(Math.hypot(e.x-z.x,e.y-z.y)<S.R+e.r && frame>=z.hurtAt){ z.hurtAt=frame+30; z.hp-=(e.dmg||8); z.lastHit=frame; break; } }
-    if(frame-z.lastHit>180) z.hp=Math.min(S.maxHp, z.hp+S.maxHp*0.004);   // ★3초 미피격 시 서서히 회복(0.4%/프레임, 한번에 완전회복 X)
+      if(Math.hypot(e.x-z.x,e.y-z.y)<S.R+e.r && frame>=z.hurtAt){ z.hurtAt=frame+30; z.hp-=(e.dmg||8)*1.2; z.lastHit=frame; break; } }   // ★몹/보스 데미지 +20%
+    if(frame-z.lastHit>180) z.hp=Math.min(S.maxHp, z.hp+S.maxHp*0.004);   // ★3초 미피격 시 서서히 회복
   }
-  for(let i=crZombies.length-1;i>=0;i--){ if(crZombies[i].hp<=0){ burst(crZombies[i].x,crZombies[i].y,'#6a7a3a',16); crZombies.splice(i,1); crNextSpawn=Math.max(crNextSpawn,frame+180); } }
+  for(let i=crZombies.length-1;i>=0;i--){ if(crZombies[i].hp<=0){ burst(crZombies[i].x,crZombies[i].y,'#6a7a3a',16); crZombies.splice(i,1); crRespawns.push(frame+1500); } }   // ★죽으면 25초 뒤 부활
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
 }
 /* 드라이 마티니: 밀어내기 제거(너무 강했음) → 궤도 사정거리 안에 든 적을 느리게(속도 32%). 보스에도 적용. */
@@ -4560,8 +4567,9 @@ function applyCraft(rc){
   if(!player.weapons[rc.result]){ player.weapons[rc.result]=1; player.wt[rc.result]=0; }
   else player.weapons[rc.result]++;
   everCrafted.add(rc.result);
-  // ★히든 조합(트리오/소다건/블랙버무스/심플시럽): 소진 재료를 재료칸에서 제거 → 조합품이 1칸으로 대체(슬롯 비움)
-  if(!rc.cocktail && rc.consume){ for(const k of rc.consume){ delete player.weapons[k]; delete player.wt[k]; } }
+  // ★히든 조합(트리오/소다건/블랙버무스/심플시럽): 소진 재료를 '흡수(absorbed)'로 표시.
+  //   재료는 풀업 상태 그대로 player.weapons에 유지 → 능력치 효과는 계속 적용되고, 슬롯 카운트에서만 빠짐(3칸 → 조합품 1칸).
+  if(!rc.cocktail && rc.consume){ player.absorbed=player.absorbed||{}; for(const k of rc.consume){ player.absorbed[k]=true; } }
   // ★조합 완성 연출: 슈퍼칵테일 진화처럼 회전 반짝 + 골드 버스트 + 팡파레
   if(!rc.cocktail){
     player.ultFxUntil = frame + 70;
@@ -4747,7 +4755,7 @@ function evolveCard(ck){ const c=COCKTAILS[ck];
   return { type:'evolve', key:ck, ic:'✨', img:c.img, n:'★ SUPER '+c.name, d:'EVOLVE! Base attack maxed + Cocktail Lv6 + '+weaponInfo(EVO_ING[ck]).name+' maxed → SUPER (Lv1). Then level it up, far beyond the base cocktail.', isNew:true, evo:true }; }
 function superCard(ck){ const c=COCKTAILS[ck], slv=(player.superLv&&player.superLv[ck])||1;
   return { type:'super', key:ck, ic:'✨', img:c.img, n:'★ SUPER '+c.name+' UP', d:'Super power surges — dramatically stronger than the base cocktail.', lv:slv, maxlv:6, isNew:false, sup:true }; }
-function ownedCount(keys){ let n=0; for(const k of keys) if(player.weapons[k]) n++; return n; }
+function ownedCount(keys){ let n=0; for(const k of keys) if(player.weapons[k] && !(player.absorbed&&player.absorbed[k])) n++; return n; }   // ★흡수된 재료는 슬롯 카운트 제외(효과는 유지)
 function baseUltPool(){ const p=[];
   if(player.baseLv < MAX_BASE_LV){ const sh=player.base==='shaker';
     p.push({ type:'base', ic:sh?'🍸':'🥄', img:sh?'icon_shaker':'icon_barspoon', n:sh?'SHAKING UP':'STIRRING UP', d:'Base attack stronger', lv:player.baseLv, maxlv:MAX_BASE_LV }); }
@@ -4781,6 +4789,7 @@ function buildLevelChoices(){
   weaponPick.forEach(c=>out.push(c));
   // 기본공격(base) 카드를 풀에 3배로 넣어 뜰 확률↑(진화 필수 조건이라 자주 필요) → 출력에선 중복 제거
   const baseCards=baseUltPool().filter(c=>c.type==='base');
+  if(baseCards.length && Math.random()<0.15) out.push(baseCards[0]);   // ★기본공격 업그레이드 15% 확률로 확정 등장(다른 칵테일보다 더 잘 뜨게)
   const fill=_shuf(passiveCards.concat(baseUltPool(), baseCards, baseCards));
   const seen=new Set(out.map(c=>c.type+':'+(c.key||c.n)));
   for(const c of fill){ if(out.length>=4) break; const id=c.type+':'+(c.key||c.n); if(seen.has(id)) continue; seen.add(id); out.push(c); }
@@ -4984,7 +4993,7 @@ function updateWeaponChips(){
   slotH+='</div>';
   // ── 패시브(재료) + 촉매(스피릿) + 기본공격 ──
   let resH='<div class="resbar">';
-  for(const k of PASSIVE_KEYS){ const lv=player.weapons[k]; if(!lv) continue; const info=weaponInfo(k);
+  for(const k of PASSIVE_KEYS){ const lv=player.weapons[k]; if(!lv || (player.absorbed&&player.absorbed[k])) continue; const info=weaponInfo(k);   // ★흡수된 재료는 칩 숨김(조합품으로 대체)
     resH+=`<div class="res-c">${wicImg(info.img||'_nope', info.ic)}<b>${lv}</b></div>`; }
   resH+=`<div class="res-c">${wicImg(player.base==='shaker'?'icon_shaker':'icon_barspoon', player.base==='shaker'?'🍸':'🥄')}<b>${player.baseLv}</b></div>`;
   for(const k of SPIRIT_KEYS){ if(!player.weapons[k]) continue;   // 촉매(스피릿): 보유 표시
@@ -5064,7 +5073,7 @@ function gameOver(){ state='over'; setMusic('title'); const secs=Math.floor(game
     setTimeout(()=>inp.focus(),50);
     renderGuestbook(); guestbookFetch();
   }
-  hide('hud'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); hide('dropBanner'); show('overScreen'); }
+  hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); hide('dropBanner'); show('overScreen'); }
 
 /* 플레이어 애니메이션 프레임 선택: 던지기 > 걷기(A/B 교대) > 서기 */
 function playerFrameKey(){
@@ -5399,15 +5408,26 @@ function draw(){
         if(z.attacking) key = (Math.floor(frame/8)%2) ? (evoZ?'zombie_satk2':'zombie_atk2') : (evoZ?'zombie_satk1':'zombie_atk1');
         else if(z.moving) key = (Math.floor(frame/9)%2) ? (evoZ?'zombie_swalk2':'zombie_walk2') : (evoZ?'zombie_swalk1':'zombie_walk1');
         else key = evoZ?'zombie_swalk1':'zombie_stay';
-        const im=spr(key); ctx.save();
-        const bw=22, hpr=Math.max(0,z.hp/(z.mhp||1));
-        ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(z.x-bw/2, z.y-28, bw, 3);
-        ctx.fillStyle= hpr>0.5?'#7fd86a':(hpr>0.25?'#e6b450':'#d9544d'); ctx.fillRect(z.x-bw/2, z.y-28, bw*hpr, 3);
-        if(im){ const H=36*(player.sizeMul||1), W=H*im.width/im.height;
+        const im=spr(key); const H=36*(player.sizeMul||1);
+        ctx.save();
+        if(im){ const W=H*im.width/im.height;
           ctx.translate(z.x, z.y); ctx.scale(z.face<0?-1:1, 1); ctx.drawImage(im, -W/2, -H/2-3, W, H); }
         else { ctx.fillStyle=evoZ?'#3a3f2a':'#6a7a3a'; ctx.beginPath(); ctx.arc(z.x,z.y,11,0,6.28); ctx.fill(); }
         ctx.restore();
-      } }
+        // ★체력바: 스프라이트 위에(머리에 안 가리게) 더 크고 또렷하게 + 테두리
+        const bw=28, bh=5, by=z.y - H/2 - 10, hpr=Math.max(0,z.hp/(z.mhp||1));
+        ctx.fillStyle='#000'; ctx.fillRect(z.x-bw/2-1, by-1, bw+2, bh+2);
+        ctx.fillStyle='rgba(40,40,40,.9)'; ctx.fillRect(z.x-bw/2, by, bw, bh);
+        ctx.fillStyle= hpr>0.5?'#7fd86a':(hpr>0.25?'#e6b450':'#d9544d'); ctx.fillRect(z.x-bw/2, by, bw*hpr, bh);
+      }
+      // ★부활 대기: 플레이어 아래에 25초 진행바(체력바처럼)
+      if(crRespawns.length){ const bw=44, bh=4; let yy=player.y+22;
+        for(const rf of crRespawns.slice(0,4)){ const prog=Math.max(0,Math.min(1, 1-(rf-frame)/1500));
+          ctx.fillStyle='#000'; ctx.fillRect(player.x-bw/2-1, yy-1, bw+2, bh+2);
+          ctx.fillStyle='rgba(40,40,40,.9)'; ctx.fillRect(player.x-bw/2, yy, bw, bh);
+          ctx.fillStyle='#8fd14f'; ctx.fillRect(player.x-bw/2, yy, bw*prog, bh);
+          yy+=bh+3; } }
+    }
     // ★블랙 버무스: 드라이/스윗 버무스 로밍 familiar 2개(각 스프라이트)
     if(bvDrones.length){
       for(const d of bvDrones){ const im=spr(d.kind==='sweet'?'ing_sweetver':'ing_dryver'); ctx.save();
