@@ -440,7 +440,7 @@
   .rec-hint{ font-size:7px; color:var(--dim); margin:3px 0 5px; line-height:1.45; }
   #recipePanel .rec-box h3{ margin:2px 0 5px; font-size:clamp(11px,3vw,15px); }   /* 헤더 여백 축소 → 스크롤 영역 확보 */
   #recTabs{ flex-wrap:nowrap; gap:3px; margin:2px 0 5px; width:100%; box-sizing:border-box; overflow-x:auto; }   /* ★한 줄 고정(줄바꿈 없음) */
-  #recTabs .bt-tab{ font-size:clamp(6.5px,1.9vw,11px); padding:6px 1px; letter-spacing:0; flex:1 1 0; min-width:0; text-align:center; box-shadow:1px 1px 0 #000; white-space:nowrap; overflow:hidden; }   /* ★균등 정렬(각 탭 동일 폭) · 한 줄 안에 다 들어가게 */
+  #recTabs .bt-tab{ font-size:clamp(8px,2.5vw,12px); padding:6px 5px; letter-spacing:0; flex:1 1 auto; min-width:0; text-align:center; box-shadow:1px 1px 0 #000; white-space:nowrap; overflow:visible; text-overflow:clip; }   /* ★글자 안 잘리게(overflow visible, 여백 확보, 내용폭 기준) */
   #recipePanel .mindex{ max-width:none; }   /* 박스 폭에 맞춤(인덱스가 좁은 박스 안) */
   .rec-list{ max-height:72vh; min-height:0; flex:1 1 auto; overflow-y:auto; display:flex; flex-direction:column; gap:6px; width:100%; }
   .rec-row{ display:flex; align-items:center; gap:9px; background:rgba(0,0,0,.4); border:1px solid #2a2e26; border-radius:5px; padding:6px 8px; text-align:left; }
@@ -830,7 +830,7 @@
         <button class="bt-tab" data-rt="skills" onclick="showRecTab('skills')">ITEMS</button>
         <button class="bt-tab" data-rt="cocktails" onclick="showRecTab('cocktails')">DRINKS</button>
       </div>
-      <p class="rec-hint" id="recHint">Make up to 6 (cocktails + hidden). Base spirit Lv5 + ingredients maxed.</p>
+      <p class="rec-hint" id="recHint" style="display:none"></p>
       <div class="rec-list" id="recipeList"></div>
       <div class="mindex" id="mindexList" style="display:none;max-height:72vh;min-height:0;flex:1 1 auto;overflow-y:auto;width:100%"></div>
       <button class="btn" onclick="closeRecipe()">CLOSE</button>
@@ -1054,7 +1054,7 @@
       <button class="bt-tab" data-m="kills" onclick="showBoard('kills')">DOWNS</button>
       <button class="bt-tab" data-m="sales" onclick="showBoard('sales')">SALES</button>
     </div>
-    <div class="board-title" id="guestbookTitle" style="display:none;color:var(--amber,#c89a3c);font-weight:700;letter-spacing:1px;margin:4px 0">✍ GUESTBOOK</div>
+    <div class="board-title" id="guestbookTitle" style="display:none;color:var(--amber,#c89a3c);font-weight:700;letter-spacing:1px;margin:4px 0">✍ LASTCALL SURVIVORS</div>
     <div class="board board-out" id="boardList"></div>
     <div class="row">
       <button class="btn" onclick="goSelect()">▶ RETRY</button>
@@ -1139,8 +1139,8 @@ function applyBoardMode(){
   const hell=boardHell, b=document.getElementById('hellToggleBtn');
   // 메트릭 탭(TIME/DOWNS/SALES)은 HELL(순위)일 때만
   document.querySelectorAll('#highscoreScreen .bt-tab[data-m]').forEach(t=>t.style.display = hell?'':'none');
-  if(b){ b.textContent=hell?'↩ GUESTBOOK':'🔥 HELL'; b.style.background=hell?'#7a1414':''; b.style.color=hell?'#ffdede':'#e88'; }
-  document.querySelectorAll('.title').forEach(t=>{ if(t.closest('#highscoreScreen')) t.textContent=hell?'🔥 HELL SCORES':'✍ GUESTBOOK'; });
+  if(b){ b.textContent=hell?'↩ SURVIVORS':'🔥 HELL'; b.style.background=hell?'#7a1414':''; b.style.color=hell?'#ffdede':'#e88'; }
+  document.querySelectorAll('.title').forEach(t=>{ if(t.closest('#highscoreScreen')) t.textContent=hell?'🔥 HELL SCORES':'✍ LASTCALL SURVIVORS'; });
   if(hell){ curBoardMetric='time'; showBoard('time'); }
   else { renderGuestbook(); guestbookFetch(); }
 }
@@ -1272,7 +1272,7 @@ function guestbookFetch(){
 }
 function renderGuestbook(){
   // ★순위·top record 없음. 날짜 + 이름 + DOWNS + SALES + BY. 최대 50개.
-  const head=`<div class="brow bhead"><span class="bn">GUESTBOOK</span><span>DATE</span><span>DOWNS</span><span>SALES</span><span class="bby">BY</span></div>`;
+  const head=`<div class="brow bhead"><span class="bn">SURVIVOR</span><span>DATE</span><span>DOWNS</span><span>SALES</span><span class="bby">BY</span></div>`;
   const rows = GUESTBOOK.length
     ? GUESTBOOK.slice(0,50).map(e=>`<div class="brow"><span class="bn">${gbEsc(e.name)}</span><span>${gbDate(e.ts)}</span><span>${fmtCell('kills',e.kills||0)}</span><span>${fmtCell('sales',e.sales||0)}</span>${charCell(e.char)}</div>`).join('')
     : '<div class="brow" style="opacity:.6">Be the first to sign the guestbook…</div>';
@@ -1600,30 +1600,30 @@ function openSettings(){ initAudio(); unlockMusic(); paused=true;
 function closeSettings(){ paused=false; document.getElementById('settingsPanel').classList.add('hidden'); playSelect(); }
 // 족보(조합법) — 칵테일·히든조합 레시피 + 설명 한눈에. 설정처럼 일시정지 오버레이.
 const CRAFT_FX = {
-  syrup:'Slow bottle that bursts into a wide AoE slow.',
-  trio:'Fires lemon+lime+orange wheels at once · 8 pierce · Lv4: 5 shots, 2x dmg & speed.',
-  sodagun:'Soda + Ginger Beer + Tonic (all maxed). Gatling fizz that locks one target until it drops. Hits hard, about half a Fire Cross.',
-  blackver:'Summons a Dry Vermouth and a Sweet Vermouth familiar that roam and hunt on their own — each 1.5× the attack power and speed of Vodka Tonic.',
-  gimlet:'⚡ Electric chain: lightning leaps from the nearest enemy to nearby ones, more each level (x1.8). Slow, hard-hitting like an Old Fashioned.',
-  manhattan:'A heavy cherry bomb with a huge explosion. Hits harder than the Old Fashioned.',
+  syrup:'Slow bottle → wide AoE slow.',
+  trio:'Lemon + lime + orange wheels orbit you. Lv4: 5 wheels.',
+  sodagun:'Gatling fizz locks one target until it drops.',
+  blackver:'Dry + Sweet vermouth familiars roam & hunt (1.5× Vodka Tonic).',
+  gimlet:'⚡ Lightning chains between enemies. Slow, hard-hitting.',
+  manhattan:'Cherry bombs the toughest enemy. Huge blast.',
   oldfashioned:'A giant ice rock with a wide blast.',
-  sidecar:'A shot that ricochets off the walls, piercing and bursting on impact. Slower fire rate, fewer bounces.',
-  mojito:'A continuous gatling spray of rum bursts (low pierce) that slow, freeze, and leave mint clouds. Super: each shot explodes.',
-  cosmopolitan:'A continuous gatling stream of freezing pink darts (low pierce). Super: shots scatter behind the enemy they hit.',
-  gintonic:'A wide gin & tonic aura locked around you. Enemies inside are continuously frozen — slowed harder than any other freeze — poisoned, and take heavy damage (2x).',
-  highball:'A continuous gatling stream of fizzy splashes (low pierce) that freeze, each a small blast. Super: each shot explodes bigger.',
-  vodkatonic:'Summons roaming ice familiars (up to 4) that hunt nearby enemies on their own, striking and freezing them. They stay out and patrol instead of re-firing. Each level adds one (up to 4). Super: more, bigger, far stronger familiars.',
-  vodkacranberry:'A giant crimson glass whips out sideways the way you face and snaps back (like lipstick in and out), freezing and draining life on hit (lifesteal). Grows each level; at Lv6 it lashes from BOTH sides. Super: 2x speed & damage.',
-  southside:'Blue-flame rain: drops leave lingering blue fire that burns enemies continuously. Each level adds 2 drops, more damage & range, and lands closer around you in a loose ring.',
-  moscowmule:'Donkey KICK! A hoof lashes out the way you face and snaps back (like lipstick in and out), knocking non-swarm enemies away, slowing them, and draining life on hit (lifesteal). Grows each level; at Lv6 it kicks from BOTH sides. Super: 2x damage.',
-  whiskysour:'A long yellow lemon beam locks onto the nearest enemy (or your facing direction) and fires straight to the screen edge, piercing 6. Anything the line touches is fully FROZEN in place. No damage, pure lockdown. Levels up faster and thicker.',
-  negroni:'Defensive. 5% chance to dodge a hit outright, plus a red shield with its own HP that soaks damage before your health. The shield regenerates slowly when unhit and rebuilds if broken. Leveling raises shield HP.',
-  bloodymary:'One bloody-mary glass loops around you in a wide slow figure-8, flinging 7 chili peppers in all directions. Peppers pierce 2 (4 at max level) and leave a burning DoT. More peppers as it levels.',
-  espressomartini:'Brown lightning strikes from the top of the screen onto enemies below, a strong AoE that also freezes. Slow to fire but the hardest-hitting cocktail.',
-  corpsereviver:'Summons ZOMBIE allies that fight beside you — melee only, slow (½ your speed), tanky (5× Pat HP), and self-heal after 4s unhit. 1 zombie + 1 per level + 1 from Cointreau; +20% atk/HP/atk-speed each level. Super: 2× power, +30% per level, starts at 2 zombies. Absinthe makes them +10% stronger per level.',
-  margarita:'Salt boomerangs that fly out and come back, damaging enemies on BOTH the way out and the way back. More boomerangs as it levels.',
-  drymartini:'Olives orbit you (one more each level, wider orbit). Enemies within the orbit range are slowed.',
-  vodkamartini:'A continuous gatling stream of freezing olive shots (low pierce) + a freezing shockwave. Super: shots scatter behind the enemy they hit.',
+  sidecar:'Shot ricochets off walls, piercing & bursting.',
+  mojito:'Sniper shot at the toughest enemy + shotgun pellets.',
+  cosmopolitan:'Gatling freezing darts. Super: scatter on hit.',
+  gintonic:'Aura around you: freezes, poisons, 2× damage.',
+  highball:'Gatling fizzy blasts that freeze. Super: bigger blasts.',
+  vodkatonic:'Roaming ice familiars hunt on their own (+1 per level).',
+  vodkacranberry:'Crimson whip lashes sideways — freezes & lifesteals.',
+  southside:'Blue-flame rain leaves burning fire zones.',
+  moscowmule:'Donkey kick knocks enemies away + lifesteal.',
+  whiskysour:'Yellow beam fully FREEZES everything in a line.',
+  negroni:'Defensive: dodge chance + a red HP shield.',
+  bloodymary:'Glass loops in a figure-8, flinging chili peppers.',
+  espressomartini:'Brown lightning from the sky. Slow but hardest-hitting.',
+  corpsereviver:'Summons zombie allies (melee, tanky, self-heal). Absinthe buffs them.',
+  margarita:'Salt boomerangs hit going out AND back.',
+  drymartini:'Olives orbit you, slowing enemies in range.',
+  vodkamartini:'Gatling freezing olives + shockwave. Super: scatter on hit.',
 };
 function recRow(outImg, name, parts, desc){
   const need = parts.map((p,i)=> (i>0?'<span class="rec-plus">+</span>':'') + `<img src="assets/${p.img}.png" alt="">${p.lv?`<small>${p.lv}</small>`:''}`).join('');
@@ -3900,7 +3900,7 @@ function finaleEnd(){
   if(el){ el.style.pointerEvents='auto';
     el.innerHTML=`<div class="fin-title">CLOSING TIME</div>`+
       `<div class="fin-body">Your 20-minute shift is over.<br>${(player.key==='joe')?'PAT':'JOE'} takes the bar from here.<br>Clock out and sign the guestbook — or pull an after-hours shift.</div>`+
-      `<button class="fin-continue" onclick="finaleContinue()">🏁 CLOCK OUT · SIGN GUESTBOOK ▸</button>`+
+      `<button class="fin-continue" onclick="finaleContinue()">🏁 CLOCK OUT · LASTCALL SURVIVORS ▸</button>`+
       `<button class="fin-continue" style="background:#7a1414;border-color:#ff4d4d;color:#ffdede" onclick="enterHell()">🔥 AFTER-HOURS · HELL (ranked + Rainbow) ▸</button>`;
     el.classList.remove('hidden'); }
 }
@@ -3930,12 +3930,14 @@ function update(){
   if(state==='tip'){ tipTick(); return; }   // 팁 스핀 연출 중
   if(state==='plaza'){ plazaUpdate(); return; }   // 🌲 광장: 전투 없이 이동만
   if(state!=='playing' || paused) return;   // 설정창 열려있으면 일시정지
+  // ★피날레 등장(PAT/JOE SHOWS UP)·최종선택 화면: 시간·플레이 완전 정지(버튼 눌러야 진행) — gameTime 증가 전에 막아야 시간이 안 올라감
+  if(finale.active && (finale.phase==='intro' || finale.phase==='ended')) return;
   gameTime += 1/60;
 
-  // ★30분 피날레: 라이벌 바텐더가 쫓아옴(도망 가능). 잡히면 교대 → 게임 종료
-  if(!finale.active && !hellMode && gameTime>=FINALE_AT){ startFinale(); }   // ★HELL 모드 중엔 피날레 재진입 안 함
+  // ★20분 피날레: 라이벌 바텐더가 쫓아옴(도망 가능). 잡히면 교대 → 게임 종료
+  if(!finale.active && !hellMode && gameTime>=FINALE_AT){ startFinale(); return; }   // ★진입 즉시 정지(같은 프레임 시간 증가 방지)
   if(finale.active){
-    if(finale.phase==='intro' || finale.phase==='ended') return;   // 등장 안내/최종 메시지 대기(정지 → 버튼 눌러야 진행)
+    if(finale.phase==='intro' || finale.phase==='ended') return;   // (가드: 위에서 이미 처리)
     finaleChase();
     if(finale.phase==='ended') return;
     // chase 중엔 아래 일반 업데이트 계속(플레이어 이동/발사) — 적 스폰만 정지됨
@@ -5041,7 +5043,7 @@ function gameOver(){ state='over'; setMusic('title'); const secs=Math.floor(game
     // ★일반: 순위 없이 방명록에 이름 남기기(항상)
     if(tabs) tabs.style.display='none'; if(gbT) gbT.style.display='';
     ne.classList.remove('hidden'); inp.value='';
-    if(nt) nt.innerHTML='✍ SHIFT COMPLETE · SIGN THE GUESTBOOK<br><span style="font-size:.8em;opacity:.8">Leave your name (English, up to 25).</span>';
+    if(nt) nt.innerHTML='✍ LASTCALL SURVIVORS · LEAVE YOUR NAME<br><span style="font-size:.8em;opacity:.8">You survived last call (English, up to 25).</span>';
     setTimeout(()=>inp.focus(),50);
     renderGuestbook(); guestbookFetch();
   }
