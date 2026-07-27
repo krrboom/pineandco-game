@@ -3714,6 +3714,9 @@ function updateCorpseReviver(){
     // ★진토닉식 리쉬: 플레이어 중심 원(leashR) 안에서만 이동 → 화면 밖 이탈 방지
     const pdx=z.x-player.x, pdy=z.y-player.y, pd=Math.hypot(pdx,pdy);
     if(pd>S.leashR){ z.x=player.x+pdx/pd*S.leashR; z.y=player.y+pdy/pd*S.leashR; z.vx*=0.4; z.vy*=0.4; }
+    // ★플레이어처럼 화면 밖으로 못 나감(리쉬 원이 화면 끝에 걸쳐도 좀비는 화면 안에)
+    if(z.x<S.R){ z.x=S.R; z.vx=Math.max(0,z.vx); } else if(z.x>W-S.R){ z.x=W-S.R; z.vx=Math.min(0,z.vx); }
+    if(z.y<S.R){ z.y=S.R; z.vy=Math.max(0,z.vy); } else if(z.y>H-S.R){ z.y=H-S.R; z.vy=Math.min(0,z.vy); }
     for(const e of enemies){ if(e.type==='passout')continue;
       if(Math.hypot(e.x-z.x,e.y-z.y)<S.R+e.r && frame>=z.hurtAt){ z.hurtAt=frame+30; z.hp-=(e.dmg||8)*1.2; z.lastHit=frame; break; } }   // ★몹/보스 데미지 +20%
     if(frame-z.lastHit>180) z.hp=Math.min(S.maxHp, z.hp+S.maxHp*0.004);   // ★3초 미피격 시 서서히 회복
