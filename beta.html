@@ -297,9 +297,10 @@
   /* ★LASTCALL SURVIVORS: 기록마다 2줄(이름 전광판 + 메타) */
   .gb-row{ padding:5px 3px; border-bottom:1px solid rgba(200,154,60,.18); }
   .gb-name{ overflow:hidden; white-space:nowrap; width:100%; }
-  .gb-name span{ display:inline-block; padding-left:100%; color:var(--pine-light,#e8e4d0); font-weight:700;
-    font-size:clamp(11px,3.2vw,15px); letter-spacing:.5px; animation:gbMarquee 9s linear infinite; }
-  @keyframes gbMarquee{ from{ transform:translate(0,0); } to{ transform:translate(-100%,0); } }
+  .gb-name span{ display:inline-block; color:var(--pine-light,#e8e4d0); font-weight:700;
+    font-size:clamp(11px,3.2vw,15px); letter-spacing:.5px; }   /* ★기본은 정적(항상 보임) */
+  .gb-name.marq span{ animation:gbMarquee 7s ease-in-out infinite alternate; }   /* ★긴 이름만 전광판 스크롤(왕복) — 항상 처음은 보임 */
+  @keyframes gbMarquee{ 0%,15%{ transform:translateX(0); } 85%,100%{ transform:translateX(var(--sc,0)); } }
   .gb-meta{ display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:2px;
     font-size:clamp(9px,2.5vw,12px); color:var(--dim,#9a9); font-variant-numeric:tabular-nums;
     font-family:'Segoe UI',system-ui,-apple-system,'Malgun Gothic',sans-serif; letter-spacing:.3px; }   /* ★숫자 또렷하게(픽셀폰트 6 뭉개짐 방지) */
@@ -1289,6 +1290,10 @@ function renderGuestbook(){
       }).join('')
     : '<div class="gb-row" style="opacity:.6;text-align:center">Be the first to survive last call…</div>';
   document.querySelectorAll('.board-out').forEach(el=> el.innerHTML=rows);
+  // ★오버플로우하는 이름만 전광판 스크롤(짧은 이름은 정적으로 항상 보임)
+  try{ requestAnimationFrame(()=>{ document.querySelectorAll('.board-out .gb-name').forEach(cell=>{ const sp=cell.firstElementChild; if(!sp)return;
+    const over=sp.scrollWidth - cell.clientWidth;
+    if(over>4){ cell.classList.add('marq'); cell.style.setProperty('--sc', (-over-14)+'px'); } else { cell.classList.remove('marq'); } }); }); }catch(e){}
 }
 
 /* =====================================================================
@@ -3688,20 +3693,18 @@ function corpseReviverStats(){
     leashR:(120 + lvl*22)*(player.sizeMul||1) };   // ★진토닉처럼 레벨업할수록 커지는 활동 반경(그 안에서만 이동)
 }
 function updateCorpseReviver(){
-  if(!player||!player.weapons||!player.weapons.corpsereviver){ crZombies.length=0; crRespawns.length=0; return; }
+  if(!player||!player.weapons||!player.weapons.corpsereviver){ crZombies.length=0; return; }
   const S=corpseReviverStats();
-  const spawnZ=()=>{ const ang=Math.random()*6.28, rr=Math.random()*S.leashR*0.4;
-    crZombies.push({ x:player.x+Math.cos(ang)*rr, y:player.y+Math.sin(ang)*rr, vx:0, vy:0, hp:S.maxHp, mhp:S.maxHp, lastHit:frame, atkAt:0, hurtAt:0, face:1, attacking:false, moving:false }); };
+  // ★HP 없는 무적 자동공격(보드카토닉·고추처럼). 개수만 맞추고, 강한 적을 유도 추격.
   while(crZombies.length>S.want){ crZombies.pop(); }
-  while(crRespawns.length && crZombies.length+crRespawns.length>S.want){ crRespawns.pop(); }
-  while(crZombies.length+crRespawns.length < S.want) spawnZ();     // 레벨업으로 늘어난 빈 슬롯은 즉시 채움
-  for(let i=crRespawns.length-1;i>=0;i--){ if(frame>=crRespawns[i]){ crRespawns.splice(i,1); if(crZombies.length<S.want) spawnZ(); } }   // 25초 뒤 부활
+  while(crZombies.length<S.want){ const ang=Math.random()*6.28, rr=Math.random()*60;
+    crZombies.push({ x:player.x+Math.cos(ang)*rr, y:player.y+Math.sin(ang)*rr, vx:0, vy:0, atkAt:0, face:1, attacking:false, moving:false }); }
+  // 타겟: 필드에서 체력 가장 많은 적(강한 몬스터·보스 먼저) — 전체 좀비 공통
+  let tgt=null, best=-1; for(const e of enemies){ if(e.type==='passout')continue; if(e.hp>best){ best=e.hp; tgt=e; } }
   const SEP=S.R*1.9;
   for(const z of crZombies){
-    z.mhp=S.maxHp; if(z.hp>S.maxHp)z.hp=S.maxHp;
-    let tgt=null,nd=1e9; for(const e of enemies){ if(e.type==='passout')continue; const dd=(e.x-z.x)**2+(e.y-z.y)**2; if(dd<nd){nd=dd;tgt=e;} }
     z.attacking=false;
-    if(tgt){ const dist=Math.sqrt(nd); z.face=tgt.x<z.x?-1:1; const reach=S.R+tgt.r+6;
+    if(tgt){ const dist=Math.hypot(tgt.x-z.x,tgt.y-z.y); z.face=tgt.x<z.x?-1:1; const reach=S.R+tgt.r+6;
       if(dist<=reach){ z.vx*=0.6; z.vy*=0.6; z.attacking=true;
         if(frame>=z.atkAt){ z.atkAt=frame+S.atkCd; dealDmg(tgt,S.atk); burst((z.x+tgt.x)/2,(z.y+tgt.y)/2,'#cfd8b0',5);
           if(tgt.hp<=0){ const idx=enemies.indexOf(tgt); if(idx>=0) killEnemy(idx); } }
@@ -3711,17 +3714,10 @@ function updateCorpseReviver(){
     for(const o of crZombies){ if(o===z)continue; const dx=z.x-o.x,dy=z.y-o.y,dd=Math.hypot(dx,dy);
       if(dd>0.01&&dd<SEP){ const p=(SEP-dd)/SEP*0.6; z.vx+=(dx/dd)*p; z.vy+=(dy/dd)*p; } }
     z.x+=z.vx; z.y+=z.vy; z.moving=Math.hypot(z.vx,z.vy)>0.35;
-    // ★진토닉식 리쉬: 플레이어 중심 원(leashR) 안에서만 이동 → 화면 밖 이탈 방지
-    const pdx=z.x-player.x, pdy=z.y-player.y, pd=Math.hypot(pdx,pdy);
-    if(pd>S.leashR){ z.x=player.x+pdx/pd*S.leashR; z.y=player.y+pdy/pd*S.leashR; z.vx*=0.4; z.vy*=0.4; }
-    // ★플레이어처럼 화면 밖으로 못 나감(리쉬 원이 화면 끝에 걸쳐도 좀비는 화면 안에)
+    // ★화면 밖으로만 안 나가게(플레이어처럼)
     if(z.x<S.R){ z.x=S.R; z.vx=Math.max(0,z.vx); } else if(z.x>W-S.R){ z.x=W-S.R; z.vx=Math.min(0,z.vx); }
     if(z.y<S.R){ z.y=S.R; z.vy=Math.max(0,z.vy); } else if(z.y>H-S.R){ z.y=H-S.R; z.vy=Math.min(0,z.vy); }
-    for(const e of enemies){ if(e.type==='passout')continue;
-      if(Math.hypot(e.x-z.x,e.y-z.y)<S.R+e.r && frame>=z.hurtAt){ z.hurtAt=frame+30; z.hp-=(e.dmg||8)*1.2; z.lastHit=frame; break; } }   // ★몹/보스 데미지 +20%
-    if(frame-z.lastHit>180) z.hp=Math.min(S.maxHp, z.hp+S.maxHp*0.004);   // ★3초 미피격 시 서서히 회복
   }
-  for(let i=crZombies.length-1;i>=0;i--){ if(crZombies[i].hp<=0){ burst(crZombies[i].x,crZombies[i].y,'#6a7a3a',16); crZombies.splice(i,1); crRespawns.push(frame+1500); } }   // ★죽으면 25초 뒤 부활
   for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
 }
 /* 드라이 마티니: 밀어내기 제거(너무 강했음) → 궤도 사정거리 안에 든 적을 느리게(속도 32%). 보스에도 적용. */
@@ -4146,12 +4142,8 @@ function update(){
     else if(frame<(e.stopUntil||0)) e.speed=0;                // ★위스키사워: 완전 정지(동결)
     else if(frame<(e.gtSlowUntil||0)) e.speed=_spd0*0.224*_fz;// ★진토닉: 다른 빙결보다 30% 더 느리게(0.32×0.7)
     else if(frame<(e.frozenUntil||0)) e.speed=_spd0*0.32*_fz; // 일반 빙결(vodka 등)
-    // ★타겟: 근처의 Corpse Reviver 좀비 동료 또는 플레이어 중 가장 가까운 쪽(좀비가 어그로를 끔)
-    let tX=player.x, tY=player.y;
-    if(typeof crZombies!=='undefined' && crZombies.length){ let bd=(player.x-e.x)**2+(player.y-e.y)**2;
-      for(const z of crZombies){ const zd=(z.x-e.x)**2+(z.y-e.y)**2; if(zd<bd){ bd=zd; tX=z.x; tY=z.y; } } }
-    const a=Math.atan2(tY-e.y, tX-e.x);
-    const dist=Math.hypot(tX-e.x, tY-e.y);
+    const a=Math.atan2(player.y-e.y, player.x-e.x);   // ★좀비는 무적이라 적은 플레이어를 추격(좀비가 어그로 안 끔)
+    const dist=Math.hypot(player.x-e.x, player.y-e.y);
     if(e.thrower){
       // 투척수: 거리 유지하다 멈춰서 토하고(vomit) 침 발사
       if(frame < e.vomitUntil){
@@ -5417,19 +5409,7 @@ function draw(){
           ctx.translate(z.x, z.y); ctx.scale(z.face<0?-1:1, 1); ctx.drawImage(im, -W/2, -H/2-3, W, H); }
         else { ctx.fillStyle=evoZ?'#3a3f2a':'#6a7a3a'; ctx.beginPath(); ctx.arc(z.x,z.y,11,0,6.28); ctx.fill(); }
         ctx.restore();
-        // ★체력바: 스프라이트 위에(머리에 안 가리게) 더 크고 또렷하게 + 테두리
-        const bw=28, bh=5, by=z.y - H/2 - 10, hpr=Math.max(0,z.hp/(z.mhp||1));
-        ctx.fillStyle='#000'; ctx.fillRect(z.x-bw/2-1, by-1, bw+2, bh+2);
-        ctx.fillStyle='rgba(40,40,40,.9)'; ctx.fillRect(z.x-bw/2, by, bw, bh);
-        ctx.fillStyle= hpr>0.5?'#7fd86a':(hpr>0.25?'#e6b450':'#d9544d'); ctx.fillRect(z.x-bw/2, by, bw*hpr, bh);
       }
-      // ★부활 대기: 플레이어 아래에 25초 진행바(체력바처럼)
-      if(crRespawns.length){ const bw=44, bh=4; let yy=player.y+22;
-        for(const rf of crRespawns.slice(0,4)){ const prog=Math.max(0,Math.min(1, 1-(rf-frame)/1500));
-          ctx.fillStyle='#000'; ctx.fillRect(player.x-bw/2-1, yy-1, bw+2, bh+2);
-          ctx.fillStyle='rgba(40,40,40,.9)'; ctx.fillRect(player.x-bw/2, yy, bw, bh);
-          ctx.fillStyle='#8fd14f'; ctx.fillRect(player.x-bw/2, yy, bw*prog, bh);
-          yy+=bh+3; } }
     }
     // ★블랙 버무스: 드라이/스윗 버무스 로밍 familiar 2개(각 스프라이트)
     if(bvDrones.length){
