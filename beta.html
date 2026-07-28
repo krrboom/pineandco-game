@@ -1702,10 +1702,10 @@ function setSfxVol(v){ sfxVol=Math.max(0,Math.min(1,v/100)); document.getElement
 const CHARACTERS = {
   // Pat: 마티니 글라스를 던진다 — 강하고 광역(쉐이킹), 느림
   // 기본공격 약화(칵테일 시스템이 주력) — Pat 쉐이커(splash), Joe 믹싱글라스(관통 강화)
-  pat: { name:'PAT', color:'#d9544d', moveSpeed:1.9, maxHp:130,
+  pat: { name:'PAT', color:'#d9544d', moveSpeed:1.9, maxHp:156,
          base:'shaker', projKind:'shaker', fireCd:59, dmg:72, projSpeed:4.6, projR:8, splash:38, pierce:0 },   // 기본공격 공격력 +80%(40→72) · 공격속도 20%↓(49→59)
   // Joe: 믹싱글라스를 던진다 — 빠르고 강한 관통 (한 줄로 여러 마리 꿰뚫음)
-  joe: { name:'JOE', color:'#e6b450', moveSpeed:3.0, maxHp:85,
+  joe: { name:'JOE', color:'#e6b450', moveSpeed:3.0, maxHp:102,
          base:'barspoon', projKind:'mixglass', fireCd:14, dmg:7.5, projSpeed:8.5, projR:4, splash:0, pierce:8 }   // ★Joe 기본공격 +25%(6→7.5): 초반 첫 웨이브 처치 가능하게
 };
 
@@ -2194,8 +2194,8 @@ const MONSTER_INDEX=[
 ];
 /* 바텐더(캐릭터) 사전 */
 const CHAR_INDEX=[
-  { img:'char_pat', name:'PAT · THE SHAKER', t:'Built like the bar he tends. Hurls a heavy cobbler shaker that splashes a whole cluster at once. Tanky (130 HP), slow as last call, and gains +2 max HP every level so he keeps standing deep into the night. He does not chase the crowd; the crowd comes to him and regrets it. ULTIMATE — Shaker Tornado: a spinning vortex that keeps flinging glasses in every direction, invincible while it spins. Each level doubles its damage, adds an arm, and lasts longer.' },
-  { img:'char_joe', name:'JOE · THE STIRRER', t:'All wrist, no waste. Flicks a bar spoon and mixing glass that skewer a line of up to 4 guests on one pour. Fragile (85 HP) but quick, gaining +1 max HP every level plus passive HP regen that heals faster each level. ULTIMATE — Untouchable: full invincibility PLUS a giant spinning bar spoon (15× normal) that shreds anyone it touches. 8s base, +0.8s and +220% damage every level.' },
+  { img:'char_pat', name:'PAT · THE SHAKER', t:'Built like the bar he tends. Hurls a heavy cobbler shaker that splashes a whole cluster at once. Tanky (156 HP), slow as last call, and gains +2 max HP every level so he keeps standing deep into the night. He does not chase the crowd; the crowd comes to him and regrets it. ULTIMATE — Shaker Tornado: a spinning vortex that keeps flinging glasses in every direction, invincible while it spins. Each level doubles its damage, adds an arm, and lasts longer.' },
+  { img:'char_joe', name:'JOE · THE STIRRER', t:'All wrist, no waste. Flicks a bar spoon and mixing glass that skewer a line of up to 4 guests on one pour. Fragile (102 HP) but quick, gaining +1 max HP every level plus passive HP regen that heals faster each level. ULTIMATE — Untouchable: full invincibility PLUS a giant spinning bar spoon (15× normal) that shreds anyone it touches. 8s base, +0.8s and +220% damage every level.' },
 ];
 /* 스킬 사전 — 기본공격 / 기주 6종 / 재료 / 궤도 / 일반 강화 / 필살기. 모든 항목은 붐이 올린 이미지로. */
 const SKILL_INDEX=[
@@ -2765,7 +2765,7 @@ function DIFF(){
     hp:    (16 + m*12 + m*m*3.2) * hard * hm,  // 적 HP (시간 스케일 + 3분당 40%) = 갈수록 훨씬 단단함
     speed: 0.5 + m*0.05 + m*m*0.006,       // 적 속도 (완만하게만 빨라짐)
     spawn: spawn,
-    dmg:   (6 + mD*0.4) * hardD * hm,       // 접촉 데미지: 9분 이후 고정(잡몹·보스 공통). 이후엔 체력만 오름
+    dmg:   (6 + mD*0.4) * hardD * hm * 0.85,       // ★접촉·공격 데미지 -15%(잡몹·보스 공통, 초반 사망 완화). 9분 이후 고정
   };
 }
 /* 러시(피버) 타임: 2분(120초)에 한 번씩. 18초 지속. */
@@ -4028,8 +4028,8 @@ function update(){
   if(player.throwTimer>0) player.throwTimer--;                     // 던지기 모션 타이머
   // 패시브 체력 회복: Joe는 기본 회복(레벨 스케일) + HEAL 강화 보너스 / Pat은 HEAL 강화로만 회복
   // 회복력: Joe가 가장 높고, Pat도 약간(조 보다 낮게). + HEAL 강화 보너스
-  const regenPerSec = (player.key==='joe' ? 0.10 + (player.level-1)*0.075    // ★기본 회복률 절반
-                     : player.key==='pat' ? 0.035 + (player.level-1)*0.025 : 0) + (player.regenBonus||0);
+  const regenPerSec = (player.key==='joe' ? (0.10 + (player.level-1)*0.075)*1.1    // ★기본 회복 +10%
+                     : player.key==='pat' ? (0.035 + (player.level-1)*0.025)*1.1 : 0) + (player.regenBonus||0);
   if(regenPerSec>0 && player.hp>0 && player.hp<player.maxHp && !player.noSustain){   // noSustain(피날레) 시 회복 정지
     player.hp = Math.min(player.maxHp, player.hp + regenPerSec/60);
   }
@@ -4789,8 +4789,8 @@ function buildLevelChoices(){
   const seen=new Set(out.map(c=>c.type+':'+(c.key||c.n)));
   for(const c of fill){ if(out.length>=4) break; const id=c.type+':'+(c.key||c.n); if(seen.has(id)) continue; seen.add(id); out.push(c); }
   // ★업그레이드할 게 없을 때(cash 상황): 특수 픽업 강화 선택지 제공(십자가 지속/시계 멈춤/데킬라샷 회복)
-  if(out.length < 2){ const sp=_shuf(specialUpgradePool()); while(out.length<3 && sp.length) out.push(sp.shift()); out.push({type:'gold', ic:'💰', n:'CASH', d:'+2000', isNew:false}); }
-  if(!out.length) out.push({type:'gold', ic:'💰', n:'CASH', d:'+2000', isNew:false});
+  if(out.length < 2){ const sp=_shuf(specialUpgradePool()); while(out.length<3 && sp.length) out.push(sp.shift()); }
+  if(!out.length){ const sp2=_shuf(specialUpgradePool()); while(out.length<3 && sp2.length) out.push(sp2.shift()); }
   return _shuf(out).slice(0,4);
 }
 // ★특수 강화 선택지(누적): 십자가 +2s / 시계 +3s / 데킬라샷 +20HP
@@ -4847,8 +4847,8 @@ function buildUpgradePool(){
   for(const k of COCKTAIL_KEYS){ if(player.weapons[k] && !(player.evolved&&player.evolved.has(k)) && player.weapons[k]<6) pool.push(weaponCard(k)); }        // 보유 칵테일 강화
   for(const k of PASSIVE_KEYS){ if(player.weapons[k] && player.weapons[k]<(weaponInfo(k).max||6)) pool.push(passiveCard(k)); }          // 보유 재료(능력치) 강화(재료별 max까지)
   if(player.rainbow && (player.rainbowLv||1) < 6){ pool.push({ type:'rainbowup', ic:'🌈', img:'rainbow_icon', n:'RAINBOW GUN UP', d:'+2 firing directions', lv:player.rainbowLv||1, maxlv:6 }); }   // 레인보우건 방향 추가
-  if(pool.length < 2){ const sp=_shuf(specialUpgradePool()); while(pool.length<3 && sp.length) pool.push(sp.shift()); pool.push({type:'gold', ic:'💰', n:'CASH', d:'+2000', isNew:false}); }
-  if(!pool.length) pool.push({type:'gold', ic:'💰', n:'CASH', d:'+2000', isNew:false});
+  if(pool.length < 2){ const sp=_shuf(specialUpgradePool()); while(pool.length<3 && sp.length) pool.push(sp.shift()); }
+  if(!pool.length){ const sp2=_shuf(specialUpgradePool()); while(pool.length<3 && sp2.length) pool.push(sp2.shift()); }
   return pool;
 }
 const STAT_UP={ 'MOVE SPEED UP':1, 'POWER UP':1, 'MAX HP UP':1, 'REGEN UP':1, 'DEFENSE UP':1, 'ATTACK SPEED UP':1 };  // 스탯패널에 따로 표시 → 아이템칩에선 제외
