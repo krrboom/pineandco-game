@@ -3448,7 +3448,7 @@ function fireCocktail(key, lv){
     case 'mojito': {   // ★저격총: 필드에서 체력 가장 많은 몬스터/보스를 저격(느린 공속·초강력·직선 저격탄) + 산탄
       const rt = highestHpEnemy() || t;
       const ang = rt ? Math.atan2(rt.y-player.y, rt.x-player.x) : aim;
-      add({ kind:img, vx:Math.cos(ang)*17, vy:Math.sin(ang)*17, dmg: 360*P*(evo?2:1), r:9, pierce:99, life:70, cFreeze:34, cMint:2, snipe:true });   // 저격탄(관통 직선, 매우 강함)
+      add({ kind:img, vx:Math.cos(ang)*17, vy:Math.sin(ang)*17, dmg: 360*P*(evo?2:1), r:9, pierce:4, life:70, cFreeze:34, cMint:2, snipe:true });   // ★저격탄: 관통 99→4(라인 광역화 방지, 단일 저격 강함 유지)
       const pel = 5 + Math.floor(lv/2);                                   // ★산탄: 맞은 몬스터도 피해
       for(let i=0;i<pel;i++){ const pa = ang + (i-(pel-1)/2)*0.17;
         add({ kind:img, vx:Math.cos(pa)*11, vy:Math.sin(pa)*11, dmg: 66*P*(evo?1.6:1), r:7, pierce:2, life:32, cMint:2, cFreeze:22, knockback:0.28 }); }
