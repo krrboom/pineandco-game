@@ -3445,13 +3445,10 @@ function fireCocktail(key, lv){
     case 'highball':
       gatling(img, 32, 8.5, 0.16, 46, { r:11, pierce:0, cExplode:24, cFreeze:40 }); break;   // 저관통+빙결 · 슈퍼=피사체마다 폭발↑
     // ── 산탄콘→게틀링: 슬로우+민트 스프레이 연사. 발수 2배·+20%. ──
-    case 'mojito': {   // ★저격총: 필드에서 체력 가장 많은 몬스터/보스를 저격(느린 공속·초강력·직선 저격탄) + 산탄
+    case 'mojito': {   // ★저격총: 필드에서 체력 가장 많은 몬스터/보스를 저격(느린 공속·초강력·직선 저격탄 1발)
       const rt = highestHpEnemy() || t;
       const ang = rt ? Math.atan2(rt.y-player.y, rt.x-player.x) : aim;
-      add({ kind:img, vx:Math.cos(ang)*17, vy:Math.sin(ang)*17, dmg: 360*P*(evo?2:1), r:9, pierce:4, life:70, cFreeze:34, cMint:2, snipe:true });   // ★저격탄: 관통 99→4(라인 광역화 방지, 단일 저격 강함 유지)
-      const pel = 5 + Math.floor(lv/2);                                   // ★산탄: 맞은 몬스터도 피해
-      for(let i=0;i<pel;i++){ const pa = ang + (i-(pel-1)/2)*0.17;
-        add({ kind:img, vx:Math.cos(pa)*11, vy:Math.sin(pa)*11, dmg: 66*P*(evo?1.6:1), r:7, pierce:2, life:32, cMint:2, cFreeze:22, knockback:0.28 }); }
+      add({ kind:img, vx:Math.cos(ang)*17, vy:Math.sin(ang)*17, dmg: 360*P*(evo?2:1), r:9, pierce:4, life:70, cFreeze:34, cMint:2, snipe:true });   // ★저격탄 1발만(산탄 제거 — 데미지가 이미 큼)
       break; }
     // ── 마법지팡이: 유도 얼음볼트. Lv1=1발 → 2레벨마다 +1 ──
     case 'vodkatonic': break;   // ★로밍 자동사냥 familiar(최대 4개) — updateVodkaTonic()에서 상시 관리(재발사 안 함)
