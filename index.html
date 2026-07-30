@@ -6030,7 +6030,7 @@ async function appleAsk(q){
   if(APPLE_AI_URL){
     try{
       const r=await fetch(APPLE_AI_URL, { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ question:q, history: plaza.appleHist.slice(-6) }) });
+        body: JSON.stringify({ question:q, history: plaza.appleHist.slice(-6), lang: detectAppleLang(q) }) });
       const j=await r.json(); if(j && j.answer) answer=j.answer;
     }catch(e){ /* 서버 없음/실패 → 아래 로컬 폴백 */ }
   }
@@ -6087,6 +6087,13 @@ function ahFitViewport(){
 }
 // 언어 상태 + 언어별 환영/UI 문구
 let appleLang = (function(){ try{ return localStorage.getItem('paco_applelang')||'ko'; }catch(e){ return 'ko'; } })();
+// ★질문 언어 자동 감지 → 그 언어로 답하게(중국어로 물으면 중국어로 답). 감지 안 되면 appleLang.
+function detectAppleLang(s){ s=String(s||'');
+  if(/[぀-ヿ]/.test(s)) return 'ja';           // 히라가나/가타카나 → 일본어
+  if(/[가-힣]/.test(s)) return 'ko';           // 한글 → 한국어
+  if(/[一-鿿]/.test(s)) return 'zh';           // 한자(가나 없음) → 중국어
+  if(/[a-zA-Z]/.test(s)) return 'en';                  // 라틴 문자 → 영어
+  return appleLang; }                                  // 판별 불가(숫자/기호만) → 설정 언어
 const AH_TXT = {
   ko: { welcome:'파인앤코에 오신 걸 환영합니다. 어떻게 도와드릴까요? 무엇이든지 물어보세요.', ph:'무엇이든지 물어보세요…', send:'물어보기' },
   en: { welcome:'Welcome to Pine & Co. How can I help you? Ask me anything.', ph:'Ask me anything…', send:'Ask' },
@@ -6134,7 +6141,7 @@ async function appleHelperSend(){
   let answer='', emotion='';
   if(APPLE_AI_URL){
     try{ const r=await fetch(APPLE_AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ question:q, history:ahHist.slice(-6), lang:appleLang }) });
+        body:JSON.stringify({ question:q, history:ahHist.slice(-6), lang: detectAppleLang(q) }) });
       const j=await r.json(); if(j && j.answer){ answer=j.answer; emotion=j.emotion||''; } }catch(e){}
   }
   if(!answer) answer=appleLocalAnswer(q);            // 서버 없음/오류 → 로컬 폴백(진짜 메뉴 데이터)
