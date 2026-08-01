@@ -1744,11 +1744,11 @@ const INGREDIENTS = {
   sugar: { name:'SUGAR', ic:'🧊', img:'ing_sugar', color:'#eef2f5', max:6, pas:{stat:'luck',per:0.005}, desc:'+0.5% item drop rate per level (LUCK)' },
   mint:  { name:'MINT',  ic:'🌿', img:'ing_mint',  color:'#3f9a45', max:6, pas:{stat:'speed',per:0.05}, desc:'Move faster + shorter dash cooldown each level' },
   water: { name:'WATER', ic:'💧', img:'ing_water', color:'#aee6f5', max:6, pas:{stat:'regen',per:0.195}, desc:'Regenerate HP (faster)' },
-  // 심플시럽 = 설탕(Lv3)+물(Lv3) 조합 결과물(공격 무기). 아주 느린 병을 던져 맞으면 터지며 광역 슬로우.
+  // 심플시럽 = 설탕(Lv6)+물(Lv6) 만렙 조합 결과물(공격 무기). 아주 느린 병을 던져 맞으면 터지며 광역 슬로우.
   syrup: { name:'SIMPLE SYRUP', ic:'🍯', img:'ing_syrup', color:'#e9c46a', attack:'syrup', cd:150, max:4, desc:'Lobbed bottle, AoE slow' },
-  // 시트러스 트리오 = 레몬·라임·오렌지 셋 다 Lv4 만렙일 때 만들어지는 히든 조합 무기.
+  // 시트러스 트리오 = 레몬·라임·오렌지 셋 다 Lv6 만렙일 때 만들어지는 히든 조합 무기.
   trio:  { name:'CITRUS TRIO', ic:'🍋', img:'ing_trio', color:'#e0b84a', attack:'trio', cd:58, max:4, desc:'Citrus wheels orbit you (gin-tonic damage)' },
-  // 소다건 = 소다+진저비어+토닉 셋 다 Lv4(만렙)일 때 만들어지는 히든 조합. 물방울을 게틀링처럼 한 타겟에 집중사격.
+  // 소다건 = 소다+진저비어+토닉 셋 다 Lv6(만렙)일 때 만들어지는 히든 조합. 물방울을 게틀링처럼 한 타겟에 집중사격.
   sodagun:{ name:'SODA GUN', ic:'🔫', img:'ing_sodagun', color:'#3d7fb0', attack:'sodagun', cd:11, max:4, desc:'Gatling soda, locks a target' },
   // 칵테일 조합 재료들도 시트러스 휠(관통 발사)로 통일. 각자 올린 이미지로 날아감. (조합 시스템 추가 시 재료로도 사용)
   cointreau:{ name:'COINTREAU', ic:'🍊', img:'ing_cointreau', color:'#c8731f', max:3, pas:{stat:'amount',per:1}, desc:'+1 projectile per level, added one at a time (max 3, every weapon)' },
@@ -1763,7 +1763,7 @@ const INGREDIENTS = {
   coffee:    { name:'COFFEE BEANS', ic:'☕', img:'ing_coffee',   color:'#5a3a22', max:6, pas:{stat:'edur',per:0.14}, revive:true, desc:'Effects last longer (orbit/aura). Grants ONE revive!' },
   tomato:    { name:'TOMATO JUICE', ic:'🍅', img:'ing_tomato',   color:'#c0392b', max:6, pas:{stat:'ultcd',per:0},   desc:'Cuts ultimate cooldown (1/8 → 1/3 at max)' },
   campari:   { name:'CAMPARI',     ic:'🅱️', img:'ing_campari',  color:'#b81e2c', max:6, pas:{stat:'enemydef',per:0.08}, desc:'Nearby enemies take more damage (defense down)' },
-  // 검정 버무스 = 드라이+스윗 버무스 둘 다 Lv4일 때 만들어지는 히든 조합. 훨씬 강한 검정 오라.
+  // 검정 버무스 = 드라이+스윗 버무스 둘 다 Lv6(만렙)일 때 만들어지는 히든 조합. 훨씬 강한 검정 오라.
   blackver: { name:'BLACK VERMOUTH', ic:'🖤', img:'ing_wormwood', color:'#1f1830', attack:'aura', cd:60, max:4, desc:'Dry + Sweet vermouth familiars · 1.5× Vodka Tonic' },
   // ★압생트: 슈퍼 Corpse Reviver 재료 + 패시브(내 좀비 레벨당 +10% 강화)
   absinthe:  { name:'ABSINTHE', ic:'🧚', img:'ing_absinthe', color:'#3f9a45', max:6, pas:{stat:'zombuff',per:0.1}, desc:'Your Corpse Reviver zombies grow +10% stronger per level' },
@@ -2262,10 +2262,10 @@ const COCKTAIL_INDEX=[
   { img:'cocktail_espressomartini',name:'ESPRESSO MARTINI',t:'Vodka · coffee · coffee liqueur. The one that says "one more, then home."' },
   // ── ★조합 전용(SECRET CRAFTS): 재료를 모아 합쳐야 나오는 무기 ──
   { ic:'⚗️', name:'— SECRET CRAFTS · COMBINATIONS —', t:'Not picked at level-up. Level the right ingredients, then a fusion prompt appears mid-run. Combining spends those ingredients and gives one new weapon.' },
-  { img:'ing_syrup',    name:'SIMPLE SYRUP · craft',  t:'CRAFT: Water (Lv3) + Sugar (Lv3). A slow lobbed bottle that bursts into a wide AoE slow. The gateway craft — also an ingredient for Gimlet & South Side.' },
-  { img:'ing_trio',     name:'CITRUS TRIO · craft',   t:'CRAFT: Lemon + Lime + Orange (all maxed). Three citrus wheels orbit around you, hitting everything they pass — same damage as Gin Tonic. Lv4: 5 wheels.' },
-  { img:'ing_sodagun',  name:'SODA GUN · craft',      t:'CRAFT: Soda + Ginger Beer + Tonic (all maxed). Gatling fizz that locks one target until it drops, then moves on. Hits about half a Fire Cross. 3 shots → 7 at Lv4.' },
-  { img:'ing_wormwood', name:'BLACK VERMOUTH · craft',t:'CRAFT: Sweet + Dry Vermouth (both maxed). Summons a Dry and a Sweet Vermouth familiar that roam and hunt on their own — each 1.5× the power and speed of Vodka Tonic. Also curses enemies\' armor nearby.' },
+  { img:'ing_syrup',    name:'SIMPLE SYRUP · craft',  t:'CRAFT: Water + Sugar, both maxed to Lv6. A slow lobbed bottle that bursts into a wide AoE slow. The gateway craft — also an ingredient for Gimlet & South Side.' },
+  { img:'ing_trio',     name:'CITRUS TRIO · craft',   t:'CRAFT: Lemon + Lime + Orange, all maxed to Lv6. Three citrus wheels orbit around you, hitting everything they pass — same damage as Gin Tonic. Lv4: 5 wheels.' },
+  { img:'ing_sodagun',  name:'SODA GUN · craft',      t:'CRAFT: Soda + Ginger Beer + Tonic, all maxed to Lv6. Gatling fizz that locks one target until it drops, then moves on. Hits about half a Fire Cross. 3 shots → 7 at Lv4.' },
+  { img:'ing_wormwood', name:'BLACK VERMOUTH · craft',t:'CRAFT: Sweet + Dry Vermouth, both maxed to Lv6. Summons a Dry and a Sweet Vermouth familiar that roam and hunt on their own — each 1.5× the power and speed of Vodka Tonic. Also curses enemies\' armor nearby.' },
   { img:'rainbow_icon', name:'RAINBOW GUN · ENDGAME FUSION', t:'Not on the menu. Max out SIX or more super cocktails (each fully leveled to super Lv6) and they fuse into one weapon: the Rainbow Gun. Every other weapon vanishes, replaced by absurd damage and an absurd fire rate. Level it up to add firing directions — a cross at Lv1, then 6, 8, 10, 12, and 14 at Lv6. No spirits needed. From then on the bosses never stop scaling — the last drink you will ever pour.' },
 ];
 let curIndexTab='monsters';
@@ -4544,21 +4544,21 @@ let pendingCraft=null, pendingFromTip=false;   // 조합 확인창 대기 / 팁(
 let declinedCraft=new Set();                    // 이번 판에 "NOT NOW"로 거절한 융합(다시 안 물어봄)
 const RECIPES = [
   { result:'syrup', consume:['sugar','water'], eq:['ing_water','ing_sugar','ing_syrup'],
-    ok:()=> (player.weapons.sugar||0)>=3 && (player.weapons.water||0)>=3,
+    ok:()=> (player.weapons.sugar||0)>=6 && (player.weapons.water||0)>=6,
     title:'✦ SIMPLE SYRUP ✦',
-    desc:'Water (Lv3) + Sugar (Lv3) → <b>SIMPLE SYRUP</b>.<br>A slow lobbed bottle that bursts into a wide AoE slow.<br>Lv4 = cocktail-ready.' },
+    desc:'Water (Lv6) + Sugar (Lv6), both maxed → <b>SIMPLE SYRUP</b>.<br>A slow lobbed bottle that bursts into a wide AoE slow.' },
   { result:'trio', consume:['lemon','lime','orange'], eq:['ing_lemon','ing_lime','ing_orange','ing_trio'],
-    ok:()=> (player.weapons.lemon||0)>=4 && (player.weapons.lime||0)>=4 && (player.weapons.orange||0)>=4,
+    ok:()=> (player.weapons.lemon||0)>=6 && (player.weapons.lime||0)>=6 && (player.weapons.orange||0)>=6,
     title:'✦ CITRUS TRIO ✦',
-    desc:'Lemon + Lime + Orange all maxed → <b>CITRUS TRIO</b>.<br>Three citrus wheels <b>orbit around you</b>, hitting everything they pass — same damage as GIN TONIC.<br>Lv4: 5 wheels, wider & stronger.' },
+    desc:'Lemon + Lime + Orange, all maxed to Lv6 → <b>CITRUS TRIO</b>.<br>Three citrus wheels <b>orbit around you</b>, hitting everything they pass — same damage as GIN TONIC.<br>Lv4: 5 wheels, wider & stronger.' },
   { result:'sodagun', consume:['soda','gingerbeer','tonic'], eq:['ing_soda','ing_gingerbeer','ing_tonic','ing_sodagun'],
-    ok:()=> (player.weapons.soda||0)>=4 && (player.weapons.gingerbeer||0)>=4 && (player.weapons.tonic||0)>=4,
+    ok:()=> (player.weapons.soda||0)>=6 && (player.weapons.gingerbeer||0)>=6 && (player.weapons.tonic||0)>=6,
     title:'✦ SODA GUN ✦',
-    desc:'Soda + Ginger Beer + Tonic all maxed → <b>SODA GUN</b>. Infinite fizz!<br>Gatling droplets that lock one target until it drops, then move on.<br>Hits hard — about half a Fire Cross. 3 shots → 7 at Lv4.' },
+    desc:'Soda + Ginger Beer + Tonic, all maxed to Lv6 → <b>SODA GUN</b>. Infinite fizz!<br>Gatling droplets that lock one target until it drops, then move on.<br>Hits hard — about half a Fire Cross. 3 shots → 7 at Lv4.' },
   { result:'blackver', consume:['sweetver','dryver'], eq:['ing_sweetver','ing_dryver','ing_wormwood'],
-    ok:()=> (player.weapons.sweetver||0)>=4 && (player.weapons.dryver||0)>=4,
+    ok:()=> (player.weapons.sweetver||0)>=6 && (player.weapons.dryver||0)>=6,
     title:'✦ BLACK VERMOUTH ✦',
-    desc:'Sweet + Dry Vermouth both maxed → <b>BLACK VERMOUTH</b>.<br>Summons a Dry and a Sweet Vermouth familiar that roam and hunt on their own.<br>Each hits <b>1.5×</b> the power and speed of Vodka Tonic.' },
+    desc:'Sweet + Dry Vermouth, both maxed to Lv6 → <b>BLACK VERMOUTH</b>.<br>Summons a Dry and a Sweet Vermouth familiar that roam and hunt on their own.<br>Each hits <b>1.5×</b> the power and speed of Vodka Tonic.' },
 ];
 // 칵테일 레시피 자동 생성: 스피릿(Lv5+) + 재료(만렙). 재료는 소진(다시 모아 레벨업), 스피릿은 보유.
 for(const ck of COCKTAIL_KEYS){
