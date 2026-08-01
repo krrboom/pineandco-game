@@ -1893,6 +1893,16 @@ function recalcStats(){
   if(player.shield>player.shieldMax) player.shield = player.shieldMax;   // 만렙에서 하향 시
   if(_negLv>0 && player.shield<player.shieldMax && (player._negWasZero)) player.shield=player.shieldMax;   // 방금 습득 시 채움
   player._negWasZero = (_negLv===0);
+  // ★레인보우건 레벨업 누적 스탯: 공격 +1%/공속 +1%/체력 +2%/아머 +2%/이속 +5%/회복 +2% (레벨업 때 하나씩 선택 누적)
+  const u=player.rbUp;
+  if(u){
+    if(u.dmg)   player.dmgMul *= (1 + 0.01*u.dmg);
+    if(u.spd)   player.cdMul   = Math.max(0.2, player.cdMul * Math.pow(1/1.01, u.spd));   // 공속 +1%/스택 = 쿨 축소
+    if(u.move)  player.speed  *= (1 + 0.05*u.move);
+    if(u.armor) player.defense = Math.min(90, player.defense + 2*u.armor);
+    if(u.hp){ const nm=Math.round(player.maxHp * (1 + 0.02*u.hp)); if(player.hp>=player.maxHp) player.hp=nm; player.maxHp=nm; }
+    if(u.regen) player.regenBonus += player.maxHp*0.0005*u.regen;   // 회복 +2%/스택 ≈ 최대체력의 0.05%/초·스택
+  }
 }
 
 /* ===== 메뉴 (★ 실제 파인앤코 메뉴로 교체) ===== */
@@ -2588,7 +2598,8 @@ function startGame(charKey){
     xp:0, xpNeed:xpForLevel(1), level:1, invuln:0,
     ultReadyAt:ULT_CD, ultUntil:0, ultFxUntil:0, ultLevel:1, ultSpiralUntil:0, ultSpiralAng:0,   // 필살기: 80초 쿨타임(레벨업으로 위력만 강화)
     regenBonus:0, noSustain:false,                 // HEAL 강화로 쌓이는 패시브 회복(둘 다) · noSustain=피날레 시 회복/흡혈 정지
-    weapons:{}, wt:{}, evolved:new Set(), superLv:{}, absorbed:{}, hasDash:false };  // weapons: 무기/재료 레벨, absorbed: 조합에 흡수된 재료(효과유지·슬롯제외)
+    weapons:{}, wt:{}, evolved:new Set(), superLv:{}, absorbed:{}, hasDash:false,   // weapons: 무기/재료 레벨, absorbed: 조합에 흡수된 재료(효과유지·슬롯제외)
+    rbUp:{dmg:0,spd:0,hp:0,armor:0,move:0,regen:0} };   // ★레인보우건 레벨업 누적 스탯(공격/공속/체력/아머/이속/회복)
   applyBaseLevel(); recalcStats();
   enemies=[]; projectiles=[]; eprojectiles=[]; pickups=[]; zones=[]; particles=[]; explosions=[]; crits=[]; limes=[]; mintRain=[]; lightning=[]; gatStream=[]; dropMarks=[]; roadLines=[]; boltFx=[]; vtDrones=[]; bmChilis=[]; crZombies=[]; crRespawns=[];
   gameTime=0; killCount=0; money=0; spawnTimer=0; frame=0; enemyId=0;
@@ -4772,7 +4783,23 @@ function baseUltPool(){ const p=[];
 // ★상호 배타: 둘 중 하나를 보유하면 나머지는 등장 안 함(중복 보유 금지)
 const CONFLICTS = { moscowmule:'vodkacranberry', vodkacranberry:'moscowmule' };
 function conflictBlocked(k){ const c=CONFLICTS[k]; return !!(c && (player.weapons[c]||0)>0); }
+// ★레인보우건 전용 레벨업 스탯 6종(하나 선택 → 누적). 레인보우 이후엔 칵테일·재료는 안 뜨고 이것만 뜬다.
+function rbStatCard(k){ const u=player.rbUp||{}; const M={
+  dmg:  { ic:'⚔️', n:'RAINBOW · POWER +1%',    d:'Attack power +1% (now +'+(u.dmg||0)+'%)' },
+  spd:  { ic:'⚡', n:'RAINBOW · ATK SPEED +1%', d:'Attack speed +1% (now +'+(u.spd||0)+'%)' },
+  hp:   { ic:'❤️', n:'RAINBOW · MAX HP +2%',   d:'Max HP +2% (now +'+2*(u.hp||0)+'%)' },
+  armor:{ ic:'🛡️', n:'RAINBOW · ARMOR +2%',    d:'Armor +2% (now +'+2*(u.armor||0)+'%)' },
+  move: { ic:'👟', n:'RAINBOW · MOVE +5%',      d:'Move speed +5% (now +'+5*(u.move||0)+'%)' },
+  regen:{ ic:'✨', n:'RAINBOW · REGEN +2%',     d:'HP regen +2% (now +'+2*(u.regen||0)+'%)' },
+}[k]; return { type:'rbstat', stat:k, ic:M.ic, n:M.n, d:M.d }; }
+function rainbowLevelChoices(){
+  const pool=_shuf(['dmg','spd','hp','armor','move','regen'].map(rbStatCard));
+  const out=pool.slice(0,3);                                   // 6종 중 3장 제시
+  if((player.rainbowLv||1) < 6) out.push({ type:'rainbowup', ic:'🌈', img:'rainbow_icon', n:'RAINBOW GUN UP', d:'+2 firing directions (cross → 6 → 8 → 10 → 12 → 14)', lv:player.rainbowLv||1, maxlv:6 });   // 방향 추가는 만렙 전까지 항상 선택 가능
+  return out.slice(0,4);
+}
 function buildLevelChoices(){
+  if(player.rainbow) return rainbowLevelChoices();   // ★레인보우건 완성 후: 칵테일·재료 업그레이드 대신 레인보우 전용 스탯만
   // ※ 진화(슈퍼 칵테일)는 레벨업에 안 뜸 → 보스 팁에서만.
   const weaponFull = ownedCount(COCKTAIL_KEYS) >= weaponSlotMax();
   const passiveFull= ownedCount(PASSIVE_KEYS)  >= passiveSlotMax();
@@ -4876,6 +4903,7 @@ function applyUpgrade(u){
   else if(u.type==='sp_timestop'){ player.timestopBonus=(player.timestopBonus||0)+2; burst(player.x,player.y,'#9fe6ff',22); }     // ★시계 멈춤 +2s(너프)
   else if(u.type==='sp_tequila'){ player.tequilaHealBonus=(player.tequilaHealBonus||0)+20; burst(player.x,player.y,'#7ac74f',22); } // ★데킬라샷 회복 +20
   else if(u.type==='rainbowup'){ player.rainbowLv=Math.min(6,(player.rainbowLv||1)+1); burst(player.x,player.y,'#ff66cc',22); }
+  else if(u.type==='rbstat'){ player.rbUp=player.rbUp||{dmg:0,spd:0,hp:0,armor:0,move:0,regen:0}; player.rbUp[u.stat]=(player.rbUp[u.stat]||0)+1; recalcStats(); burst(player.x,player.y,'#ff66cc',18); }   // ★레인보우 스탯 누적 후 재계산
   else if(u.type==='ult') player.ultLevel++;
   recalcStats();   // 스킬/재료패시브 변화 반영
 }
