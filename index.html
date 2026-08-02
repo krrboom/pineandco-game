@@ -1914,7 +1914,7 @@ function MENU_LETTER(){ return `<div class="lt-logo"><img class="pine-logo" src=
 /* 시그니처 칵테일: 스토리 카드(인용문 → Twisted 컨셉 → 글라스 → 재료). 전 종 ₩26,000(팁 별도). */
 const COCKTAIL_PRICE = '₩26,000';
 const MENU_COCKTAILS = [
-  { n:1,  name:'BINGSU', tw:'Twisted Frozen G&T', gl:'copa', q:'What if Korean Bingsu is a G&T?', ing:'shiso · gin · tonic water · mandarin sorbet · lime' },
+  { n:1,  name:'BINGSU', tw:'Twisted Frozen G&T', gl:'copa', q:'What if Korean Bingsu is a G&T?', ing:'pine gin · tonic water · mandarin sorbet · lime' },
   { n:2,  name:'NURUK', tw:'Twisted Whisky Highball', gl:'highball', q:'Whisky is made from barley… so what if barley meets nuruk?', ing:'whisky · nuruk · genmai tea · koji · toasted barley' },
   { n:3,  name:'PICNIC', tw:'Twisted Tom Collins', gl:'highball', q:'Eggs, Milkis, gimbap… a classic mom picnic combo!', ing:'boiled egg · vodka · lactose · yuzu · lemon · gimbap · umami rice' },
   { n:4,  name:'BULGOGI', tw:'Twisted Paloma & Batanga', gl:'highball', q:'Tacos and palomas, match made in heaven. But add bulgogi?', ing:'tequila · bulgogi · calamansi · grapefruit · cola syrup · tonic water' },
@@ -2367,7 +2367,7 @@ function T(k){ return (UI[menuLang]&&UI[menuLang][k]!=null)?UI[menuLang][k]:UI.e
 /* 칵테일 번역 (tw=컨셉, q=인용문, ing=재료). 순서는 MENU_COCKTAILS(1~15)와 동일. 이름은 원문 유지. */
 const CK_TR = {
   ko:[
-  { tw:'트위스트 프로즌 진토닉', q:'한국 빙수가 진토닉이라면 어떨까?', ing:'차조기 · 진 · 토닉워터 · 만다린 소르베 · 라임' },
+  { tw:'트위스트 프로즌 진토닉', q:'한국 빙수가 진토닉이라면 어떨까?', ing:'파인 진 · 토닉워터 · 만다린 소르베 · 라임' },
   { tw:'트위스트 위스키 하이볼', q:'위스키는 보리로 만들잖아요. 그럼 그 보리가 누룩을 만나면?', ing:'위스키 · 누룩 · 현미차 · 코지 · 볶은 보리' },
   { tw:'트위스트 톰 콜린스', q:'계란, 밀키스, 김밥… 엄마표 소풍 세트 그대로예요!', ing:'삶은 계란 · 보드카 · 유당 · 유자 · 레몬 · 김밥 · 감칠맛 쌀' },
   { tw:'트위스트 팔로마 & 바탕가', q:'타코엔 팔로마가 정석인데, 여기에 불고기까지 넣어봤어요.', ing:'데킬라 · 불고기 · 칼라만시 · 자몽 · 콜라 시럽 · 토닉워터' },
@@ -2384,7 +2384,7 @@ const CK_TR = {
   { tw:'트위스트 포르노스타 마티니', q:'포르노스타의 관능에 깁슨의 엣지, 베스퍼의 날카로움까지. 약주로 부드럽게 눌렀어요.', ing:'진 · 보드카 · 패션프루트 · 레몬 · 약주 · 바닐라' },
   ],
   ja:[
-  { tw:'ツイスト フローズン ジントニック', q:'韓国のかき氷（ピンス）が、もしジントニックだったら？', ing:'紫蘇 · ジン · トニックウォーター · みかんソルベ · ライム' },
+  { tw:'ツイスト フローズン ジントニック', q:'韓国のかき氷（ピンス）が、もしジントニックだったら？', ing:'パインジン · トニックウォーター · みかんソルベ · ライム' },
   { tw:'ツイスト ウイスキーハイボール', q:'ウイスキーは麦から生まれる。じゃあ、その麦が麹（ヌルク）に出会ったら？', ing:'ウイスキー · ヌルク · 玄米茶 · 麹 · ローストした大麦' },
   { tw:'ツイスト トムコリンズ', q:'ゆで卵にミルキス、キンパ… まるでお母さんのお弁当。', ing:'ゆで卵 · ウォッカ · 乳糖 · 柚子 · レモン · キンパ · 旨味ライス' },
   { tw:'ツイスト パロマ & バタンガ', q:'タコスにはやっぱりパロマ。そこにプルコギも、いっちゃいます？', ing:'テキーラ · プルコギ · カラマンシー · グレープフルーツ · コーラシロップ · トニックウォーター' },
@@ -2401,7 +2401,7 @@ const CK_TR = {
   { tw:'ツイスト ポルノスターマティーニ', q:'ポルノスターの色気に、ギブソンのキレ、ヴェスパーの鋭さ。薬酒でそっとまろやかに。', ing:'ジン · ウォッカ · パッションフルーツ · レモン · 薬酒（ヤッチュ） · バニラ' },
   ],
   zh:[
-  { tw:'创意冰冻金汤力', q:'要是韩国刨冰（bingsu），其实是一杯金汤力呢？', ing:'紫苏 · 金酒 · 汤力水 · 柑橘雪葩 · 青柠' },
+  { tw:'创意冰冻金汤力', q:'要是韩国刨冰（bingsu），其实是一杯金汤力呢？', ing:'松针金酒 · 汤力水 · 柑橘雪葩 · 青柠' },
   { tw:'创意威士忌高球', q:'威士忌是大麦酿的。那大麦要是遇上韩国酒麹（nuruk）呢？', ing:'威士忌 · 韩国酒麹 · 玄米茶 · 米曲 · 烘烤大麦' },
   { tw:'创意汤姆柯林斯', q:'鸡蛋、Milkis、紫菜包饭… 满满都是妈妈的野餐味。', ing:'水煮蛋 · 伏特加 · 乳糖 · 柚子 · 柠檬 · 紫菜包饭 · 鲜味米' },
   { tw:'创意帕洛玛 & 巴坦加', q:'塔可配帕洛玛是标配，那再加点韩式烤肉，敢不敢？', ing:'龙舌兰 · 韩式烤肉 · 卡拉曼西 · 西柚 · 可乐糖浆 · 汤力水' },
