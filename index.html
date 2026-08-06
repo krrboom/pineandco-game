@@ -705,11 +705,11 @@
   .ci-desc{ font-size:clamp(6px,1.8vw,8.5px); line-height:1.35; color:#cfe0e0; text-align:center; margin:0; }
   /* 스탯 프레임: 지도 안, 얼굴 프레임 바로 아래(살짝 넓게) */
   .ci-wide{ aspect-ratio:1010/544; width:100%; margin:0; }
-  .ci-wide .ci-wide-in{ inset:15% 7%; flex-direction:column; justify-content:center; gap:clamp(1px,0.9vw,4px); background:rgba(6,11,20,.7); border-radius:3px; }
-  .ci-wide .s{ display:flex; align-items:center; gap:4px; width:100%; }
-  .ci-wide .s b{ font-size:clamp(6px,1.9vw,9px); letter-spacing:.2px; color:#eafbe9; width:clamp(28px,8.5vw,44px); flex:0 0 auto; text-align:right; }
-  .ci-wide .pips{ display:flex; gap:clamp(1.5px,0.6vw,3px); }
-  .ci-wide .pips i{ width:clamp(6px,2.4vw,13px); height:clamp(4px,1.3vw,8px); border-radius:2px; background:#22303a; box-shadow:0 0 0 1px #000 inset; }
+  .ci-wide .ci-wide-in{ inset:17% 6%; flex-direction:column; justify-content:center; align-items:center; gap:clamp(1px,1vw,4px); background:rgba(6,11,20,.72); border-radius:3px; }
+  .ci-wide .s{ display:flex; align-items:center; justify-content:center; gap:5px; width:100%; }
+  .ci-wide .s b{ font-size:clamp(6px,1.8vw,8.5px); letter-spacing:.2px; color:#eafbe9; width:clamp(34px,10vw,48px); flex:0 0 auto; text-align:right; white-space:nowrap; }
+  .ci-wide .pips{ display:flex; gap:clamp(1.5px,0.6vw,3px); flex:0 0 auto; }
+  .ci-wide .pips i{ width:clamp(6px,2.2vw,12px); height:clamp(4px,1.2vw,7px); border-radius:2px; background:#22303a; box-shadow:0 0 0 1px #000 inset; }
   .ci-wide .pips i.on{ background:#5fb8a8; box-shadow:0 0 0 1px #000, 0 0 3px #5fb8a8; }
   .worldmap{ position:relative; width:min(90%,430px,56vh); aspect-ratio:1063/798; border:2px solid var(--gold,#c89a3c);
     border-radius:10px; overflow:hidden; background:#122032; }
@@ -1022,7 +1022,7 @@
       <div id="worldMapPh" class="worldmap-ph"></div>
       <!-- 프레임 ↔ 소속국가 연결선 -->
       <svg class="map-conn" id="mapConn" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <line id="connLine" x1="45" y1="30" x2="82" y2="35" stroke="#ffd24a" stroke-width="0.7" stroke-dasharray="2 1.4"/>
+        <line id="connLine" x1="45" y1="30" x2="82" y2="35" stroke="#7a1008" stroke-width="1.3" stroke-dasharray="2.2 1.3"/>
       </svg>
       <!-- 소속 국가 핀 — 한국(크리켓 서울) -->
       <div class="map-pin" id="pinKorea"><span class="pin-label">KOREA</span><span class="pin-arrow">▼</span><span class="pin-dot"></span></div>
