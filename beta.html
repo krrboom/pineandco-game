@@ -675,7 +675,35 @@
   #worldScreen{ background-color:#0d0f0c;
     background-image:linear-gradient(rgba(13,15,12,.82), rgba(11,13,10,.9)), url('assets/bg_select.png');
     background-size:cover, 92px auto; background-repeat:no-repeat, repeat; image-rendering:pixelated;
-    gap:16px; justify-content:center; }
+    gap:12px; justify-content:flex-start; overflow-y:auto; padding:16px 8px 24px; }
+  /* 장식 프레임 공통: 테두리 PNG를 위에 얹고, 안쪽 콘텐츠는 inset */
+  .framed{ position:relative; width:min(88%,360px); margin:0 auto; }
+  .framed .frame-brd{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; image-rendering:pixelated; }
+  .framed .frame-inner{ position:absolute; z-index:1; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .cf-big{ aspect-ratio:987/997; width:min(72%,260px); }
+  .cf-big .frame-inner{ inset:9%; align-items:flex-end; background:radial-gradient(circle at 50% 42%, #24406b 0%, #0d1830 88%); }
+  .cf-big .cf-portrait{ height:104%; width:auto; object-fit:contain; image-rendering:pixelated; }
+  .wb-roster{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; width:100%; }
+  .cf-small{ aspect-ratio:340/458; width:clamp(72px,20vw,96px); margin:0; cursor:pointer; transition:transform .08s; }
+  .cf-small:active{ transform:translateY(2px); }
+  .cf-small .frame-inner{ inset:12% 10%; flex-direction:column; background:radial-gradient(circle at 50% 40%, #1a2c4a 0%, #0a1122 90%); }
+  .cf-small.sel{ filter:drop-shadow(0 0 8px #ffd24a); }
+  .cf-small .cf-head{ width:100%; height:100%; object-fit:cover; image-rendering:pixelated; }
+  .cf-small.locked .frame-inner{ gap:1px; }
+  .cf-small .cf-q{ font-size:clamp(22px,6vw,30px); font-weight:900; color:#5a7ba8; line-height:1; }
+  .cf-small .cf-soon{ font-size:7px; font-weight:800; letter-spacing:.4px; color:#6f8bab; text-align:center; line-height:1.05; }
+  .ci-big{ aspect-ratio:1020/981; width:min(88%,340px); }
+  .ci-big .ci-big-in{ inset:7%; flex-direction:column; gap:5px; padding:2%; background:rgba(10,18,30,.55); }
+  .ci-logo{ width:46%; height:auto; image-rendering:pixelated; filter:brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+  .ci-name{ font-size:clamp(13px,3.6vw,17px); font-weight:900; letter-spacing:.5px; color:#ffd24a; text-align:center; }
+  .ci-desc{ font-size:clamp(9px,2.5vw,11.5px); line-height:1.5; color:#cfe0e0; text-align:center; margin:0; }
+  .ci-wide{ aspect-ratio:1010/544; width:min(88%,340px); }
+  .ci-wide .ci-wide-in{ inset:14% 8%; flex-direction:column; justify-content:center; gap:clamp(3px,1.3vw,7px); }
+  .ci-wide .s{ display:flex; align-items:center; gap:8px; width:100%; }
+  .ci-wide .s b{ font-size:clamp(9px,2.6vw,12px); letter-spacing:.5px; color:#eafbe9; width:56px; flex:0 0 auto; text-align:right; }
+  .ci-wide .pips{ display:flex; gap:4px; }
+  .ci-wide .pips i{ width:clamp(12px,3.4vw,18px); height:9px; border-radius:2px; background:#22303a; box-shadow:0 0 0 1px #000 inset; }
+  .ci-wide .pips i.on{ background:#5fb8a8; box-shadow:0 0 0 1px #000, 0 0 4px #5fb8a8; }
   .worldmap{ position:relative; width:min(92%,520px); aspect-ratio:1063/798; border:2px solid var(--gold,#c89a3c);
     border-radius:10px; overflow:hidden; background:#122032; }
   .worldmap img{ width:100%; height:100%; object-fit:cover; image-rendering:pixelated; }
@@ -988,15 +1016,48 @@
       <!-- 소속 국가 핀(선택 시 표시) — 한국(크리켓 서울) -->
       <div class="map-pin" id="pinKorea"><span class="pin-label">KOREA</span><span class="pin-arrow">▼</span><span class="pin-dot"></span></div>
     </div>
-    <div class="wb-row">
-      <div class="wb-card" id="wbMinguk" onclick="selectWorldBartender('minguk')">
-        <img class="wb-logo" src="assets/logo_cricket.png" alt="Cricket Seoul">
-        <div class="wb-portrait"><img src="assets/char_minguk.png" alt="MINGUK"></div>
-        <div class="wb-name">MINGUK</div>
-        <div class="wb-tag">CRICKET SEOUL · KOREA</div>
+    <!-- 캐릭터 프레임: 큰 프레임(상반신) + 작은 프레임 로스터(민국 + ? coming soon) -->
+    <div class="framed cf-big">
+      <div class="frame-inner"><img class="cf-portrait" src="assets/char_minguk.png" alt="MINGUK"></div>
+      <img class="frame-brd" src="assets/cframe_big.png" alt="">
+    </div>
+    <div class="wb-roster">
+      <div class="framed cf-small sel" id="wbMinguk" onclick="selectWorldBartender('minguk')">
+        <div class="frame-inner"><img class="cf-head" src="assets/minguk_head.png" alt="MINGUK"></div>
+        <img class="frame-brd" src="assets/cframe_small.png" alt="">
+      </div>
+      <div class="framed cf-small locked">
+        <div class="frame-inner"><span class="cf-q">?</span><span class="cf-soon">COMING<br>SOON</span></div>
+        <img class="frame-brd" src="assets/cframe_small.png" alt="">
+      </div>
+      <div class="framed cf-small locked">
+        <div class="frame-inner"><span class="cf-q">?</span><span class="cf-soon">COMING<br>SOON</span></div>
+        <img class="frame-brd" src="assets/cframe_small.png" alt="">
+      </div>
+      <div class="framed cf-small locked">
+        <div class="frame-inner"><span class="cf-q">?</span><span class="cf-soon">COMING<br>SOON</span></div>
+        <img class="frame-brd" src="assets/cframe_small.png" alt="">
       </div>
     </div>
-    <button class="wb-play hidden" id="wbPlay" onclick="startGame('minguk')">▶ PLAY as MINGUK</button>
+    <!-- 캐릭터 정보: 크리켓 로고+소개(큰 프레임), 민국 스탯(넓은 프레임) -->
+    <div class="framed ci-big">
+      <div class="frame-inner ci-big-in">
+        <img class="ci-logo" src="assets/logo_cricket_px.png" alt="Cricket Seoul">
+        <div class="ci-name">MINGUK · CRICKET SEOUL</div>
+        <p class="ci-desc"><b>CRICKET SEOUL</b> is a Korean craft-spirit cocktail bar in Gangnam. Its bartender <b>MINGUK</b> lobs an agave heart that bursts into spikes in every direction on impact.</p>
+      </div>
+      <img class="frame-brd" src="assets/cinfo_big.png" alt="">
+    </div>
+    <div class="framed ci-wide">
+      <div class="frame-inner ci-wide-in">
+        <div class="s"><b>SPEED</b><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+        <div class="s"><b>POWER</b><span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+        <div class="s"><b>HEALTH</b><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+        <div class="s"><b>RAPID</b><span class="pips"><i class="on"></i><i></i><i></i><i></i></span></div>
+      </div>
+      <img class="frame-brd" src="assets/cinfo_wide.png" alt="">
+    </div>
+    <button class="wb-play hidden" id="wbPlay" onclick="startGame('minguk')">START</button>
     <button class="imgbtn backbtn" onclick="goSelect()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
 
@@ -2347,10 +2408,8 @@ function openAboutPage(){ try{ playSelect&&playSelect(); }catch(e){} try{ var w=
 /* ★손가락 각도는 CSS 고정값(--fdeg:37deg)으로만 처리 → JS 재조준 제거(로딩 후 각도/위치 바뀜 원천 차단). */
 /* 세계 바텐더(준비중): 세계지도 화면으로. 해외 바텐더 이미지가 들어오면 여기서 선택 가능해질 예정. */
 function openMoreBartenders(){ initAudio(); playSelect(); state='world'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('worldScreen');
-  // 진입 시 핀·선택·PLAY 초기화
-  const pin=document.getElementById('pinKorea'); if(pin) pin.classList.remove('show');
-  const card=document.getElementById('wbMinguk'); if(card) card.classList.remove('sel');
-  const pb=document.getElementById('wbPlay'); if(pb) pb.classList.add('hidden');
+  const ws=document.getElementById('worldScreen'); if(ws) ws.scrollTop=0;
+  selectWorldBartender('minguk');   // 민국 기본 선택 → 한국 핀 + START 바로 표시
 }
 // 세계 바텐더 선택: 소속 국가 핀(화살표) 표시 + PLAY 버튼 노출. (한 번 더 눌러도 됨 → startGame)
 function selectWorldBartender(key){
