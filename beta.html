@@ -675,9 +675,35 @@
     background-image:linear-gradient(rgba(13,15,12,.82), rgba(11,13,10,.9)), url('assets/bg_select.png');
     background-size:cover, 92px auto; background-repeat:no-repeat, repeat; image-rendering:pixelated;
     gap:16px; justify-content:center; }
-  .worldmap{ position:relative; width:min(90%,560px); aspect-ratio:16/9; border:2px solid var(--gold,#c89a3c);
+  .worldmap{ position:relative; width:min(92%,520px); aspect-ratio:1063/798; border:2px solid var(--gold,#c89a3c);
     border-radius:10px; overflow:hidden; background:#122032; }
-  .worldmap img{ width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
+  .worldmap img{ width:100%; height:100%; object-fit:cover; image-rendering:pixelated; }
+  /* 소속 국가 핀: 선택 시 한국 위치에 화살표+라벨 표시 */
+  .map-pin{ position:absolute; left:87%; top:36%; transform:translate(-50%,-100%); z-index:5;
+    display:flex; flex-direction:column; align-items:center; pointer-events:none; opacity:0; transition:opacity .25s; }
+  .map-pin.show{ opacity:1; animation:pinBounce .6s ease infinite alternate; }
+  .map-pin .pin-label{ font-size:11px; font-weight:800; letter-spacing:1px; color:#fff; background:#c0392b;
+    padding:2px 7px; border-radius:5px; box-shadow:0 2px 0 rgba(0,0,0,.5); white-space:nowrap; }
+  .map-pin .pin-arrow{ color:#c0392b; font-size:18px; line-height:.8; margin-top:-1px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+  .map-pin .pin-dot{ width:9px; height:9px; border-radius:50%; background:#ffd24a; border:2px solid #c0392b; box-shadow:0 0 8px #ffd24a; }
+  @keyframes pinBounce{ from{ transform:translate(-50%,-100%);} to{ transform:translate(-50%,-118%);} }
+  /* 세계 바텐더 카드 행 */
+  .wb-row{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+  .wb-card{ position:relative; width:clamp(150px,44vw,220px); padding:10px 10px 12px; cursor:pointer;
+    background:linear-gradient(#1a2620,#12190f); border:2px solid #35513f; border-radius:12px; box-shadow:0 4px 0 rgba(0,0,0,.5);
+    display:flex; flex-direction:column; align-items:center; gap:4px; transition:transform .08s, border-color .15s; }
+  .wb-card:active{ transform:translateY(3px); }
+  .wb-card.sel{ border-color:var(--gold,#c89a3c); box-shadow:0 0 16px rgba(200,154,60,.5),0 4px 0 rgba(0,0,0,.5); }
+  .wb-logo{ position:absolute; top:6px; right:8px; width:34px; height:auto; opacity:.9;
+    filter:brightness(0) invert(1) drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+  .wb-portrait{ width:100%; height:clamp(130px,32vw,180px); display:flex; align-items:flex-end; justify-content:center; overflow:hidden; }
+  .wb-portrait img{ height:100%; width:auto; object-fit:contain; image-rendering:pixelated; }
+  .wb-name{ font-size:clamp(15px,4vw,20px); font-weight:900; letter-spacing:1px; color:#eafbe9; }
+  .wb-tag{ font-size:clamp(9px,2.4vw,11px); font-weight:700; letter-spacing:.5px; color:var(--gold,#c89a3c); }
+  .wb-play{ font-family:inherit; font-size:clamp(15px,4.4vw,20px); font-weight:800; letter-spacing:.5px; cursor:pointer;
+    padding:12px 30px; color:#0a140a; background:#5a8a5e; border:2px solid #cfeccf; border-radius:28px; box-shadow:0 4px 0 rgba(0,0,0,.5); }
+  .wb-play:active{ transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.5); }
+  .wb-play.hidden{ display:none; }
   .worldmap-ph{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:6px; color:#7fa8d8; font-size:clamp(28px,8vw,52px); text-align:center; }
   .worldmap-ph div{ font-size:clamp(13px,3.4vw,18px); font-weight:700; letter-spacing:2px; color:#bcd6f2; }
@@ -954,12 +980,22 @@
   <!-- 세계 바텐더 선택(준비중): 세계지도 픽셀 이미지 위에 해외 바텐더들이 올라갈 예정 -->
   <div class="screen hidden crt" id="worldScreen">
     <h2 class="title">WORLD BARTENDERS</h2>
-    <div class="worldmap">
+    <div class="worldmap" id="worldMap">
       <img id="worldMapImg" src="assets/world_map.png" alt="World Map"
         onerror="this.style.display='none'; document.getElementById('worldMapPh').style.display='flex';">
       <div id="worldMapPh" class="worldmap-ph">🗺️<div>WORLD MAP</div><small>pixel map coming here</small></div>
+      <!-- 소속 국가 핀(선택 시 표시) — 한국(크리켓 서울) -->
+      <div class="map-pin" id="pinKorea"><span class="pin-label">KOREA</span><span class="pin-arrow">▼</span><span class="pin-dot"></span></div>
     </div>
-    <div class="coming-soon">🌍 COMING SOON<br><span>해외 바텐더들이 곧 합류합니다!</span></div>
+    <div class="wb-row">
+      <div class="wb-card" id="wbMinguk" onclick="selectWorldBartender('minguk')">
+        <img class="wb-logo" src="assets/logo_cricket.png" alt="Cricket Seoul">
+        <div class="wb-portrait"><img src="assets/char_minguk.png" alt="MINGUK"></div>
+        <div class="wb-name">MINGUK</div>
+        <div class="wb-tag">CRICKET SEOUL · KOREA</div>
+      </div>
+    </div>
+    <button class="wb-play hidden" id="wbPlay" onclick="startGame('minguk')">▶ PLAY as MINGUK</button>
     <button class="imgbtn backbtn" onclick="goSelect()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
 
@@ -1161,11 +1197,11 @@ function applyBoardMode(){
 function toggleHellBoard(){ boardHell=!boardHell; applyBoardMode(); }
 /* 캐릭터를 이름 필드에 인코딩(구글 시트/Apps Script가 char 열을 몰라도 캐릭터가 살아남게 함).
    보내는 이름 끝에 ~P(Pat)/~J(Joe) 마커를 붙이고, 받을 때 파싱해 배지로 표시하고 이름은 깨끗하게. */
-function charMark(ch){ return ch==='pat'?'~P':ch==='joe'?'~J':''; }
+function charMark(ch){ return ch==='pat'?'~P':ch==='joe'?'~J':ch==='minguk'?'~M':''; }
 function parseCharName(name, char){
   let c=(char==='pat'||char==='joe')?char:'';
-  const m=name.match(/~([PJ])$/);
-  if(m){ if(!c) c=(m[1]==='P')?'pat':'joe'; name=name.slice(0,-2); }   // 마커 있으면 캐릭터 복원 + 이름에서 제거
+  const m=name.match(/~([PJM])$/);
+  if(m){ if(!c) c=(m[1]==='P')?'pat':(m[1]==='M')?'minguk':'joe'; name=name.slice(0,-2); }   // 마커 있으면 캐릭터 복원 + 이름에서 제거
   return { name:name, char:c };
 }
 /* 점수 전송 (fire-and-forget, no-cors) */
@@ -1200,9 +1236,9 @@ function cloudFetch(metric){
   setTimeout(()=>{ if(!done){ try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); } }, 8000);
 }
 // 순위표에 어떤 바텐더로 달성했는지: 오른쪽 끝 'BY' 열에 텍스트로(Pat 빨강 / Joe 앰버)
-function charName(ch){ return ch==='pat'?'PAT':ch==='joe'?'JOE':''; }
+function charName(ch){ return ch==='pat'?'PAT':ch==='joe'?'JOE':ch==='minguk'?'MINGUK':''; }
 function charCell(ch){ const nm=charName(ch); if(!nm) return `<span class="bby">-</span>`;
-  const col=ch==='pat'?'#e8746d':'#e6b450'; return `<span class="bby" style="color:${col}">${nm}</span>`; }
+  const col=ch==='pat'?'#e8746d':ch==='minguk'?'#5fb8a8':'#e6b450'; return `<span class="bby" style="color:${col}">${nm}</span>`; }
 function renderBoard(){
   if(!boardHell){ renderGuestbook(); return; }   // ★일반 모드는 순위(top-record) 없이 방명록만 — HELL 보드 이미지가 끼어드는 것 방지
   const CB=HELL_CLOUD_BOARDS, LB=HELL_BOARDS;   // HELL 전용
@@ -1231,7 +1267,7 @@ function renderBoard(){
 }
 // ★중복 이름 방지: 로컬+클라우드 보드에 이미 있는 이름인지
 function nameTaken(nm){
-  const norm=s=>String(s||'').trim().toUpperCase().replace(/~[PJ]$/,'');
+  const norm=s=>String(s||'').trim().toUpperCase().replace(/~[PJM]$/,'');
   const n=norm(nm);
   for(const m of ['time','kills','sales']){
     if((BOARDS[m]||[]).some(e=>norm(e.name)===n)) return true;
@@ -1337,6 +1373,9 @@ const ASSET_MANIFEST = {
   // 캐릭터 애니메이션 프레임 (서기 / 걷기 A·B / 던지기) — 좌우반전 자동
   pat_stand:'assets/pat_stand.png', pat_walkA:'assets/pat_walkA.png', pat_walkB:'assets/pat_walkB.png', pat_throw:'assets/pat_throw.png',
   joe_stand:'assets/joe_stand.png', joe_walkA:'assets/joe_walkA.png', joe_walkB:'assets/joe_walkB.png', joe_throw:'assets/joe_throw.png',
+  // ★민국(MINGUK, 크리켓 서울) — 아가베 투척 + 가시 폭발
+  minguk_stand:'assets/minguk_stand.png', minguk_walkA:'assets/minguk_walkA.png', minguk_walkB:'assets/minguk_walkB.png', minguk_throw:'assets/minguk_throw.png',
+  char_minguk:'assets/char_minguk.png', ing_agave:'assets/ing_agave.png', icon_clase:'assets/icon_clase.png', logo_cricket:'assets/logo_cricket.png',
   // 몬스터 애니메이션 프레임 (서기/걷기A·B + 좌우반전, thrower는 토하기 추가)
   enemy_drunk_stand:'assets/enemy_drunk_stand.png', enemy_drunk_walkA:'assets/enemy_drunk_walkA.png', enemy_drunk_walkB:'assets/enemy_drunk_walkB.png',
   enemy_drunk2_stand:'assets/enemy_drunk2_stand.png', enemy_drunk2_walkA:'assets/enemy_drunk2_walkA.png', enemy_drunk2_walkB:'assets/enemy_drunk2_walkB.png',
@@ -1658,7 +1697,7 @@ function openRecipe(){ try{ initAudio(); }catch(e){} paused=true; playSelect&&pl
     html += recRow(c.img, c.name, [], CRAFT_FX[ck]); }
   // EVOLUTIONS — 칵테일 Lv8 + 기주 스피릿 + 대표 재료 Lv8 → 슈퍼
   html += '<div class="rec-cat">EVOLUTIONS · SUPER COCKTAILS (base attack MAX + cocktail Lv6 + key ingredient MAX → evolve at a BOSS TIP)</div>';
-  const baseIcon = (typeof player!=='undefined' && player && player.base==='barspoon') ? 'icon_barspoon' : 'icon_shaker';
+  const baseIcon = (typeof player!=='undefined' && player && player.base==='agave') ? 'icon_clase' : (typeof player!=='undefined' && player && player.base==='barspoon') ? 'icon_barspoon' : 'icon_shaker';
   for(const ck of COCKTAIL_KEYS){ const c=COCKTAILS[ck], ei=EVO_ING[ck];
     const parts=[{img:baseIcon, lv:'MAX'},{img:c.img, lv:'Lv6'},{img:weaponInfo(ei).img, lv:'MAX'}];   // 기주 제거: 기본공격 풀업 + 칵테일 Lv8 + 대표 재료 만렙
     html += recRow(c.img, '★ SUPER '+c.name, parts, 'Far stronger version of '+c.name+'. No spirit needed.'); }
@@ -1717,7 +1756,11 @@ const CHARACTERS = {
          base:'shaker', projKind:'shaker', fireCd:59, dmg:72, projSpeed:4.6, projR:8, splash:38, pierce:0 },   // 기본공격 공격력 +80%(40→72) · 공격속도 20%↓(49→59)
   // Joe: 믹싱글라스를 던진다 — 빠르고 강한 관통 (한 줄로 여러 마리 꿰뚫음)
   joe: { name:'JOE', color:'#e6b450', moveSpeed:3.0, maxHp:100,
-         base:'barspoon', projKind:'mixglass', fireCd:14, dmg:7.5, projSpeed:8.5, projR:4, splash:0, pierce:8 }   // ★Joe 기본공격 +25%(6→7.5): 초반 첫 웨이브 처치 가능하게
+         base:'barspoon', projKind:'mixglass', fireCd:14, dmg:7.5, projSpeed:8.5, projR:4, splash:0, pierce:8 },   // ★Joe 기본공격 +25%(6→7.5): 초반 첫 웨이브 처치 가능하게
+  // ★민국(MINGUK) — 크리켓 서울 소속. 아가베를 던져 적에게 명중하면 사방으로 가시가 터진다.
+  //   파워=Pat 절반(36) · 공속=Pat와 동일(59) · 이동속도=Pat보다 25%↑(2.375) · 체력=Joe보다 20%↑(120)
+  minguk: { name:'MINGUK', color:'#5fb8a8', moveSpeed:2.375, maxHp:120,
+         base:'agave', projKind:'agave', fireCd:59, dmg:36, projSpeed:5.0, projR:9, splash:0, pierce:0 }
 };
 
 /* ===== 6대 기주 무기 (보스가 떨어뜨림) =====
@@ -1847,9 +1890,13 @@ function applyBaseLevel(){
   // 기본공격 피사체: Pat 만렙 4 / Joe 만렙 5 (EXTRA SHOT +2까지 → Pat 6 / Joe 7)
   player.projCount = player.key==='joe'
     ? 1 + (lv>=2?1:0)+(lv>=3?1:0)+(lv>=4?1:0)+(lv>=5?1:0)+(lv>=6?1:0)   // Joe: Lv6 = 6발
+    : player.key==='minguk'
+    ? 1 + (lv>=4?1:0)                                                    // 민국: 아가베 1발(만렙 Lv4+ 2발). 주력은 가시.
     : 1 + (lv>=2?1:0)+(lv>=4?1:0)+(lv>=6?1:0);
   // Pat 스플래시: 한 번에 데미지 주는 최대 마릿수. 6마리 시작, 레벨업마다 +2
   player.splashMax = 6 + (lv-1)*2;
+  // ★민국 아가베 가시: 명중 시 사방으로 터지는 가시 개수. Lv1=6 → 레벨업마다 +3 (Lv6=21)
+  player.agaveSpikes = 6 + (lv-1)*3;
 }
 /* ===== 스탯 재계산 (VS식): 캐릭터 기본 × 스킬 카운터 × 재료 패시브 합산 =====
    재료(INGREDIENTS)와 크랜베리는 이제 발사 대신 이 패시브 스탯을 준다. */
@@ -2217,12 +2264,14 @@ const MONSTER_INDEX=[
 const CHAR_INDEX=[
   { img:'char_pat', name:'PAT · THE SHAKER', t:'Built like the bar he tends. Hurls a heavy cobbler shaker that splashes a whole cluster at once. Tanky (180 HP), slow as last call, and gains +2 max HP every level so he keeps standing deep into the night. He does not chase the crowd; the crowd comes to him and regrets it. ULTIMATE — Shaker Tornado: a spinning vortex that keeps flinging glasses in every direction, invincible while it spins. Each level doubles its damage, adds an arm, and lasts longer.' },
   { img:'char_joe', name:'JOE · THE STIRRER', t:'All wrist, no waste. Flicks a bar spoon and mixing glass that skewer a line of up to 4 guests on one pour. Fragile (100 HP) but quick, gaining +1 max HP every level plus passive HP regen that heals faster each level. ULTIMATE — Untouchable: full invincibility PLUS a giant spinning bar spoon (15× normal) that shreds anyone it touches. 8s base, +0.8s and +220% damage every level.' },
+  { img:'char_minguk', name:'MINGUK · CRICKET SEOUL (KOREA)', t:'A guest bartender from Cricket Seoul. Lobs an agave heart that, on impact, bursts into spikes flying in every direction — the projectile hits one target, and the spikes rake everyone around it. Half of Pat\'s raw power (36) but nimble: same fire rate as Pat, 25% faster on his feet, and 20% more health than Joe (120 HP). Each AGAVE level adds damage, speeds up the throw, and throws MORE spikes on every hit (6 → 21 at max). ULTIMATE — Agave Storm: a spinning vortex that keeps flinging agave hearts, invincible while it spins.' },
 ];
 /* 스킬 사전 — 기본공격 / 기주 6종 / 재료 / 궤도 / 일반 강화 / 필살기. 모든 항목은 붐이 올린 이미지로. */
 const SKILL_INDEX=[
   // ── 기본 공격 ──
   { img:'icon_shaker',   name:'SHAKING · Pat base · max Lv6',  t:'Cobbler-shaker throw with splash AoE. Each level adds damage, fires faster, widens splash. Always available; boosted by every passive you own.' },
   { img:'icon_barspoon', name:'STIRRING · Joe base · max Lv6', t:'Bar-spoon / mixing-glass throw that pierces a line. Each level adds damage and fires faster. Boosted by every passive you own.' },
+  { img:'icon_clase',    name:'AGAVE · Minguk base · max Lv6', t:'Throws an agave heart at the nearest guest. On impact it bursts spikes in every direction (6 at Lv1 → 21 at Lv6), each spike dealing damage. Every level adds damage, fires faster, and adds spikes. Boosted by every passive you own.' },
   // ── 패시브 (재료) — 발사 안 하고 모든 무기를 강화 ──
   { ic:'🧪', name:'— PASSIVES · INGREDIENTS —', t:'Ingredients no longer fire. They boost ALL your weapons. Pick at level-up (8 passive slots), max Lv6.' },
   { img:'ing_lemon',     name:'LEMON · +DAMAGE',        t:'+8% damage per level to every weapon.' },
@@ -2296,7 +2345,21 @@ function openAboutPage(){ try{ playSelect&&playSelect(); }catch(e){} try{ var w=
 // ★손가락 조준: 화면마다 손끝→로고의 '&·C 사이'를 향해 회전 + 바브를 그 방향으로. 어느 기기에서도 정확히 가리킴.
 /* ★손가락 각도는 CSS 고정값(--fdeg:37deg)으로만 처리 → JS 재조준 제거(로딩 후 각도/위치 바뀜 원천 차단). */
 /* 세계 바텐더(준비중): 세계지도 화면으로. 해외 바텐더 이미지가 들어오면 여기서 선택 가능해질 예정. */
-function openMoreBartenders(){ initAudio(); playSelect(); state='world'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('worldScreen'); }
+function openMoreBartenders(){ initAudio(); playSelect(); state='world'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('worldScreen');
+  // 진입 시 핀·선택·PLAY 초기화
+  const pin=document.getElementById('pinKorea'); if(pin) pin.classList.remove('show');
+  const card=document.getElementById('wbMinguk'); if(card) card.classList.remove('sel');
+  const pb=document.getElementById('wbPlay'); if(pb) pb.classList.add('hidden');
+}
+// 세계 바텐더 선택: 소속 국가 핀(화살표) 표시 + PLAY 버튼 노출. (한 번 더 눌러도 됨 → startGame)
+function selectWorldBartender(key){
+  try{ playSelect(); }catch(e){}
+  if(key==='minguk'){
+    const pin=document.getElementById('pinKorea'); if(pin) pin.classList.add('show');   // 한국에 화살표
+    const card=document.getElementById('wbMinguk'); if(card) card.classList.add('sel');
+    const pb=document.getElementById('wbPlay'); if(pb) pb.classList.remove('hidden');
+  }
+}
 /* 칵테일 글라스 쉐입 — 흰색 라인아트 SVG(문구 없이 모양만). 메뉴의 미니멀 라인 스타일. */
 const GLASS_PATH = {
   martini:  'M5 5 L12 16 L19 5 M4 5 H20 M12 16 V27 M8 28 H16',
@@ -3169,11 +3232,14 @@ function fireBase(){
   // Joe: 바스푼 ↔ 믹싱글라스 번갈아 발사
   let kind = player.projKind;
   if(player.key==='joe'){ player.altShot=!player.altShot; kind = player.altShot?'barspoon':'mixglass'; }
+  const agave = (kind==='agave');
   for(let i=0;i<cnt;i++){
     const off=(i-(cnt-1)/2)*spread, ang=a+off;
-    projectiles.push({ x:player.x, y:player.y, vx:Math.cos(ang)*player.projSpeed, vy:Math.sin(ang)*player.projSpeed,
+    const p={ x:player.x, y:player.y, vx:Math.cos(ang)*player.projSpeed, vy:Math.sin(ang)*player.projSpeed,
       dmg:player.dmg*player.dmgMul, r:player.projR*player.sizeMul*0.9, splash:player.splash*player.sizeMul, splashMax:player.splashMax,   // ★기본공격 피사체 25%↓
-      pierce:player.splash>0?0:(player.basePierce||1), hit:new Set(), life:80, kind });
+      pierce:player.splash>0?0:(player.basePierce||1), hit:new Set(), life:80, kind };
+    if(agave){ p.agaveSpikes = player.agaveSpikes||6; p.spikeDmg = player.dmg*player.dmgMul*0.6; p.pierce=0; }   // ★명중 시 가시 폭발(가시 데미지 = 아가베의 60%)
+    projectiles.push(p);
   }
 }
 /* 크리티컬: 명중 시점에 player.crit 확률로 데미지 critMul배. 적에게 적용 + 노란 숫자 팝업 */
@@ -3184,6 +3250,14 @@ function dealDmg(e, base){ let dmg=base;
     crits.push({ x:e.x, y:e.y-e.r-4, life:26 }); burst(e.x,e.y,'#ffd24a',6); } e.hp-=dmg; }
 /* 스피릿별 명중 효과: vodka=빙결 / gin=독 / whiskey·rum=폭발 / tequila=라임 궤도 추가타 */
 function onHit(p, e){
+  // ★민국 아가베: 몬스터에 명중하면 그 자리에서 사방으로 가시 폭발(가시 하나하나가 데미지). 명중당 1회.
+  if(p.agaveSpikes && !p._spiked){
+    p._spiked=1; const n=p.agaveSpikes, sp=7.5, R=(player.sizeMul||1);
+    burst(e.x,e.y,'#7fd6c4',10);
+    for(let i=0;i<n;i++){ const ang=(i/n)*6.28 + Math.random()*0.15;
+      projectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,
+        dmg:p.spikeDmg||(p.dmg*0.6), r:5*R, splash:0, pierce:1, hit:new Set(), life:20, kind:'spike' }); }
+  }
   // 흡혈(보드카 크랜베리 채찍): healBudget 있으면 명중당 고정 회복(피사체당 상한). 없으면 구모델(데미지 비례).
   if(p.lifesteal && player.hp>0 && !player.noSustain){
     let heal;
@@ -4057,7 +4131,7 @@ function update(){
   // 패시브 체력 회복: Joe는 기본 회복(레벨 스케일) + HEAL 강화 보너스 / Pat은 HEAL 강화로만 회복
   // 회복력: Joe가 가장 높고, Pat도 약간(조 보다 낮게). + HEAL 강화 보너스
   const regenPerSec = (player.key==='joe' ? (0.10 + (player.level-1)*0.075)*1.1    // ★기본 회복 +10%
-                     : player.key==='pat' ? (0.035 + (player.level-1)*0.025)*1.1 : 0) + (player.regenBonus||0);
+                     : (player.key==='pat'||player.key==='minguk') ? (0.035 + (player.level-1)*0.025)*1.1 : 0) + (player.regenBonus||0);
   if(regenPerSec>0 && player.hp>0 && player.hp<player.maxHp && !player.noSustain){   // noSustain(피날레) 시 회복 정지
     player.hp = Math.min(player.maxHp, player.hp + regenPerSec/60);
   }
@@ -4133,7 +4207,7 @@ function update(){
   }
 
   // Pat 필살기 회오리: 활성 동안 회전하는 여러 팔에서 피사체를 계속 뿜어냄
-  if(player.key==='pat' && gameTime < (player.ultSpiralUntil||0)){
+  if((player.key==='pat'||player.key==='minguk') && gameTime < (player.ultSpiralUntil||0)){
     player.ultSpiralAng += 0.40;                          // 회전 속도
     if(frame % 3 === 0){
       const arms = 2 + (player.ultLevel||1);              // 레벨업으로 팔(갈래) 증가
@@ -4463,13 +4537,13 @@ function useUltimate(){
   player.ultReadyAt = gameTime + ULT_CD*(player.ultCdMul||1);   // 다음 사용까지 80초 × 토마토 감소
   player.ultFxUntil = frame + 70;               // 반짝 이펙트(공통)
   playSelect();
-  if(player.key==='pat'){
-    // 더블 쉐이킹: 사방으로 대량의 피사체를 한꺼번에 뿌림
+  if(player.key==='pat'||player.key==='minguk'){
+    // 더블 쉐이킹: 사방으로 대량의 피사체를 한꺼번에 뿌림(민국=아가베 회오리 → 가시 폭발)
     // 회오리: 한 번에 안 나가고, 활성 동안 회전하는 팔에서 계속 뿜어져 나감(update에서 발사)
     const durSec = (1.4 + (player.ultLevel||1)*0.13) * 1.3;   // 피사체 나가는 시간 30%↑(무적도 그만큼 유지)
     player.ultSpiralUntil = gameTime + durSec; player.ultSpiralAng = Math.random()*6.28;
-    burst(player.x,player.y,'#ffe08a',26);
-    banner('🍸 SHAKER TORNADO!', true);
+    burst(player.x,player.y, player.key==='minguk'?'#7fd6c4':'#ffe08a',26);
+    banner(player.key==='minguk'?'🌵 AGAVE STORM!':'🍸 SHAKER TORNADO!', true);
   } else {
     // Joe: 무적 + 몸 주위 가시(근접 데미지). gameTime 기반이라 레벨업해도 안 끊김.
     const durSec = 8 + ((player.ultLevel||1)-1)*0.8;   // 무적 8초 + 업그레이드마다 0.8초씩
@@ -4783,8 +4857,9 @@ function superCard(ck){ const c=COCKTAILS[ck], slv=(player.superLv&&player.super
 function ownedCount(keys){ let n=0; for(const k of keys) if(player.weapons[k] && !(player.absorbed&&player.absorbed[k])) n++; return n; }   // ★흡수된 재료는 슬롯 카운트 제외(효과는 유지)
 function baseUltPool(){ const p=[];
   if(player.baseLv < MAX_BASE_LV){ const sh=player.base==='shaker';
-    p.push({ type:'base', ic:sh?'🍸':'🥄', img:sh?'icon_shaker':'icon_barspoon', n:sh?'SHAKING UP':'STIRRING UP', d:'Base attack stronger', lv:player.baseLv, maxlv:MAX_BASE_LV }); }
-  if(player.ultLevel < MAX_ULT_LV){ p.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:player.key==='pat'?'Tornado ×2 damage + longer':'Giant bar spoon +220% dmg / +0.8s invuln', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
+    const ag=player.base==='agave';
+    p.push({ type:'base', ic:ag?'🌵':(sh?'🍸':'🥄'), img:ag?'icon_clase':(sh?'icon_shaker':'icon_barspoon'), n:ag?'AGAVE UP':(sh?'SHAKING UP':'STIRRING UP'), d:ag?'Agave hits harder, fires faster, +more spikes':'Base attack stronger', lv:player.baseLv, maxlv:MAX_BASE_LV }); }
+  if(player.ultLevel < MAX_ULT_LV){ p.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:(player.key==='pat'||player.key==='minguk')?'Tornado ×2 damage + longer':'Giant bar spoon +220% dmg / +0.8s invuln', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
   if(player.rainbow && (player.rainbowLv||1) < 6){ p.push({ type:'rainbowup', ic:'🌈', img:'rainbow_icon', n:'RAINBOW GUN UP', d:'+2 firing directions (cross → 6 → 8 → 10 → 12 → 14)', lv:player.rainbowLv||1, maxlv:6 }); }
   return p;
 }
@@ -5037,7 +5112,7 @@ function updateWeaponChips(){
   let resH='<div class="resbar">';
   for(const k of PASSIVE_KEYS){ const lv=player.weapons[k]; if(!lv || (player.absorbed&&player.absorbed[k])) continue; const info=weaponInfo(k);   // ★흡수된 재료는 칩 숨김(조합품으로 대체)
     resH+=`<div class="res-c">${wicImg(info.img||'_nope', info.ic)}<b>${lv}</b></div>`; }
-  resH+=`<div class="res-c">${wicImg(player.base==='shaker'?'icon_shaker':'icon_barspoon', player.base==='shaker'?'🍸':'🥄')}<b>${player.baseLv}</b></div>`;
+  resH+=`<div class="res-c">${wicImg(player.base==='agave'?'icon_clase':player.base==='shaker'?'icon_shaker':'icon_barspoon', player.base==='agave'?'🌵':player.base==='shaker'?'🍸':'🥄')}<b>${player.baseLv}</b></div>`;
   for(const k of SPIRIT_KEYS){ if(!player.weapons[k]) continue;   // 촉매(스피릿): 보유 표시
     resH+=`<div class="res-c" style="opacity:.85">${wicImg('bottle_'+k, SPIRITS[k].ic)}<b>✓</b></div>`; }
   resH+='</div>';
@@ -5527,7 +5602,7 @@ function draw(){
         ctx.beginPath(); ctx.arc(player.x,player.y-4,R,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
       }
       // Pat 회오리 동안 무적 표시(빛나는 방패 링)
-      if(player.key==='pat' && gameTime < (player.ultSpiralUntil||0)){
+      if((player.key==='pat'||player.key==='minguk') && gameTime < (player.ultSpiralUntil||0)){
         const R=player.r+22;
         ctx.globalAlpha=0.20+0.10*Math.sin(frame*0.3); ctx.strokeStyle='#ffe08a'; ctx.lineWidth=3;
         ctx.beginPath(); ctx.arc(player.x,player.y-4,R+6,0,6.28); ctx.stroke(); ctx.globalAlpha=1;
@@ -5715,6 +5790,11 @@ function drawProj(p){
   if(p.kind==='barspoon' && spr('proj_barspoon')){ const im=spr('proj_barspoon'), H=p.r*5.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 바스푼(올린 이미지)
   if(p.kind==='mixglass' && spr('proj_mixglass')){ const im=spr('proj_mixglass'), H=p.r*5.0, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.16); return; }   // 믹싱글라스(올린 이미지)
   if(p.kind && p.kind.indexOf('ing_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 재료 피사체(올린 이미지)
+  if(p.kind==='agave' && spr('ing_agave')){ const im=spr('ing_agave'), H=p.r*3.8, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)+1.57); return; }   // ★민국 아가베(진행방향 회전)
+  if(p.kind==='spike'){ ctx.save(); const ang=Math.atan2(p.vy,p.vx); ctx.translate(p.x,p.y); ctx.rotate(ang);   // ★아가베 가시: 청록 다트
+    ctx.fillStyle='#8fe0d0'; ctx.strokeStyle='#1b4a45'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(p.r*1.7,0); ctx.lineTo(-p.r*0.8,-p.r*0.62); ctx.lineTo(-p.r*0.3,0); ctx.lineTo(-p.r*0.8,p.r*0.62); ctx.closePath();
+    ctx.fill(); ctx.stroke(); ctx.restore(); return; }
   if((p.kind==='proj_mule_l'||p.kind==='proj_mule_r') && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.2, W=H*im.width/im.height;
     // ★발사 방향으로 회전 '고정'(whipDir): 나갈 때/돌아올 때 이미지가 안 바뀜(예전엔 vx가 반대라 뒤집혔음)
     const ang = (p.whipDir!==undefined ? (p.whipDir<0?Math.PI:0) : Math.atan2(p.vy,p.vx)) - 1.57;
