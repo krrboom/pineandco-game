@@ -270,6 +270,7 @@
     padding:2px; background:radial-gradient(circle at 50% 32%, rgba(22,32,20,.5), rgba(8,12,8,.8)); }
   .up-card .ic{ line-height:1; display:flex; align-items:center; justify-content:center; font-size:clamp(17px,4.6vw,30px); flex:0 0 auto; }
   .up-card .up-ic{ max-width:82%; max-height:clamp(20px,6vh,36px); width:auto; height:auto; object-fit:contain; image-rendering:pixelated; display:block; }
+  .up-card .up-ic.up-ic-tall{ max-width:100%; max-height:clamp(48px,14vh,86px); }   /* 클라세아줄(세로 긴 병) 크게 */
   .up-card h4{ font-size:clamp(7px,2.1vw,12px); color:var(--pine-light); line-height:1.2; }
   .up-card.new h4{ color:var(--amber); }
   .up-card .lv{ font-size:clamp(6px,1.6vw,9px); color:var(--amber); }
@@ -983,7 +984,7 @@
     <div class="worldmap" id="worldMap">
       <img id="worldMapImg" src="assets/world_map.png" alt="World Map"
         onerror="this.style.display='none'; document.getElementById('worldMapPh').style.display='flex';">
-      <div id="worldMapPh" class="worldmap-ph">🗺️<div>WORLD MAP</div><small>pixel map coming here</small></div>
+      <div id="worldMapPh" class="worldmap-ph"></div>
       <!-- 소속 국가 핀(선택 시 표시) — 한국(크리켓 서울) -->
       <div class="map-pin" id="pinKorea"><span class="pin-label">KOREA</span><span class="pin-arrow">▼</span><span class="pin-dot"></span></div>
     </div>
@@ -1760,7 +1761,7 @@ const CHARACTERS = {
   // ★민국(MINGUK) — 크리켓 서울 소속. 아가베를 던져 적에게 명중하면 사방으로 가시가 터진다.
   //   파워=Pat 절반(36) · 공속=Pat와 동일(59) · 이동속도=Pat보다 25%↑(2.375) · 체력=Joe보다 20%↑(120)
   minguk: { name:'MINGUK', color:'#5fb8a8', moveSpeed:2.375, maxHp:120,
-         base:'agave', projKind:'agave', fireCd:59, dmg:36, projSpeed:5.0, projR:9, splash:0, pierce:0 }
+         base:'agave', projKind:'agave', fireCd:59, dmg:36, projSpeed:5.0, projR:6, splash:0, pierce:0 }
 };
 
 /* ===== 6대 기주 무기 (보스가 떨어뜨림) =====
@@ -3256,7 +3257,7 @@ function onHit(p, e){
     burst(e.x,e.y,'#7fd6c4',10);
     for(let i=0;i<n;i++){ const ang=(i/n)*6.28 + Math.random()*0.15;
       projectiles.push({ x:e.x, y:e.y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,
-        dmg:p.spikeDmg||(p.dmg*0.6), r:5*R, splash:0, pierce:1, hit:new Set(), life:20, kind:'spike' }); }
+        dmg:p.spikeDmg||(p.dmg*0.6), r:9*R, splash:0, pierce:1, hit:new Set(), life:20, kind:'spike' }); }
   }
   // 흡혈(보드카 크랜베리 채찍): healBudget 있으면 명중당 고정 회복(피사체당 상한). 없으면 구모델(데미지 비례).
   if(p.lifesteal && player.hp>0 && !player.noSustain){
@@ -4924,7 +4925,7 @@ function renderLevelCards(pick){
   document.getElementById('upRow').innerHTML = pick.map((u,i)=>`
     <div class="up-card ${(u.evo||u.sup)?'evo':(u.isNew?'new':'')}" onclick="pickUpgrade(${i})">
       <div class="up-inner">
-        <div class="ic">${u.img?`<img class="up-ic" src="assets/${u.img}.png" alt="">`:`<span>${u.ic}</span>`}</div>
+        <div class="ic">${u.img?`<img class="up-ic${u.img==='icon_clase'?' up-ic-tall':''}" src="assets/${u.img}.png" alt="">`:`<span>${u.ic}</span>`}</div>
         <h4>${u.n}</h4>
         ${(u.lv!==undefined && !u.evo)?`<div class="lv">${u.isNew?'NEW · Lv 1':'Lv '+u.lv+'→'+(u.lv+1)+'/'+u.maxlv}</div>`:(u.evo?'<div class="lv" style="color:#ffd24a">★ EVOLVE ★</div>':'')}
         <p>${u.d}</p>
@@ -5790,7 +5791,7 @@ function drawProj(p){
   if(p.kind==='barspoon' && spr('proj_barspoon')){ const im=spr('proj_barspoon'), H=p.r*5.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 바스푼(올린 이미지)
   if(p.kind==='mixglass' && spr('proj_mixglass')){ const im=spr('proj_mixglass'), H=p.r*5.0, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.16); return; }   // 믹싱글라스(올린 이미지)
   if(p.kind && p.kind.indexOf('ing_')===0 && spr(p.kind)){ const im=spr(p.kind), H=p.r*3.4, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, frame*0.2); return; }   // 재료 피사체(올린 이미지)
-  if(p.kind==='agave' && spr('ing_agave')){ const im=spr('ing_agave'), H=p.r*3.8, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)+1.57); return; }   // ★민국 아가베(진행방향 회전)
+  if(p.kind==='agave' && spr('ing_agave')){ const im=spr('ing_agave'), H=p.r*3.1, W=H*im.width/im.height; drawImgC(im, p.x, p.y, W, H, Math.atan2(p.vy,p.vx)+1.57); return; }   // ★민국 아가베(진행방향 회전)
   if(p.kind==='spike'){ ctx.save(); const ang=Math.atan2(p.vy,p.vx); ctx.translate(p.x,p.y); ctx.rotate(ang);   // ★아가베 가시: 청록 다트
     ctx.fillStyle='#8fe0d0'; ctx.strokeStyle='#1b4a45'; ctx.lineWidth=1.4;
     ctx.beginPath(); ctx.moveTo(p.r*1.7,0); ctx.lineTo(-p.r*0.8,-p.r*0.62); ctx.lineTo(-p.r*0.3,0); ctx.lineTo(-p.r*0.8,p.r*0.62); ctx.closePath();
