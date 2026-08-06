@@ -680,30 +680,36 @@
   .framed{ position:relative; width:min(88%,360px); margin:0 auto; }
   .framed .frame-brd{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; image-rendering:pixelated; }
   .framed .frame-inner{ position:absolute; z-index:1; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-  .cf-big{ aspect-ratio:987/997; width:min(72%,260px); }
-  .cf-big .frame-inner{ inset:9%; align-items:flex-end; background:radial-gradient(circle at 50% 42%, #24406b 0%, #0d1830 88%); }
-  .cf-big .cf-portrait{ height:104%; width:auto; object-fit:contain; image-rendering:pixelated; }
-  .wb-roster{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; width:100%; }
-  .cf-small{ aspect-ratio:340/458; width:clamp(72px,20vw,96px); margin:0; cursor:pointer; transition:transform .08s; }
+  /* 지도 안 캐릭터 박스: 얼굴 큰 프레임 + 스탯. 좌측에 떠 있고 소속국가(핀)와 선으로 연결 */
+  .map-conn{ position:absolute; inset:0; width:100%; height:100%; z-index:2; pointer-events:none; opacity:0; transition:opacity .3s; }
+  .map-conn.show{ opacity:1; }
+  .map-charbox{ position:absolute; left:2%; top:2.5%; width:46%; z-index:4; display:flex; flex-direction:column; align-items:center; gap:1px; }
+  .cf-big{ aspect-ratio:987/997; width:92%; margin:0; }
+  .cf-big .frame-inner{ inset:8.5%; align-items:flex-start; background:radial-gradient(circle at 50% 38%, #24406b 0%, #0d1830 92%); }
+  .cf-big .cf-portrait{ width:100%; height:100%; object-fit:cover; object-position:50% 3%; image-rendering:pixelated; }   /* 상반신 꽉차게, 상단(머리카락)부터 */
+  /* 지도 아래 작은 프레임(얼굴만): 항상 한 줄 유지(nowrap + flex) */
+  .wb-roster{ display:flex; gap:5px; justify-content:center; flex-wrap:nowrap; width:100%; max-width:min(96%,460px); margin:0 auto; }
+  .cf-small{ aspect-ratio:340/458; flex:1 1 0; min-width:0; max-width:58px; margin:0; cursor:pointer; transition:transform .08s; }
   .cf-small:active{ transform:translateY(2px); }
   .cf-small .frame-inner{ inset:12% 10%; flex-direction:column; background:radial-gradient(circle at 50% 40%, #1a2c4a 0%, #0a1122 90%); }
-  .cf-small.sel{ filter:drop-shadow(0 0 8px #ffd24a); }
-  .cf-small .cf-head{ width:100%; height:100%; object-fit:cover; image-rendering:pixelated; }
-  .cf-small.locked .frame-inner{ gap:1px; }
-  .cf-small .cf-q{ font-size:clamp(22px,6vw,30px); font-weight:900; color:#5a7ba8; line-height:1; }
-  .cf-small .cf-soon{ font-size:7px; font-weight:800; letter-spacing:.4px; color:#6f8bab; text-align:center; line-height:1.05; }
-  .ci-big{ aspect-ratio:1020/981; width:min(88%,340px); }
+  .cf-small.sel{ filter:drop-shadow(0 0 7px #ffd24a); }
+  .cf-small .cf-head{ width:100%; height:100%; object-fit:cover; object-position:50% 8%; image-rendering:pixelated; }
+  .cf-small.locked .frame-inner{ gap:0; }
+  .cf-small .cf-q{ font-size:clamp(13px,4.4vw,22px); font-weight:900; color:#5a7ba8; line-height:1; }
+  .cf-small .cf-soon{ font-size:clamp(4px,1.5vw,6px); font-weight:800; letter-spacing:.1px; color:#6f8bab; text-align:center; line-height:1.05; }
+  .ci-big{ aspect-ratio:1020/981; width:min(90%,320px); }
   .ci-big .ci-big-in{ inset:7%; flex-direction:column; gap:5px; padding:2%; background:rgba(10,18,30,.55); }
-  .ci-logo{ width:46%; height:auto; image-rendering:pixelated; filter:brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
-  .ci-name{ font-size:clamp(13px,3.6vw,17px); font-weight:900; letter-spacing:.5px; color:#ffd24a; text-align:center; }
-  .ci-desc{ font-size:clamp(9px,2.5vw,11.5px); line-height:1.5; color:#cfe0e0; text-align:center; margin:0; }
-  .ci-wide{ aspect-ratio:1010/544; width:min(88%,340px); }
-  .ci-wide .ci-wide-in{ inset:14% 8%; flex-direction:column; justify-content:center; gap:clamp(3px,1.3vw,7px); }
-  .ci-wide .s{ display:flex; align-items:center; gap:8px; width:100%; }
-  .ci-wide .s b{ font-size:clamp(9px,2.6vw,12px); letter-spacing:.5px; color:#eafbe9; width:56px; flex:0 0 auto; text-align:right; }
-  .ci-wide .pips{ display:flex; gap:4px; }
-  .ci-wide .pips i{ width:clamp(12px,3.4vw,18px); height:9px; border-radius:2px; background:#22303a; box-shadow:0 0 0 1px #000 inset; }
-  .ci-wide .pips i.on{ background:#5fb8a8; box-shadow:0 0 0 1px #000, 0 0 4px #5fb8a8; }
+  .ci-logo{ width:44%; height:auto; image-rendering:pixelated; filter:brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+  .ci-name{ font-size:clamp(12px,3.4vw,16px); font-weight:900; letter-spacing:.5px; color:#ffd24a; text-align:center; }
+  .ci-desc{ font-size:clamp(8.5px,2.4vw,11px); line-height:1.5; color:#cfe0e0; text-align:center; margin:0; }
+  /* 스탯 프레임: 지도 안, 얼굴 프레임 바로 아래(살짝 넓게) */
+  .ci-wide{ aspect-ratio:1010/544; width:100%; margin:0; }
+  .ci-wide .ci-wide-in{ inset:15% 7%; flex-direction:column; justify-content:center; gap:clamp(1px,0.9vw,4px); background:rgba(6,11,20,.7); border-radius:3px; }
+  .ci-wide .s{ display:flex; align-items:center; gap:4px; width:100%; }
+  .ci-wide .s b{ font-size:clamp(6px,1.9vw,9px); letter-spacing:.2px; color:#eafbe9; width:clamp(28px,8.5vw,44px); flex:0 0 auto; text-align:right; }
+  .ci-wide .pips{ display:flex; gap:clamp(1.5px,0.6vw,3px); }
+  .ci-wide .pips i{ width:clamp(6px,2.4vw,13px); height:clamp(4px,1.3vw,8px); border-radius:2px; background:#22303a; box-shadow:0 0 0 1px #000 inset; }
+  .ci-wide .pips i.on{ background:#5fb8a8; box-shadow:0 0 0 1px #000, 0 0 3px #5fb8a8; }
   .worldmap{ position:relative; width:min(92%,520px); aspect-ratio:1063/798; border:2px solid var(--gold,#c89a3c);
     border-radius:10px; overflow:hidden; background:#122032; }
   .worldmap img{ width:100%; height:100%; object-fit:cover; image-rendering:pixelated; }
@@ -1013,33 +1019,37 @@
       <img id="worldMapImg" src="assets/world_map.png" alt="World Map"
         onerror="this.style.display='none'; document.getElementById('worldMapPh').style.display='flex';">
       <div id="worldMapPh" class="worldmap-ph"></div>
-      <!-- 소속 국가 핀(선택 시 표시) — 한국(크리켓 서울) -->
+      <!-- 프레임 ↔ 소속국가 연결선 -->
+      <svg class="map-conn" id="mapConn" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line id="connLine" x1="45" y1="30" x2="82" y2="35" stroke="#ffd24a" stroke-width="0.7" stroke-dasharray="2 1.4"/>
+      </svg>
+      <!-- 소속 국가 핀 — 한국(크리켓 서울) -->
       <div class="map-pin" id="pinKorea"><span class="pin-label">KOREA</span><span class="pin-arrow">▼</span><span class="pin-dot"></span></div>
+      <!-- 지도 안에 뜨는 캐릭터 프레임(얼굴) + 스탯: 소속 국가와 선으로 연결 -->
+      <div class="map-charbox">
+        <div class="framed cf-big">
+          <div class="frame-inner"><img class="cf-portrait" src="assets/char_minguk.png" alt="MINGUK"></div>
+          <img class="frame-brd" src="assets/cframe_big.png" alt="">
+        </div>
+        <div class="framed ci-wide">
+          <div class="frame-inner ci-wide-in">
+            <div class="s"><b>SPEED</b><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+            <div class="s"><b>POWER</b><span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+            <div class="s"><b>HEALTH</b><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+            <div class="s"><b>RAPID</b><span class="pips"><i class="on"></i><i></i><i></i><i></i></span></div>
+          </div>
+          <img class="frame-brd" src="assets/cinfo_wide.png" alt="">
+        </div>
+      </div>
     </div>
-    <!-- 캐릭터 프레임: 큰 프레임(상반신) + 작은 프레임 로스터(민국 + ? coming soon) -->
-    <div class="framed cf-big">
-      <div class="frame-inner"><img class="cf-portrait" src="assets/char_minguk.png" alt="MINGUK"></div>
-      <img class="frame-brd" src="assets/cframe_big.png" alt="">
-    </div>
-    <div class="wb-roster">
+    <!-- 지도 아래: 작은 프레임 로스터(민국 + ? 여러개, 작게) -->
+    <div class="wb-roster" id="wbRoster">
       <div class="framed cf-small sel" id="wbMinguk" onclick="selectWorldBartender('minguk')">
         <div class="frame-inner"><img class="cf-head" src="assets/minguk_head.png" alt="MINGUK"></div>
         <img class="frame-brd" src="assets/cframe_small.png" alt="">
       </div>
-      <div class="framed cf-small locked">
-        <div class="frame-inner"><span class="cf-q">?</span><span class="cf-soon">COMING<br>SOON</span></div>
-        <img class="frame-brd" src="assets/cframe_small.png" alt="">
-      </div>
-      <div class="framed cf-small locked">
-        <div class="frame-inner"><span class="cf-q">?</span><span class="cf-soon">COMING<br>SOON</span></div>
-        <img class="frame-brd" src="assets/cframe_small.png" alt="">
-      </div>
-      <div class="framed cf-small locked">
-        <div class="frame-inner"><span class="cf-q">?</span><span class="cf-soon">COMING<br>SOON</span></div>
-        <img class="frame-brd" src="assets/cframe_small.png" alt="">
-      </div>
     </div>
-    <!-- 캐릭터 정보: 크리켓 로고+소개(큰 프레임), 민국 스탯(넓은 프레임) -->
+    <!-- 크리켓 바 소개 -->
     <div class="framed ci-big">
       <div class="frame-inner ci-big-in">
         <img class="ci-logo" src="assets/logo_cricket_px.png" alt="Cricket Seoul">
@@ -1047,15 +1057,6 @@
         <p class="ci-desc"><b>CRICKET SEOUL</b> is a Korean craft-spirit cocktail bar in Gangnam. Its bartender <b>MINGUK</b> lobs an agave heart that bursts into spikes in every direction on impact.</p>
       </div>
       <img class="frame-brd" src="assets/cinfo_big.png" alt="">
-    </div>
-    <div class="framed ci-wide">
-      <div class="frame-inner ci-wide-in">
-        <div class="s"><b>SPEED</b><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
-        <div class="s"><b>POWER</b><span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
-        <div class="s"><b>HEALTH</b><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
-        <div class="s"><b>RAPID</b><span class="pips"><i class="on"></i><i></i><i></i><i></i></span></div>
-      </div>
-      <img class="frame-brd" src="assets/cinfo_wide.png" alt="">
     </div>
     <button class="wb-play hidden" id="wbPlay" onclick="startGame('minguk')">START</button>
     <button class="imgbtn backbtn" onclick="goSelect()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
@@ -2326,7 +2327,7 @@ const MONSTER_INDEX=[
 const CHAR_INDEX=[
   { img:'char_pat', name:'PAT · THE SHAKER', t:'Built like the bar he tends. Hurls a heavy cobbler shaker that splashes a whole cluster at once. Tanky (180 HP), slow as last call, and gains +2 max HP every level so he keeps standing deep into the night. He does not chase the crowd; the crowd comes to him and regrets it. ULTIMATE — Shaker Tornado: a spinning vortex that keeps flinging glasses in every direction, invincible while it spins. Each level doubles its damage, adds an arm, and lasts longer.' },
   { img:'char_joe', name:'JOE · THE STIRRER', t:'All wrist, no waste. Flicks a bar spoon and mixing glass that skewer a line of up to 4 guests on one pour. Fragile (100 HP) but quick, gaining +1 max HP every level plus passive HP regen that heals faster each level. ULTIMATE — Untouchable: full invincibility PLUS a giant spinning bar spoon (15× normal) that shreds anyone it touches. 8s base, +0.8s and +220% damage every level.' },
-  { img:'char_minguk', name:'MINGUK · CRICKET SEOUL (KOREA)', t:'A guest bartender from Cricket Seoul. Lobs an agave heart that, on impact, bursts into spikes flying in every direction — the projectile hits one target, and the spikes rake everyone around it. Half of Pat\'s raw power (36) but nimble: same fire rate as Pat, 25% faster on his feet, and 20% more health than Joe (120 HP). Each AGAVE level adds damage, speeds up the throw, and throws MORE spikes on every hit (6 → 21 at max). ULTIMATE — Agave Storm: a spinning vortex that keeps flinging agave hearts, invincible while it spins.' },
+  { img:'char_minguk', name:'MINGUK · CRICKET SEOUL (KOREA)', t:'A guest bartender from Cricket Seoul. Lobs an agave heart that, on impact, bursts into spikes flying in every direction — the projectile hits one target, and the spikes rake everyone around it. Half of Pat\'s raw power (36) but nimble: same fire rate as Pat, 25% faster on his feet, and 20% more health than Joe (120 HP). Each AGAVE level adds damage, speeds up the throw, and throws MORE spikes on every hit (6 → 21 at max). ULTIMATE — Clase Azul Drop: a giant Clase Azul bottle falls upside-down from the sky, and when it lands the whole screen flashes white — every enemy and boss takes 200,000 damage. Each ultimate level doubles it (×2).' },
 ];
 /* 스킬 사전 — 기본공격 / 기주 6종 / 재료 / 궤도 / 일반 강화 / 필살기. 모든 항목은 붐이 올린 이미지로. */
 const SKILL_INDEX=[
@@ -2409,15 +2410,28 @@ function openAboutPage(){ try{ playSelect&&playSelect(); }catch(e){} try{ var w=
 /* 세계 바텐더(준비중): 세계지도 화면으로. 해외 바텐더 이미지가 들어오면 여기서 선택 가능해질 예정. */
 function openMoreBartenders(){ initAudio(); playSelect(); state='world'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('worldScreen');
   const ws=document.getElementById('worldScreen'); if(ws) ws.scrollTop=0;
-  selectWorldBartender('minguk');   // 민국 기본 선택 → 한국 핀 + START 바로 표시
+  fillRoster(5);                     // 지도 아래 작은 프레임: 민국 + ? 5개 = 6칸(한 줄)
+  selectWorldBartender('minguk');   // 민국 기본 선택 → 한국 핀 + 연결선 + START
 }
 // 세계 바텐더 선택: 소속 국가 핀(화살표) 표시 + PLAY 버튼 노출. (한 번 더 눌러도 됨 → startGame)
 function selectWorldBartender(key){
   try{ playSelect(); }catch(e){}
   if(key==='minguk'){
-    const pin=document.getElementById('pinKorea'); if(pin) pin.classList.add('show');   // 한국에 화살표
+    const pin=document.getElementById('pinKorea'); if(pin) pin.classList.add('show');   // 한국에 핀
+    const conn=document.getElementById('mapConn'); if(conn) conn.classList.add('show');  // 프레임↔한국 연결선
     const card=document.getElementById('wbMinguk'); if(card) card.classList.add('sel');
     const pb=document.getElementById('wbPlay'); if(pb) pb.classList.remove('hidden');
+  }
+}
+// 로스터 채우기: 민국(선택) + 곧 추가될 ? 프레임 여러 개(작게)
+function fillRoster(nLocked){
+  const r=document.getElementById('wbRoster'); if(!r) return;
+  r.querySelectorAll('.cf-small.locked').forEach(e=>e.remove());   // 기존 ? 제거(중복 방지)
+  const n=nLocked||7;
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div'); d.className='framed cf-small locked';
+    d.innerHTML='<div class="frame-inner"><span class="cf-q">?</span><span class="cf-soon">COMING<br>SOON</span></div><img class="frame-brd" src="assets/cframe_small.png" alt="">';
+    r.appendChild(d);
   }
 }
 /* 칵테일 글라스 쉐입 — 흰색 라인아트 SVG(문구 없이 모양만). 메뉴의 미니멀 라인 스타일. */
@@ -4235,6 +4249,7 @@ function update(){
   updateCorpseReviver(); // ★Corpse Reviver: 좀비 동료 근접전투
   updateVodkaTonic(); // ★보드카 토닉: 로밍 얼음 familiar 자동사냥
   updateBlackVermouth(); // ★블랙 버무스: 드라이/스윗 버무스 familiar 2개(보드카토닉 1.5배)
+  updateClaseUlt(); // ★민국 필살기: 클라세아줄 낙하 → 중앙 착지 → 초광역 데미지
   drymartiniSlow(); // 드라이 마티니: 사정거리 안 적을 느리게(속도 32%)
   // ★사우스사이드 민트 레인: 예약된 폭탄을 한발씩(시간차) 하늘에서 떨어뜨림 → 착지 지점은 플레이어 주위 랜덤
   for(let i=mintRain.length-1;i>=0;i--){ const m=mintRain[i]; if(frame<m.at) continue;
@@ -4589,7 +4604,40 @@ function doRevive(){ player.reviveUsed=true; player.reviveCharges=0; player.hp=p
 }
 /* 무적 판정: 피격 직후(invuln) 또는 Joe 필살기(ultUntil) 중 */
 function isInvuln(){ return player.invuln>0 || gameTime < (player.ultUntil||0) || gameTime < (player.ultSpiralUntil||0); }   // Joe 무적(ultUntil) + Pat 회오리(ultSpiralUntil) 동안 무적. gameTime(초) 기반
-function ultActiveNow(){ if(!player) return false; return player.key==='joe' ? gameTime<(player.ultUntil||0) : gameTime<(player.ultSpiralUntil||0); }
+function ultActiveNow(){ if(!player) return false;
+  if(player.key==='minguk') return !!claseUlt;   // 클라세아줄 낙하 동안 무적
+  return player.key==='joe' ? gameTime<(player.ultUntil||0) : gameTime<(player.ultSpiralUntil||0); }
+/* ★민국 필살기: 클라세아줄 병이 거꾸로 천천히(픽셀 단위) 하늘에서 떨어져 중앙 착지 → 화면 전체 하얗게 → 모든 적(보스 포함)에 초광역 데미지. 기본 20만, 업그레이드마다 ×2. */
+let claseUlt=null;
+function updateClaseUlt(){
+  if(!claseUlt) return;
+  claseUlt.t++;
+  if(!claseUlt.dmgDone && claseUlt.t>=claseUlt.drop){
+    claseUlt.dmgDone=true; claseUlt.flashT=20;
+    const dmg = 200000 * Math.pow(2, (player.ultLevel||1)-1);   // Lv1 20만, 레벨업마다 ×2
+    for(const e of enemies){ if(e.type==='passout') continue; dealDmg(e, dmg); }
+    for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
+    burst(W/2,H/2,'#ffffff',70); burst(W/2,H/2,'#bcd0ff',40);
+    try{ playSfx('whistle',2.4,0); }catch(e){}
+    try{ shakeT=Math.max(shakeT||0,18); }catch(e){}
+  }
+  if(claseUlt.flashT>0) claseUlt.flashT--;
+  if(claseUlt.t > claseUlt.drop+34) claseUlt=null;   // 종료
+}
+function drawClaseUlt(){
+  if(!claseUlt) return;
+  const im=spr('icon_clase');
+  const prog=Math.min(1, claseUlt.t/claseUlt.drop);
+  const step=Math.floor(prog*16)/16;                 // 픽셀 단위로 뚝뚝(16스텝) 떨어지는 느낌
+  const bw = H*0.34, bh = bw*(im? im.height/im.width : 2);   // ★병을 크게(미사일처럼)
+  const y = -bh*0.55 + step*(H*0.5 + bh*0.55);        // 화면 위(가려진 상태)에서 중앙까지
+  if(im && claseUlt.t<=claseUlt.drop+2){
+    // 하강 궤적(미사일 꼬리) — 살짝 흐릿한 잔상
+    ctx.save(); ctx.globalAlpha=0.28; drawImgC(im, W/2, y-bh*0.5, bw*0.9, bh*0.9, Math.PI); ctx.restore();
+    drawImgC(im, W/2, y, bw, bh, Math.PI);            // 거꾸로(180°) 큰 병
+  }
+  if(claseUlt.flashT>0){ ctx.save(); ctx.globalAlpha=Math.min(1, claseUlt.flashT/14); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H); ctx.restore(); }
+}
 /* ===== 필살기 ===== */
 function useUltimate(){
   if(!player || state!=='playing' || paused) return;
@@ -4597,13 +4645,18 @@ function useUltimate(){
   player.ultReadyAt = gameTime + ULT_CD*(player.ultCdMul||1);   // 다음 사용까지 80초 × 토마토 감소
   player.ultFxUntil = frame + 70;               // 반짝 이펙트(공통)
   playSelect();
-  if(player.key==='pat'||player.key==='minguk'){
-    // 더블 쉐이킹: 사방으로 대량의 피사체를 한꺼번에 뿌림(민국=아가베 회오리 → 가시 폭발)
+  if(player.key==='minguk'){
+    // ★민국 필살기: 클라세아줄 병이 하늘에서 거꾸로 천천히(픽셀 단위) 떨어져 중앙 착지 → 화면 전체 하얗게 → 전 적 초광역 데미지
+    claseUlt = { t:0, drop:140, flashT:0, dmgDone:false };   // ~2.3초, 천천히 낙하
+    burst(player.x,player.y,'#dfe6ef',24);
+    banner('🍾 CLASE AZUL DROP!', true);
+  } else if(player.key==='pat'){
+    // 더블 쉐이킹: 사방으로 대량의 피사체를 한꺼번에 뿌림
     // 회오리: 한 번에 안 나가고, 활성 동안 회전하는 팔에서 계속 뿜어져 나감(update에서 발사)
     const durSec = (1.4 + (player.ultLevel||1)*0.13) * 1.3;   // 피사체 나가는 시간 30%↑(무적도 그만큼 유지)
     player.ultSpiralUntil = gameTime + durSec; player.ultSpiralAng = Math.random()*6.28;
-    burst(player.x,player.y, player.key==='minguk'?'#7fd6c4':'#ffe08a',26);
-    banner(player.key==='minguk'?'🌵 AGAVE STORM!':'🍸 SHAKER TORNADO!', true);
+    burst(player.x,player.y,'#ffe08a',26);
+    banner('🍸 SHAKER TORNADO!', true);
   } else {
     // Joe: 무적 + 몸 주위 가시(근접 데미지). gameTime 기반이라 레벨업해도 안 끊김.
     const durSec = 8 + ((player.ultLevel||1)-1)*0.8;   // 무적 8초 + 업그레이드마다 0.8초씩
@@ -4919,7 +4972,7 @@ function baseUltPool(){ const p=[];
   if(player.baseLv < MAX_BASE_LV){ const sh=player.base==='shaker';
     const ag=player.base==='agave';
     p.push({ type:'base', ic:ag?'🌵':(sh?'🍸':'🥄'), img:ag?'icon_clase':(sh?'icon_shaker':'icon_barspoon'), n:ag?'AGAVE UP':(sh?'SHAKING UP':'STIRRING UP'), d:ag?'Agave hits harder, fires faster, +more spikes':'Base attack stronger', lv:player.baseLv, maxlv:MAX_BASE_LV }); }
-  if(player.ultLevel < MAX_ULT_LV){ p.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:(player.key==='pat'||player.key==='minguk')?'Tornado ×2 damage + longer':'Giant bar spoon +220% dmg / +0.8s invuln', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
+  if(player.ultLevel < MAX_ULT_LV){ p.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:player.key==='minguk'?'Clase Azul drop ×2 damage (200k → 400k → …)':player.key==='pat'?'Tornado ×2 damage + longer':'Giant bar spoon +220% dmg / +0.8s invuln', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
   if(player.rainbow && (player.rainbowLv||1) < 6){ p.push({ type:'rainbowup', ic:'🌈', img:'rainbow_icon', n:'RAINBOW GUN UP', d:'+2 firing directions (cross → 6 → 8 → 10 → 12 → 14)', lv:player.rainbowLv||1, maxlv:6 }); }
   return p;
 }
@@ -5714,6 +5767,7 @@ function draw(){
         ctx.fillStyle='#fff4c0'; ctx.fillRect(cx+Math.cos(a)*rr-1.5, cy+Math.sin(a)*rr-1.5, 3, 3); }
     }
   }
+  drawClaseUlt();   // ★민국 필살기: 거꾸로 떨어지는 클라세아줄 + 화면 전체 하얀 플래시(최상단)
 }
 /* 애니메이션 프레임: 보스(4종) / thrower 토하기 > 서기/걷기(A·B 교대) */
 function enemyFrameKey(e){
