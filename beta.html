@@ -4651,8 +4651,8 @@ function drawClaseUlt(){
   if(!claseUlt) return;
   const im=spr('icon_clase');
   const prog=Math.min(1, claseUlt.t/claseUlt.drop);
-  const step=Math.floor(prog*16)/16;                 // 픽셀 단위로 뚝뚝(16스텝) 떨어지는 느낌
-  const bw = H*0.22, bh = bw*(im? im.height/im.width : 2);   // ★병 크기(축소)
+  const step=Math.floor(prog*44)/44;                 // 픽셀 단위(44스텝)로 자연스럽게 떨어지는 느낌
+  const bw = H*0.14, bh = bw*(im? im.height/im.width : 2);   // ★병 크기(더 축소)
   const y = -bh*0.55 + step*(H*0.5 + bh*0.55);        // 화면 위(가려진 상태)에서 중앙까지
   if(im && claseUlt.t<=claseUlt.drop+2){
     // 하강 궤적(미사일 꼬리) — 살짝 흐릿한 잔상
