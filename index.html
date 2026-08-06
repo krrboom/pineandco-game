@@ -1630,6 +1630,28 @@ function playRainbowJingle(){
     }catch(e){}
   });
 }
+/* ★핵폭탄 폭발음(민국 필살기) — 서브베이스 붐 + 감쇠 화이트노이즈 블라스트 + 초기 펀치. 에셋 불필요. */
+function playNukeBoom(){
+  if(!audioCtx) return;
+  const t0=audioCtx.currentTime, bus=sfxBus||audioCtx.destination, V=sfxVol||0.7;
+  // 1) 서브베이스 붐: 140Hz → 26Hz 스윕, 긴 감쇠
+  try{ const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(140,t0); o.frequency.exponentialRampToValueAtTime(26,t0+1.5);
+    g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(1.0*V+0.0001,t0+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t0+1.9);
+    o.connect(g); g.connect(bus); o.start(t0); o.stop(t0+2.0); }catch(e){}
+  // 2) 폭발 노이즈: 감쇠 화이트노이즈 + lowpass 스윕(1800→120Hz)
+  try{ const dur=1.7, sr=audioCtx.sampleRate, buf=audioCtx.createBuffer(1, Math.floor(sr*dur), sr), d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.6); }
+    const src=audioCtx.createBufferSource(); src.buffer=buf;
+    const lp=audioCtx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(1900,t0); lp.frequency.exponentialRampToValueAtTime(110,t0+1.3);
+    const g=audioCtx.createGain(); g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.85*V+0.0001,t0+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+1.7);
+    src.connect(lp); lp.connect(g); g.connect(bus); src.start(t0); src.stop(t0+1.7); }catch(e){}
+  // 3) 초기 펀치(crack): 400Hz → 60Hz 급강하
+  try{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='triangle';
+    o.frequency.setValueAtTime(420,t0); o.frequency.exponentialRampToValueAtTime(55,t0+0.16);
+    g.gain.setValueAtTime(0.8*V,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.28);
+    o.connect(g); g.connect(bus); o.start(t0); o.stop(t0+0.32); }catch(e){}
+}
 /* 효과음: 각 사운드를 피크 0.85로 정규화(norm)했으니 gain은 강조용으로만 (배경음악 MVOL=0.3) */
 function playHit(){ const now=audioCtx?audioCtx.currentTime:0; if(!audioCtx||!SFX.hit||now-lastHitT<0.03) return; lastHitT=now; playSfx('hit',1.0,0); }
 function playCoin(){ const now=audioCtx?audioCtx.currentTime:0; if(!audioCtx||!SFX.coin||now-lastCoinT<0.05) return; lastCoinT=now; playSfx('coin',1.15,0); }
@@ -4614,12 +4636,12 @@ function updateClaseUlt(){
   if(!claseUlt) return;
   claseUlt.t++;
   if(!claseUlt.dmgDone && claseUlt.t>=claseUlt.drop){
-    claseUlt.dmgDone=true; claseUlt.flashT=20;
+    claseUlt.dmgDone=true; claseUlt.flashT=26; claseUlt.flashMax=26;   // 3번 번쩍(빠르게)
     const dmg = 200000 * Math.pow(2, (player.ultLevel||1)-1);   // Lv1 20만, 레벨업마다 ×2
     for(const e of enemies){ if(e.type==='passout') continue; dealDmg(e, dmg); }
     for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
     burst(W/2,H/2,'#ffffff',70); burst(W/2,H/2,'#bcd0ff',40);
-    try{ playSfx('whistle',2.4,0); }catch(e){}
+    try{ playNukeBoom(); }catch(e){}   // ★핵폭탄 폭발음
     try{ shakeT=Math.max(shakeT||0,18); }catch(e){}
   }
   if(claseUlt.flashT>0) claseUlt.flashT--;
@@ -4630,14 +4652,17 @@ function drawClaseUlt(){
   const im=spr('icon_clase');
   const prog=Math.min(1, claseUlt.t/claseUlt.drop);
   const step=Math.floor(prog*16)/16;                 // 픽셀 단위로 뚝뚝(16스텝) 떨어지는 느낌
-  const bw = H*0.34, bh = bw*(im? im.height/im.width : 2);   // ★병을 크게(미사일처럼)
+  const bw = H*0.22, bh = bw*(im? im.height/im.width : 2);   // ★병 크기(축소)
   const y = -bh*0.55 + step*(H*0.5 + bh*0.55);        // 화면 위(가려진 상태)에서 중앙까지
   if(im && claseUlt.t<=claseUlt.drop+2){
     // 하강 궤적(미사일 꼬리) — 살짝 흐릿한 잔상
-    ctx.save(); ctx.globalAlpha=0.28; drawImgC(im, W/2, y-bh*0.5, bw*0.9, bh*0.9, Math.PI); ctx.restore();
-    drawImgC(im, W/2, y, bw, bh, Math.PI);            // 거꾸로(180°) 큰 병
+    ctx.save(); ctx.globalAlpha=0.25; drawImgC(im, W/2, y-bh*0.5, bw*0.9, bh*0.9, Math.PI); ctx.restore();
+    drawImgC(im, W/2, y, bw, bh, Math.PI);            // 거꾸로(180°)
   }
-  if(claseUlt.flashT>0){ ctx.save(); ctx.globalAlpha=Math.min(1, claseUlt.flashT/14); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H); ctx.restore(); }
+  if(claseUlt.flashT>0){ ctx.save();                  // ★화면 하얗게 3번 빠르게 번쩍
+    const p = 1 - claseUlt.flashT/(claseUlt.flashMax||26);   // 0→1
+    const blink = Math.abs(Math.sin(p*Math.PI*3));           // 3번 번쩍
+    ctx.globalAlpha = Math.min(1, blink); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H); ctx.restore(); }
 }
 /* ===== 필살기 ===== */
 function useUltimate(){
