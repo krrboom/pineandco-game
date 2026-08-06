@@ -1591,6 +1591,8 @@ function initAudio(){
   loadSfx('hurt','assets/sfx_hurt.mp3','onset'); // 플레이어 피격
   loadSfx('tipcoin','assets/sfx_tipcoin.mp3','onset'); // 팁: 동전소리
   loadSfx('whistle','assets/sfx_whistle.mp3','onset'); // 팁: 휘파람소리
+  loadSfx('bombdrop','assets/bomb_drop.mp3','onset');  // ★민국 필살기: 폭탄 낙하음(낙하 시간과 동기화)
+  loadSfx('boomshort','assets/boom_short.mp3','onset'); // ★민국 필살기: 착지 폭발음
 }
 function playSfx(name,gain,when){
   const s=SFX[name]; if(!audioCtx||!s) return;
@@ -4641,7 +4643,7 @@ function updateClaseUlt(){
     for(const e of enemies){ if(e.type==='passout') continue; dealDmg(e, dmg); }
     for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
     burst(W/2,H/2,'#ffffff',70); burst(W/2,H/2,'#bcd0ff',40);
-    try{ playNukeBoom(); }catch(e){}   // ★핵폭탄 폭발음
+    try{ playSfx('boomshort', 2.2, 0); }catch(e){ try{ playNukeBoom(); }catch(_){} }   // ★착지 폭발음(boom short)
     try{ shakeT=Math.max(shakeT||0,18); }catch(e){}
   }
   if(claseUlt.flashT>0) claseUlt.flashT--;
@@ -4652,7 +4654,8 @@ function drawClaseUlt(){
   const im=spr('icon_clase');
   const prog=Math.min(1, claseUlt.t/claseUlt.drop);
   const step=Math.floor(prog*44)/44;                 // 픽셀 단위(44스텝)로 자연스럽게 떨어지는 느낌
-  const bw = H*0.14, bh = bw*(im? im.height/im.width : 2);   // ★병 크기(더 축소)
+  const sc = 0.30 - step*0.20;                        // ★크게 나왔다가(0.30) 떨어지며 작아짐(0.10)
+  const bw = H*sc, bh = bw*(im? im.height/im.width : 2);
   const y = -bh*0.55 + step*(H*0.5 + bh*0.55);        // 화면 위(가려진 상태)에서 중앙까지
   if(im && claseUlt.t<=claseUlt.drop+2){
     // 하강 궤적(미사일 꼬리) — 살짝 흐릿한 잔상
@@ -4673,7 +4676,10 @@ function useUltimate(){
   playSelect();
   if(player.key==='minguk'){
     // ★민국 필살기: 클라세아줄 병이 하늘에서 거꾸로 천천히(픽셀 단위) 떨어져 중앙 착지 → 화면 전체 하얗게 → 전 적 초광역 데미지
-    claseUlt = { t:0, drop:140, flashT:0, dmgDone:false };   // ~2.3초, 천천히 낙하
+    // 낙하 시간 = 폭탄 낙하음 길이에 맞춤(사운드 재생 내내 떨어지게)
+    const dropSec = (SFX.bombdrop && SFX.bombdrop.dur) ? SFX.bombdrop.dur : 2.3;
+    claseUlt = { t:0, drop:Math.max(60, Math.round(dropSec*60)), flashT:0, dmgDone:false };
+    try{ playSfx('bombdrop', 1.7, 0); }catch(e){}   // ★폭탄 낙하음
     burst(player.x,player.y,'#dfe6ef',24);
     banner('🍾 CLASE AZUL DROP!', true);
   } else if(player.key==='pat'){
