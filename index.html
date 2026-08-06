@@ -4628,7 +4628,7 @@ function doRevive(){ player.reviveUsed=true; player.reviveCharges=0; player.hp=p
   crits.push({x:player.x,y:player.y-player.r-12,life:70,txt:'REVIVE!',col:'#ffd24a'}); banner('✦ REVIVE! ✦', true);
 }
 /* 무적 판정: 피격 직후(invuln) 또는 Joe 필살기(ultUntil) 중 */
-function isInvuln(){ return player.invuln>0 || gameTime < (player.ultUntil||0) || gameTime < (player.ultSpiralUntil||0); }   // Joe 무적(ultUntil) + Pat 회오리(ultSpiralUntil) 동안 무적. gameTime(초) 기반
+function isInvuln(){ return player.invuln>0 || gameTime < (player.ultUntil||0) || gameTime < (player.ultSpiralUntil||0) || !!claseUlt; }   // Joe 무적(ultUntil) + Pat 회오리(ultSpiralUntil) + 민국 클라세아줄 낙하(claseUlt) 동안 무적. gameTime(초) 기반
 function ultActiveNow(){ if(!player) return false;
   if(player.key==='minguk') return !!claseUlt;   // 클라세아줄 낙하 동안 무적
   return player.key==='joe' ? gameTime<(player.ultUntil||0) : gameTime<(player.ultSpiralUntil||0); }
