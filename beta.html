@@ -1896,7 +1896,7 @@ const INGREDIENTS = {
   olive:    { name:'OLIVE',     ic:'🫒', img:'ing_olive',     color:'#7a8c3a', max:6, pas:{stat:'armor',per:4},    desc:'Armor: take less damage (×2 effect)' },
   sweetver: { name:'SWEET VERMOUTH', ic:'🍷', img:'ing_sweetver', color:'#a83b3b', max:6, pas:{stat:'hp',per:12},  desc:'+max HP · +1 cocktail slot' },
   dryver:   { name:'DRY VERMOUTH',   ic:'🍸', img:'ing_dryver',   color:'#cfd6e0', max:6, pas:{stat:'crit',per:0.01}, desc:'+crit chance & crit dmg (×2 base, +50%/lv → Lv6 ×4.5)' },
-  angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', max:6, pas:{stat:'xp',per:0.06},   desc:'+XP gain' },
+  angostura:{ name:'ANGOSTURA',ic:'🅰️', img:'ing_angostura', color:'#b07a2a', max:6, pas:{stat:'xp',per:0.06},   desc:'+XP & sales' },
   // ★새 재료 4종
   gingerbeer:{ name:'GINGER BEER', ic:'🫚', img:'ing_gingerbeer', color:'#d9a441', max:6, pas:{stat:'cd',per:0.01}, reroll:true, desc:'RE-ROLL: each level gives one re-roll of your level-up choices (Moscow Mule / Soda Gun key)' },
   coffee:    { name:'COFFEE BEANS', ic:'☕', img:'ing_coffee',   color:'#5a3a22', max:6, pas:{stat:'edur',per:0.14}, revive:true, desc:'Effects last longer (orbit/aura). Grants ONE revive!' },
@@ -2375,7 +2375,7 @@ const SKILL_INDEX=[
   { img:'ing_sweetver',  name:'SWEET VERMOUTH · +MAX HP · +SLOT', t:'+max HP each level. Owning Sweet Vermouth also adds +1 cocktail slot (hold one more cocktail).' },
   { img:'ing_dryver',    name:'DRY VERMOUTH · +CRIT',   t:'Crit chance rises each level, AND crit damage jumps by level: ×2 / ×3.5 / ×4 / ×7 / ×12 / ×18 (Lv1→Lv6).' },
   { img:'cranberry',     name:'CRANBERRY · MAGNET',     t:'Wider cash & item pickup range each level.' },
-  { img:'ing_angostura', name:'ANGOSTURA · +XP', t:'+XP gain each level. (DASH is now available from the start — double-tap a direction; it speeds up as your base attack levels.)' },
+  { img:'ing_angostura', name:'ANGOSTURA · +XP', t:'+XP and +sales each level (money rises the same %, so you level up faster).' },
   { img:'ing_absinthe',  name:'ABSINTHE · +ZOMBIE', t:'The green fairy. Passive: your Corpse Reviver zombies grow +10% stronger (attack & HP) per level. Also the key ingredient to evolve the SUPER CORPSE REVIVER No.2.' },
   // ── 촉매 & 진화 & 필살기 ──
   { ic:'🥃', name:'SPIRITS · field drops', t:'The 6 spirits still drop on the field and fire as extra bonus weapons if you grab them. They are NOT required to evolve cocktails, and NOT required for the Rainbow Gun anymore — that now comes from maxing out six or more super cocktails (super Lv6).' },
@@ -4972,11 +4972,11 @@ function collectPickup(g){
     return;
   }
 
-  const xm = player.xpMul||1;
+  const xm = player.xpMul||1;   // ★앙고스투라(+XP)는 돈도 같은 %만큼 더 벌게 → 경험치를 더 빨리 먹는 느낌
   if(g.kind==='bill'){               // 보스 지폐/뭉치: 금액(won)만큼 매출 + 경험치(동전보다 많이)
-    money += g.won; player.xp += Math.round(billXP(g.won)*xm); playCoin();
+    money += Math.round(g.won*xm); player.xp += Math.round(billXP(g.won)*xm); playCoin();
   } else {                            // 황금동전
-    money += 500; player.xp += 2.2*xm; playCoin();   // 동전 경험치 2 → 2.2 (+10%). 반올림 안 함(소수 누적 → 10% 실제 반영)
+    money += Math.round(500*xm); player.xp += 2.2*xm; playCoin();   // 동전 경험치 2 → 2.2 (+10%). 반올림 안 함(소수 누적 → 10% 실제 반영)
   }
   if(player.xp>=player.xpNeed) levelUp();
 }
@@ -5022,8 +5022,10 @@ function rbStatCard(k){ const u=player.rbUp||{}; const M={
 }[k]; return { type:'rbstat', stat:k, ic:M.ic, n:M.n, d:M.d }; }
 function rainbowLevelChoices(){
   const pool=_shuf(['dmg','spd','hp','armor','move','regen'].map(rbStatCard));
-  const out=pool.slice(0,3);                                   // 6종 중 3장 제시
+  const out=pool.slice(0,2);                                   // 6종 중 2장 제시
   if((player.rainbowLv||1) < 6) out.push({ type:'rainbowup', ic:'🌈', img:'rainbow_icon', n:'RAINBOW GUN UP', d:'+2 firing directions (cross → 6 → 8 → 10 → 12 → 14)', lv:player.rainbowLv||1, maxlv:6 });   // 방향 추가는 만렙 전까지 항상 선택 가능
+  // ★레인보우 후에도 필살기는 계속 업그레이드 가능(다른 아이템이 안 나오므로)
+  if((player.ultLevel||1) < MAX_ULT_LV){ out.push({ type:'ult', ic:'🌀', n:'ULTIMATE UP', d:player.key==='minguk'?'Clase Azul drop ×2.5 damage':player.key==='pat'?'Tornado ×2 damage + longer':'Giant bar spoon +220% dmg / +0.8s invuln', lv:player.ultLevel, maxlv:MAX_ULT_LV }); }
   return out.slice(0,4);
 }
 function buildLevelChoices(){
@@ -5237,11 +5239,15 @@ function updateWeaponChips(){
   if(!ingRow||!player) return;
   // ── 무기 6칸 = 칵테일 (진화하면 금색 ★) ──
   let slotH='<div class="slotbar">';
-  if(player.rainbow){   // 레인보우건 장착: 단일 슬롯에 레벨 표시(방향 수)
-    ingRow.innerHTML = `<div class="slotbar"><div class="wslot filled max" style="border-color:#ff66cc">${wicImg('rainbow_icon','🌈')}<div class="wlv" style="color:#ff9ad2">Lv${player.rainbowLv||1}</div></div></div>`;
-    let sr='<div class="resbar">'; if((player.ultLevel||1)>1) sr+=`<div class="res-c">${wicImg('_nope','🌀')}<b>${player.ultLevel}</b></div>`; sr+='</div>';
-    ingRow.innerHTML += sr;
-    let sk=''; document.getElementById('skillRow').innerHTML=sk; return;
+  if(player.rainbow){   // 레인보우건 장착: 단일 슬롯 + 보유 패시브 재료 칩 그대로 표시
+    let slot = `<div class="slotbar"><div class="wslot filled max" style="border-color:#ff66cc">${wicImg('rainbow_icon','🌈')}<div class="wlv" style="color:#ff9ad2">Lv${player.rainbowLv||1}</div></div></div>`;
+    let sr='<div class="resbar">';
+    for(const k of PASSIVE_KEYS){ const lv=player.weapons[k]; if(!lv || (player.absorbed&&player.absorbed[k])) continue; const info=weaponInfo(k);   // ★레인보우 후에도 패시브 재료 칩 유지 표시
+      sr+=`<div class="res-c">${wicImg(info.img||'_nope', info.ic)}<b>${lv}</b></div>`; }
+    if((player.ultLevel||1)>1) sr+=`<div class="res-c">${wicImg('_nope','🌀')}<b>${player.ultLevel}</b></div>`;
+    sr+='</div>';
+    ingRow.innerHTML = slot + sr;
+    document.getElementById('skillRow').innerHTML=''; return;
   }
   const weapons = COCKTAIL_KEYS.filter(k=>player.weapons[k]);
   for(let i=0;i<weaponSlotMax();i++){
