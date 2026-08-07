@@ -2352,7 +2352,7 @@ const MONSTER_INDEX=[
 const CHAR_INDEX=[
   { img:'char_pat', name:'PAT · THE SHAKER', t:'Built like the bar he tends. Hurls a heavy cobbler shaker that splashes a whole cluster at once. Tanky (180 HP), slow as last call, and gains +2 max HP every level so he keeps standing deep into the night. He does not chase the crowd; the crowd comes to him and regrets it. ULTIMATE — Shaker Tornado: a spinning vortex that keeps flinging glasses in every direction, invincible while it spins. Each level doubles its damage, adds an arm, and lasts longer.' },
   { img:'char_joe', name:'JOE · THE STIRRER', t:'All wrist, no waste. Flicks a bar spoon and mixing glass that skewer a line of up to 4 guests on one pour. Fragile (100 HP) but quick, gaining +1 max HP every level plus passive HP regen that heals faster each level. ULTIMATE — Untouchable: full invincibility PLUS a giant spinning bar spoon (15× normal) that shreds anyone it touches. 8s base, +0.8s and +220% damage every level.' },
-  { img:'char_minguk', name:'MINGUK · CRICKET SEOUL (KOREA)', t:'A guest bartender from Cricket Seoul. Lobs an agave heart that, on impact, bursts into spikes flying in every direction — the projectile hits one target, and the spikes rake everyone around it. Half of Pat\'s raw power (36) but nimble: same fire rate as Pat, 25% faster on his feet, and 20% more health than Joe (120 HP). Each AGAVE level adds damage, speeds up the throw, and throws MORE spikes on every hit (6 → 21 at max). ULTIMATE — Clase Azul Drop: a giant Clase Azul bottle falls upside-down from the sky, and when it lands the whole screen flashes white — every enemy and boss takes 10,000,000 damage. Each ultimate level multiplies it by 2.5.' },
+  { img:'char_minguk', name:'MINGUK · CRICKET SEOUL (KOREA)', t:'Owner of Cricket Seoul and a Clase Azul brand ambassador. Throws an agave that bursts into spikes. Nimble and sturdy. ULTIMATE — Clase Azul Drop: a giant bottle falls and wipes the whole screen.' },
 ];
 /* 스킬 사전 — 기본공격 / 기주 6종 / 재료 / 궤도 / 일반 강화 / 필살기. 모든 항목은 붐이 올린 이미지로. */
 const SKILL_INDEX=[
@@ -4640,7 +4640,7 @@ function updateClaseUlt(){
   if(!claseUlt.dmgDone && claseUlt.t>=claseUlt.drop){
     claseUlt.dmgDone=true; claseUlt.flashT=26; claseUlt.flashMax=26;   // 3번 번쩍(빠르게)
     const dmg = 10000000 * Math.pow(2.5, (player.ultLevel||1)-1);   // Lv1 1000만, 레벨업마다 ×2.5
-    for(const e of enemies){ if(e.type==='passout') continue; dealDmg(e, dmg); }
+    for(const e of enemies){ dealDmg(e, dmg); }   // ★passout 포함 전부 타격
     for(let k=enemies.length-1;k>=0;k--){ if(enemies[k].hp<=0) killEnemy(k); }
     burst(W/2,H/2,'#ffffff',70); burst(W/2,H/2,'#bcd0ff',40);
     try{ playSfx('boomshort', 2.2, 0); }catch(e){ try{ playNukeBoom(); }catch(_){} }   // ★착지 폭발음(boom short)
