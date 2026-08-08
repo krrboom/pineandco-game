@@ -133,6 +133,7 @@
   // ── 이미지(캐릭터 pat/joe + 슈퍼맨 포즈 + 던지는 피사체) ──
   const IMG={}; function loadImg(k,src){ const i=new Image(); i.onload=()=>{ IMG[k]=i; }; i.src=src; }
   ['cb_pat','cb_pat_s','cb_joe','cb_joe_s','proj_shaker','proj_barspoon','proj_mixglass'].forEach(k=>loadImg(k,'assets/'+k+'.png'));
+  loadImg('bg_gangnam','assets/bg_gangnam.png');   // ★가로 스크롤 강남 배경
   // ★Cocktail Defense 몬스터 + 보스 스프라이트(걷기 A/B) + thrower 토하기
   const BOSSES=['boss_karaoke','boss_couple','boss_woman','boss_ladies','boss_amaro'];   // 보스 순환
   ['enemy_drunk','enemy_drunk2','enemy_genzm','enemy_genzf','enemy_runner','enemy_bomber','enemy_thrower'].concat(BOSSES)
@@ -417,8 +418,12 @@
     else { ctx.fillStyle='rgba(90,138,94,.9)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,6.28); ctx.fill(); } }
 
   function draw(){ ctx.clearRect(0,0,W,H); ctx.save(); if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
-    for(const s of stars){ ctx.globalAlpha=s.z*0.8; ctx.fillStyle='#cdd7ef'; ctx.fillRect(s.x*W,s.y*H,s.z*1.8,s.z*1.8); } ctx.globalAlpha=1;
-    const gg=ctx.createLinearGradient(0,H*0.86,0,H); gg.addColorStop(0,'rgba(90,138,94,0)'); gg.addColorStop(1,'rgba(90,138,94,.18)'); ctx.fillStyle=gg; ctx.fillRect(0,H*0.86,W,H*0.14);
+    // ★강남 스카이라인 가로 스크롤 배경(끊김 없이 타일 반복, 천천히)
+    const bgi=IMG.bg_gangnam;
+    if(bgi){ const scale=H/bgi.height, tw=bgi.width*scale, ox=-((frame*0.4)%tw);
+      for(let x=ox-tw; x<W+tw; x+=tw) ctx.drawImage(bgi, x, 0, tw, H);
+      ctx.fillStyle='rgba(6,8,20,0.30)'; ctx.fillRect(0,0,W,H); }   // 살짝 어둡게(가독성)
+    else { for(const s of stars){ ctx.globalAlpha=s.z*0.8; ctx.fillStyle='#cdd7ef'; ctx.fillRect(s.x*W,s.y*H,s.z*1.8,s.z*1.8); } ctx.globalAlpha=1; }
     for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
     if(state!=='title'){
       // coins
