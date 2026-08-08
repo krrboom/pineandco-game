@@ -10,7 +10,7 @@
   html,body{ height:100%; background:#05070d; overflow:hidden; }
   body{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
     display:flex; align-items:center; justify-content:center; touch-action:none; -webkit-user-select:none; user-select:none; }
-  #wrap{ position:relative; width:100vw; height:100vh; max-width:520px; max-height:100vh; margin:0 auto; }
+  #wrap{ position:relative; width:100vw; height:100vh; max-width:min(100vw,900px); max-height:100vh; margin:0 auto; }
   canvas{ display:block; width:100%; height:100%; background:radial-gradient(120% 80% at 50% -10%, #16213e 0%, #0a0f1f 55%, #05070d 100%); }
   .overlay{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
     text-align:center; color:var(--cream); padding:22px; gap:12px; }
@@ -76,7 +76,7 @@
   <div id="title" class="overlay">
     <div class="brand">PINE &amp; CO · ARCADE</div>
     <h1>COCKTAIL<br><span class="em">BLITZ</span></h1>
-    <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>드래그·마우스·방향키로 이동.</div>
+    <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>드래그·마우스·방향키로 이동. 세로/가로 화면 모두 지원.</div>
     <button class="btn" id="startBtn">START</button>
     <div class="hi">BEST · <b id="hiTitle">0</b></div>
   </div>
@@ -99,7 +99,9 @@
 (function(){
   const cv=document.getElementById('c'), ctx=cv.getContext('2d'), wrap=document.getElementById('wrap');
   let W=0,H=0,DPR=Math.min(2,window.devicePixelRatio||1);
-  function resize(){ const r=wrap.getBoundingClientRect(); W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
+  let LAND=false, FWD=-Math.PI/2;   // ★방향 인식: 가로화면=옆으로(오른쪽 발사), 세로화면=위로 발사
+  function computeOrient(){ LAND = W>H; FWD = LAND ? 0 : -Math.PI/2; }
+  function resize(){ const r=wrap.getBoundingClientRect(); W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); computeOrient(); }
   window.addEventListener('resize',resize); resize();
 
   // ── audio ──
@@ -116,20 +118,24 @@
   function coinSfx(){ beep(1200,0.05,'square',0.05); }
 
   // ── weapons (칵테일) ──
-  function addBullet(o){ bullets.push(Object.assign({x:player.x,y:player.y-player.r,vx:0,vy:-10,dmg:6,r:4,pierce:0,life:120,col:'#9fffe4',homing:false},o)); }
+  function addBullet(o){ bullets.push(Object.assign({x:player.x,y:player.y,vx:0,vy:-10,dmg:6,r:4,pierce:0,life:120,col:'#9fffe4',homing:false,ang:FWD},o)); }
+  // ★FWD(발사 방향) 기준으로 발사: da=각도편차, off=수직 오프셋(발사구 간격)
+  function shoot(speed,da,off,extra){ const dir=FWD+da, perp=FWD+Math.PI/2;
+    const sx=player.x+Math.cos(FWD)*player.r+Math.cos(perp)*off, sy=player.y+Math.sin(FWD)*player.r+Math.sin(perp)*off;
+    addBullet(Object.assign({x:sx,y:sy,vx:Math.cos(dir)*speed,vy:Math.sin(dir)*speed,ang:dir},extra)); }
   const WEAPONS={
-    gintonic:{ name:'GIN TONIC', ic:'🍸', col:'#9fe4ff', max:6, desc:'위로 곧게 쏘는 기본 탄. 레벨업마다 발수·데미지↑',
-      cd:lv=>Math.max(5,11-lv), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ const off=(i-(n-1)/2)*10; addBullet({x:player.x+off,vy:-11,dmg:5+lv*2,r:4,col:'#9fe4ff'}); } } },
+    gintonic:{ name:'GIN TONIC', ic:'🍸', col:'#9fe4ff', max:6, desc:'정면으로 곧게 쏘는 기본 탄. 레벨업마다 발수·데미지↑',
+      cd:lv=>Math.max(5,11-lv), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ shoot(11,0,(i-(n-1)/2)*10,{dmg:5+lv*2,r:4,col:'#9fe4ff'}); } } },
     margarita:{ name:'MARGARITA', ic:'🍹', col:'#7ee787', max:6, desc:'3~5갈래 부채꼴 산탄',
-      cd:lv=>Math.max(14,24-lv*2), fire:function(lv){ const n=3+Math.min(2,Math.floor(lv/2)); for(let i=0;i<n;i++){ const a=-Math.PI/2+(i-(n-1)/2)*0.24; addBullet({vx:Math.cos(a)*10,vy:Math.sin(a)*10,dmg:5+lv*1.6,r:4,col:'#7ee787'}); } } },
+      cd:lv=>Math.max(14,24-lv*2), fire:function(lv){ const n=3+Math.min(2,Math.floor(lv/2)); for(let i=0;i<n;i++){ shoot(10,(i-(n-1)/2)*0.24,0,{dmg:5+lv*1.6,r:4,col:'#7ee787'}); } } },
     whiskysour:{ name:'WHISKY SOUR', ic:'🥃', col:'#ffd24a', max:6, desc:'적을 관통하는 강한 빔탄',
-      cd:lv=>Math.max(20,34-lv*2), fire:function(lv){ addBullet({vy:-13,dmg:10+lv*4,r:7,pierce:3+lv,col:'#ffd24a',beam:true}); } },
+      cd:lv=>Math.max(20,34-lv*2), fire:function(lv){ shoot(13,0,0,{dmg:10+lv*4,r:7,pierce:3+lv,col:'#ffd24a',beam:true}); } },
     bloodymary:{ name:'BLOODY MARY', ic:'🌶️', col:'#ff6a5a', max:6, desc:'가장 가까운 적을 유도하는 고추탄',
-      cd:lv=>Math.max(16,28-lv*2), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ const off=(i-(n-1)/2)*14; addBullet({x:player.x+off,vy:-7,dmg:6+lv*2,r:5,homing:true,col:'#ff6a5a',life:150}); } } },
-    negroni:{ name:'NEGRONI', ic:'🍊', col:'#ff8a3c', max:6, desc:'좌우 대각선으로 퍼지는 사이드건',
-      cd:lv=>Math.max(10,18-lv), fire:function(lv){ const sp=10; for(const s of [-1,1]){ const a=-Math.PI/2 + s*(0.5-Math.min(0.3,lv*0.05)); addBullet({vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,dmg:5+lv*1.8,r:4,col:'#ff8a3c'}); } } },
+      cd:lv=>Math.max(16,28-lv*2), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ shoot(7,0,(i-(n-1)/2)*14,{dmg:6+lv*2,r:5,homing:true,col:'#ff6a5a',life:150}); } } },
+    negroni:{ name:'NEGRONI', ic:'🍊', col:'#ff8a3c', max:6, desc:'양옆 대각선으로 퍼지는 사이드건',
+      cd:lv=>Math.max(10,18-lv), fire:function(lv){ const d=0.5-Math.min(0.3,lv*0.05); for(const s of [-1,1]) shoot(10,s*d,0,{dmg:5+lv*1.8,r:4,col:'#ff8a3c'}); } },
     espresso:{ name:'ESPRESSO', ic:'☕', col:'#c88a4c', max:6, desc:'초고속 연사 소형탄',
-      cd:lv=>Math.max(2,5-Math.floor(lv/2)), fire:function(lv){ addBullet({x:player.x+(Math.random()-0.5)*8,vy:-14,dmg:3+lv*1.2,r:3,col:'#e0b48a'}); } },
+      cd:lv=>Math.max(2,5-Math.floor(lv/2)), fire:function(lv){ shoot(14,0,(Math.random()-0.5)*8,{dmg:3+lv*1.2,r:3,col:'#e0b48a'}); } },
   };
   const HEAL={ name:'ON THE HOUSE', ic:'❤️', col:'#ff6a7a', desc:'체력 회복 + 최대체력 +20' };
 
@@ -154,7 +160,7 @@
   function start(){ ac(); state='play'; frame=0; score=0; level=1; coins=0; coinNeed=6; t=0;
     enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; boss=null; bossbar.classList.remove('show');
     spawnT=0; shake=0; flashHit=0; bossTimer=26*60; bossCount=0;
-    player.x=W/2; player.y=H*0.80; player.tx=player.x; player.ty=player.y; player.hp=100; player.maxHp=100; player.invuln=0; player.trail=[];
+    computeOrient(); if(LAND){ player.x=W*0.16; player.y=H/2; } else { player.x=W/2; player.y=H*0.80; } player.tx=player.x; player.ty=player.y; player.hp=100; player.maxHp=100; player.invuln=0; player.trail=[];
     player.weapons={ gintonic:1 }; player.wcd={};
     document.getElementById('title').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('levelup').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden'); updWchips();
@@ -168,10 +174,13 @@
   function spawnEnemy(){ const r=Math.random(); let type='basic', rad=13, hp=enemyHpBase(), spd=1.3+t*0.02, coin=1, col='#c96b6b';
     if(r<0.22){ type='zig'; rad=12; spd=1.6+t*0.02; col='#c98bd0'; }
     else if(r<0.36){ type='tank'; rad=20; hp*=3.2; spd=0.8+t*0.01; coin=3; col='#6b7ec9'; }
-    enemies.push({ type, x:Math.random()*(W-40)+20, y:-30, r:rad, hp, maxHp:hp, spd, coin, col, wob:Math.random()*6.28 }); }
+    let ex,ey,vx,vy; if(LAND){ ex=W+30; ey=Math.random()*(H-40)+20; vx=-spd; vy=0; } else { ex=Math.random()*(W-40)+20; ey=-30; vx=0; vy=spd; }
+    enemies.push({ type, x:ex, y:ey, r:rad, hp, maxHp:hp, spd, vx, vy, coin, col, wob:Math.random()*6.28 }); }
 
   function spawnBoss(){ bossCount++; const hp=Math.round(120*Math.pow(1.5,bossCount-1));
-    boss={ x:W/2, y:-80, ty:H*0.15, r:40, hp, maxHp:hp, fireT:50, burstT:160, dir:1, enter:true };
+    boss = LAND
+      ? { x:W+80, y:H/2, ex:W*0.85, ey:H/2, r:40, hp, maxHp:hp, fireT:50, burstT:160, dir:1, enter:true }
+      : { x:W/2, y:-80, ex:W/2, ey:H*0.15, r:40, hp, maxHp:hp, fireT:50, burstT:160, dir:1, enter:true };
     bossbar.classList.add('show'); bossfill.style.width='100%';
     lvlFlashEl.textContent='⚠ RIVAL BAR ⚠'; lvlFlashEl.classList.add('boss'); lvlFlashEl.style.opacity='1'; setTimeout(()=>lvlFlashEl.style.opacity='0',1100);
     beep(150,0.35,'sawtooth',0.14); }
@@ -179,8 +188,10 @@
   function explo(x,y,col,n,sp){ for(let i=0;i<(n||14);i++){ const a=Math.random()*6.28,s=1+Math.random()*(sp||4); parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:1+Math.random()*3,col}); } }
   function nearestEnemy(x,y){ let n=null,nd=1e9; for(const e of enemies){ const d=(e.x-x)**2+(e.y-y)**2; if(d<nd){nd=d;n=e;} } if(boss&&!boss.enter){ const d=(boss.x-x)**2+(boss.y-y)**2; if(d<nd){nd=d;n=boss;} } return n; }
 
+  function dropCoin(x,y){ const c={x:x+(Math.random()-0.5)*14,y:y+(Math.random()-0.5)*14,r:6};
+    if(LAND){ c.vx=-(1.0+Math.random()); c.vy=(Math.random()-0.5)*1.2; } else { c.vx=(Math.random()-0.5)*1.4; c.vy=1.2+Math.random(); } coinDrops.push(c); }
   function killEnemy(e,i){ explo(e.x,e.y,e.col,12,4); score+=e.type==='tank'?30:10; boom(false);
-    for(let k=0;k<e.coin;k++) coinDrops.push({x:e.x+(Math.random()-0.5)*14,y:e.y,vx:(Math.random()-0.5)*1.4,vy:1.2+Math.random(),r:6}); enemies.splice(i,1); }
+    for(let k=0;k<e.coin;k++) dropCoin(e.x,e.y); enemies.splice(i,1); }
 
   function gainCoin(){ coins++; score+=2; coinSfx(); if(coins>=coinNeed) levelUp(); }
   function levelUp(){ level++; coins-=coinNeed; coinNeed=5+level*3; document.getElementById('lvVal').textContent=level;
@@ -238,20 +249,24 @@
         if(gone){ bullets.splice(i,1); continue; }
         if(boss&&!boss.enter&&Math.hypot(boss.x-b.x,boss.y-b.y)<boss.r){ boss.hp-=b.dmg; explo(b.x,b.y,'#ffd24a',2,2); score+=1;
           if(boss.hp<=0){ explo(boss.x,boss.y,'#ff6a4d',50,7); explo(boss.x,boss.y,'#ffd24a',30,6); boom(true); shake=18; score+=400*bossCount;
-            for(let k=0;k<12;k++) coinDrops.push({x:boss.x+(Math.random()-0.5)*40,y:boss.y,vx:(Math.random()-0.5)*2,vy:1+Math.random()*1.5,r:6});
+            for(let k=0;k<12;k++) dropCoin(boss.x+(Math.random()-0.5)*40, boss.y+(Math.random()-0.5)*40);
             boss=null; bossbar.classList.remove('show'); bossTimer=22*60; lvlFlashEl.classList.remove('boss'); lvlFlashEl.textContent='RIVAL DOWN!'; lvlFlashEl.style.opacity='1'; setTimeout(()=>lvlFlashEl.style.opacity='0',900); }
           if(b.pierce>0) b.pierce--; else bullets.splice(i,1); continue; }
       }
       // 적
       for(let i=enemies.length-1;i>=0;i--){ const e=enemies[i]; e.wob+=0.1;
-        if(e.type==='zig') e.x+=Math.sin(e.wob*2)*2.2; e.y+=e.spd; if(e.x<e.r)e.x=e.r; if(e.x>W-e.r)e.x=W-e.r;
+        e.x+=e.vx; e.y+=e.vy;
+        if(e.type==='zig'){ if(LAND) e.y+=Math.sin(e.wob*2)*2.2; else e.x+=Math.sin(e.wob*2)*2.2; }
+        if(LAND){ if(e.y<e.r)e.y=e.r; if(e.y>H-e.r)e.y=H-e.r; } else { if(e.x<e.r)e.x=e.r; if(e.x>W-e.r)e.x=W-e.r; }
         if(Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r-2){ hurt(e.type==='tank'?34:22); explo(e.x,e.y,e.col,8,3); enemies.splice(i,1); continue; }
-        if(e.y>H+40) enemies.splice(i,1); }
+        if(e.y>H+40||e.y<-60||e.x<-60||e.x>W+60) enemies.splice(i,1); }
       // 보스
-      if(boss){ if(boss.enter){ boss.y+=(boss.ty-boss.y)*0.06; if(Math.abs(boss.y-boss.ty)<2){ boss.y=boss.ty; boss.enter=false; } }
-        else { boss.x+=boss.dir*(1.1+bossCount*0.2); if(boss.x<boss.r+10){boss.x=boss.r+10;boss.dir=1;} if(boss.x>W-boss.r-10){boss.x=W-boss.r-10;boss.dir=-1;}
+      if(boss){ if(boss.enter){ boss.x+=(boss.ex-boss.x)*0.06; boss.y+=(boss.ey-boss.y)*0.06; if(Math.hypot(boss.x-boss.ex,boss.y-boss.ey)<2){ boss.x=boss.ex; boss.y=boss.ey; boss.enter=false; } }
+        else { const bs=1.1+bossCount*0.2;
+          if(LAND){ boss.y+=boss.dir*bs; if(boss.y<boss.r+10){boss.y=boss.r+10;boss.dir=1;} if(boss.y>H-boss.r-10){boss.y=H-boss.r-10;boss.dir=-1;} }
+          else { boss.x+=boss.dir*bs; if(boss.x<boss.r+10){boss.x=boss.r+10;boss.dir=1;} if(boss.x>W-boss.r-10){boss.x=W-boss.r-10;boss.dir=-1;} }
           boss.fireT--; if(boss.fireT<=0){ boss.fireT=Math.max(26,56-bossCount*6); const ang=Math.atan2(player.y-boss.y,player.x-boss.x),sp=3+bossCount*0.25;
-            for(let k=-1;k<=1;k++){ const a=ang+k*0.2; ebullets.push({x:boss.x,y:boss.y+boss.r*0.6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6}); } beep(300,0.05,'sawtooth',0.06); }
+            for(let k=-1;k<=1;k++){ const a=ang+k*0.2; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6}); } beep(300,0.05,'sawtooth',0.06); }
           boss.burstT--; if(boss.burstT<=0){ boss.burstT=180; const n=8+bossCount*2; for(let k=0;k<n;k++){ const a=k/n*6.28; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,r:6}); } beep(220,0.12,'sawtooth',0.08); } }
         bossfill.style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';
         if(!boss.enter&&Math.hypot(boss.x-player.x,boss.y-player.y)<boss.r+player.r-4) hurt(40); }
@@ -261,10 +276,10 @@
       // 코인
       for(let i=coinDrops.length-1;i>=0;i--){ const c=coinDrops[i]; const d=Math.hypot(c.x-player.x,c.y-player.y);
         if(d<player.magnet){ const a=Math.atan2(player.y-c.y,player.x-c.x); c.vx+=(Math.cos(a)*7-c.vx)*0.2; c.vy+=(Math.sin(a)*7-c.vy)*0.2; }
-        else { c.vy+=0.03; }
+        else { if(LAND) c.vx-=0.03; else c.vy+=0.03; }
         c.x+=c.vx; c.y+=c.vy;
         if(d<player.r+c.r){ coinDrops.splice(i,1); gainCoin(); continue; }
-        if(c.y>H+40) coinDrops.splice(i,1); }
+        if(c.y>H+40||c.y<-40||c.x<-40||c.x>W+40) coinDrops.splice(i,1); }
     }
     for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.02; p.life-=(p.fade||0.03); if(p.life<=0) parts.splice(i,1); }
     if(shake>0){ shake*=0.86; if(shake<0.4) shake=0; } if(flashHit>0) flashHit-=0.05;
@@ -300,7 +315,9 @@
       // coins
       for(const c of coinDrops){ ctx.fillStyle='#ffd24a'; ctx.strokeStyle='#a5771a'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,6.28); ctx.fill(); ctx.stroke(); ctx.fillStyle='#a5771a'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('₩',c.x,c.y+3); }
       // player bullets
-      for(const b of bullets){ ctx.fillStyle=b.col; ctx.shadowColor=b.col; ctx.shadowBlur=8; if(b.beam){ ctx.fillRect(b.x-b.r/2,b.y-b.r*1.6,b.r,b.r*3.2); } else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } } ctx.shadowBlur=0;
+      for(const b of bullets){ ctx.fillStyle=b.col; ctx.shadowColor=b.col; ctx.shadowBlur=8;
+        if(b.beam){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate((b.ang||-Math.PI/2)+Math.PI/2); ctx.fillRect(-b.r/2,-b.r*1.6,b.r,b.r*3.2); ctx.restore(); }
+        else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } } ctx.shadowBlur=0;
       for(const e of ebullets){ ctx.fillStyle='#ff6a5a'; ctx.shadowColor='#ff3a2a'; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0;
       for(const e of enemies) drawEnemy(e); drawBoss();
       if(state==='play'||state==='levelup') drawPlayer();
