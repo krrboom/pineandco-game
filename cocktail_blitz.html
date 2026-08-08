@@ -23,6 +23,15 @@
     color:#0a140a; background:var(--pine); border:2px solid #cfeccf; border-radius:30px; cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,.5); }
   .btn:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.5); }
   .hi{ font-size:13px; color:#8ea0c0; } .hi b{ color:var(--gold); }
+  #charpick{ display:flex; gap:12px; margin:4px 0; }
+  .cbtn{ display:flex; flex-direction:column; align-items:center; gap:2px; width:clamp(120px,38vw,150px); padding:8px 6px 10px; cursor:pointer;
+    background:linear-gradient(#1a2620,#12190f); border:2px solid #35513f; border-radius:14px; box-shadow:0 4px 0 rgba(0,0,0,.5); transition:transform .07s,border-color .12s,box-shadow .12s; }
+  .cbtn:active{ transform:translateY(3px); }
+  .cbtn img{ width:84px; height:56px; object-fit:contain; image-rendering:pixelated; }
+  .cbtn .cn{ font-size:16px; font-weight:900; color:var(--cream); letter-spacing:1px; }
+  .cbtn .cd{ font-size:10.5px; font-weight:700; color:#a9b6cf; }
+  .cbtn.sel{ border-color:var(--gold); box-shadow:0 0 14px rgba(200,154,60,.45),0 4px 0 rgba(0,0,0,.5); }
+  .cbtn.sel .cn{ color:var(--gold); }
   #overTitle{ font-size:clamp(26px,8vw,40px); font-weight:900; color:#ff5a4d; text-shadow:0 0 20px rgba(255,90,77,.4); }
   .stat{ font-size:clamp(15px,4.4vw,19px); } .stat b{ color:var(--gold); font-size:1.3em; }
   .newrec{ color:var(--gold); font-weight:800; letter-spacing:2px; font-size:13px; animation:blink 1s steps(2) infinite; }
@@ -77,6 +86,10 @@
     <div class="brand">PINE &amp; CO · ARCADE</div>
     <h1>COCKTAIL<br><span class="em">BLITZ</span></h1>
     <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>드래그·마우스·방향키로 이동. 세로/가로 화면 모두 지원.</div>
+    <div id="charpick">
+      <button class="cbtn sel" data-char="pat"><img src="assets/cb_pat.png" alt="PAT"><span class="cn">PAT</span><span class="cd">🍸 쉐이커 · 폭발</span></button>
+      <button class="cbtn" data-char="joe"><img src="assets/cb_joe.png" alt="JOE"><span class="cn">JOE</span><span class="cd">🥄 바스푼 · 관통</span></button>
+    </div>
     <button class="btn" id="startBtn">START</button>
     <div class="hi">BEST · <b id="hiTitle">0</b></div>
   </div>
@@ -117,6 +130,11 @@
     g2.gain.setValueAtTime(big?0.5:0.35,a.currentTime); g2.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+dur); s.connect(lp); lp.connect(g2); g2.connect(a.destination); s.start(); s.stop(a.currentTime+dur); }catch(e){} }
   function coinSfx(){ beep(1200,0.05,'square',0.05); }
 
+  // ── 이미지(캐릭터 pat/joe + 슈퍼맨 포즈 + 던지는 피사체) ──
+  const IMG={}; function loadImg(k,src){ const i=new Image(); i.onload=()=>{ IMG[k]=i; }; i.src=src; }
+  ['cb_pat','cb_pat_s','cb_joe','cb_joe_s','proj_shaker','proj_barspoon','proj_mixglass'].forEach(k=>loadImg(k,'assets/'+k+'.png'));
+  let selectedChar='pat';
+
   // ── weapons (칵테일) ──
   function addBullet(o){ bullets.push(Object.assign({x:player.x,y:player.y,vx:0,vy:-10,dmg:6,r:4,pierce:0,life:120,col:'#9fffe4',homing:false,ang:FWD},o)); }
   // ★FWD(발사 방향) 기준으로 발사: da=각도편차, off=수직 오프셋(발사구 간격)
@@ -124,6 +142,10 @@
     const sx=player.x+Math.cos(FWD)*player.r+Math.cos(perp)*off, sy=player.y+Math.sin(FWD)*player.r+Math.sin(perp)*off;
     addBullet(Object.assign({x:sx,y:sy,vx:Math.cos(dir)*speed,vy:Math.sin(dir)*speed,ang:dir},extra)); }
   const WEAPONS={
+    shaker:{ name:'SHAKER', ic:'🍸', col:'#e6ecf5', max:6, sig:'pat', desc:'Pat의 코블러 쉐이커 — 명중 시 폭발(광역 데미지)',
+      cd:lv=>Math.max(15,27-lv*2), fire:function(lv){ player.throwTimer=11; shoot(9,0,0,{dmg:9+lv*3,r:10,col:'#e6ecf5',img:'proj_shaker',spin:true,splash:34+lv*5}); } },
+    barspoon:{ name:'BAR SPOON', ic:'🥄', col:'#cfe0ff', max:6, sig:'joe', desc:'Joe의 바스푼·믹싱글라스 — 관통 3',
+      cd:lv=>Math.max(6,12-lv), fire:function(lv){ player.throwTimer=11; const alt=(frame%2===0); shoot(13,0,(Math.random()-0.5)*6,{dmg:6+lv*2,r:7,pierce:3,col:'#cfe0ff',img:alt?'proj_barspoon':'proj_mixglass',spin:true}); } },
     gintonic:{ name:'GIN TONIC', ic:'🍸', col:'#9fe4ff', max:6, desc:'정면으로 곧게 쏘는 기본 탄. 레벨업마다 발수·데미지↑',
       cd:lv=>Math.max(5,11-lv), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ shoot(11,0,(i-(n-1)/2)*10,{dmg:5+lv*2,r:4,col:'#9fe4ff'}); } } },
     margarita:{ name:'MARGARITA', ic:'🍹', col:'#7ee787', max:6, desc:'3~5갈래 부채꼴 산탄',
@@ -141,7 +163,7 @@
 
   // ── state ──
   let state='title', frame=0, score=0, best=parseInt(localStorage.getItem('pine_blitz_best')||'0')||0, level=1, coins=0, coinNeed=6, t=0;
-  const player={ x:0,y:0,tx:0,ty:0,r:13, hp:100,maxHp:100, invuln:0, trail:[], weapons:{}, wcd:{}, magnet:80 };
+  const player={ x:0,y:0,tx:0,ty:0,r:15, hp:100,maxHp:100, invuln:0, trail:[], weapons:{}, wcd:{}, magnet:80, char:'pat', throwTimer:0 };
   let enemies=[], bullets=[], ebullets=[], coinDrops=[], parts=[], stars=[], boss=null;
   let shake=0, spawnT=0, flashHit=0, bossTimer=0, bossCount=0;
   const lvlFlashEl=document.getElementById('lvlFlash'), bossbar=document.getElementById('bossbar'), bossfill=document.getElementById('bossfill');
@@ -156,12 +178,15 @@
   const keys={}; window.addEventListener('keydown',e=>{ keys[e.key]=true; if(e.key===' '&&state!=='play'&&state!=='levelup') start(); });
   window.addEventListener('keyup',e=>{ keys[e.key]=false; });
   document.getElementById('startBtn').onclick=start; document.getElementById('retryBtn').onclick=start;
+  document.querySelectorAll('#charpick .cbtn').forEach(b=>{ b.onclick=()=>{ selectedChar=b.getAttribute('data-char'); ac();
+    document.querySelectorAll('#charpick .cbtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); beep(660,0.05,'square',0.06); }; });
 
   function start(){ ac(); state='play'; frame=0; score=0; level=1; coins=0; coinNeed=6; t=0;
     enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; boss=null; bossbar.classList.remove('show');
     spawnT=0; shake=0; flashHit=0; bossTimer=26*60; bossCount=0;
     computeOrient(); if(LAND){ player.x=W*0.16; player.y=H/2; } else { player.x=W/2; player.y=H*0.80; } player.tx=player.x; player.ty=player.y; player.hp=100; player.maxHp=100; player.invuln=0; player.trail=[];
-    player.weapons={ gintonic:1 }; player.wcd={};
+    player.char=selectedChar; player.throwTimer=0;
+    player.weapons = player.char==='joe' ? { barspoon:1 } : { shaker:1 }; player.wcd={};
     document.getElementById('title').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('levelup').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden'); updWchips();
   }
@@ -199,7 +224,8 @@
     state='levelup'; showCards(); document.getElementById('levelup').classList.remove('hidden'); }
 
   function showCards(){ const pool=[];
-    for(const k in WEAPONS){ const lv=player.weapons[k]||0; if(lv>=WEAPONS[k].max) continue; pool.push({k, upgrade:lv>0}); }
+    for(const k in WEAPONS){ const w=WEAPONS[k]; if(w.sig && w.sig!==player.char) continue;   // ★상대 캐릭터 시그니처는 안 나옴
+      const lv=player.weapons[k]||0; if(lv>=w.max) continue; pool.push({k, upgrade:lv>0}); }
     // 셔플
     for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
     const pick=pool.slice(0,3); if(Math.random()<0.35 || pick.length<3) pick.push({heal:true});
@@ -236,7 +262,7 @@
       player.tx=Math.max(player.r,Math.min(W-player.r,player.tx)); player.ty=Math.max(player.r,Math.min(H-player.r,player.ty));
       player.x+=(player.tx-player.x)*0.35; player.y+=(player.ty-player.y)*0.35;
       player.trail.push({x:player.x,y:player.y}); if(player.trail.length>8) player.trail.shift();
-      if(player.invuln>0) player.invuln--;
+      if(player.invuln>0) player.invuln--; if(player.throwTimer>0) player.throwTimer--;
       // 무기 발사
       for(const k in player.weapons){ const lv=player.weapons[k]; player.wcd[k]=(player.wcd[k]||0)-1; if(player.wcd[k]<=0){ WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); } }
       // 총알
@@ -244,7 +270,12 @@
         if(b.homing){ const tg=nearestEnemy(b.x,b.y); if(tg){ const a=Math.atan2(tg.y-b.y,tg.x-b.x); b.vx+=(Math.cos(a)*8-b.vx)*0.12; b.vy+=(Math.sin(a)*8-b.vy)*0.12; } }
         b.x+=b.vx; b.y+=b.vy; if(b.life<=0||b.y<-30||b.x<-30||b.x>W+30){ bullets.splice(i,1); continue; }
         let gone=false;
-        for(let j=enemies.length-1;j>=0;j--){ const e=enemies[j]; if(Math.hypot(e.x-b.x,e.y-b.y)<e.r+b.r){ e.hp-=b.dmg; explo(b.x,b.y,'#ffe08a',3,2);
+        for(let j=enemies.length-1;j>=0;j--){ const e=enemies[j]; if(Math.hypot(e.x-b.x,e.y-b.y)<e.r+b.r){
+          if(b.splash){ explo(b.x,b.y,'#ffb14d',18,5); boom(false);   // ★쉐이커 폭발: 반경 안 전부 타격
+            for(let mm=enemies.length-1;mm>=0;mm--){ const e2=enemies[mm]; if(Math.hypot(e2.x-b.x,e2.y-b.y)<b.splash+e2.r){ e2.hp-=b.dmg; if(e2.hp<=0) killEnemy(e2,mm); } }
+            if(boss&&!boss.enter&&Math.hypot(boss.x-b.x,boss.y-b.y)<b.splash+boss.r){ boss.hp-=b.dmg; score+=1; }
+            gone=true; break; }
+          e.hp-=b.dmg; explo(b.x,b.y,'#ffe08a',3,2);
           if(e.hp<=0) killEnemy(e,j); if(b.pierce>0){ b.pierce--; } else { gone=true; } break; } }
         if(gone){ bullets.splice(i,1); continue; }
         if(boss&&!boss.enter&&Math.hypot(boss.x-b.x,boss.y-b.y)<boss.r){ boss.hp-=b.dmg; explo(b.x,b.y,'#ffd24a',2,2); score+=1;
@@ -300,12 +331,13 @@
     const cg=ctx.createRadialGradient(0,r*0.15,2,0,r*0.15,r*0.6); cg.addColorStop(0,'#fff'); cg.addColorStop(0.4,'#ff8a5a'); cg.addColorStop(1,'#7a1008'); ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(0,r*0.15,r*0.42*(0.9+0.1*Math.sin(frame*0.2)),0,6.28); ctx.fill();
     ctx.restore(); }
   function drawPlayer(){ if(player.invuln>0 && frame%6<3) return;
-    for(let i=0;i<player.trail.length;i++){ const p=player.trail[i],a=i/player.trail.length; ctx.globalAlpha=a*0.25; ctx.fillStyle='#8fe0c4'; ctx.beginPath(); ctx.arc(p.x,p.y,player.r*a,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
-    const g=ctx.createRadialGradient(player.x,player.y,2,player.x,player.y,player.r*2.6); g.addColorStop(0,'rgba(120,230,200,.5)'); g.addColorStop(1,'rgba(120,230,200,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(player.x,player.y,player.r*2.6,0,6.28); ctx.fill();
-    const x=player.x,y=player.y,s=player.r; ctx.strokeStyle='#eafff6'; ctx.fillStyle='rgba(90,138,94,.85)'; ctx.lineWidth=2.4; ctx.lineJoin='round';
-    ctx.beginPath(); ctx.moveTo(x-s,y-s*0.7); ctx.lineTo(x+s,y-s*0.7); ctx.lineTo(x,y+s*0.15); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x,y+s*0.15); ctx.lineTo(x,y+s*0.95); ctx.moveTo(x-s*0.55,y+s*0.95); ctx.lineTo(x+s*0.55,y+s*0.95); ctx.stroke();
-    ctx.fillStyle='#ff5a6a'; ctx.beginPath(); ctx.arc(x+s*0.28,y-s*0.42,s*0.2,0,6.28); ctx.fill(); }
+    for(let i=0;i<player.trail.length;i++){ const p=player.trail[i],a=i/player.trail.length; ctx.globalAlpha=a*0.22; ctx.fillStyle='#8fe0c4'; ctx.beginPath(); ctx.arc(p.x,p.y,player.r*a,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
+    const g=ctx.createRadialGradient(player.x,player.y,2,player.x,player.y,player.r*2.4); g.addColorStop(0,'rgba(120,230,200,.4)'); g.addColorStop(1,'rgba(120,230,200,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(player.x,player.y,player.r*2.4,0,6.28); ctx.fill();
+    // ★던질 때(throwTimer>0) 슈퍼맨 포즈 이미지로 전환
+    const key=(player.throwTimer>0?(player.char==='joe'?'cb_joe_s':'cb_pat_s'):(player.char==='joe'?'cb_joe':'cb_pat'));
+    const im=IMG[key];
+    if(im){ const h=player.r*3.6, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.rotate(FWD); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
+    else { ctx.fillStyle='rgba(90,138,94,.9)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,6.28); ctx.fill(); } }
 
   function draw(){ ctx.clearRect(0,0,W,H); ctx.save(); if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
     for(const s of stars){ ctx.globalAlpha=s.z*0.8; ctx.fillStyle='#cdd7ef'; ctx.fillRect(s.x*W,s.y*H,s.z*1.8,s.z*1.8); } ctx.globalAlpha=1;
@@ -315,9 +347,11 @@
       // coins
       for(const c of coinDrops){ ctx.fillStyle='#ffd24a'; ctx.strokeStyle='#a5771a'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,6.28); ctx.fill(); ctx.stroke(); ctx.fillStyle='#a5771a'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('₩',c.x,c.y+3); }
       // player bullets
-      for(const b of bullets){ ctx.fillStyle=b.col; ctx.shadowColor=b.col; ctx.shadowBlur=8;
+      for(const b of bullets){
+        if(b.img && IMG[b.img]){ const im=IMG[b.img], h=b.r*2.8, w=h*im.width/im.height; ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.spin?frame*0.32:((b.ang||-Math.PI/2)+Math.PI/2)); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); continue; }
+        ctx.fillStyle=b.col; ctx.shadowColor=b.col; ctx.shadowBlur=8;
         if(b.beam){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate((b.ang||-Math.PI/2)+Math.PI/2); ctx.fillRect(-b.r/2,-b.r*1.6,b.r,b.r*3.2); ctx.restore(); }
-        else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } } ctx.shadowBlur=0;
+        else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0; } ctx.shadowBlur=0;
       for(const e of ebullets){ ctx.fillStyle='#ff6a5a'; ctx.shadowColor='#ff3a2a'; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0;
       for(const e of enemies) drawEnemy(e); drawBoss();
       if(state==='play'||state==='levelup') drawPlayer();
