@@ -241,6 +241,7 @@
     else if(r<0.32){ type='bomber'; rad=15; hpm=0.8; spdm=1.1; coin=2; sprite='enemy_bomber'; } // 폭발
     else if(r<0.5){ type='runner'; rad=13; hpm=0.7; spdm=1.9; coin=1; sprite='enemy_runner'; }  // 빠름+지그재그
     else { type='drunk'; rad=15; hpm=1.1; spdm=1.0; coin=1; sprite=EVAR[Math.floor(Math.random()*EVAR.length)]; }
+    rad=Math.round(rad*1.4);   // ★기본 몬스터 크기 +40%
     const hp=enemyHpBase()*hpm, spd=(1.2+t*0.02)*spdm;
     let ex,ey,vx,vy; if(LAND){ ex=W+30; ey=Math.random()*(H-60)+30; vx=-spd; vy=0; } else { ex=Math.random()*(W-60)+30; ey=-30; vx=0; vy=spd; }
     const e={ type, sprite, x:ex, y:ey, r:rad, hp, maxHp:hp, spd, vx, vy, coin, wob:Math.random()*6.28, fireT:70, vomit:0 };
@@ -349,8 +350,10 @@
           const reached = LAND ? (e.x<=e.stop) : (e.y>=e.stop);
           if(!reached){ e.x+=e.vx; e.y+=e.vy; }
           else { if(LAND) e.y+=Math.sin(e.wob)*0.8; else e.x+=Math.sin(e.wob)*0.8;   // 거리 두고 배회
-            e.fireT--; if(e.fireT<=0){ e.fireT=Math.max(46,90-t*1.2); e.vomit=14;
-              const a=Math.atan2(player.y-e.y,player.x-e.x), sp=3.2; ebullets.push({x:e.x,y:e.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6,col:'#9ad14f'}); beep(280,0.06,'sawtooth',0.05); } }
+            e.fireT--; if(e.fireT<=0){ e.fireT=Math.max(46,90-t*1.2); e.vomit=16;
+              const a=Math.atan2(player.y-e.y,player.x-e.x);   // ★CD식 침 뱉기: 초록 vomit 블롭 2발
+              for(const off of [-0.14,0.14]){ const aa=a+off, sp=2.8+Math.random()*0.8; ebullets.push({x:e.x,y:e.y+e.r*0.3,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,r:7,col:'#9ad14f',vomit:true,wob:Math.random()*6.28}); }
+              sfx('sfx_hurt',0.25); } }
         } else {
           e.x+=e.vx; e.y+=e.vy;
           if(e.type==='runner'){ if(LAND) e.y+=Math.sin(e.wob*2)*2.4; else e.x+=Math.sin(e.wob*2)*2.4; }
@@ -364,9 +367,13 @@
         else { const bs=1.1+bossCount*0.2;
           if(LAND){ boss.y+=boss.dir*bs; if(boss.y<boss.r+10){boss.y=boss.r+10;boss.dir=1;} if(boss.y>H-boss.r-10){boss.y=H-boss.r-10;boss.dir=-1;} }
           else { boss.x+=boss.dir*bs; if(boss.x<boss.r+10){boss.x=boss.r+10;boss.dir=1;} if(boss.x>W-boss.r-10){boss.x=W-boss.r-10;boss.dir=-1;} }
-          boss.fireT--; if(boss.fireT<=0){ boss.fireT=Math.max(26,56-bossCount*6); const ang=Math.atan2(player.y-boss.y,player.x-boss.x),sp=3+bossCount*0.25;
-            for(let k=-1;k<=1;k++){ const a=ang+k*0.2; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6}); } beep(300,0.05,'sawtooth',0.06); }
-          boss.burstT--; if(boss.burstT<=0){ boss.burstT=180; const n=8+bossCount*2; for(let k=0;k<n;k++){ const a=k/n*6.28; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,r:6}); } beep(220,0.12,'sawtooth',0.08); } }
+          // ① 조준 연발(플레이어를 향해 3~5갈래)
+          boss.fireT--; if(boss.fireT<=0){ boss.fireT=Math.max(24,54-bossCount*6); const ang=Math.atan2(player.y-boss.y,player.x-boss.x),sp=3+bossCount*0.25, sh=2+Math.min(2,Math.floor(bossCount/2));
+            for(let k=-sh;k<=sh;k++){ const a=ang+k*0.16; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6}); } sfx('hit',0.3); }
+          // ② 방사형 버스트(사방)
+          boss.burstT--; if(boss.burstT<=0){ boss.burstT=170; const n=8+bossCount*2; for(let k=0;k<n;k++){ const a=k/n*6.28; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,r:6}); } sfx('sfx_boss',0.35); }
+          // ③ 회전 스파이럴(빙글빙글 뿜기) — 2번째 보스부터
+          if(bossCount>=2){ boss.spA=(boss.spA||0)+0.35; if(frame%4===0){ const arms=2+Math.min(3,Math.floor(bossCount/2)); for(let k=0;k<arms;k++){ const a=boss.spA+k*(6.28/arms); ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.6,vy:Math.sin(a)*2.6,r:5,col:'#ffb14d'}); } } } }
         bossfill.style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';
         if(!boss.enter&&Math.hypot(boss.x-player.x,boss.y-player.y)<boss.r+player.r-4) hurt(40); }
       // 적 탄
@@ -422,7 +429,11 @@
         ctx.fillStyle=b.col; ctx.shadowColor=b.col; ctx.shadowBlur=8;
         if(b.beam){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate((b.ang||-Math.PI/2)+Math.PI/2); ctx.fillRect(-b.r/2,-b.r*1.6,b.r,b.r*3.2); ctx.restore(); }
         else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0; } ctx.shadowBlur=0;
-      for(const e of ebullets){ const col=e.col||'#ff6a5a'; ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0;
+      for(const e of ebullets){ const col=e.col||'#ff6a5a'; ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=8;
+        if(e.vomit){ const w=(e.wob||0)+frame*0.2;   // 울퉁불퉁한 침 덩어리
+          ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.arc(e.x+Math.cos(w)*e.r*0.6,e.y+Math.sin(w)*e.r*0.5,e.r*0.7,0,6.28); ctx.arc(e.x-Math.cos(w)*e.r*0.5,e.y+e.r*0.4,e.r*0.55,0,6.28); ctx.fill();
+          ctx.fillStyle='rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(e.x-e.r*0.3,e.y-e.r*0.3,e.r*0.25,0,6.28); ctx.fill(); }
+        else { ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.fill(); } } ctx.shadowBlur=0;
       for(const e of enemies) drawEnemy(e); drawBoss();
       if(state==='play'||state==='levelup'){ drawPlayer(); drawOrbit(); }
     }
