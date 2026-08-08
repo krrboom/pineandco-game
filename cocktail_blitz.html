@@ -148,9 +148,10 @@
 
   // ── weapons (칵테일) ──
   function addBullet(o){ bullets.push(Object.assign({x:player.x,y:player.y,vx:0,vy:-10,dmg:6,r:4,pierce:0,life:120,col:'#9fffe4',homing:false,ang:FWD},o)); }
-  // ★FWD(발사 방향) 기준으로 발사: da=각도편차, off=수직 오프셋(발사구 간격)
+  // ★FWD(발사 방향) 기준으로 발사. 발사 원점 fireOX/OY(궤도 칵테일 위치 or 플레이어)
+  let fireOX=0, fireOY=0, orbitPos={};
   function shoot(speed,da,off,extra){ const dir=FWD+da, perp=FWD+Math.PI/2;
-    const sx=player.x+Math.cos(FWD)*player.r+Math.cos(perp)*off, sy=player.y+Math.sin(FWD)*player.r+Math.sin(perp)*off;
+    const sx=fireOX+Math.cos(FWD)*player.r*0.6+Math.cos(perp)*off, sy=fireOY+Math.sin(FWD)*player.r*0.6+Math.sin(perp)*off;
     addBullet(Object.assign({x:sx,y:sy,vx:Math.cos(dir)*speed,vy:Math.sin(dir)*speed,ang:dir},extra)); }
   // ★모든 칵테일을 실제 칵테일 이미지(cocktail_*.png)를 피사체로 발사
   const WEAPONS={
@@ -315,7 +316,13 @@
       player.trail.push({x:player.x,y:player.y}); if(player.trail.length>8) player.trail.shift();
       if(player.invuln>0) player.invuln--; if(player.throwTimer>0) player.throwTimer--;
       // 무기 발사
-      for(const k in player.weapons){ const lv=player.weapons[k]; player.wcd[k]=(player.wcd[k]||0)-1; if(player.wcd[k]<=0){ WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); player.throwTimer=9; } }
+      // ★궤도 칵테일: 획득한 칵테일이 플레이어 주위를 빙글빙글 돎(기본 쉐이커/바스푼 제외)
+      const orb=Object.keys(player.weapons).filter(k=>!WEAPONS[k].sig); orbitPos={};
+      const NR=orb.length, OR=player.r*2.7, spin=frame*0.035;
+      orb.forEach((k,i)=>{ const a=spin + i*(6.28/Math.max(1,NR)); orbitPos[k]={x:player.x+Math.cos(a)*OR, y:player.y+Math.sin(a)*OR}; });
+      for(const k in player.weapons){ const lv=player.weapons[k]; player.wcd[k]=(player.wcd[k]||0)-1;
+        if(player.wcd[k]<=0){ const op=(WEAPONS[k].sig||!orbitPos[k])?player:orbitPos[k]; fireOX=op.x; fireOY=op.y;   // 시그니처=플레이어, 칵테일=궤도 위치에서 발사
+          WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); if(WEAPONS[k].sig) player.throwTimer=9; } }
       // 총알
       for(let i=bullets.length-1;i>=0;i--){ const b=bullets[i]; b.life--;
         if(b.homing){ const tg=nearestEnemy(b.x,b.y); if(tg){ const a=Math.atan2(tg.y-b.y,tg.x-b.x); b.vx+=(Math.cos(a)*8-b.vx)*0.12; b.vy+=(Math.sin(a)*8-b.vy)*0.12; } }
@@ -388,6 +395,10 @@
     const g=ctx.createRadialGradient(boss.x,boss.y,4,boss.x,boss.y,r*1.7); g.addColorStop(0,'rgba(255,90,77,.35)'); g.addColorStop(1,'rgba(255,90,77,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(boss.x,boss.y,r*1.7,0,6.28); ctx.fill();
     const walk=(Math.floor(frame/10)%2===0);
     drawSprite(boss.sprite+(walk?'_walkA':'_walkB'), boss.x, boss.y, r, LAND); }
+  function drawOrbit(){ for(const k in orbitPos){ const p=orbitPos[k], im=IMG['cocktail_'+k];
+    ctx.save(); ctx.globalAlpha=0.55; const g=ctx.createRadialGradient(p.x,p.y,1,p.x,p.y,player.r*1.35); g.addColorStop(0,(WEAPONS[k]&&WEAPONS[k].col)||'#fff'); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,player.r*1.35,0,6.28); ctx.fill(); ctx.restore();
+    if(im){ const h=player.r*1.8, w=h*im.width/im.height; ctx.save(); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,p.x-w/2,p.y-h/2,w,h); ctx.restore(); }
+    else { ctx.fillStyle=(WEAPONS[k]&&WEAPONS[k].col)||'#fff'; ctx.beginPath(); ctx.arc(p.x,p.y,player.r*0.5,0,6.28); ctx.fill(); } } }
   function drawPlayer(){ if(player.invuln>0 && frame%6<3) return;
     for(let i=0;i<player.trail.length;i++){ const p=player.trail[i],a=i/player.trail.length; ctx.globalAlpha=a*0.22; ctx.fillStyle='#8fe0c4'; ctx.beginPath(); ctx.arc(p.x,p.y,player.r*a,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
     const g=ctx.createRadialGradient(player.x,player.y,2,player.x,player.y,player.r*2.4); g.addColorStop(0,'rgba(120,230,200,.4)'); g.addColorStop(1,'rgba(120,230,200,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(player.x,player.y,player.r*2.4,0,6.28); ctx.fill();
@@ -412,7 +423,7 @@
         else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0; } ctx.shadowBlur=0;
       for(const e of ebullets){ const col=e.col||'#ff6a5a'; ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0;
       for(const e of enemies) drawEnemy(e); drawBoss();
-      if(state==='play'||state==='levelup') drawPlayer();
+      if(state==='play'||state==='levelup'){ drawPlayer(); drawOrbit(); }
     }
     ctx.restore();
     if(flashHit>0){ ctx.globalAlpha=flashHit*0.55; ctx.fillStyle='#ff5a4d'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
