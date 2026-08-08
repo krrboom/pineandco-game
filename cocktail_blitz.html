@@ -85,7 +85,7 @@
   <div id="title" class="overlay">
     <div class="brand">PINE &amp; CO · ARCADE</div>
     <h1>COCKTAIL<br><span class="em">BLITZ</span></h1>
-    <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>드래그·마우스·방향키로 이동. 세로/가로 화면 모두 지원.</div>
+    <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>모바일=드래그, PC=방향키/WASD로 이동. 세로/가로 화면 모두 지원.</div>
     <div id="charpick">
       <button class="cbtn sel" data-char="pat"><img src="assets/cb_pat.png" alt="PAT"><span class="cn">PAT</span><span class="cd">🍸 쉐이커 · 폭발</span></button>
       <button class="cbtn" data-char="joe"><img src="assets/cb_joe.png" alt="JOE"><span class="cn">JOE</span><span class="cd">🥄 바스푼 · 관통</span></button>
@@ -209,8 +209,9 @@
 
   let pointerActive=false;
   function setTarget(cx,cy){ const r=cv.getBoundingClientRect(); player.tx=Math.max(player.r,Math.min(W-player.r,cx-r.left)); player.ty=Math.max(player.r,Math.min(H-player.r,cy-r.top)); }
-  cv.addEventListener('pointerdown',e=>{ pointerActive=true; setTarget(e.clientX,e.clientY); },{passive:true});
-  window.addEventListener('pointermove',e=>{ if(state==='play'&&(pointerActive||e.pointerType==='mouse')) setTarget(e.clientX,e.clientY); },{passive:true});
+  // ★마우스 컨트롤 제거: 터치(드래그)만 이동, 데스크톱은 방향키/WASD
+  cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse') return; pointerActive=true; setTarget(e.clientX,e.clientY); },{passive:true});
+  window.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') return; if(state==='play'&&pointerActive) setTarget(e.clientX,e.clientY); },{passive:true});
   window.addEventListener('pointerup',()=>{ pointerActive=false; },{passive:true});
   const keys={}; window.addEventListener('keydown',e=>{ keys[e.key]=true; if(e.key===' '&&state!=='play'&&state!=='levelup') start(); });
   window.addEventListener('keyup',e=>{ keys[e.key]=false; });
