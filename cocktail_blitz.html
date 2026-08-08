@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Pine &amp; Co — Cocktail Blitz</title>
+<style>
+  :root{ --pine:#5a8a5e; --gold:#c89a3c; --cream:#f0ebe0; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; background:#05070d; overflow:hidden; }
+  body{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    display:flex; align-items:center; justify-content:center; touch-action:none; -webkit-user-select:none; user-select:none; }
+  #wrap{ position:relative; width:100vw; height:100vh; max-width:520px; max-height:100vh; margin:0 auto; }
+  canvas{ display:block; width:100%; height:100%; background:radial-gradient(120% 80% at 50% -10%, #16213e 0%, #0a0f1f 55%, #05070d 100%); }
+  .overlay{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; color:var(--cream); padding:22px; gap:12px; }
+  .hidden{ display:none !important; }
+  .brand{ font-size:12px; letter-spacing:4px; color:var(--gold); font-weight:800; }
+  h1{ font-size:clamp(28px,9vw,50px); font-weight:900; letter-spacing:1px; line-height:1; text-shadow:0 0 24px rgba(200,154,60,.35); }
+  h1 .em{ color:#7ee7a0; }
+  .sub{ font-size:clamp(12px,3.5vw,15px); color:#a9b6cf; line-height:1.6; max-width:320px; }
+  .btn{ margin-top:6px; padding:14px 40px; font-family:inherit; font-size:clamp(16px,4.8vw,20px); font-weight:800; letter-spacing:1px;
+    color:#0a140a; background:var(--pine); border:2px solid #cfeccf; border-radius:30px; cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,.5); }
+  .btn:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.5); }
+  .hi{ font-size:13px; color:#8ea0c0; } .hi b{ color:var(--gold); }
+  #overTitle{ font-size:clamp(26px,8vw,40px); font-weight:900; color:#ff5a4d; text-shadow:0 0 20px rgba(255,90,77,.4); }
+  .stat{ font-size:clamp(15px,4.4vw,19px); } .stat b{ color:var(--gold); font-size:1.3em; }
+  .newrec{ color:var(--gold); font-weight:800; letter-spacing:2px; font-size:13px; animation:blink 1s steps(2) infinite; }
+  @keyframes blink{ 50%{ opacity:.25; } }
+  /* HUD */
+  #hud{ position:absolute; top:0; left:0; right:0; padding:10px 14px; pointer-events:none; color:var(--cream); }
+  #topRow{ display:flex; justify-content:space-between; align-items:flex-start; }
+  #score{ font-size:clamp(22px,7vw,34px); font-weight:900; font-variant-numeric:tabular-nums; text-shadow:0 2px 8px rgba(0,0,0,.6); line-height:1; }
+  #score small{ display:block; font-size:10px; letter-spacing:2px; color:#8ea0c0; font-weight:700; }
+  #lvBox{ text-align:right; font-size:11px; color:#8ea0c0; font-weight:700; }
+  #lvBox b{ color:var(--gold); font-size:15px; }
+  #bars{ margin-top:7px; display:flex; flex-direction:column; gap:4px; }
+  .bar{ height:7px; background:rgba(0,0,0,.5); border-radius:4px; overflow:hidden; border:1px solid rgba(255,255,255,.15); }
+  #hpFill{ height:100%; background:linear-gradient(90deg,#ff5a6a,#ff9a6a); width:100%; }
+  #xpFill{ height:100%; background:linear-gradient(90deg,#7ee7a0,#c89a3c); width:0%; }
+  #wchips{ position:absolute; bottom:8px; left:0; right:0; display:flex; gap:5px; justify-content:center; pointer-events:none; flex-wrap:wrap; padding:0 8px; }
+  .wchip{ font-size:10px; font-weight:800; letter-spacing:.3px; color:#0a140a; padding:3px 8px; border-radius:20px; box-shadow:0 2px 0 rgba(0,0,0,.4); }
+  #lvlFlash{ position:absolute; top:28%; left:0; right:0; text-align:center; font-weight:900; font-size:clamp(20px,7vw,34px);
+    letter-spacing:3px; opacity:0; pointer-events:none; transition:opacity .2s; color:var(--gold); text-shadow:0 0 18px rgba(200,154,60,.5); }
+  #lvlFlash.boss{ color:#ff5a4d; }
+  #bossbar{ position:absolute; top:58px; left:12%; right:12%; height:8px; background:rgba(0,0,0,.5); border:1px solid #ff8a7a; border-radius:5px; overflow:hidden; opacity:0; transition:opacity .3s; }
+  #bossbar.show{ opacity:1; } #bossfill{ height:100%; width:100%; background:linear-gradient(90deg,#ff5a4d,#ffb14d); }
+  /* 무기 선택 */
+  #levelup{ background:rgba(6,10,20,.9); }
+  #levelup h2{ font-size:clamp(18px,5.5vw,26px); font-weight:900; color:var(--gold); letter-spacing:1px; }
+  #levelup .lsub{ font-size:12px; color:#a9b6cf; margin-bottom:4px; }
+  #cards{ display:flex; flex-direction:column; gap:10px; width:100%; max-width:340px; }
+  .card{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; cursor:pointer; text-align:left;
+    background:linear-gradient(#1a2620,#12190f); border:2px solid #35513f; box-shadow:0 4px 0 rgba(0,0,0,.5); transition:transform .07s,border-color .1s; }
+  .card:active{ transform:translateY(3px); } .card:hover{ border-color:var(--gold); }
+  .cIcon{ width:42px; height:42px; border-radius:10px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .cName{ font-size:15px; font-weight:900; color:var(--cream); }
+  .cLv{ font-size:11px; font-weight:800; color:var(--gold); }
+  .cDesc{ font-size:11px; color:#a9b6cf; line-height:1.4; margin-top:2px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="hud" class="hidden">
+    <div id="topRow">
+      <div id="score"><small>SCORE</small><span id="scoreVal">0</span></div>
+      <div id="lvBox">LV <b id="lvVal">1</b><br>BEST <span id="hiVal">0</span></div>
+    </div>
+    <div id="bars"><div class="bar"><div id="hpFill"></div></div><div class="bar"><div id="xpFill"></div></div></div>
+  </div>
+  <div id="wchips"></div>
+  <div id="bossbar"><div id="bossfill"></div></div>
+  <div id="lvlFlash"></div>
+
+  <div id="title" class="overlay">
+    <div class="brand">PINE &amp; CO · ARCADE</div>
+    <h1>COCKTAIL<br><span class="em">BLITZ</span></h1>
+    <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>드래그·마우스·방향키로 이동.</div>
+    <button class="btn" id="startBtn">START</button>
+    <div class="hi">BEST · <b id="hiTitle">0</b></div>
+  </div>
+
+  <div id="levelup" class="overlay hidden">
+    <h2>LEVEL UP!</h2><div class="lsub">칵테일을 하나 골라라</div>
+    <div id="cards"></div>
+  </div>
+
+  <div id="over" class="overlay hidden">
+    <div id="overTitle">LAST CALL</div>
+    <div class="stat">SCORE · <b id="finalScore">0</b></div>
+    <div class="stat" style="font-size:.85em">LV <span id="finalLv">1</span> · BEST <span id="finalBest">0</span></div>
+    <div class="newrec hidden" id="newRec">★ NEW RECORD ★</div>
+    <button class="btn" id="retryBtn">RETRY</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const cv=document.getElementById('c'), ctx=cv.getContext('2d'), wrap=document.getElementById('wrap');
+  let W=0,H=0,DPR=Math.min(2,window.devicePixelRatio||1);
+  function resize(){ const r=wrap.getBoundingClientRect(); W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
+  window.addEventListener('resize',resize); resize();
+
+  // ── audio ──
+  let AC=null; function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); return AC; }
+  function beep(f,d,t,v){ const a=ac(); if(!a) return; try{ const o=a.createOscillator(),g=a.createGain(); o.type=t||'square'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(v||0.1,a.currentTime+0.008); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+d);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+d+0.02); }catch(e){} }
+  function boom(big){ const a=ac(); if(!a) return; try{ const o=a.createOscillator(),g=a.createGain(); o.type='sine'; o.frequency.setValueAtTime(big?200:150,a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(30,a.currentTime+(big?0.6:0.3)); g.gain.setValueAtTime(big?0.6:0.35,a.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+(big?0.7:0.35));
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+0.7);
+    const dur=big?0.5:0.3,sr=a.sampleRate,b=a.createBuffer(1,Math.floor(sr*dur),sr),d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);
+    const s=a.createBufferSource(); s.buffer=b; const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=big?700:1100; const g2=a.createGain();
+    g2.gain.setValueAtTime(big?0.5:0.35,a.currentTime); g2.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+dur); s.connect(lp); lp.connect(g2); g2.connect(a.destination); s.start(); s.stop(a.currentTime+dur); }catch(e){} }
+  function coinSfx(){ beep(1200,0.05,'square',0.05); }
+
+  // ── weapons (칵테일) ──
+  function addBullet(o){ bullets.push(Object.assign({x:player.x,y:player.y-player.r,vx:0,vy:-10,dmg:6,r:4,pierce:0,life:120,col:'#9fffe4',homing:false},o)); }
+  const WEAPONS={
+    gintonic:{ name:'GIN TONIC', ic:'🍸', col:'#9fe4ff', max:6, desc:'위로 곧게 쏘는 기본 탄. 레벨업마다 발수·데미지↑',
+      cd:lv=>Math.max(5,11-lv), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ const off=(i-(n-1)/2)*10; addBullet({x:player.x+off,vy:-11,dmg:5+lv*2,r:4,col:'#9fe4ff'}); } } },
+    margarita:{ name:'MARGARITA', ic:'🍹', col:'#7ee787', max:6, desc:'3~5갈래 부채꼴 산탄',
+      cd:lv=>Math.max(14,24-lv*2), fire:function(lv){ const n=3+Math.min(2,Math.floor(lv/2)); for(let i=0;i<n;i++){ const a=-Math.PI/2+(i-(n-1)/2)*0.24; addBullet({vx:Math.cos(a)*10,vy:Math.sin(a)*10,dmg:5+lv*1.6,r:4,col:'#7ee787'}); } } },
+    whiskysour:{ name:'WHISKY SOUR', ic:'🥃', col:'#ffd24a', max:6, desc:'적을 관통하는 강한 빔탄',
+      cd:lv=>Math.max(20,34-lv*2), fire:function(lv){ addBullet({vy:-13,dmg:10+lv*4,r:7,pierce:3+lv,col:'#ffd24a',beam:true}); } },
+    bloodymary:{ name:'BLOODY MARY', ic:'🌶️', col:'#ff6a5a', max:6, desc:'가장 가까운 적을 유도하는 고추탄',
+      cd:lv=>Math.max(16,28-lv*2), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ const off=(i-(n-1)/2)*14; addBullet({x:player.x+off,vy:-7,dmg:6+lv*2,r:5,homing:true,col:'#ff6a5a',life:150}); } } },
+    negroni:{ name:'NEGRONI', ic:'🍊', col:'#ff8a3c', max:6, desc:'좌우 대각선으로 퍼지는 사이드건',
+      cd:lv=>Math.max(10,18-lv), fire:function(lv){ const sp=10; for(const s of [-1,1]){ const a=-Math.PI/2 + s*(0.5-Math.min(0.3,lv*0.05)); addBullet({vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,dmg:5+lv*1.8,r:4,col:'#ff8a3c'}); } } },
+    espresso:{ name:'ESPRESSO', ic:'☕', col:'#c88a4c', max:6, desc:'초고속 연사 소형탄',
+      cd:lv=>Math.max(2,5-Math.floor(lv/2)), fire:function(lv){ addBullet({x:player.x+(Math.random()-0.5)*8,vy:-14,dmg:3+lv*1.2,r:3,col:'#e0b48a'}); } },
+  };
+  const HEAL={ name:'ON THE HOUSE', ic:'❤️', col:'#ff6a7a', desc:'체력 회복 + 최대체력 +20' };
+
+  // ── state ──
+  let state='title', frame=0, score=0, best=parseInt(localStorage.getItem('pine_blitz_best')||'0')||0, level=1, coins=0, coinNeed=6, t=0;
+  const player={ x:0,y:0,tx:0,ty:0,r:13, hp:100,maxHp:100, invuln:0, trail:[], weapons:{}, wcd:{}, magnet:80 };
+  let enemies=[], bullets=[], ebullets=[], coinDrops=[], parts=[], stars=[], boss=null;
+  let shake=0, spawnT=0, flashHit=0, bossTimer=0, bossCount=0;
+  const lvlFlashEl=document.getElementById('lvlFlash'), bossbar=document.getElementById('bossbar'), bossfill=document.getElementById('bossfill');
+
+  function initStars(){ stars=[]; for(let i=0;i<70;i++) stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.8+0.2}); } initStars();
+
+  let pointerActive=false;
+  function setTarget(cx,cy){ const r=cv.getBoundingClientRect(); player.tx=Math.max(player.r,Math.min(W-player.r,cx-r.left)); player.ty=Math.max(player.r,Math.min(H-player.r,cy-r.top)); }
+  cv.addEventListener('pointerdown',e=>{ pointerActive=true; setTarget(e.clientX,e.clientY); },{passive:true});
+  window.addEventListener('pointermove',e=>{ if(state==='play'&&(pointerActive||e.pointerType==='mouse')) setTarget(e.clientX,e.clientY); },{passive:true});
+  window.addEventListener('pointerup',()=>{ pointerActive=false; },{passive:true});
+  const keys={}; window.addEventListener('keydown',e=>{ keys[e.key]=true; if(e.key===' '&&state!=='play'&&state!=='levelup') start(); });
+  window.addEventListener('keyup',e=>{ keys[e.key]=false; });
+  document.getElementById('startBtn').onclick=start; document.getElementById('retryBtn').onclick=start;
+
+  function start(){ ac(); state='play'; frame=0; score=0; level=1; coins=0; coinNeed=6; t=0;
+    enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; boss=null; bossbar.classList.remove('show');
+    spawnT=0; shake=0; flashHit=0; bossTimer=26*60; bossCount=0;
+    player.x=W/2; player.y=H*0.80; player.tx=player.x; player.ty=player.y; player.hp=100; player.maxHp=100; player.invuln=0; player.trail=[];
+    player.weapons={ gintonic:1 }; player.wcd={};
+    document.getElementById('title').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('levelup').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden'); updWchips();
+  }
+
+  function updWchips(){ const el=document.getElementById('wchips'); let h='';
+    for(const k in player.weapons){ const w=WEAPONS[k]; h+=`<div class="wchip" style="background:${w.col}">${w.ic} ${w.name.split(' ')[0]} ${player.weapons[k]}</div>`; }
+    el.innerHTML=h; }
+
+  function enemyHpBase(){ return 8 + t*0.9 + level*2; }
+  function spawnEnemy(){ const r=Math.random(); let type='basic', rad=13, hp=enemyHpBase(), spd=1.3+t*0.02, coin=1, col='#c96b6b';
+    if(r<0.22){ type='zig'; rad=12; spd=1.6+t*0.02; col='#c98bd0'; }
+    else if(r<0.36){ type='tank'; rad=20; hp*=3.2; spd=0.8+t*0.01; coin=3; col='#6b7ec9'; }
+    enemies.push({ type, x:Math.random()*(W-40)+20, y:-30, r:rad, hp, maxHp:hp, spd, coin, col, wob:Math.random()*6.28 }); }
+
+  function spawnBoss(){ bossCount++; const hp=Math.round(120*Math.pow(1.5,bossCount-1));
+    boss={ x:W/2, y:-80, ty:H*0.15, r:40, hp, maxHp:hp, fireT:50, burstT:160, dir:1, enter:true };
+    bossbar.classList.add('show'); bossfill.style.width='100%';
+    lvlFlashEl.textContent='⚠ RIVAL BAR ⚠'; lvlFlashEl.classList.add('boss'); lvlFlashEl.style.opacity='1'; setTimeout(()=>lvlFlashEl.style.opacity='0',1100);
+    beep(150,0.35,'sawtooth',0.14); }
+
+  function explo(x,y,col,n,sp){ for(let i=0;i<(n||14);i++){ const a=Math.random()*6.28,s=1+Math.random()*(sp||4); parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:1+Math.random()*3,col}); } }
+  function nearestEnemy(x,y){ let n=null,nd=1e9; for(const e of enemies){ const d=(e.x-x)**2+(e.y-y)**2; if(d<nd){nd=d;n=e;} } if(boss&&!boss.enter){ const d=(boss.x-x)**2+(boss.y-y)**2; if(d<nd){nd=d;n=boss;} } return n; }
+
+  function killEnemy(e,i){ explo(e.x,e.y,e.col,12,4); score+=e.type==='tank'?30:10; boom(false);
+    for(let k=0;k<e.coin;k++) coinDrops.push({x:e.x+(Math.random()-0.5)*14,y:e.y,vx:(Math.random()-0.5)*1.4,vy:1.2+Math.random(),r:6}); enemies.splice(i,1); }
+
+  function gainCoin(){ coins++; score+=2; coinSfx(); if(coins>=coinNeed) levelUp(); }
+  function levelUp(){ level++; coins-=coinNeed; coinNeed=5+level*3; document.getElementById('lvVal').textContent=level;
+    lvlFlashEl.classList.remove('boss'); beep(700,0.08,'square',0.08); beep(1050,0.1,'square',0.07);
+    state='levelup'; showCards(); document.getElementById('levelup').classList.remove('hidden'); }
+
+  function showCards(){ const pool=[];
+    for(const k in WEAPONS){ const lv=player.weapons[k]||0; if(lv>=WEAPONS[k].max) continue; pool.push({k, upgrade:lv>0}); }
+    // 셔플
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    const pick=pool.slice(0,3); if(Math.random()<0.35 || pick.length<3) pick.push({heal:true});
+    const cards=pick.slice(0,3);
+    const el=document.getElementById('cards'); el.innerHTML='';
+    cards.forEach(c=>{ const d=document.createElement('div'); d.className='card';
+      if(c.heal){ d.innerHTML=`<div class="cIcon" style="background:${HEAL.col}">${HEAL.ic}</div><div><div class="cName">${HEAL.name}</div><div class="cDesc">${HEAL.desc}</div></div>`;
+        d.onclick=()=>{ player.maxHp+=20; player.hp=Math.min(player.maxHp,player.hp+60); pickDone(); }; }
+      else { const w=WEAPONS[c.k], lv=player.weapons[c.k]||0;
+        d.innerHTML=`<div class="cIcon" style="background:${w.col}">${w.ic}</div><div><div class="cName">${w.name} <span class="cLv">${c.upgrade?('Lv'+lv+'→'+(lv+1)):'NEW'}</span></div><div class="cDesc">${w.desc}</div></div>`;
+        d.onclick=()=>{ player.weapons[c.k]=(player.weapons[c.k]||0)+1; pickDone(); }; }
+      el.appendChild(d); });
+  }
+  function pickDone(){ beep(880,0.05,'square',0.06); document.getElementById('levelup').classList.add('hidden'); updWchips(); state='play'; }
+
+  function hurt(dmg){ if(player.invuln>0) return; player.hp-=dmg; player.invuln=45; flashHit=0.8; shake=Math.max(shake,10); beep(140,0.1,'sawtooth',0.1);
+    if(player.hp<=0){ die(); } }
+  function die(){ state='over'; boom(true); explo(player.x,player.y,'#ff6a4d',40,6); explo(player.x,player.y,'#ffd24a',24,5); shake=22; flashHit=1;
+    const rec=score>best; if(rec){ best=score; localStorage.setItem('pine_blitz_best',String(best)); }
+    document.getElementById('finalScore').textContent=Math.floor(score).toLocaleString(); document.getElementById('finalLv').textContent=level;
+    document.getElementById('finalBest').textContent=best.toLocaleString(); document.getElementById('newRec').classList.toggle('hidden',!rec);
+    document.getElementById('hud').classList.add('hidden'); bossbar.classList.remove('show');
+    setTimeout(()=>document.getElementById('over').classList.remove('hidden'),650); }
+
+  function update(){
+    frame++;
+    if(state==='play'){
+      t+=1/60;
+      // 스폰
+      spawnT--; const rate=Math.max(14, 46 - t*0.6)*(boss?1.8:1); if(spawnT<=0){ spawnEnemy(); if(t>25 && !boss && Math.random()<0.4) spawnEnemy(); spawnT=rate*(0.6+Math.random()*0.8); }
+      if(!boss){ bossTimer--; if(bossTimer<=0) spawnBoss(); }
+      // 이동
+      const kb=6.5; if(keys['ArrowLeft']||keys['a']) player.tx-=kb; if(keys['ArrowRight']||keys['d']) player.tx+=kb; if(keys['ArrowUp']||keys['w']) player.ty-=kb; if(keys['ArrowDown']||keys['s']) player.ty+=kb;
+      player.tx=Math.max(player.r,Math.min(W-player.r,player.tx)); player.ty=Math.max(player.r,Math.min(H-player.r,player.ty));
+      player.x+=(player.tx-player.x)*0.35; player.y+=(player.ty-player.y)*0.35;
+      player.trail.push({x:player.x,y:player.y}); if(player.trail.length>8) player.trail.shift();
+      if(player.invuln>0) player.invuln--;
+      // 무기 발사
+      for(const k in player.weapons){ const lv=player.weapons[k]; player.wcd[k]=(player.wcd[k]||0)-1; if(player.wcd[k]<=0){ WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); } }
+      // 총알
+      for(let i=bullets.length-1;i>=0;i--){ const b=bullets[i]; b.life--;
+        if(b.homing){ const tg=nearestEnemy(b.x,b.y); if(tg){ const a=Math.atan2(tg.y-b.y,tg.x-b.x); b.vx+=(Math.cos(a)*8-b.vx)*0.12; b.vy+=(Math.sin(a)*8-b.vy)*0.12; } }
+        b.x+=b.vx; b.y+=b.vy; if(b.life<=0||b.y<-30||b.x<-30||b.x>W+30){ bullets.splice(i,1); continue; }
+        let gone=false;
+        for(let j=enemies.length-1;j>=0;j--){ const e=enemies[j]; if(Math.hypot(e.x-b.x,e.y-b.y)<e.r+b.r){ e.hp-=b.dmg; explo(b.x,b.y,'#ffe08a',3,2);
+          if(e.hp<=0) killEnemy(e,j); if(b.pierce>0){ b.pierce--; } else { gone=true; } break; } }
+        if(gone){ bullets.splice(i,1); continue; }
+        if(boss&&!boss.enter&&Math.hypot(boss.x-b.x,boss.y-b.y)<boss.r){ boss.hp-=b.dmg; explo(b.x,b.y,'#ffd24a',2,2); score+=1;
+          if(boss.hp<=0){ explo(boss.x,boss.y,'#ff6a4d',50,7); explo(boss.x,boss.y,'#ffd24a',30,6); boom(true); shake=18; score+=400*bossCount;
+            for(let k=0;k<12;k++) coinDrops.push({x:boss.x+(Math.random()-0.5)*40,y:boss.y,vx:(Math.random()-0.5)*2,vy:1+Math.random()*1.5,r:6});
+            boss=null; bossbar.classList.remove('show'); bossTimer=22*60; lvlFlashEl.classList.remove('boss'); lvlFlashEl.textContent='RIVAL DOWN!'; lvlFlashEl.style.opacity='1'; setTimeout(()=>lvlFlashEl.style.opacity='0',900); }
+          if(b.pierce>0) b.pierce--; else bullets.splice(i,1); continue; }
+      }
+      // 적
+      for(let i=enemies.length-1;i>=0;i--){ const e=enemies[i]; e.wob+=0.1;
+        if(e.type==='zig') e.x+=Math.sin(e.wob*2)*2.2; e.y+=e.spd; if(e.x<e.r)e.x=e.r; if(e.x>W-e.r)e.x=W-e.r;
+        if(Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r-2){ hurt(e.type==='tank'?34:22); explo(e.x,e.y,e.col,8,3); enemies.splice(i,1); continue; }
+        if(e.y>H+40) enemies.splice(i,1); }
+      // 보스
+      if(boss){ if(boss.enter){ boss.y+=(boss.ty-boss.y)*0.06; if(Math.abs(boss.y-boss.ty)<2){ boss.y=boss.ty; boss.enter=false; } }
+        else { boss.x+=boss.dir*(1.1+bossCount*0.2); if(boss.x<boss.r+10){boss.x=boss.r+10;boss.dir=1;} if(boss.x>W-boss.r-10){boss.x=W-boss.r-10;boss.dir=-1;}
+          boss.fireT--; if(boss.fireT<=0){ boss.fireT=Math.max(26,56-bossCount*6); const ang=Math.atan2(player.y-boss.y,player.x-boss.x),sp=3+bossCount*0.25;
+            for(let k=-1;k<=1;k++){ const a=ang+k*0.2; ebullets.push({x:boss.x,y:boss.y+boss.r*0.6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6}); } beep(300,0.05,'sawtooth',0.06); }
+          boss.burstT--; if(boss.burstT<=0){ boss.burstT=180; const n=8+bossCount*2; for(let k=0;k<n;k++){ const a=k/n*6.28; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,r:6}); } beep(220,0.12,'sawtooth',0.08); } }
+        bossfill.style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';
+        if(!boss.enter&&Math.hypot(boss.x-player.x,boss.y-player.y)<boss.r+player.r-4) hurt(40); }
+      // 적 탄
+      for(let i=ebullets.length-1;i>=0;i--){ const e=ebullets[i]; e.x+=e.vx; e.y+=e.vy; if(e.x<-20||e.x>W+20||e.y<-20||e.y>H+20){ ebullets.splice(i,1); continue; }
+        if(Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r-3){ hurt(20); ebullets.splice(i,1); } }
+      // 코인
+      for(let i=coinDrops.length-1;i>=0;i--){ const c=coinDrops[i]; const d=Math.hypot(c.x-player.x,c.y-player.y);
+        if(d<player.magnet){ const a=Math.atan2(player.y-c.y,player.x-c.x); c.vx+=(Math.cos(a)*7-c.vx)*0.2; c.vy+=(Math.sin(a)*7-c.vy)*0.2; }
+        else { c.vy+=0.03; }
+        c.x+=c.vx; c.y+=c.vy;
+        if(d<player.r+c.r){ coinDrops.splice(i,1); gainCoin(); continue; }
+        if(c.y>H+40) coinDrops.splice(i,1); }
+    }
+    for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.02; p.life-=(p.fade||0.03); if(p.life<=0) parts.splice(i,1); }
+    if(shake>0){ shake*=0.86; if(shake<0.4) shake=0; } if(flashHit>0) flashHit-=0.05;
+    for(const s of stars){ s.y+=0.0006*(state==='play'?(1+t*0.02):0.5); if(s.y>1) s.y-=1; }
+  }
+
+  function drawEnemy(e){ ctx.save(); ctx.translate(e.x,e.y); ctx.fillStyle=e.col; ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(0,0,e.r,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#141018'; ctx.beginPath(); ctx.arc(-e.r*0.35,-e.r*0.15,e.r*0.16,0,6.28); ctx.arc(e.r*0.35,-e.r*0.15,e.r*0.16,0,6.28); ctx.fill();
+    ctx.strokeStyle='#141018'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-e.r*0.4,e.r*0.35); ctx.lineTo(e.r*0.4,e.r*0.5); ctx.stroke();
+    // hp
+    if(e.hp<e.maxHp){ ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(-e.r,-e.r-7,e.r*2,3); ctx.fillStyle='#7ee7a0'; ctx.fillRect(-e.r,-e.r-7,e.r*2*(e.hp/e.maxHp),3); }
+    ctx.restore(); }
+  function drawBoss(){ if(!boss) return; const r=boss.r; ctx.save(); ctx.translate(boss.x,boss.y);
+    const g=ctx.createRadialGradient(0,0,4,0,0,r*1.6); g.addColorStop(0,'rgba(255,90,77,.35)'); g.addColorStop(1,'rgba(255,90,77,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,r*1.6,0,6.28); ctx.fill();
+    ctx.fillStyle='#2a3350'; ctx.strokeStyle='#8ea3c8'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(-r,-r*0.3); ctx.lineTo(-r*1.5,r*0.5); ctx.lineTo(-r*0.5,r*0.9); ctx.lineTo(r*0.5,r*0.9); ctx.lineTo(r*1.5,r*0.5); ctx.lineTo(r,-r*0.3); ctx.quadraticCurveTo(0,-r*1.2,-r,-r*0.3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    const cg=ctx.createRadialGradient(0,r*0.15,2,0,r*0.15,r*0.6); cg.addColorStop(0,'#fff'); cg.addColorStop(0.4,'#ff8a5a'); cg.addColorStop(1,'#7a1008'); ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(0,r*0.15,r*0.42*(0.9+0.1*Math.sin(frame*0.2)),0,6.28); ctx.fill();
+    ctx.restore(); }
+  function drawPlayer(){ if(player.invuln>0 && frame%6<3) return;
+    for(let i=0;i<player.trail.length;i++){ const p=player.trail[i],a=i/player.trail.length; ctx.globalAlpha=a*0.25; ctx.fillStyle='#8fe0c4'; ctx.beginPath(); ctx.arc(p.x,p.y,player.r*a,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
+    const g=ctx.createRadialGradient(player.x,player.y,2,player.x,player.y,player.r*2.6); g.addColorStop(0,'rgba(120,230,200,.5)'); g.addColorStop(1,'rgba(120,230,200,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(player.x,player.y,player.r*2.6,0,6.28); ctx.fill();
+    const x=player.x,y=player.y,s=player.r; ctx.strokeStyle='#eafff6'; ctx.fillStyle='rgba(90,138,94,.85)'; ctx.lineWidth=2.4; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(x-s,y-s*0.7); ctx.lineTo(x+s,y-s*0.7); ctx.lineTo(x,y+s*0.15); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x,y+s*0.15); ctx.lineTo(x,y+s*0.95); ctx.moveTo(x-s*0.55,y+s*0.95); ctx.lineTo(x+s*0.55,y+s*0.95); ctx.stroke();
+    ctx.fillStyle='#ff5a6a'; ctx.beginPath(); ctx.arc(x+s*0.28,y-s*0.42,s*0.2,0,6.28); ctx.fill(); }
+
+  function draw(){ ctx.clearRect(0,0,W,H); ctx.save(); if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+    for(const s of stars){ ctx.globalAlpha=s.z*0.8; ctx.fillStyle='#cdd7ef'; ctx.fillRect(s.x*W,s.y*H,s.z*1.8,s.z*1.8); } ctx.globalAlpha=1;
+    const gg=ctx.createLinearGradient(0,H*0.86,0,H); gg.addColorStop(0,'rgba(90,138,94,0)'); gg.addColorStop(1,'rgba(90,138,94,.18)'); ctx.fillStyle=gg; ctx.fillRect(0,H*0.86,W,H*0.14);
+    for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
+    if(state!=='title'){
+      // coins
+      for(const c of coinDrops){ ctx.fillStyle='#ffd24a'; ctx.strokeStyle='#a5771a'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,6.28); ctx.fill(); ctx.stroke(); ctx.fillStyle='#a5771a'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('₩',c.x,c.y+3); }
+      // player bullets
+      for(const b of bullets){ ctx.fillStyle=b.col; ctx.shadowColor=b.col; ctx.shadowBlur=8; if(b.beam){ ctx.fillRect(b.x-b.r/2,b.y-b.r*1.6,b.r,b.r*3.2); } else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } } ctx.shadowBlur=0;
+      for(const e of ebullets){ ctx.fillStyle='#ff6a5a'; ctx.shadowColor='#ff3a2a'; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0;
+      for(const e of enemies) drawEnemy(e); drawBoss();
+      if(state==='play'||state==='levelup') drawPlayer();
+    }
+    ctx.restore();
+    if(flashHit>0){ ctx.globalAlpha=flashHit*0.55; ctx.fillStyle='#ff5a4d'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+    if(state==='play'||state==='levelup'){ document.getElementById('scoreVal').textContent=Math.floor(score).toLocaleString();
+      document.getElementById('hiVal').textContent=best.toLocaleString(); document.getElementById('hpFill').style.width=Math.max(0,player.hp/player.maxHp*100)+'%';
+      document.getElementById('xpFill').style.width=(coins/coinNeed*100)+'%'; }
+  }
+  function loop(){ update(); draw(); requestAnimationFrame(loop); }
+  document.getElementById('hiTitle').textContent=best.toLocaleString(); loop();
+})();
+</script>
+</body>
+</html>
