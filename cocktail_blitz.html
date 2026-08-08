@@ -128,7 +128,7 @@
     const dur=big?0.5:0.3,sr=a.sampleRate,b=a.createBuffer(1,Math.floor(sr*dur),sr),d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.5);
     const s=a.createBufferSource(); s.buffer=b; const lp=a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=big?700:1100; const g2=a.createGain();
     g2.gain.setValueAtTime(big?0.5:0.35,a.currentTime); g2.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+dur); s.connect(lp); lp.connect(g2); g2.connect(a.destination); s.start(); s.stop(a.currentTime+dur); }catch(e){} }
-  function coinSfx(){ beep(1200,0.05,'square',0.05); }
+  function coinSfx(){ sfx('sfx_coin',0.4); }
 
   // ── 이미지(캐릭터 pat/joe + 슈퍼맨 포즈 + 던지는 피사체) ──
   const IMG={}; function loadImg(k,src){ const i=new Image(); i.onload=()=>{ IMG[k]=i; }; i.src=src; }
@@ -138,7 +138,13 @@
   ['enemy_drunk','enemy_drunk2','enemy_genzm','enemy_genzf','enemy_runner','enemy_bomber','enemy_thrower'].concat(BOSSES)
     .forEach(t=>{ loadImg(t+'_walkA','assets/'+t+'_walkA.png'); loadImg(t+'_walkB','assets/'+t+'_walkB.png'); });
   loadImg('enemy_thrower_vomit','assets/enemy_thrower_vomit.png');
+  // ★칵테일 피사체 이미지
+  ['gintonic','margarita','whiskysour','bloodymary','negroni','espressomartini','mojito','cosmopolitan','manhattan','oldfashioned','moscowmule','vodkatonic','sidecar','southside','drymartini','highball','vodkacranberry','corpsereviver'].forEach(k=>loadImg('cocktail_'+k,'assets/cocktail_'+k+'.png'));
   let selectedChar='pat';
+  // ── CD 음악 + 효과음(mp3 그대로) ──
+  const bgm=new Audio(); bgm.loop=true; bgm.volume=0.42; let curMusic='';
+  function playMusic(name){ if(curMusic===name){ if(bgm.paused) bgm.play().catch(()=>{}); return; } curMusic=name; try{ bgm.src='assets/'+name+'.mp3'; bgm.play().catch(()=>{}); }catch(e){} }
+  const SFXPOOL={}; function sfx(name,vol){ try{ let p=SFXPOOL[name]; if(!p){ p=SFXPOOL[name]={a:[],i:0}; for(let k=0;k<5;k++){ const el=new Audio('assets/'+name+'.mp3'); el.preload='auto'; p.a.push(el); } } const el=p.a[p.i=(p.i+1)%p.a.length]; el.currentTime=0; el.volume=(vol==null?0.6:vol); el.play().catch(()=>{}); }catch(e){} }
 
   // ── weapons (칵테일) ──
   function addBullet(o){ bullets.push(Object.assign({x:player.x,y:player.y,vx:0,vy:-10,dmg:6,r:4,pierce:0,life:120,col:'#9fffe4',homing:false,ang:FWD},o)); }
@@ -146,23 +152,48 @@
   function shoot(speed,da,off,extra){ const dir=FWD+da, perp=FWD+Math.PI/2;
     const sx=player.x+Math.cos(FWD)*player.r+Math.cos(perp)*off, sy=player.y+Math.sin(FWD)*player.r+Math.sin(perp)*off;
     addBullet(Object.assign({x:sx,y:sy,vx:Math.cos(dir)*speed,vy:Math.sin(dir)*speed,ang:dir},extra)); }
+  // ★모든 칵테일을 실제 칵테일 이미지(cocktail_*.png)를 피사체로 발사
   const WEAPONS={
-    shaker:{ name:'SHAKER', ic:'🍸', col:'#e6ecf5', max:6, sig:'pat', desc:'Pat의 코블러 쉐이커 — 명중 시 폭발(광역 데미지)',
-      cd:lv=>Math.max(15,27-lv*2), fire:function(lv){ player.throwTimer=11; shoot(9,0,0,{dmg:9+lv*3,r:10,col:'#e6ecf5',img:'proj_shaker',spin:true,splash:34+lv*5}); } },
-    barspoon:{ name:'BAR SPOON', ic:'🥄', col:'#cfe0ff', max:6, sig:'joe', desc:'Joe의 바스푼·믹싱글라스 — 관통 3',
-      cd:lv=>Math.max(6,12-lv), fire:function(lv){ player.throwTimer=11; const alt=(frame%2===0); shoot(13,0,(Math.random()-0.5)*6,{dmg:6+lv*2,r:7,pierce:3,col:'#cfe0ff',img:alt?'proj_barspoon':'proj_mixglass',spin:true}); } },
-    gintonic:{ name:'GIN TONIC', ic:'🍸', col:'#9fe4ff', max:6, desc:'정면으로 곧게 쏘는 기본 탄. 레벨업마다 발수·데미지↑',
-      cd:lv=>Math.max(5,11-lv), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ shoot(11,0,(i-(n-1)/2)*10,{dmg:5+lv*2,r:4,col:'#9fe4ff'}); } } },
-    margarita:{ name:'MARGARITA', ic:'🍹', col:'#7ee787', max:6, desc:'3~5갈래 부채꼴 산탄',
-      cd:lv=>Math.max(14,24-lv*2), fire:function(lv){ const n=3+Math.min(2,Math.floor(lv/2)); for(let i=0;i<n;i++){ shoot(10,(i-(n-1)/2)*0.24,0,{dmg:5+lv*1.6,r:4,col:'#7ee787'}); } } },
-    whiskysour:{ name:'WHISKY SOUR', ic:'🥃', col:'#ffd24a', max:6, desc:'적을 관통하는 강한 빔탄',
-      cd:lv=>Math.max(20,34-lv*2), fire:function(lv){ shoot(13,0,0,{dmg:10+lv*4,r:7,pierce:3+lv,col:'#ffd24a',beam:true}); } },
-    bloodymary:{ name:'BLOODY MARY', ic:'🌶️', col:'#ff6a5a', max:6, desc:'가장 가까운 적을 유도하는 고추탄',
-      cd:lv=>Math.max(16,28-lv*2), fire:function(lv){ const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ shoot(7,0,(i-(n-1)/2)*14,{dmg:6+lv*2,r:5,homing:true,col:'#ff6a5a',life:150}); } } },
-    negroni:{ name:'NEGRONI', ic:'🍊', col:'#ff8a3c', max:6, desc:'양옆 대각선으로 퍼지는 사이드건',
-      cd:lv=>Math.max(10,18-lv), fire:function(lv){ const d=0.5-Math.min(0.3,lv*0.05); for(const s of [-1,1]) shoot(10,s*d,0,{dmg:5+lv*1.8,r:4,col:'#ff8a3c'}); } },
-    espresso:{ name:'ESPRESSO', ic:'☕', col:'#c88a4c', max:6, desc:'초고속 연사 소형탄',
-      cd:lv=>Math.max(2,5-Math.floor(lv/2)), fire:function(lv){ shoot(14,0,(Math.random()-0.5)*8,{dmg:3+lv*1.2,r:3,col:'#e0b48a'}); } },
+    shaker:{ name:'SHAKER', ic:'🍸', col:'#e6ecf5', max:6, sig:'pat', desc:'Pat 코블러 쉐이커 — 명중 시 폭발(광역)',
+      cd:l=>Math.max(15,27-l*2), fire:l=>shoot(9,0,0,{dmg:9+l*3,r:11,img:'proj_shaker',spin:true,splash:34+l*5}) },
+    barspoon:{ name:'BAR SPOON', ic:'🥄', col:'#cfe0ff', max:6, sig:'joe', desc:'Joe 바스푼·믹싱글라스 — 관통 3',
+      cd:l=>Math.max(6,12-l), fire:l=>shoot(13,0,(Math.random()-0.5)*6,{dmg:6+l*2,r:8,pierce:3,img:(frame%2?'proj_barspoon':'proj_mixglass'),spin:true}) },
+    gintonic:{ name:'GIN TONIC', ic:'🍸', col:'#9fe4ff', max:6, desc:'정면 직선 다연발', cd:l=>Math.max(6,12-l),
+      fire:l=>{ const n=1+Math.floor(l/2); for(let i=0;i<n;i++) shoot(12,0,(i-(n-1)/2)*12,{dmg:6+l*2,r:10,img:'cocktail_gintonic',upright:true}); } },
+    margarita:{ name:'MARGARITA', ic:'🍹', col:'#7ee787', max:6, desc:'부채꼴 산탄', cd:l=>Math.max(14,24-l*2),
+      fire:l=>{ const n=3+Math.min(3,Math.floor(l/1.5)); for(let i=0;i<n;i++) shoot(10,(i-(n-1)/2)*0.22,0,{dmg:5+l*1.6,r:10,img:'cocktail_margarita',upright:true}); } },
+    whiskysour:{ name:'WHISKY SOUR', ic:'🥃', col:'#ffd24a', max:6, desc:'관통 강타', cd:l=>Math.max(18,30-l*2),
+      fire:l=>shoot(13,0,0,{dmg:12+l*4,r:13,pierce:4+l,img:'cocktail_whiskysour',upright:true}) },
+    bloodymary:{ name:'BLOODY MARY', ic:'🌶️', col:'#ff6a5a', max:6, desc:'유도탄', cd:l=>Math.max(15,26-l*2),
+      fire:l=>{ const n=1+Math.floor(l/2); for(let i=0;i<n;i++) shoot(7,0,(i-(n-1)/2)*14,{dmg:7+l*2,r:10,homing:true,life:160,img:'cocktail_bloodymary',upright:true}); } },
+    negroni:{ name:'NEGRONI', ic:'🍊', col:'#ff8a3c', max:6, desc:'양옆 사이드건', cd:l=>Math.max(9,16-l),
+      fire:l=>{ const d=0.5-Math.min(0.3,l*0.05); for(const s of[-1,1]) shoot(10,s*d,0,{dmg:6+l*1.8,r:10,img:'cocktail_negroni',upright:true}); } },
+    espressomartini:{ name:'ESPRESSO', ic:'☕', col:'#c88a4c', max:6, desc:'초고속 연사', cd:l=>Math.max(2,5-Math.floor(l/2)),
+      fire:l=>shoot(15,0,(Math.random()-0.5)*8,{dmg:4+l*1.4,r:8,img:'cocktail_espressomartini',upright:true}) },
+    mojito:{ name:'MOJITO', ic:'🌿', col:'#8fe0a0', max:6, desc:'강한 저격탄', cd:l=>Math.max(11,20-l*2),
+      fire:l=>shoot(17,0,0,{dmg:14+l*4,r:12,pierce:2,img:'cocktail_mojito',upright:true}) },
+    cosmopolitan:{ name:'COSMO', ic:'🍸', col:'#ff8ab0', max:6, desc:'넓은 관통탄', cd:l=>Math.max(15,25-l*2),
+      fire:l=>shoot(9,0,0,{dmg:9+l*3,r:14,pierce:3+l,img:'cocktail_cosmopolitan',upright:true}) },
+    manhattan:{ name:'MANHATTAN', ic:'🥃', col:'#c96b5a', max:6, desc:'2연발 강타', cd:l=>Math.max(11,21-l*2),
+      fire:l=>{ for(const o of[-11,11]) shoot(12,0,o,{dmg:9+l*3,r:11,img:'cocktail_manhattan',upright:true}); } },
+    oldfashioned:{ name:'OLD FASHIONED', ic:'🥃', col:'#d99a4a', max:6, desc:'명중 시 폭발(광역)', cd:l=>Math.max(17,29-l*2),
+      fire:l=>shoot(8,0,0,{dmg:10+l*3,r:13,img:'cocktail_oldfashioned',upright:true,splash:36+l*5}) },
+    moscowmule:{ name:'MOSCOW MULE', ic:'🫚', col:'#d9a441', max:6, desc:'빠른 관통', cd:l=>Math.max(6,12-l),
+      fire:l=>shoot(15,0,0,{dmg:6+l*2,r:10,pierce:2,img:'cocktail_moscowmule',upright:true}) },
+    vodkatonic:{ name:'VODKA TONIC', ic:'🧊', col:'#bfe6ff', max:6, desc:'유도탄', cd:l=>Math.max(12,22-l*2),
+      fire:l=>shoot(8,0,0,{dmg:7+l*2,r:10,homing:true,life:160,img:'cocktail_vodkatonic',upright:true}) },
+    sidecar:{ name:'SIDECAR', ic:'🍋', col:'#e6a94a', max:6, desc:'3연 산탄', cd:l=>Math.max(11,19-l*2),
+      fire:l=>{ for(let i=0;i<3;i++) shoot(11,(i-1)*0.18,0,{dmg:6+l*2,r:10,img:'cocktail_sidecar',upright:true}); } },
+    southside:{ name:'SOUTH SIDE', ic:'🌿', col:'#8fd1a0', max:6, desc:'느린 광역 폭발', cd:l=>Math.max(19,33-l*2),
+      fire:l=>shoot(6,0,0,{dmg:8+l*2,r:15,img:'cocktail_southside',upright:true,splash:44+l*5}) },
+    drymartini:{ name:'DRY MARTINI', ic:'🫒', col:'#cfd6e0', max:6, desc:'큰 관통탄', cd:l=>Math.max(13,23-l*2),
+      fire:l=>shoot(11,0,0,{dmg:11+l*3,r:13,pierce:3,img:'cocktail_drymartini',upright:true}) },
+    highball:{ name:'HIGHBALL', ic:'🫧', col:'#aee6f5', max:6, desc:'초고속 버블 연사', cd:l=>Math.max(3,6-Math.floor(l/2)),
+      fire:l=>shoot(14,0,(Math.random()-0.5)*12,{dmg:3+l*1.2,r:8,img:'cocktail_highball',upright:true}) },
+    vodkacranberry:{ name:'VODKA CRANBERRY', ic:'🔴', col:'#c0392b', max:6, desc:'유도 한쌍', cd:l=>Math.max(13,23-l*2),
+      fire:l=>{ for(const o of[-12,12]) shoot(8,0,o,{dmg:6+l*2,r:10,homing:true,life:160,img:'cocktail_vodkacranberry',upright:true}); } },
+    corpsereviver:{ name:'CORPSE REVIVER', ic:'🧟', col:'#8fd14f', max:6, desc:'광역 산탄 폭발', cd:l=>Math.max(16,28-l*2),
+      fire:l=>{ const n=2+Math.min(3,Math.floor(l/1.5)); for(let i=0;i<n;i++) shoot(9,(i-(n-1)/2)*0.28,0,{dmg:7+l*2,r:11,img:'cocktail_corpsereviver',upright:true,splash:26+l*3}); } },
   };
   const HEAL={ name:'ON THE HOUSE', ic:'❤️', col:'#ff6a7a', desc:'체력 회복 + 최대체력 +20' };
 
@@ -184,7 +215,7 @@
   window.addEventListener('keyup',e=>{ keys[e.key]=false; });
   document.getElementById('startBtn').onclick=start; document.getElementById('retryBtn').onclick=start;
   document.querySelectorAll('#charpick .cbtn').forEach(b=>{ b.onclick=()=>{ selectedChar=b.getAttribute('data-char'); ac();
-    document.querySelectorAll('#charpick .cbtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); beep(660,0.05,'square',0.06); }; });
+    document.querySelectorAll('#charpick .cbtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); sfx('sfx_select',0.6); playMusic('music_title'); }; });
 
   function start(){ ac(); state='play'; frame=0; score=0; level=1; coins=0; coinNeed=6; t=0;
     enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; boss=null; bossbar.classList.remove('show');
@@ -194,6 +225,7 @@
     player.weapons = player.char==='joe' ? { barspoon:1 } : { shaker:1 }; player.wcd={};
     document.getElementById('title').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('levelup').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden'); updWchips();
+    playMusic('music_play'+(1+Math.floor(Math.random()*3)));   // ★게임 음악
   }
 
   function updWchips(){ const el=document.getElementById('wchips'); let h='';
@@ -225,7 +257,7 @@
       : { x:W/2, y:-90, ex:W/2, ey:H*0.16, r:44, hp, maxHp:hp, fireT:50, burstT:160, dir:1, enter:true, sprite };
     bossbar.classList.add('show'); bossfill.style.width='100%';
     lvlFlashEl.textContent='⚠ RIVAL BAR ⚠'; lvlFlashEl.classList.add('boss'); lvlFlashEl.style.opacity='1'; setTimeout(()=>lvlFlashEl.style.opacity='0',1100);
-    beep(150,0.35,'sawtooth',0.14); }
+    sfx('sfx_boss',0.7); }
 
   function explo(x,y,col,n,sp){ for(let i=0;i<(n||14);i++){ const a=Math.random()*6.28,s=1+Math.random()*(sp||4); parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:1+Math.random()*3,col}); } }
   function nearestEnemy(x,y){ let n=null,nd=1e9; for(const e of enemies){ const d=(e.x-x)**2+(e.y-y)**2; if(d<nd){nd=d;n=e;} } if(boss&&!boss.enter){ const d=(boss.x-x)**2+(boss.y-y)**2; if(d<nd){nd=d;n=boss;} } return n; }
@@ -234,12 +266,12 @@
     if(LAND){ c.vx=-(1.0+Math.random()); c.vy=(Math.random()-0.5)*1.2; } else { c.vx=(Math.random()-0.5)*1.4; c.vy=1.2+Math.random(); } coinDrops.push(c); }
   function killEnemy(e,i){ enemies.splice(i,1);
     if(e.type==='bomber'){ explodeBomber(e); return; }   // 폭발몹은 죽어도 폭발
-    explo(e.x,e.y,'#ffcf8a',12,4); score+=e.type==='thrower'?20:(e.type==='runner'?12:10); boom(false);
+    explo(e.x,e.y,'#ffcf8a',12,4); score+=e.type==='thrower'?20:(e.type==='runner'?12:10); sfx('hit',0.4);
     for(let k=0;k<e.coin;k++) dropCoin(e.x,e.y); }
 
   function gainCoin(){ coins++; score+=2; coinSfx(); if(coins>=coinNeed) levelUp(); }
   function levelUp(){ level++; coins-=coinNeed; coinNeed=5+level*3; document.getElementById('lvVal').textContent=level;
-    lvlFlashEl.classList.remove('boss'); beep(700,0.08,'square',0.08); beep(1050,0.1,'square',0.07);
+    lvlFlashEl.classList.remove('boss'); sfx('sfx_tipcoin',0.6);
     state='levelup'; showCards(); document.getElementById('levelup').classList.remove('hidden'); }
 
   function showCards(){ const pool=[];
@@ -258,11 +290,11 @@
         d.onclick=()=>{ player.weapons[c.k]=(player.weapons[c.k]||0)+1; pickDone(); }; }
       el.appendChild(d); });
   }
-  function pickDone(){ beep(880,0.05,'square',0.06); document.getElementById('levelup').classList.add('hidden'); updWchips(); state='play'; }
+  function pickDone(){ sfx('sfx_select',0.6); document.getElementById('levelup').classList.add('hidden'); updWchips(); state='play'; }
 
-  function hurt(dmg){ if(player.invuln>0) return; player.hp-=dmg; player.invuln=45; flashHit=0.8; shake=Math.max(shake,10); beep(140,0.1,'sawtooth',0.1);
+  function hurt(dmg){ if(player.invuln>0) return; player.hp-=dmg; player.invuln=45; flashHit=0.8; shake=Math.max(shake,10); sfx('sfx_hurt',0.6);
     if(player.hp<=0){ die(); } }
-  function die(){ state='over'; boom(true); explo(player.x,player.y,'#ff6a4d',40,6); explo(player.x,player.y,'#ffd24a',24,5); shake=22; flashHit=1;
+  function die(){ state='over'; boom(true); playMusic('music_title'); explo(player.x,player.y,'#ff6a4d',40,6); explo(player.x,player.y,'#ffd24a',24,5); shake=22; flashHit=1;
     const rec=score>best; if(rec){ best=score; localStorage.setItem('pine_blitz_best',String(best)); }
     document.getElementById('finalScore').textContent=Math.floor(score).toLocaleString(); document.getElementById('finalLv').textContent=level;
     document.getElementById('finalBest').textContent=best.toLocaleString(); document.getElementById('newRec').classList.toggle('hidden',!rec);
@@ -283,7 +315,7 @@
       player.trail.push({x:player.x,y:player.y}); if(player.trail.length>8) player.trail.shift();
       if(player.invuln>0) player.invuln--; if(player.throwTimer>0) player.throwTimer--;
       // 무기 발사
-      for(const k in player.weapons){ const lv=player.weapons[k]; player.wcd[k]=(player.wcd[k]||0)-1; if(player.wcd[k]<=0){ WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); } }
+      for(const k in player.weapons){ const lv=player.weapons[k]; player.wcd[k]=(player.wcd[k]||0)-1; if(player.wcd[k]<=0){ WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); player.throwTimer=9; } }
       // 총알
       for(let i=bullets.length-1;i>=0;i--){ const b=bullets[i]; b.life--;
         if(b.homing){ const tg=nearestEnemy(b.x,b.y); if(tg){ const a=Math.atan2(tg.y-b.y,tg.x-b.x); b.vx+=(Math.cos(a)*8-b.vx)*0.12; b.vy+=(Math.sin(a)*8-b.vy)*0.12; } }
@@ -374,7 +406,7 @@
       for(const c of coinDrops){ ctx.fillStyle='#ffd24a'; ctx.strokeStyle='#a5771a'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,6.28); ctx.fill(); ctx.stroke(); ctx.fillStyle='#a5771a'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('₩',c.x,c.y+3); }
       // player bullets
       for(const b of bullets){
-        if(b.img && IMG[b.img]){ const im=IMG[b.img], h=b.r*2.8, w=h*im.width/im.height; ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.spin?frame*0.32:((b.ang||-Math.PI/2)+Math.PI/2)); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); continue; }
+        if(b.img && IMG[b.img]){ const im=IMG[b.img], h=b.r*2.8, w=h*im.width/im.height; ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.spin?frame*0.32:(b.upright?0:((b.ang||-Math.PI/2)+Math.PI/2))); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); continue; }
         ctx.fillStyle=b.col; ctx.shadowColor=b.col; ctx.shadowBlur=8;
         if(b.beam){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate((b.ang||-Math.PI/2)+Math.PI/2); ctx.fillRect(-b.r/2,-b.r*1.6,b.r,b.r*3.2); ctx.restore(); }
         else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0; } ctx.shadowBlur=0;
