@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Pine &amp; Co — Cocktail Blitz</title>
 <style>
-  :root{ --pine:#5a8a5e; --gold:#c89a3c; --cream:#f0ebe0; }
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  :root{ --pine:#5a8a5e; --gold:#c89a3c; --cream:#f0ebe0; --pine-light:#6fcf8f; --amber:#e6b450; }
   *{ box-sizing:border-box; margin:0; padding:0; }
   html,body{ height:100%; background:#05070d; overflow:hidden; }
   body{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
@@ -55,14 +56,26 @@
   #topRow{ display:flex; justify-content:space-between; align-items:flex-start; }
   #score{ font-size:clamp(22px,7vw,34px); font-weight:900; font-variant-numeric:tabular-nums; text-shadow:0 2px 8px rgba(0,0,0,.6); line-height:1; }
   #score small{ display:block; font-size:10px; letter-spacing:2px; color:#8ea0c0; font-weight:700; }
-  #lvBox{ text-align:right; font-size:11px; color:#8ea0c0; font-weight:700; }
-  #lvBox b{ color:var(--gold); font-size:15px; }
-  #bars{ margin-top:7px; display:flex; flex-direction:column; gap:4px; }
-  .bar{ height:7px; background:rgba(0,0,0,.5); border-radius:4px; overflow:hidden; border:1px solid rgba(255,255,255,.15); }
-  #hpFill{ height:100%; background:linear-gradient(90deg,#ff5a6a,#ff9a6a); width:100%; }
-  #xpFill{ height:100%; background:linear-gradient(90deg,#7ee7a0,#c89a3c); width:0%; }
-  #wchips{ position:absolute; bottom:8px; left:0; right:0; display:flex; gap:5px; justify-content:center; pointer-events:none; flex-wrap:wrap; padding:0 8px; }
-  .wchip{ font-size:10px; font-weight:800; letter-spacing:.3px; color:#0a140a; padding:3px 8px; border-radius:20px; box-shadow:0 2px 0 rgba(0,0,0,.4); }
+  #lvBox{ text-align:right; font-size:11px; color:#8ea0c0; font-weight:700; font-family:'Press Start 2P',monospace; }
+  #lvBox b{ color:var(--gold); font-size:13px; }
+  /* ★Cocktail Defense 동일 HP/XP 바(액자형, 픽셀폰트 라벨) */
+  #bars{ margin-top:7px; display:flex; flex-direction:column; }
+  .hp-bar{ position:relative; width:clamp(150px,44vw,230px); height:clamp(18px,5vw,26px);
+    background:#2a0e0e; border:3px solid #000; box-shadow:0 2px 0 rgba(0,0,0,.5); }
+  #hpFill{ height:100%; background:linear-gradient(#ff6b5e,#d9544d); width:100%; transition:width .12s; }
+  .bar-label{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Press Start 2P',monospace; font-size:clamp(8px,2.3vw,12px); color:#fff; text-shadow:1px 1px 0 #000,-1px -1px 0 #000; }
+  .xp-bar{ position:relative; width:clamp(150px,44vw,230px); height:clamp(9px,2.6vw,14px);
+    background:#0e2a16; border:2px solid #000; margin-top:4px; }
+  #xpFill{ height:100%; background:linear-gradient(#aeffbe,#6fcf8f); width:0%; transition:width .12s; box-shadow:0 0 6px rgba(111,207,143,.85); }
+  /* ★획득 칵테일/재료 슬롯(CD 동일: wslot 액자칩 + Lv 배지) */
+  #wchips{ position:absolute; bottom:8px; left:0; right:0; display:flex; gap:3px; justify-content:center; pointer-events:none; flex-wrap:wrap; padding:0 8px; }
+  .wslot{ width:clamp(26px,7.5vw,34px); height:clamp(26px,7.5vw,34px); border:1.5px solid #555; border-radius:4px;
+    background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; position:relative; }
+  .wslot.base{ border-color:#c89a3c; }
+  .wslot img{ width:76%; height:76%; object-fit:contain; image-rendering:pixelated; }
+  .wslot .wic{ font-size:15px; line-height:1; }
+  .wslot .wlv{ position:absolute; bottom:-3px; right:-1px; font-family:'Press Start 2P',monospace; font-size:8px; color:var(--amber); font-weight:bold; text-shadow:1px 1px 0 #000; }
   #lvlFlash{ position:absolute; top:28%; left:0; right:0; text-align:center; font-weight:900; font-size:clamp(20px,7vw,34px);
     letter-spacing:3px; opacity:0; pointer-events:none; transition:opacity .2s; color:var(--gold); text-shadow:0 0 18px rgba(200,154,60,.5); }
   #lvlFlash.boss{ color:#ff5a4d; }
@@ -71,18 +84,27 @@
   #lvlFlash .bt{ display:block; font-size:.34em; letter-spacing:.5px; font-weight:700; color:#f0d9c0; margin-top:4px; }
   #bossbar{ position:absolute; top:58px; left:12%; right:12%; height:8px; background:rgba(0,0,0,.5); border:1px solid #ff8a7a; border-radius:5px; overflow:hidden; opacity:0; transition:opacity .3s; }
   #bossbar.show{ opacity:1; } #bossfill{ height:100%; width:100%; background:linear-gradient(90deg,#ff5a4d,#ffb14d); }
-  /* 무기 선택 */
-  #levelup{ background:rgba(6,10,20,.9); }
-  #levelup h2{ font-size:clamp(18px,5.5vw,26px); font-weight:900; color:var(--gold); letter-spacing:1px; }
-  #levelup .lsub{ font-size:12px; color:#a9b6cf; margin-bottom:4px; }
-  #cards{ display:flex; flex-direction:column; gap:10px; width:100%; max-width:340px; }
-  .card{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px; cursor:pointer; text-align:left;
-    background:linear-gradient(#1a2620,#12190f); border:2px solid #35513f; box-shadow:0 4px 0 rgba(0,0,0,.5); transition:transform .07s,border-color .1s; }
-  .card:active{ transform:translateY(3px); } .card:hover{ border-color:var(--gold); }
-  .cIcon{ width:42px; height:42px; border-radius:10px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:22px; }
-  .cName{ font-size:15px; font-weight:900; color:var(--cream); }
-  .cLv{ font-size:11px; font-weight:800; color:var(--gold); }
-  .cDesc{ font-size:11px; color:#a9b6cf; line-height:1.4; margin-top:2px; }
+  /* ★레벨업: Cocktail Defense 동일 — 배너 + 액자(levelup_frame.png) 카드 */
+  #levelup{ background:rgba(6,10,20,.92); gap:clamp(8px,2vh,18px); padding:18px 8px; }
+  .levelup-banner{ width:clamp(160px,44vw,300px); height:auto; image-rendering:pixelated;
+    filter:drop-shadow(2px 2px 0 #000) drop-shadow(0 0 16px rgba(111,207,143,.45)); }
+  #cards{ display:flex; flex-wrap:wrap; gap:clamp(6px,1.5vw,14px); align-items:center; justify-content:center; width:100%; max-width:760px; }
+  .up-card{ position:relative; cursor:pointer; transition:transform .07s; flex:0 0 auto; font-family:'Press Start 2P',monospace;
+    width:clamp(120px, min(40vw,26vh), 180px); aspect-ratio:465/475; }
+  .up-card:active{ transform:translateY(3px); }
+  .upframe-img{ position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; z-index:2; pointer-events:none; }
+  .up-card.new .upframe-img{ filter:drop-shadow(0 0 11px rgba(230,180,80,.75)); }
+  .up-inner{ position:absolute; left:16%; top:15.5%; width:68%; height:69%; z-index:1; overflow:hidden;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:clamp(1px,0.5vh,3px);
+    padding:2px; background:radial-gradient(circle at 50% 32%, rgba(22,32,20,.5), rgba(8,12,8,.8)); }
+  .up-card .ic{ line-height:1; display:flex; align-items:center; justify-content:center; font-size:clamp(17px,4.6vw,28px); flex:0 0 auto; }
+  .up-card .up-ic{ max-width:82%; max-height:clamp(20px,6vh,34px); width:auto; height:auto; object-fit:contain; image-rendering:pixelated; display:block; }
+  .up-card h4{ font-size:clamp(7px,2.1vw,11px); color:var(--pine-light); line-height:1.2; }
+  .up-card.new h4{ color:var(--amber); }
+  .up-card .lv{ font-size:clamp(6px,1.6vw,9px); color:var(--amber); }
+  .up-card p{ font-size:clamp(6px,1.6vw,9px); color:#d2cdbb; line-height:1.22; max-width:100%;
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; line-clamp:3; overflow:hidden;
+    overflow-wrap:break-word; word-break:break-word; padding:0 1px; font-family:-apple-system,"Segoe UI",system-ui,sans-serif; }
 </style>
 </head>
 <body>
@@ -93,7 +115,10 @@
       <div id="score"><small>SCORE</small><span id="scoreVal">0</span></div>
       <div id="lvBox">WAVE <b id="waveVal">1</b> · LV <b id="lvVal">1</b><br>BEST <span id="hiVal">0</span></div>
     </div>
-    <div id="bars"><div class="bar"><div id="hpFill"></div></div><div class="bar"><div id="xpFill"></div></div></div>
+    <div id="bars">
+      <div class="hp-bar"><div id="hpFill"></div><span class="bar-label" id="hpText">120/120</span></div>
+      <div class="xp-bar"><div id="xpFill"></div></div>
+    </div>
   </div>
   <div id="wchips"></div>
   <div id="bossbar"><div id="bossfill"></div></div>
@@ -124,7 +149,8 @@
   </div>
 
   <div id="levelup" class="overlay hidden">
-    <h2>LEVEL UP!</h2><div class="lsub">칵테일을 하나 골라라</div>
+    <img class="levelup-banner" src="assets/levelup_banner.png" alt="LEVEL UP!"
+         onerror="this.outerHTML='<h2 style=&quot;color:var(--gold);font-family:Press Start 2P,monospace&quot;>LEVEL UP!</h2>'">
     <div id="cards"></div>
   </div>
 
@@ -288,8 +314,12 @@
     playMusic('music_play'+(1+Math.floor(Math.random()*3)));   // ★게임 음악
   }
 
+  function wImg(k){ const w=WEAPONS[k]; return w.sig?(k==='shaker'?'proj_shaker':'proj_barspoon'):'cocktail_'+k; }
   function updWchips(){ const el=document.getElementById('wchips'); let h='';
-    for(const k in player.weapons){ const w=WEAPONS[k]; h+=`<div class="wchip" style="background:${w.col}">${w.ic} ${w.name.split(' ')[0]} ${player.weapons[k]}</div>`; }
+    // ★획득 칵테일/무기를 CD 동일 wslot(액자칩 + Lv 배지)로 표시. 시그니처(기본무기)는 금테.
+    const keys=Object.keys(player.weapons).sort((a,b)=> (WEAPONS[a].sig?0:1)-(WEAPONS[b].sig?0:1));
+    for(const k of keys){ const w=WEAPONS[k], lv=player.weapons[k];
+      h+=`<div class="wslot${w.sig?' base':''}"><img src="assets/${wImg(k)}.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wic',textContent:'${w.ic||'🍸'}'}))"><span class="wlv">${lv}</span></div>`; }
     el.innerHTML=h; }
 
   function enemyHpBase(){ return 6 + t*0.55 + level*1.5; }   // ★난이도↓: 체력 완만
@@ -346,11 +376,14 @@
     const pick=pool.slice(0,3); if(Math.random()<0.35 || pick.length<3) pick.push({heal:true});
     const cards=pick.slice(0,3);
     const el=document.getElementById('cards'); el.innerHTML='';
-    cards.forEach(c=>{ const d=document.createElement('div'); d.className='card';
-      if(c.heal){ d.innerHTML=`<div class="cIcon" style="background:${HEAL.col}">${HEAL.ic}</div><div><div class="cName">${HEAL.name}</div><div class="cDesc">${HEAL.desc}</div></div>`;
+    // ★Cocktail Defense 동일 액자 카드(levelup_frame.png) — 아이콘 이미지 + 이름 + Lv + 설명
+    cards.forEach(c=>{ const d=document.createElement('div');
+      if(c.heal){ d.className='up-card new';
+        d.innerHTML=`<div class="up-inner"><div class="ic"><span>${HEAL.ic}</span></div><h4>${HEAL.name}</h4><div class="lv">RECOVER</div><p>${HEAL.desc}</p></div><img class="upframe-img" src="assets/levelup_frame.png" alt="" onerror="this.style.display='none'">`;
         d.onclick=()=>{ player.maxHp+=20; player.hp=Math.min(player.maxHp,player.hp+60); pickDone(); }; }
       else { const w=WEAPONS[c.k], lv=player.weapons[c.k]||0;
-        d.innerHTML=`<div class="cIcon" style="background:${w.col}">${w.ic}</div><div><div class="cName">${w.name} <span class="cLv">${c.upgrade?('Lv'+lv+'→'+(lv+1)):'NEW'}</span></div><div class="cDesc">${w.desc}</div></div>`;
+        d.className='up-card'+(c.upgrade?'':' new');
+        d.innerHTML=`<div class="up-inner"><div class="ic"><img class="up-ic" src="assets/${wImg(c.k)}.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${w.ic||'🍸'}'}))"></div><h4>${w.name}</h4><div class="lv">${c.upgrade?('Lv '+lv+'→'+(lv+1)+'/'+w.max):'NEW · Lv 1'}</div><p>${w.desc}</p></div><img class="upframe-img" src="assets/levelup_frame.png" alt="" onerror="this.style.display='none'">`;
         d.onclick=()=>{ player.weapons[c.k]=(player.weapons[c.k]||0)+1; pickDone(); }; }
       el.appendChild(d); });
   }
@@ -480,11 +513,12 @@
     if(im){ const h=player.r*3.6, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.rotate(FWD); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
     else { ctx.fillStyle='rgba(90,138,94,.9)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,6.28); ctx.fill(); } }
 
-  // ★미러 타일: 짝수 타일=원본, 홀수 타일=좌우반전 → 인접 이음새가 항상 같은 픽셀끼리 만나 끊김 없음
+  // ★심리스 타일: 이미지 자체가 좌우 wrap(끝=끝)으로 가공됨 → 반전 없이 평면 반복.
+  //   정수좌표 floor + 폭 +1px 겹침으로 서브픽셀 이음새선 제거.
   function tileMirror(im, y, h, speed){ const scale=h/im.height, tw=im.width*scale, s=frame*speed;
     const k0=Math.floor(s/tw)-1, k1=k0+Math.ceil(W/tw)+2;
     for(let k=k0;k<=k1;k++){ const x=k*tw - s;
-      ctx.save(); ctx.translate(x,y); if(k&1){ ctx.translate(tw,0); ctx.scale(-1,1); } ctx.drawImage(im,0,0,tw,h); ctx.restore(); } }
+      ctx.drawImage(im, 0,0,im.width,im.height, Math.floor(x), y, Math.ceil(tw)+1, h); } }
   function draw(){ ctx.clearRect(0,0,W,H); ctx.save(); if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
     // ★강남 배경 — 미러 타일로 끊김 없이(짝수=원본/홀수=좌우반전 → 이음새가 항상 같은 픽셀끼리 만남)
     const bgi=IMG.bg_gangnam;
@@ -516,6 +550,7 @@
     if(flashHit>0){ ctx.globalAlpha=flashHit*0.55; ctx.fillStyle='#ff5a4d'; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
     if(state==='play'||state==='levelup'){ document.getElementById('scoreVal').textContent=Math.floor(score).toLocaleString();
       document.getElementById('hiVal').textContent=best.toLocaleString(); document.getElementById('hpFill').style.width=Math.max(0,player.hp/player.maxHp*100)+'%';
+      document.getElementById('hpText').textContent=Math.max(0,Math.ceil(player.hp))+'/'+Math.round(player.maxHp);
       document.getElementById('xpFill').style.width=(coins/coinNeed*100)+'%'; }
   }
   function loop(){ update(); draw(); requestAnimationFrame(loop); }
