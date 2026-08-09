@@ -448,7 +448,7 @@
           e.x+=e.vx*sm; e.y+=e.vy*sm;   // ★멈추지 않고 계속 진행하면서 침을 뱉음(더 이상 정지 안 함)
           e.fireT--; if(e.fireT<=0){ e.fireT=Math.max(70,120-t); e.vomit=16;
             const a=Math.atan2(player.y-e.y,player.x-e.x);   // 초록 vomit 블롭 1발(약화)
-            const sp=2.6+Math.random()*0.6; ebullets.push({x:e.x,y:e.y+e.r*0.3,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:7,col:'#9ad14f',vomit:true,wob:Math.random()*6.28});
+            const sp=2.6+Math.random()*0.6; ebullets.push({x:e.x,y:e.y+e.r*0.3,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:11,col:'#9ad14f',vomit:true,wob:Math.random()*6.28});
             sfx('sfx_hurt',0.22); }
         } else {
           e.x+=e.vx*sm; e.y+=e.vy*sm;
@@ -465,11 +465,11 @@
           else { boss.x+=boss.dir*bs; if(boss.x<boss.r+10){boss.x=boss.r+10;boss.dir=1;} if(boss.x>W-boss.r-10){boss.x=W-boss.r-10;boss.dir=-1;} }
           // ① 조준 연발(플레이어를 향해 3~5갈래)
           boss.fireT--; if(boss.fireT<=0){ boss.fireT=Math.max(24,54-bossCount*6); const ang=Math.atan2(player.y-boss.y,player.x-boss.x),sp=3+bossCount*0.25, sh=2+Math.min(2,Math.floor(bossCount/2));
-            for(let k=-sh;k<=sh;k++){ const a=ang+k*0.16; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:6}); } sfx('hit',0.3); }
+            for(let k=-sh;k<=sh;k++){ const a=ang+k*0.16; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:9}); } sfx('hit',0.3); }
           // ② 방사형 버스트(사방)
-          boss.burstT--; if(boss.burstT<=0){ boss.burstT=170; const n=8+bossCount*2; for(let k=0;k<n;k++){ const a=k/n*6.28; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,r:6}); } sfx('sfx_boss',0.35); }
+          boss.burstT--; if(boss.burstT<=0){ boss.burstT=170; const n=8+bossCount*2; for(let k=0;k<n;k++){ const a=k/n*6.28; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,r:9}); } sfx('sfx_boss',0.35); }
           // ③ 회전 스파이럴(빙글빙글 뿜기) — 2번째 보스부터
-          if(bossCount>=2){ boss.spA=(boss.spA||0)+0.35; if(frame%4===0){ const arms=2+Math.min(3,Math.floor(bossCount/2)); for(let k=0;k<arms;k++){ const a=boss.spA+k*(6.28/arms); ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.6,vy:Math.sin(a)*2.6,r:5,col:'#ffb14d'}); } } } }
+          if(bossCount>=2){ boss.spA=(boss.spA||0)+0.35; if(frame%4===0){ const arms=2+Math.min(3,Math.floor(bossCount/2)); for(let k=0;k<arms;k++){ const a=boss.spA+k*(6.28/arms); ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.6,vy:Math.sin(a)*2.6,r:8,col:'#ffb14d'}); } } } }
         bossfill.style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';
         if(!boss.enter&&Math.hypot(boss.x-player.x,boss.y-player.y)<boss.r+player.r-4) hurt(40); }
       // 적 탄
@@ -520,23 +520,31 @@
     for(let k=k0;k<=k1;k++){ const x=k*tw - s;
       ctx.drawImage(im, 0,0,im.width,im.height, Math.floor(x), y, Math.ceil(tw)+1, h); } }
   function draw(){ ctx.clearRect(0,0,W,H); ctx.save(); if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
-    // ★강남 배경 — 뒤 1겹(이음새 없는 스카이라인) + 앞 3겹(같은 건물 이미지를 높이·속도 다르게 겹침).
-    //   투명도 조작 없이 이미지만 겹침(앞 이미지의 하늘은 원래 투명이라 뒤가 자연스럽게 비침).
+    // ★강남 배경 — 원본 패턴 그대로 타일(좌우끝 색차 0 → 이음새 없음, 가공 흔적 없음).
+    //   뒤 1겹(스카이라인, 이미지 자체가 25% 어두움) + 앞 3겹(하단정렬, 높이·속도 다르게).
     const bgi=IMG.bg_gangnam, fgi=IMG.fg_gangnam;
     if(bgi){
-      tileMirror(bgi, 0, H, 0.18, 0);                             // 뒤: 스카이라인(느리게, 좌우 끝 이어짐)
-      ctx.fillStyle='rgba(4,6,14,0.66)'; ctx.fillRect(0,0,W,H);   // ★전체적으로 더 어둡게
+      tileMirror(bgi, 0, H, 0.18, 0);                             // 뒤: 스카이라인(느리게)
+      ctx.fillStyle='rgba(4,6,14,0.42)'; ctx.fillRect(0,0,W,H);   // 약한 어둠막(이미지+막 = 더 어둡게)
     }
-    if(fgi){                                                      // 앞 3겹(뒤→앞: 느리고 높음 → 빠르고 낮음)
-      tileMirror(fgi, H-H*0.56, H*0.56, 0.38, 0.15);
-      tileMirror(fgi, H-H*0.46, H*0.46, 0.60, 0.55);
-      tileMirror(fgi, H-H*0.36, H*0.36, 0.86, 0.80);
+    if(fgi){                                                      // 앞 3겹(뒤→앞: 느리고 높음 → 빠르고 낮음), 하단정렬
+      tileMirror(fgi, H-H*0.60, H*0.60, 0.40, 0.15);
+      tileMirror(fgi, H-H*0.50, H*0.50, 0.62, 0.55);
+      tileMirror(fgi, H-H*0.40, H*0.40, 0.88, 0.80);
     }
     else { for(const s of stars){ ctx.globalAlpha=s.z*0.8; ctx.fillStyle='#cdd7ef'; ctx.fillRect(s.x*W,s.y*H,s.z*1.8,s.z*1.8); } ctx.globalAlpha=1; }
     for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
     if(state!=='title'){
       // coins
-      for(const c of coinDrops){ ctx.fillStyle='#ffd24a'; ctx.strokeStyle='#a5771a'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,6.28); ctx.fill(); ctx.stroke(); ctx.fillStyle='#a5771a'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('₩',c.x,c.y+3); }
+      for(const c of coinDrops){
+        const pulse=0.6+0.4*Math.sin(frame*0.18+(c.x+c.y)*0.05);                          // ★반짝이는 맥동
+        const gr=ctx.createRadialGradient(c.x,c.y,1,c.x,c.y,c.r*3.2);                       // 금빛 후광
+        gr.addColorStop(0,'rgba(255,230,130,'+(0.55*pulse)+')'); gr.addColorStop(1,'rgba(255,210,74,0)');
+        ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(c.x,c.y,c.r*3.2,0,6.28); ctx.fill();
+        ctx.save(); ctx.shadowColor='#ffdf6e'; ctx.shadowBlur=10+6*pulse;                   // 발광
+        ctx.fillStyle='#ffe66a'; ctx.strokeStyle='#a5771a'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,6.28); ctx.fill(); ctx.stroke(); ctx.restore();
+        ctx.fillStyle='#fff'; ctx.globalAlpha=0.85*pulse; ctx.beginPath(); ctx.arc(c.x-c.r*0.3,c.y-c.r*0.3,c.r*0.32,0,6.28); ctx.fill(); ctx.globalAlpha=1;  // 하이라이트 광점
+        ctx.fillStyle='#a5771a'; ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('₩',c.x,c.y+3); }
       // player bullets
       for(const b of bullets){
         if(b.img && IMG[b.img]){ const im=IMG[b.img], h=b.r*2.8, w=h*im.width/im.height; ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.spin?frame*0.32:(b.upright?0:((b.ang||-Math.PI/2)+Math.PI/2))); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); continue; }
