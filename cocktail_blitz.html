@@ -513,20 +513,25 @@
     if(im){ const h=player.r*3.6, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.rotate(FWD); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
     else { ctx.fillStyle='rgba(90,138,94,.9)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,6.28); ctx.fill(); } }
 
-  // ★심리스 타일: 이미지 자체가 좌우 wrap(끝=끝)으로 가공됨 → 반전 없이 평면 반복.
+  // ★타일 한 겹: 가로로 무한 반복. offFrac=타일폭의 몇 배로 시작위치를 밀지(겹마다 어긋나게).
   //   정수좌표 floor + 폭 +1px 겹침으로 서브픽셀 이음새선 제거.
-  function tileMirror(im, y, h, speed){ const scale=h/im.height, tw=im.width*scale, s=frame*speed;
+  function tileMirror(im, y, h, speed, offFrac){ const scale=h/im.height, tw=im.width*scale, s=frame*speed + (offFrac||0)*tw;
     const k0=Math.floor(s/tw)-1, k1=k0+Math.ceil(W/tw)+2;
     for(let k=k0;k<=k1;k++){ const x=k*tw - s;
       ctx.drawImage(im, 0,0,im.width,im.height, Math.floor(x), y, Math.ceil(tw)+1, h); } }
   function draw(){ ctx.clearRect(0,0,W,H); ctx.save(); if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
-    // ★강남 배경 — 미러 타일로 끊김 없이(짝수=원본/홀수=좌우반전 → 이음새가 항상 같은 픽셀끼리 만남)
-    const bgi=IMG.bg_gangnam;
-    if(bgi){ tileMirror(bgi, 0, H, 0.4);
-      ctx.fillStyle='rgba(4,6,14,0.66)'; ctx.fillRect(0,0,W,H); }   // ★전체적으로 더 어둡게
-    // ★앞쪽 배경 레이어 — 하단 정렬, 더 빠르게(패럴랙스), 역시 미러 타일
-    const fgi=IMG.fg_gangnam;
-    if(fgi){ const fh=H*0.5; ctx.save(); ctx.globalAlpha=0.82; tileMirror(fgi, H-fh, fh, 0.7); ctx.restore(); }
+    // ★강남 배경 — 4겹 패럴랙스(뒤 2 + 앞 2). 겹마다 속도·오프셋이 달라 이음새 위치가 서로 어긋나고,
+    //   반투명 겹이 그 위를 덮어 빈 곳/끊김을 가린다.
+    const bgi=IMG.bg_gangnam, fgi=IMG.fg_gangnam;
+    if(bgi){
+      tileMirror(bgi, 0, H, 0.14, 0);                                             // 뒤1: 먼 스카이라인(느림)
+      ctx.save(); ctx.globalAlpha=0.5; tileMirror(bgi, 0, H, 0.26, 0.5); ctx.restore();  // 뒤2: 반투명·반타일 어긋남 → 뒤1 이음새 덮음
+      ctx.fillStyle='rgba(4,6,14,0.66)'; ctx.fillRect(0,0,W,H);                    // ★전체적으로 더 어둡게
+    }
+    if(fgi){
+      const fh1=H*0.54; ctx.save(); ctx.globalAlpha=0.9; tileMirror(fgi, H-fh1, fh1, 0.55, 0);   ctx.restore(); // 앞1: 앞쪽 건물
+      const fh2=H*0.40; ctx.save(); ctx.globalAlpha=0.66; tileMirror(fgi, H-fh2, fh2, 0.92, 0.5); ctx.restore(); // 앞2: 더 빠르고 낮게·어긋남
+    }
     else { for(const s of stars){ ctx.globalAlpha=s.z*0.8; ctx.fillStyle='#cdd7ef'; ctx.fillRect(s.x*W,s.y*H,s.z*1.8,s.z*1.8); } ctx.globalAlpha=1; }
     for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
     if(state!=='title'){
