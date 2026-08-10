@@ -136,7 +136,7 @@
   <div id="lvlFlash"></div>
 
   <div id="title" class="overlay">
-    <div class="brand">PINE &amp; CO · ARCADE <span style="opacity:.5;font-size:9px">BUILD BOSS-CD</span></div>
+    <div class="brand">PINE &amp; CO · ARCADE <span style="opacity:.5;font-size:9px">BUILD BOSS-CD2</span></div>
     <h1>COCKTAIL<br><span class="em">BLITZ</span></h1>
     <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>이동: 모바일=드래그 / PC=방향키·WASD. <b>발사: FIRE 버튼</b>(PC=스페이스) 누르는 동안만 발사.</div>
     <div id="charpick">
@@ -373,9 +373,9 @@
   function spawnEnemy(cfg){ cfg=cfg||{};
     let type=cfg.type;
     if(!type){ const r=Math.random(); type = r<0.16?'thrower':r<0.32?'bomber':r<0.5?'runner':'drunk'; }
-    const T=ETYPE[type]; let rad=Math.round(T.rad*1.3), spdm=T.spdm;   // ★크기 살짝 키움(+30%)
+    const T=ETYPE[type]; let rad=Math.round(T.rad*1.95), spdm=T.spdm;   // ★크기 +50%(1.3→1.95)
     const sprite = T.sprite || EVAR[Math.floor(Math.random()*EVAR.length)];
-    const hp=enemyHpBase()*T.hpm, spd=(0.95+t*0.02)*spdm;   // ★초반 느리게, 시간 갈수록 빠르게
+    const hp=enemyHpBase()*T.hpm, spd=(0.7+t*0.025)*spdm;   // ★초반 더 느리게, 시간 갈수록 확 빠르게
     const ex = (cfg.x!=null) ? cfg.x : W+30;
     const ey = (cfg.y!=null) ? cfg.y : Math.random()*(H-60)+30;
     // ★이동 패턴: straight/diag/sine/dive/snake(경로추종 편대). runner 단발은 sine.
@@ -392,7 +392,7 @@
     const kind=['wave','zigzag','swoop','sweep'][Math.floor(Math.random()*4)];
     const type=KIND_TYPE[kind];
     const n=3+Math.floor(Math.random()*3);                        // ★3~5마리(난이도↓)
-    const spd=(0.95+t*0.02)*ETYPE[type].spdm*1.55;                 // ★초반 느리게→시간 갈수록 빠르게
+    const spd=(0.7+t*0.025)*ETYPE[type].spdm*1.55;                 // ★초반 더 느리게→시간 갈수록 확 빠르게
     const baseY=H*0.28 + Math.random()*H*0.44;
     const s={ members:[], hist:[], type, spd, kind, phase:Math.random()*6.28, baseY, gap:14, f:0, leadX:W+46, dir:(Math.random()<0.5?1:-1) };
     for(let i=0;i<n;i++){ const e=spawnEnemy({ type, x:W+46, y:baseY, pat:'snake', vx:0, vy:0, snake:s, idx:i }); s.members.push(e); }
