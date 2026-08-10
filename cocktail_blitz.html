@@ -529,7 +529,7 @@
     // ★이동 상태에 따른 포즈: 정지=stay, 앞(오른쪽)=straight, 뒤/위=rear. 세로로 서있는 스프라이트(회전 없음).
     const suf = player.pose==='straight' ? '_straight' : player.pose==='rear' ? '_rear' : '';
     const im=IMG['cb_'+player.char+suf];
-    if(im){ const h=player.r*3.6, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
+    if(im){ const h=player.r*4.32, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
     else { ctx.fillStyle='rgba(90,138,94,.9)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,6.28); ctx.fill(); } }
 
   // ★타일 한 겹: 브라우저 패턴 반복으로 한 번에 채움 → 이미지를 브라우저가 직접 이어붙여 그리므로
@@ -548,7 +548,7 @@
     const bgi=IMG.bg_gangnam, fgi=IMG.fg_gangnam;
     if(bgi){
       tileMirror(bgi, 0, H, 0.18, 0);                             // 뒤: 스카이라인(느리게)
-      ctx.fillStyle='rgba(4,6,14,0.42)'; ctx.fillRect(0,0,W,H);   // 약한 어둠막(이미지+막 = 더 어둡게)
+      ctx.fillStyle='rgba(4,6,14,0.55)'; ctx.fillRect(0,0,W,H);   // 어둠막(이미지+막 = 더 어둡게)
     }
     if(fgi){                                                      // 앞 3겹(뒤→앞: 느리고 높음 → 빠르고 낮음), 하단정렬
       tileMirror(fgi, H-H*0.60, H*0.60, 0.40, 0.15);
