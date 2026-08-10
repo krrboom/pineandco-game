@@ -336,7 +336,7 @@
   document.querySelectorAll('#idxTabs .itab').forEach(b=>{ b.onclick=()=>{ sfx('sfx_select',0.4); document.querySelectorAll('#idxTabs .itab').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); renderIndex(b.getAttribute('data-tab')); document.getElementById('idxList').scrollTop=0; }; });
 
   function start(){ ac(); state='play'; frame=0; score=0; level=1; coins=0; coinNeed=6; t=0;
-    enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; boss=null; bossbar.classList.remove('show');
+    enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; snakes=[]; boss=null; bossbar.classList.remove('show');
     spawnT=0; shake=0; flashHit=0; bossTimer=26*60; bossCount=0;
     computeOrient(); if(LAND){ player.x=W*0.16; player.y=H/2; } else { player.x=W/2; player.y=H*0.80; } player.tx=player.x; player.ty=player.y; player.baseMaxHp=100; player.maxHp=100; player.hp=100; player.invuln=0; player.trail=[];
     player.char=selectedChar; player.throwTimer=0;
@@ -368,28 +368,41 @@
   function spawnEnemy(cfg){ cfg=cfg||{};
     let type=cfg.type;
     if(!type){ const r=Math.random(); type = r<0.16?'thrower':r<0.32?'bomber':r<0.5?'runner':'drunk'; }
-    const T=ETYPE[type]; const sc=cfg.scale||1; let rad=Math.round(T.rad*1.4*sc), spdm=T.spdm;   // ★기본 +40%, cfg.scale로 확대
+    const T=ETYPE[type]; let rad=T.rad, spdm=T.spdm;   // ★원래 크기(확대 제거)
     const sprite = T.sprite || EVAR[Math.floor(Math.random()*EVAR.length)];
-    const hp=enemyHpBase()*T.hpm*(sc>1?sc*0.8:1), spd=(1.25+t*0.013)*spdm;   // ★큰 몬스터는 체력↑, 이동속도 +25%
+    const hp=enemyHpBase()*T.hpm, spd=(1.25+t*0.013)*spdm;   // ★이동속도 +25%
     const ex = (cfg.x!=null) ? cfg.x : W+30;
     const ey = (cfg.y!=null) ? cfg.y : Math.random()*(H-60)+30;
-    // ★이동 패턴: straight/diag(대각선,화면밖으로)/sine(파도)/dive(추적). runner는 항상 sine.
+    // ★이동 패턴: straight/diag/sine/dive/snake(경로추종 편대). runner 단발은 sine.
     const pat = cfg.pat || (type==='runner' ? 'sine' : ['straight','straight','straight','diag','sine','dive'][Math.floor(Math.random()*6)]);
     let vx = (cfg.vx!=null) ? cfg.vx : -spd;
     let vy = (cfg.vy!=null) ? cfg.vy : (pat==='diag' ? (Math.random()<0.5?-1:1)*spd*0.6 : 0);
-    const e={ type, sprite, x:ex, y:ey, r:rad, hp, maxHp:hp, spd, vx, vy, coin:T.coin, wob:(cfg.wob!=null?cfg.wob:Math.random()*6.28), fireT:70, vomit:0, pat };
-    enemies.push(e); }
-  // ★대각선 편대: 같은 종류·같은 속도로 강체 이동해 '줄'을 유지하며 대각선으로 화면 밖으로(고전 슈팅)
-  function spawnFormation(){ const n=5+Math.floor(Math.random()*3); const d=(Math.random()<0.5?1:-1);
-    const type=['drunk','bomber','runner'][Math.floor(Math.random()*3)];
-    const spd=(1.25+t*0.013)*ETYPE[type].spdm;
-    const vx=-spd, vy=d*spd*0.55;                       // 편대 전원 동일 속도 → 줄이 안 흐트러짐
-    const y0 = d>0 ? H*0.20 : H*0.80;
-    for(let i=0;i<n;i++) spawnEnemy({ type, x:W+34+i*50, y:y0 + i*32*d, pat:'diag', vx, vy }); }
-  // ★웨이브 편대: 큰 몬스터들이 줄지어 파도(sine)를 그리며 등장(300% 크게)
-  function spawnWave(){ const n=4+Math.floor(Math.random()*2); const type='drunk';
-    const spd=(1.25+t*0.013)*ETYPE[type].spdm*0.85;
-    for(let i=0;i<n;i++) spawnEnemy({ type, x:W+50+i*130, y:H*0.5, pat:'sine', vx:-spd, vy:0, scale:2.6, wob:i*0.9 }); }
+    const e={ type, sprite, x:ex, y:ey, r:rad, hp, maxHp:hp, spd, vx, vy, coin:T.coin, wob:(cfg.wob!=null?cfg.wob:Math.random()*6.28), fireT:70, vomit:0, pat, snake:cfg.snake||null, idx:cfg.idx||0 };
+    enemies.push(e); return e; }
+  // ★경로 추종형 편대(뱀): 리드가 요리조리 위빙 경로를 그리고, 뒤 멤버들이 같은 경로를 딜레이로 따라
+  //   가며 '일정 간격'을 유지한다. 더 빠르고, 방향을 바꿔가며 움직인다.
+  let snakes=[];
+  function spawnSnake(){ const n=5+Math.floor(Math.random()*4);
+    const type=['drunk','drunk','runner','bomber','thrower'][Math.floor(Math.random()*5)];   // 종류별 특성 유지(봄버 폭발/스로워 침)
+    const kind=['wave','zigzag','swoop','sweep'][Math.floor(Math.random()*4)];
+    const spd=(1.25+t*0.013)*ETYPE[type].spdm*1.55;                 // ★확실히 빠르게
+    const baseY=H*0.28 + Math.random()*H*0.44;
+    const s={ members:[], hist:[], type, spd, kind, phase:Math.random()*6.28, baseY, gap:14, f:0, leadX:W+46, dir:(Math.random()<0.5?1:-1) };
+    for(let i=0;i<n;i++){ const e=spawnEnemy({ type, x:W+46, y:baseY, pat:'snake', vx:0, vy:0, snake:s, idx:i }); s.members.push(e); }
+    snakes.push(s); }
+  function updateSnakes(){
+    for(let si=snakes.length-1;si>=0;si--){ const s=snakes[si]; s.f++; s.leadX-=s.spd;
+      let dy;   // 리드 y경로 — kind별로 요리조리
+      if(s.kind==='wave')      dy = Math.sin(s.f*0.06+s.phase)*H*0.17 + Math.sin(s.f*0.021)*H*0.09;
+      else if(s.kind==='zigzag'){ const tri=Math.asin(Math.sin(s.f*0.055+s.phase))*(2/Math.PI); dy=tri*H*0.22; }
+      else if(s.kind==='swoop') dy = Math.sin(s.f*0.032+s.phase)*H*0.30;
+      else /*sweep*/            dy = s.dir*Math.sin(s.f*0.045+s.phase)*H*0.24 + Math.sin(s.f*0.09)*H*0.05;
+      const leadY=Math.max(24, Math.min(H-24, s.baseY+dy));
+      s.hist.unshift({x:s.leadX, y:leadY}); if(s.hist.length>170) s.hist.pop();
+      let alive=false;
+      for(const e of s.members){ if(e.dead || enemies.indexOf(e)<0) continue; alive=true;
+        const h=s.hist[Math.min(s.hist.length-1, e.idx*s.gap)]; if(h){ e.x=h.x; e.y=h.y; } }
+      if(!alive || s.leadX<-160) snakes.splice(si,1); } }
 
   function explodeBomber(e){ const R=60; explo(e.x,e.y,'#ff7a2a',26,7); explo(e.x,e.y,'#ffd28a',14,5); boom(false); shake=Math.max(shake,9);
     if(Math.hypot(e.x-player.x,e.y-player.y)<R+player.r) hurt(22);   // 반경 안이면 플레이어 피해
@@ -415,7 +428,7 @@
     if(LAND){ c.vx=-(1.0+Math.random()); c.vy=(Math.random()-0.5)*1.2; } else { c.vx=(Math.random()-0.5)*1.4; c.vy=1.2+Math.random(); } coinDrops.push(c); }
   function dropBill(x,y){ const c={x:x+(Math.random()-0.5)*14,y:y+(Math.random()-0.5)*14,r:9,val:5,bill:true};   // ★지폐: 코인 5개 값
     if(LAND){ c.vx=-(0.8+Math.random()); c.vy=(Math.random()-0.5)*1.0; } else { c.vx=(Math.random()-0.5)*1.2; c.vy=1.0+Math.random(); } coinDrops.push(c); }
-  function killEnemy(e,i){ enemies.splice(i,1);
+  function killEnemy(e,i){ e.dead=true; enemies.splice(i,1);
     if(e.type==='bomber'){ explodeBomber(e); return; }   // 폭발몹은 죽어도 폭발
     explo(e.x,e.y,'#ffcf8a',12,4); score+=e.type==='thrower'?20:(e.type==='runner'?12:10); sfx('hit',0.4);
     for(let k=0;k<e.coin;k++) dropCoin(e.x,e.y); }
@@ -470,12 +483,9 @@
       t+=1/60;
       // 스폰
       spawnT--; const rate=Math.max(24, 58 - t*0.4)*(boss?2.0:1); if(spawnT<=0){
-        if(t>5 && !boss){ const rr=Math.random();          // ★랜덤 단발 대신 패턴(줄지어) 위주
-          if(rr<0.55) spawnFormation();                    // 대각선 편대
-          else if(rr<0.72) spawnWave();                    // 큰 파도(웨이브) 편대
-          else spawnEnemy(); }
+        if(t>5 && !boss){ if(Math.random()<0.7) spawnSnake(); else spawnEnemy(); }   // ★패턴(뱀 편대) 위주
         else spawnEnemy();
-        spawnT=rate*(0.8+Math.random()*0.7); }   // ★스폰 완만
+        spawnT=rate*(0.9+Math.random()*0.7); }   // ★스폰 완만
       if(!boss){ bossTimer--; if(bossTimer<=0) spawnBoss(); }
       // 이동
       const kb=6.5*(player.moveMul||1); if(keys['ArrowLeft']||keys['a']) player.tx-=kb; if(keys['ArrowRight']||keys['d']) player.tx+=kb; if(keys['ArrowUp']||keys['w']) player.ty-=kb; if(keys['ArrowDown']||keys['s']) player.ty+=kb;
@@ -519,22 +529,25 @@
             boss=null; bossbar.classList.remove('show'); bossTimer=22*60; lvlFlashEl.classList.remove('boss'); lvlFlashEl.textContent='RIVAL DOWN!'; lvlFlashEl.style.opacity='1'; setTimeout(()=>lvlFlashEl.style.opacity='0',900); }
           if(b.pierce>0) b.pierce--; else bullets.splice(i,1); continue; }
       }
+      // ★뱀 편대 경로 갱신(멤버 위치는 여기서 결정)
+      updateSnakes();
       // 적 (CD 능력 반영)
       for(let i=enemies.length-1;i>=0;i--){ const e=enemies[i]; e.wob+=0.12; if(e.vomit>0) e.vomit--;
         const sm=(frame<(e.slowUntil||0))?0.4:1;   // ★빙결/둔화 시 40% 속도
         if(e.type==='thrower'){
-          e.x+=e.vx*sm; e.y+=e.vy*sm;   // ★멈추지 않고 계속 진행하면서 침을 뱉음(더 이상 정지 안 함)
-          e.fireT--; if(e.fireT<=0){ e.fireT=Math.max(70,120-t); e.vomit=16;
-            const a=Math.atan2(player.y-e.y,player.x-e.x);   // 초록 vomit 블롭 1발(약화)
+          if(!e.snake){ e.x+=e.vx*sm; e.y+=e.vy*sm; }   // ★편대(뱀)면 이동은 경로가 담당
+          e.fireT--; if(e.fireT<=0){ e.fireT=Math.max(70,120-t); e.vomit=16;   // ★스로워 특성: 편대에서도 침 뱉기
+            const a=Math.atan2(player.y-e.y,player.x-e.x);
             const sp=2.6+Math.random()*0.6; ebullets.push({x:e.x,y:e.y+e.r*0.3,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:11,col:'#9ad14f',vomit:true,wob:Math.random()*6.28});
             sfx('sfx_hurt',0.22); }
-        } else {
+        } else if(e.snake){ /* 위치는 updateSnakes 담당 → 일반 이동 스킵 */ }
+        else {
           e.x+=e.vx*sm; e.y+=e.vy*sm;
           // ★이동 패턴: sine=파도, dive=플레이어 y로 서서히 추적, diag/straight=vx/vy 그대로
           if(e.pat==='sine'){ e.y+=Math.sin(e.wob*2)*2.4*sm; }
           else if(e.pat==='dive'){ e.y+=Math.max(-1.1,Math.min(1.1,(player.y-e.y)*0.02))*sm; }
         }
-        if(e.pat!=='diag'){ if(LAND){ if(e.y<e.r)e.y=e.r; if(e.y>H-e.r)e.y=H-e.r; } else { if(e.x<e.r)e.x=e.r; if(e.x>W-e.r)e.x=W-e.r; } }   // ★diag(편대)는 화면 밖으로 통과
+        if(e.pat!=='diag' && !e.snake){ if(LAND){ if(e.y<e.r)e.y=e.r; if(e.y>H-e.r)e.y=H-e.r; } else { if(e.x<e.r)e.x=e.r; if(e.x>W-e.r)e.x=W-e.r; } }   // ★diag/뱀 편대는 화면 밖으로 통과
         if(Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r-2){ enemies.splice(i,1);
           if(e.type==='bomber') explodeBomber(e); else { hurt(16); explo(e.x,e.y,'#c96b6b',8,3); } continue; }
         if(e.y>H+50||e.y<-80||e.x<-80||e.x>W+80) enemies.splice(i,1); }
