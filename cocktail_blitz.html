@@ -513,12 +513,16 @@
     if(im){ const h=player.r*3.6, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.rotate(FWD); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
     else { ctx.fillStyle='rgba(90,138,94,.9)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,6.28); ctx.fill(); } }
 
-  // ★타일 한 겹: 가로로 무한 반복. offFrac=타일폭의 몇 배로 시작위치를 밀지(겹마다 어긋나게).
-  //   정수좌표 floor + 폭 +1px 겹침으로 서브픽셀 이음새선 제거.
-  function tileMirror(im, y, h, speed, offFrac){ const scale=h/im.height, tw=im.width*scale, s=frame*speed + (offFrac||0)*tw;
-    const k0=Math.floor(s/tw)-1, k1=k0+Math.ceil(W/tw)+2;
-    for(let k=k0;k<=k1;k++){ const x=k*tw - s;
-      ctx.drawImage(im, 0,0,im.width,im.height, Math.floor(x), y, Math.ceil(tw)+1, h); } }
+  // ★타일 한 겹: 가로로 무한 반복. 타일끼리 픽셀단위로 딱 맞붙음(빈틈 0).
+  //   ① 타일폭 tw를 '정수'로 고정 → 모든 타일 폭이 동일 ② 간격도 tw(정수) → 이음새가 항상 딱 맞음
+  //   ③ imageSmoothingEnabled=false → 가장자리 번짐(반투명 실틈) 제거. 이미지 좌우끝이 같으므로 무한 연속.
+  function tileMirror(im, y, h, speed, offFrac){
+    const tw=Math.max(1, Math.round(im.width*(h/im.height)));    // 정수 타일폭
+    const s=frame*speed + (offFrac||0)*tw;
+    const off=((s%tw)+tw)%tw;                                    // 0..tw
+    const sm=ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled=false;
+    for(let x=-off; x<W+tw; x+=tw){ ctx.drawImage(im, Math.round(x), y, tw, h); }
+    ctx.imageSmoothingEnabled=sm; }
   function draw(){ ctx.clearRect(0,0,W,H); ctx.save(); if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
     // ★강남 배경 — 원본 패턴 그대로 타일(좌우끝 색차 0 → 이음새 없음, 가공 흔적 없음).
     //   뒤 1겹(스카이라인, 이미지 자체가 25% 어두움) + 앞 3겹(하단정렬, 높이·속도 다르게).
