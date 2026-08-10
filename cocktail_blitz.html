@@ -136,7 +136,7 @@
   <div id="lvlFlash"></div>
 
   <div id="title" class="overlay">
-    <div class="brand">PINE &amp; CO · ARCADE <span style="opacity:.5;font-size:9px">BUILD SNAKE-2</span></div>
+    <div class="brand">PINE &amp; CO · ARCADE <span style="opacity:.5;font-size:9px">BUILD BOSS-CD</span></div>
     <h1>COCKTAIL<br><span class="em">BLITZ</span></h1>
     <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>이동: 모바일=드래그 / PC=방향키·WASD. <b>발사: FIRE 버튼</b>(PC=스페이스) 누르는 동안만 발사.</div>
     <div id="charpick">
@@ -213,6 +213,8 @@
   ['enemy_drunk','enemy_drunk2','enemy_genzm','enemy_genzf','enemy_runner','enemy_bomber','enemy_thrower'].concat(BOSSES)
     .forEach(t=>{ loadImg(t+'_walkA','assets/'+t+'_walkA.png'); loadImg(t+'_walkB','assets/'+t+'_walkB.png'); });
   loadImg('enemy_thrower_vomit','assets/enemy_thrower_vomit.png');
+  // ★보스 피사체(CD 동일): 하트/아마로 5종/무지개/음표 2종
+  ['icon_heart','amaro_0','amaro_1','amaro_2','amaro_3','amaro_4','eproj_rainbow','eproj_note1','eproj_note2'].forEach(k=>loadImg(k,'assets/'+k+'.png'));
   // ★칵테일 피사체 이미지
   ['gintonic','margarita','whiskysour','bloodymary','negroni','espressomartini','mojito','cosmopolitan','manhattan','oldfashioned','moscowmule','vodkatonic','sidecar','southside','drymartini','highball','vodkacranberry','corpsereviver'].forEach(k=>loadImg('cocktail_'+k,'assets/cocktail_'+k+'.png'));
   let selectedChar='pat';
@@ -231,7 +233,7 @@
   // ★모든 칵테일을 실제 칵테일 이미지(cocktail_*.png)를 피사체로 발사
   const WEAPONS={
     shaker:{ name:'SHAKER', ic:'🍸', col:'#e6ecf5', max:6, sig:'pat', desc:'Pat 코블러 쉐이커 — 명중 시 폭발(광역)',
-      cd:l=>Math.max(15,27-l*2), fire:l=>shoot(9,0,0,{dmg:9+l*3,r:11,img:'proj_shaker',spin:true,splash:34+l*5}) },
+      cd:l=>Math.max(15,27-l*2), fire:l=>shoot(9,0,0,{dmg:9+l*3,r:11,img:'proj_shaker',spin:true,splash:46+l*6}) },
     barspoon:{ name:'BAR SPOON', ic:'🥄', col:'#cfe0ff', max:6, sig:'joe', desc:'Joe 바스푼·믹싱글라스 — 관통 3',
       cd:l=>Math.max(6,12-l), fire:l=>shoot(13,0,(Math.random()-0.5)*6,{dmg:6+l*2,r:8,pierce:3,img:(frame%2?'proj_barspoon':'proj_mixglass'),spin:true}) },
     gintonic:{ name:'GIN TONIC', ic:'🍸', col:'#9fe4ff', max:6, desc:'정면 직선 다연발 · 넉백', cd:l=>Math.max(6,12-l),
@@ -294,7 +296,7 @@
   // ── state ──
   let state='title', frame=0, score=0, best=parseInt(localStorage.getItem('pine_blitz_best')||'0')||0, level=1, coins=0, coinNeed=6, t=0;
   const player={ x:0,y:0,tx:0,ty:0,r:15, hp:100,maxHp:100, invuln:0, trail:[], weapons:{}, wcd:{}, magnet:80, char:'pat', throwTimer:0 };
-  let enemies=[], bullets=[], ebullets=[], coinDrops=[], parts=[], stars=[], boss=null;
+  let enemies=[], bullets=[], ebullets=[], coinDrops=[], parts=[], stars=[], dropMarks=[], boss=null;
   let shake=0, spawnT=0, flashHit=0, bossTimer=0, bossCount=0;
   const lvlFlashEl=document.getElementById('lvlFlash'), bossbar=document.getElementById('bossbar'), bossfill=document.getElementById('bossfill');
 
@@ -339,12 +341,12 @@
   document.querySelectorAll('#idxTabs .itab').forEach(b=>{ b.onclick=()=>{ sfx('sfx_select',0.4); document.querySelectorAll('#idxTabs .itab').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); renderIndex(b.getAttribute('data-tab')); document.getElementById('idxList').scrollTop=0; }; });
 
   function start(){ ac(); state='play'; frame=0; score=0; level=1; coins=0; coinNeed=6; t=0;
-    enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; snakes=[]; boss=null; bossbar.classList.remove('show');
+    enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; snakes=[]; dropMarks=[]; boss=null; bossbar.classList.remove('show');
     spawnT=0; shake=0; flashHit=0; bossTimer=26*60; bossCount=0;
     computeOrient(); if(LAND){ player.x=W*0.16; player.y=H/2; } else { player.x=W/2; player.y=H*0.80; } player.tx=player.x; player.ty=player.y; player.baseMaxHp=100; player.maxHp=100; player.hp=100; player.invuln=0; player.trail=[];
     player.char=selectedChar; player.throwTimer=0;
     player.weapons = player.char==='joe' ? { barspoon:1 } : { shaker:1 }; player.wcd={};
-    player.passives={}; player.dmgMul=1; player.cdMul=1; player.moveMul=1; player.coinMul=1;   // ★재료(패시브)
+    player.passives={}; player.dmgMul=1; player.cdMul=1; player.moveMul=1; player.coinMul=1; player.slowT=0;   // ★재료(패시브)+아우라둔화
     document.getElementById('title').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('levelup').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden'); fireBtn.classList.remove('hidden'); fireOff(); updWchips();
     document.getElementById('waveVal').textContent=1; document.getElementById('lvVal').textContent=1;
@@ -362,7 +364,7 @@
       h+=`<div class="wslot ing"><img src="assets/${k}.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wic',textContent:'🧪'}))"><span class="wlv">${lv}</span></div>`; }
     el.innerHTML=h; }
 
-  function enemyHpBase(){ return 6 + t*0.55 + level*1.5; }   // ★난이도↓: 체력 완만
+  function enemyHpBase(){ return 3 + t*0.8 + level*1.0; }   // ★초반 약하게, 시간 갈수록 강해짐(t 비중↑)
   const EVAR=['enemy_drunk','enemy_drunk2','enemy_genzm','enemy_genzf'];   // 기본 손님(비주얼 랜덤)
   const ETYPE={ thrower:{rad:15,hpm:1.3,spdm:0.9,coin:2,sprite:'enemy_thrower'},
                 bomber:{rad:15,hpm:0.8,spdm:1.1,coin:2,sprite:'enemy_bomber'},
@@ -373,7 +375,7 @@
     if(!type){ const r=Math.random(); type = r<0.16?'thrower':r<0.32?'bomber':r<0.5?'runner':'drunk'; }
     const T=ETYPE[type]; let rad=Math.round(T.rad*1.3), spdm=T.spdm;   // ★크기 살짝 키움(+30%)
     const sprite = T.sprite || EVAR[Math.floor(Math.random()*EVAR.length)];
-    const hp=enemyHpBase()*T.hpm, spd=(1.25+t*0.013)*spdm;   // ★이동속도 +25%
+    const hp=enemyHpBase()*T.hpm, spd=(0.95+t*0.02)*spdm;   // ★초반 느리게, 시간 갈수록 빠르게
     const ex = (cfg.x!=null) ? cfg.x : W+30;
     const ey = (cfg.y!=null) ? cfg.y : Math.random()*(H-60)+30;
     // ★이동 패턴: straight/diag/sine/dive/snake(경로추종 편대). runner 단발은 sine.
@@ -390,7 +392,7 @@
     const kind=['wave','zigzag','swoop','sweep'][Math.floor(Math.random()*4)];
     const type=KIND_TYPE[kind];
     const n=3+Math.floor(Math.random()*3);                        // ★3~5마리(난이도↓)
-    const spd=(1.25+t*0.013)*ETYPE[type].spdm*1.55;                 // ★확실히 빠르게
+    const spd=(0.95+t*0.02)*ETYPE[type].spdm*1.55;                 // ★초반 느리게→시간 갈수록 빠르게
     const baseY=H*0.28 + Math.random()*H*0.44;
     const s={ members:[], hist:[], type, spd, kind, phase:Math.random()*6.28, baseY, gap:14, f:0, leadX:W+46, dir:(Math.random()<0.5?1:-1) };
     for(let i=0;i<n;i++){ const e=spawnEnemy({ type, x:W+46, y:baseY, pat:'snake', vx:0, vy:0, snake:s, idx:i }); s.members.push(e); }
@@ -493,12 +495,13 @@
         spawnT=rate*(1.3+Math.random()*0.9); }   // ★스폰 더 완만(난이도↓)
       if(!boss){ bossTimer--; if(bossTimer<=0) spawnBoss(); }
       // 이동
-      const kb=6.5*(player.moveMul||1); if(keys['ArrowLeft']||keys['a']) player.tx-=kb; if(keys['ArrowRight']||keys['d']) player.tx+=kb; if(keys['ArrowUp']||keys['w']) player.ty-=kb; if(keys['ArrowDown']||keys['s']) player.ty+=kb;
+      const slowF=(player.slowT>0)?0.5:1; if(player.slowT>0) player.slowT--;   // ★빙결 아우라 둔화
+      const kb=6.5*(player.moveMul||1)*slowF; if(keys['ArrowLeft']||keys['a']) player.tx-=kb; if(keys['ArrowRight']||keys['d']) player.tx+=kb; if(keys['ArrowUp']||keys['w']) player.ty-=kb; if(keys['ArrowDown']||keys['s']) player.ty+=kb;
       player.tx=Math.max(player.r,Math.min(W-player.r,player.tx)); player.ty=Math.max(player.r,Math.min(H-player.r,player.ty));
       // ★이동 방향으로 포즈: 앞(오른쪽)=straight, 뒤(왼쪽)/위=rear, 그 외=stay
       const pdx=player.tx-player.x, pdy=player.ty-player.y;
       player.pose = (pdx>3) ? 'straight' : (pdx<-3||pdy<-3) ? 'rear' : 'stay';
-      const ease=Math.min(0.6,0.35*(player.moveMul||1)); player.x+=(player.tx-player.x)*ease; player.y+=(player.ty-player.y)*ease;
+      const ease=Math.min(0.6,0.35*(player.moveMul||1))*slowF; player.x+=(player.tx-player.x)*ease; player.y+=(player.ty-player.y)*ease;
       player.trail.push({x:player.x,y:player.y}); if(player.trail.length>8) player.trail.shift();
       if(player.invuln>0) player.invuln--; if(player.throwTimer>0) player.throwTimer--;
       // 무기 발사 — ★고전 슈팅게임처럼 발사 버튼(또는 스페이스)을 누르고 있을 때만 발사
@@ -558,18 +561,38 @@
         if(e.y>H+50||e.y<-80||e.x<-80||e.x>W+80) enemies.splice(i,1); }
       // 보스
       if(boss){ if(boss.enter){ boss.x+=(boss.ex-boss.x)*0.06; boss.y+=(boss.ey-boss.y)*0.06; if(Math.hypot(boss.x-boss.ex,boss.y-boss.ey)<2){ boss.x=boss.ex; boss.y=boss.ey; boss.enter=false; } }
-        else { const bs=1.1+bossCount*0.2;
+        else { const bs=(1.1+bossCount*0.2)*(boss.kstop>0?0:1);   // karaoke는 멈췄을 때 정지
+          if(boss.kstop>0) boss.kstop--;
           if(LAND){ boss.y+=boss.dir*bs; if(boss.y<boss.r+10){boss.y=boss.r+10;boss.dir=1;} if(boss.y>H-boss.r-10){boss.y=H-boss.r-10;boss.dir=-1;} }
           else { boss.x+=boss.dir*bs; if(boss.x<boss.r+10){boss.x=boss.r+10;boss.dir=1;} if(boss.x>W-boss.r-10){boss.x=W-boss.r-10;boss.dir=-1;} }
-          // ① 조준 연발(플레이어를 향해 3~5갈래)
-          boss.fireT--; if(boss.fireT<=0){ boss.fireT=Math.max(24,54-bossCount*6); const ang=Math.atan2(player.y-boss.y,player.x-boss.x),sp=3+bossCount*0.25, sh=2+Math.min(2,Math.floor(bossCount/2));
-            for(let k=-sh;k<=sh;k++){ const a=ang+k*0.16; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:9}); } sfx('hit',0.3); }
-          // ② 방사형 버스트(사방)
-          boss.burstT--; if(boss.burstT<=0){ boss.burstT=170; const n=8+bossCount*2; for(let k=0;k<n;k++){ const a=k/n*6.28; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4,r:9}); } sfx('sfx_boss',0.35); }
-          // ③ 회전 스파이럴(빙글빙글 뿜기) — 2번째 보스부터
-          if(bossCount>=2){ boss.spA=(boss.spA||0)+0.35; if(frame%4===0){ const arms=2+Math.min(3,Math.floor(bossCount/2)); for(let k=0;k<arms;k++){ const a=boss.spA+k*(6.28/arms); ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*2.6,vy:Math.sin(a)*2.6,r:8,col:'#ffb14d'}); } } } }
+          // ★보스별 CD 고유 공격 + 피사체
+          const aim=Math.atan2(player.y-boss.y,player.x-boss.x), sp0=2.5+bossCount*0.18; boss.fireT--;
+          if(boss.sprite==='boss_couple'){        // GET-A-ROOM GANG: 하트 1~4발 스프레드
+            if(boss.fireT<=0){ boss.fireT=Math.max(34,66-bossCount*4); const n=1+Math.floor(Math.random()*4);
+              for(let i=0;i<n;i++){ const off=(n>1?(i-(n-1)/2)*0.22:0), a=aim+off; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp0,vy:Math.sin(a)*sp0,r:12,img:'icon_heart',spin:Math.random()*6.28}); }
+              sfx('sfx_select',0.35); }
+          } else if(boss.sprite==='boss_amaro'){  // THE AMARO NERD: 아마로 5병 부채꼴
+            if(boss.fireT<=0){ boss.fireT=Math.max(46,92-bossCount*5); for(let i=0;i<5;i++){ const a=aim+(i-2)*0.24; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp0,vy:Math.sin(a)*sp0,r:16,img:'amaro_'+i,spin:(Math.random()-0.5)*0.1}); }
+              sfx('sfx_select',0.4); }
+          } else if(boss.sprite==='boss_karaoke'){ // THE HUMAN MEGAPHONE: 멈춰서 무지개1 + 음표2
+            if(boss.fireT<=0){ boss.fireT=Math.max(44,84-bossCount*5); boss.kstop=22;
+              ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(aim)*sp0*0.85,vy:Math.sin(aim)*sp0*0.85,r:17,img:'eproj_rainbow'});
+              for(const o of [-0.4,0.4]){ const a=aim+o; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp0*0.85,vy:Math.sin(a)*sp0*0.85,r:12,img:(o<0?'eproj_note1':'eproj_note2'),bob:Math.random()*6.28}); }
+              sfx('sfx_select',0.5); }
+          } else if(boss.sprite==='boss_woman'){  // MADAME SEND-IT-BACK: "Again!" 낙하 예고 원 → 폭발
+            if(boss.fireT<=0){ boss.fireT=Math.max(78,150-bossCount*8); const n=3+Math.min(2,Math.floor(bossCount/2));
+              for(let k=0;k<n;k++) dropMarks.push({x:60+Math.random()*(W-120),y:40+Math.random()*(H-80),r:48,life:44,max:44}); sfx('sfx_boss',0.3); }
+          } else {  // FOUR-HOUR TWO-TOP(boss_ladies): 빙결 아우라(가까이 오면 둔화) + 조준탄
+            boss.aura=boss.r*3.6; if(Math.hypot(player.x-boss.x,player.y-boss.y)<boss.aura) player.slowT=6;
+            if(boss.fireT<=0){ boss.fireT=Math.max(46,86-bossCount*5); const sh=1+Math.min(2,Math.floor(bossCount/2));
+              for(let k=-sh;k<=sh;k++){ const a=aim+k*0.18; ebullets.push({x:boss.x,y:boss.y,vx:Math.cos(a)*sp0,vy:Math.sin(a)*sp0,r:10,col:'#7fd4ff'}); } sfx('hit',0.3); } } }
         bossfill.style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';
         if(!boss.enter&&Math.hypot(boss.x-player.x,boss.y-player.y)<boss.r+player.r-4) hurt(40); }
+      // ★Madame "Again!" 낙하: 예고 원 → 착지 시 반경 안이면 큰 피해
+      for(let i=dropMarks.length-1;i>=0;i--){ const m=dropMarks[i]; m.life--;
+        if(m.life<=0){ explo(m.x,m.y,'#ff7ab0',24,6); boom(false); shake=Math.max(shake,8);
+          if(Math.hypot(player.x-m.x,player.y-m.y)<m.r) hurt(30);
+          dropMarks.splice(i,1); } }
       // 적 탄
       for(let i=ebullets.length-1;i>=0;i--){ const e=ebullets[i]; e.x+=e.vx; e.y+=e.vy; if(e.x<-20||e.x>W+20||e.y<-20||e.y>H+20){ ebullets.splice(i,1); continue; }
         if(Math.hypot(e.x-player.x,e.y-player.y)<e.r+player.r-3){ hurt(13); ebullets.splice(i,1); } }
@@ -662,11 +685,21 @@
         ctx.fillStyle=b.col; ctx.shadowColor=b.col; ctx.shadowBlur=8;
         if(b.beam){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate((b.ang||-Math.PI/2)+Math.PI/2); ctx.fillRect(-b.r/2,-b.r*1.6,b.r,b.r*3.2); ctx.restore(); }
         else { ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0; } ctx.shadowBlur=0;
-      for(const e of ebullets){ const col=e.col||'#ff6a5a'; ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=8;
+      // ★Madame 낙하 예고 원(수축)
+      for(const m of dropMarks){ const p=1-m.life/m.max; ctx.save(); ctx.globalAlpha=0.5+0.4*Math.sin(frame*0.4);
+        ctx.strokeStyle='#ff6ab0'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,6.28); ctx.stroke();
+        ctx.fillStyle='rgba(255,120,170,'+(0.12+0.2*p)+')'; ctx.beginPath(); ctx.arc(m.x,m.y,m.r*(0.3+0.7*p),0,6.28); ctx.fill();
+        ctx.fillStyle='#ffd9ea'; ctx.font='bold 12px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('Again!',m.x,m.y); ctx.textBaseline='alphabetic'; ctx.restore(); }
+      for(const e of ebullets){ const col=e.col||'#ff6a5a';
+        if(e.img && IMG[e.img]){ const im=IMG[e.img]; const h=e.r*2.4, w=h*im.width/im.height;   // ★CD 피사체 이미지(하트/아마로/무지개/음표)
+          ctx.save(); ctx.translate(e.x, e.y + (e.bob!=null?Math.sin(frame*0.15+e.bob)*3:0));
+          if(e.bob==null) ctx.rotate(Math.atan2(e.vy,e.vx));   // 진행 방향(음표는 회전 안 함)
+          ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); continue; }
+        ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=8;
         if(e.vomit){ const w=(e.wob||0)+frame*0.2;   // 울퉁불퉁한 침 덩어리
           ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.arc(e.x+Math.cos(w)*e.r*0.6,e.y+Math.sin(w)*e.r*0.5,e.r*0.7,0,6.28); ctx.arc(e.x-Math.cos(w)*e.r*0.5,e.y+e.r*0.4,e.r*0.55,0,6.28); ctx.fill();
           ctx.fillStyle='rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(e.x-e.r*0.3,e.y-e.r*0.3,e.r*0.25,0,6.28); ctx.fill(); }
-        else { ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.fill(); } } ctx.shadowBlur=0;
+        else { ctx.beginPath(); ctx.arc(e.x,e.y,e.r,0,6.28); ctx.fill(); } ctx.shadowBlur=0; } ctx.shadowBlur=0;
       for(const e of enemies) drawEnemy(e); drawBoss();
       if(state==='play'||state==='levelup'){ drawPlayer(); drawOrbit(); }
     }
