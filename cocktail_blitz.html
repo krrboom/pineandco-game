@@ -427,7 +427,7 @@
       t+=1/60;
       // 스폰
       spawnT--; const rate=Math.max(24, 58 - t*0.4)*(boss?2.0:1); if(spawnT<=0){
-        if(t>18 && !boss && Math.random()<0.22) spawnFormation();   // ★대각선 편대 등장
+        if(t>6 && !boss && Math.random()<0.34) spawnFormation();   // ★대각선 편대 등장(6초 이후 자주)
         else { spawnEnemy(); if(t>45 && !boss && Math.random()<0.3) spawnEnemy(); }
         spawnT=rate*(0.7+Math.random()*0.8); }   // ★스폰 완만
       if(!boss){ bossTimer--; if(bossTimer<=0) spawnBoss(); }
