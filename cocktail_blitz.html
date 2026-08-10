@@ -532,15 +532,16 @@
     if(im){ const h=player.r*4.32, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
     else { ctx.fillStyle='rgba(90,138,94,.9)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,6.28); ctx.fill(); } }
 
-  // ★타일 한 겹: 브라우저 패턴 반복으로 한 번에 채움 → 이미지를 브라우저가 직접 이어붙여 그리므로
-  //   화면 배율(DPR)이 소수여도 타일 사이 빈틈이 절대 안 생김. 이미지 좌우끝이 같으니 무한 연속 패턴.
+  // ★타일 한 겹: '디바이스 픽셀' 정수 좌표로 직접 타일 → 배율(DPR)이 소수여도 타일 경계가
+  //   실제 픽셀 격자에 딱 맞아 실금(1px 경계선)이 절대 안 생김. 타일폭·간격 모두 정수라 딱 붙음.
   function tileMirror(im, y, h, speed, offFrac){
-    const scale=h/im.height, tw=im.width*scale;
-    const off=(((frame*speed+(offFrac||0)*tw)%tw)+tw)%tw;        // 0..tw (스크롤 위상)
-    const pat=ctx.createPattern(im,'repeat'); if(!pat) return;
-    ctx.save(); ctx.imageSmoothingEnabled=false;
-    ctx.translate(-off, y); ctx.scale(scale, scale);            // 패턴 1칸 = im.width*scale = tw (화면px)
-    ctx.fillStyle=pat; ctx.fillRect(0, 0, (W+tw+2)/scale, im.height);
+    const hDev=Math.round(h*DPR), yDev=Math.round(y*DPR);
+    const twDev=Math.max(1, Math.round(im.width*hDev/im.height));   // 정수 디바이스 타일폭
+    const s=frame*speed*DPR + (offFrac||0)*twDev;
+    const off=((s%twDev)+twDev)%twDev;
+    const wDev=W*DPR;
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.imageSmoothingEnabled=false;   // 디바이스 픽셀 공간
+    for(let x=-off; x<wDev+twDev; x+=twDev){ ctx.drawImage(im, Math.round(x), yDev, twDev, hDev); }
     ctx.restore(); }
   function draw(){ ctx.clearRect(0,0,W,H); ctx.save(); if(shake>0) ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
     // ★강남 배경 — 원본 패턴 그대로 타일(좌우끝 색차 0 → 이음새 없음, 가공 흔적 없음).
