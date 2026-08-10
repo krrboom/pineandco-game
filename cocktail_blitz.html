@@ -69,6 +69,12 @@
     background:#0e2a16; border:2px solid #000; margin-top:4px; }
   #xpFill{ height:100%; background:linear-gradient(#aeffbe,#6fcf8f); width:0%; transition:width .12s; box-shadow:0 0 6px rgba(111,207,143,.85); }
   /* ★획득 칵테일/재료 슬롯(CD 동일: wslot 액자칩 + Lv 배지) */
+  /* ★발사 버튼(모바일 우하단, 누르는 동안 발사) */
+  #fireBtn{ position:absolute; right:20px; bottom:24px; z-index:20; width:clamp(78px,20vw,104px); height:clamp(78px,20vw,104px);
+    border-radius:50%; font-family:'Press Start 2P',monospace; font-size:clamp(11px,3vw,15px); font-weight:900; letter-spacing:1px;
+    color:#3a1010; background:radial-gradient(circle at 38% 32%, #ff8a6a, #e0483d 70%); border:4px solid #2a0e0e;
+    box-shadow:0 6px 0 rgba(0,0,0,.55), inset 0 2px 6px rgba(255,255,255,.35); touch-action:none; -webkit-user-select:none; user-select:none; }
+  #fireBtn.on{ transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,.55), inset 0 2px 8px rgba(0,0,0,.35), 0 0 18px rgba(255,120,90,.8); filter:brightness(1.15); }
   #wchips{ position:absolute; bottom:8px; left:0; right:0; display:flex; gap:3px; justify-content:center; pointer-events:none; flex-wrap:wrap; padding:0 8px; }
   .wslot{ width:clamp(26px,7.5vw,34px); height:clamp(26px,7.5vw,34px); border:1.5px solid #555; border-radius:4px;
     background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; position:relative; }
@@ -121,13 +127,14 @@
     </div>
   </div>
   <div id="wchips"></div>
+  <button id="fireBtn" class="hidden">FIRE</button>
   <div id="bossbar"><div id="bossfill"></div></div>
   <div id="lvlFlash"></div>
 
   <div id="title" class="overlay">
     <div class="brand">PINE &amp; CO · ARCADE</div>
     <h1>COCKTAIL<br><span class="em">BLITZ</span></h1>
-    <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>모바일=드래그, PC=방향키/WASD로 이동. 세로/가로 화면 모두 지원.</div>
+    <div class="sub">몰려오는 손님을 <b>칵테일로 격추</b>하라.<br>쓰러지면 <b>코인</b>이 떨어지고, 모으면 <b>레벨업</b> → <b>새 칵테일 무기</b>를 고른다.<br>이동: 모바일=드래그 / PC=방향키·WASD. <b>발사: FIRE 버튼</b>(PC=스페이스) 누르는 동안만 발사.</div>
     <div id="charpick">
       <button class="cbtn sel" data-char="pat"><img src="assets/cb_pat.png" alt="PAT"><span class="cn">PAT</span><span class="cd">🍸 쉐이커 · 폭발</span></button>
       <button class="cbtn" data-char="joe"><img src="assets/cb_joe.png" alt="JOE"><span class="cn">JOE</span><span class="cd">🥄 바스푼 · 관통</span></button>
@@ -187,7 +194,7 @@
 
   // ── 이미지(캐릭터 pat/joe + 슈퍼맨 포즈 + 던지는 피사체) ──
   const IMG={}; function loadImg(k,src){ const i=new Image(); i.onload=()=>{ IMG[k]=i; }; i.src=src; }
-  ['cb_pat','cb_pat_s','cb_joe','cb_joe_s','proj_shaker','proj_barspoon','proj_mixglass'].forEach(k=>loadImg(k,'assets/'+k+'.png'));
+  ['cb_pat','cb_pat_straight','cb_pat_rear','cb_joe','cb_joe_straight','cb_joe_rear','proj_shaker','proj_barspoon','proj_mixglass'].forEach(k=>loadImg(k,'assets/'+k+'.png'));
   loadImg('bg_gangnam','assets/bg_gangnam.png');   // ★가로 스크롤 강남 배경(뒤)
   loadImg('fg_gangnam','assets/fg_gangnam.png');   // ★앞쪽 배경 레이어(더 빠르게)
   // ★Cocktail Defense 몬스터 + 보스 스프라이트(걷기 A/B) + thrower 토하기
@@ -271,7 +278,7 @@
 
   function initStars(){ stars=[]; for(let i=0;i<70;i++) stars.push({x:Math.random(),y:Math.random(),z:Math.random()*0.8+0.2}); } initStars();
 
-  let pointerActive=false;
+  let pointerActive=false, firing=false;   // ★firing: 발사 버튼(또는 스페이스)을 누르고 있는 중인가
   function setTarget(cx,cy){ const r=cv.getBoundingClientRect(); player.tx=Math.max(player.r,Math.min(W-player.r,cx-r.left)); player.ty=Math.max(player.r,Math.min(H-player.r,cy-r.top)); }
   // ★마우스 컨트롤 제거: 터치(드래그)만 이동, 데스크톱은 방향키/WASD
   cv.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse') return; pointerActive=true; setTarget(e.clientX,e.clientY); },{passive:true});
@@ -279,6 +286,13 @@
   window.addEventListener('pointerup',()=>{ pointerActive=false; },{passive:true});
   const keys={}; window.addEventListener('keydown',e=>{ keys[e.key]=true; if(e.key===' '&&state!=='play'&&state!=='levelup') start(); });
   window.addEventListener('keyup',e=>{ keys[e.key]=false; });
+  // ★발사 버튼(모바일): 누르는 동안만 발사(고전 슈팅게임)
+  const fireBtn=document.getElementById('fireBtn');
+  function fireOn(e){ if(e){e.preventDefault();} firing=true; fireBtn.classList.add('on'); }
+  function fireOff(){ firing=false; fireBtn.classList.remove('on'); }
+  fireBtn.addEventListener('pointerdown',fireOn); fireBtn.addEventListener('pointerup',fireOff);
+  fireBtn.addEventListener('pointerleave',fireOff); fireBtn.addEventListener('pointercancel',fireOff);
+  fireBtn.addEventListener('touchstart',fireOn,{passive:false}); fireBtn.addEventListener('touchend',fireOff);
   document.getElementById('startBtn').onclick=start; document.getElementById('retryBtn').onclick=start;
   document.querySelectorAll('#charpick .cbtn').forEach(b=>{ b.onclick=()=>{ selectedChar=b.getAttribute('data-char'); ac();
     document.querySelectorAll('#charpick .cbtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); sfx('sfx_select',0.6); playMusic('music_title'); }; });
@@ -309,7 +323,7 @@
     player.char=selectedChar; player.throwTimer=0;
     player.weapons = player.char==='joe' ? { barspoon:1 } : { shaker:1 }; player.wcd={};
     document.getElementById('title').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('levelup').classList.add('hidden');
-    document.getElementById('hud').classList.remove('hidden'); updWchips();
+    document.getElementById('hud').classList.remove('hidden'); fireBtn.classList.remove('hidden'); fireOff(); updWchips();
     document.getElementById('waveVal').textContent=1; document.getElementById('lvVal').textContent=1;
     playMusic('music_play'+(1+Math.floor(Math.random()*3)));   // ★게임 음악
   }
@@ -366,7 +380,7 @@
   function gainCoin(){ coins++; score+=2; coinSfx(); if(coins>=coinNeed) levelUp(); }
   function levelUp(){ level++; coins-=coinNeed; coinNeed=5+level*3; document.getElementById('lvVal').textContent=level;
     lvlFlashEl.classList.remove('boss'); sfx('sfx_tipcoin',0.6);
-    state='levelup'; showCards(); document.getElementById('levelup').classList.remove('hidden'); }
+    state='levelup'; fireBtn.classList.add('hidden'); fireOff(); showCards(); document.getElementById('levelup').classList.remove('hidden'); }
 
   function showCards(){ const pool=[];
     for(const k in WEAPONS){ const w=WEAPONS[k]; if(w.sig && w.sig!==player.char) continue;   // ★상대 캐릭터 시그니처는 안 나옴
@@ -387,7 +401,7 @@
         d.onclick=()=>{ player.weapons[c.k]=(player.weapons[c.k]||0)+1; pickDone(); }; }
       el.appendChild(d); });
   }
-  function pickDone(){ sfx('sfx_select',0.6); document.getElementById('levelup').classList.add('hidden'); updWchips(); state='play'; }
+  function pickDone(){ sfx('sfx_select',0.6); document.getElementById('levelup').classList.add('hidden'); fireBtn.classList.remove('hidden'); updWchips(); state='play'; }
 
   function hurt(dmg){ if(player.invuln>0) return; player.hp-=dmg; player.invuln=45; flashHit=0.8; shake=Math.max(shake,10); sfx('sfx_hurt',0.6);
     if(player.hp<=0){ die(); } }
@@ -395,7 +409,7 @@
     const rec=score>best; if(rec){ best=score; localStorage.setItem('pine_blitz_best',String(best)); }
     document.getElementById('finalScore').textContent=Math.floor(score).toLocaleString(); document.getElementById('finalLv').textContent=level;
     document.getElementById('finalBest').textContent=best.toLocaleString(); document.getElementById('newRec').classList.toggle('hidden',!rec);
-    document.getElementById('hud').classList.add('hidden'); bossbar.classList.remove('show');
+    document.getElementById('hud').classList.add('hidden'); fireBtn.classList.add('hidden'); fireOff(); bossbar.classList.remove('show');
     setTimeout(()=>document.getElementById('over').classList.remove('hidden'),650); }
 
   function update(){
@@ -408,17 +422,22 @@
       // 이동
       const kb=6.5; if(keys['ArrowLeft']||keys['a']) player.tx-=kb; if(keys['ArrowRight']||keys['d']) player.tx+=kb; if(keys['ArrowUp']||keys['w']) player.ty-=kb; if(keys['ArrowDown']||keys['s']) player.ty+=kb;
       player.tx=Math.max(player.r,Math.min(W-player.r,player.tx)); player.ty=Math.max(player.r,Math.min(H-player.r,player.ty));
+      // ★이동 방향으로 포즈: 앞(오른쪽)=straight, 뒤(왼쪽)/위=rear, 그 외=stay
+      const pdx=player.tx-player.x, pdy=player.ty-player.y;
+      player.pose = (pdx>3) ? 'straight' : (pdx<-3||pdy<-3) ? 'rear' : 'stay';
       player.x+=(player.tx-player.x)*0.35; player.y+=(player.ty-player.y)*0.35;
       player.trail.push({x:player.x,y:player.y}); if(player.trail.length>8) player.trail.shift();
       if(player.invuln>0) player.invuln--; if(player.throwTimer>0) player.throwTimer--;
-      // 무기 발사
+      // 무기 발사 — ★고전 슈팅게임처럼 발사 버튼(또는 스페이스)을 누르고 있을 때만 발사
       // ★궤도 칵테일: 획득한 칵테일이 플레이어 주위를 빙글빙글 돎(기본 쉐이커/바스푼 제외)
       const orb=Object.keys(player.weapons).filter(k=>!WEAPONS[k].sig); orbitPos={};
       const NR=orb.length, OR=player.r*2.7, spin=frame*0.035;
       orb.forEach((k,i)=>{ const a=spin + i*(6.28/Math.max(1,NR)); orbitPos[k]={x:player.x+Math.cos(a)*OR, y:player.y+Math.sin(a)*OR}; });
-      for(const k in player.weapons){ const lv=player.weapons[k]; player.wcd[k]=(player.wcd[k]||0)-1;
-        if(player.wcd[k]<=0){ const op=(WEAPONS[k].sig||!orbitPos[k])?player:orbitPos[k]; fireOX=op.x; fireOY=op.y;   // 시그니처=플레이어, 칵테일=궤도 위치에서 발사
-          WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); if(WEAPONS[k].sig) player.throwTimer=9; } }
+      const shooting = firing || keys[' '] || keys['j'] || keys['k'];
+      for(const k in player.weapons){ player.wcd[k]=(player.wcd[k]||0)-1;
+        if(shooting && player.wcd[k]<=0){ const lv=player.weapons[k]; const op=(WEAPONS[k].sig||!orbitPos[k])?player:orbitPos[k]; fireOX=op.x; fireOY=op.y;   // 시그니처=플레이어, 칵테일=궤도 위치에서 발사
+          WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); if(WEAPONS[k].sig) player.throwTimer=9; }
+        if(player.wcd[k]<0) player.wcd[k]=0; }
       // 총알
       for(let i=bullets.length-1;i>=0;i--){ const b=bullets[i]; b.life--;
         if(b.homing){ const tg=nearestEnemy(b.x,b.y); if(tg){ const a=Math.atan2(tg.y-b.y,tg.x-b.x); b.vx+=(Math.cos(a)*8-b.vx)*0.12; b.vy+=(Math.sin(a)*8-b.vy)*0.12; } }
@@ -507,10 +526,10 @@
   function drawPlayer(){ if(player.invuln>0 && frame%6<3) return;
     for(let i=0;i<player.trail.length;i++){ const p=player.trail[i],a=i/player.trail.length; ctx.globalAlpha=a*0.22; ctx.fillStyle='#8fe0c4'; ctx.beginPath(); ctx.arc(p.x,p.y,player.r*a,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
     const g=ctx.createRadialGradient(player.x,player.y,2,player.x,player.y,player.r*2.4); g.addColorStop(0,'rgba(120,230,200,.4)'); g.addColorStop(1,'rgba(120,230,200,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(player.x,player.y,player.r*2.4,0,6.28); ctx.fill();
-    // ★플레이어는 항상 슈퍼맨 포즈 고정(공격마다 자세 안 바뀜)
-    const key=(player.char==='joe'?'cb_joe_s':'cb_pat_s');
-    const im=IMG[key];
-    if(im){ const h=player.r*3.6, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.rotate(FWD); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
+    // ★이동 상태에 따른 포즈: 정지=stay, 앞(오른쪽)=straight, 뒤/위=rear. 세로로 서있는 스프라이트(회전 없음).
+    const suf = player.pose==='straight' ? '_straight' : player.pose==='rear' ? '_rear' : '';
+    const im=IMG['cb_'+player.char+suf];
+    if(im){ const h=player.r*3.6, w=h*im.width/im.height; ctx.save(); ctx.translate(player.x,player.y); ctx.imageSmoothingEnabled=false; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
     else { ctx.fillStyle='rgba(90,138,94,.9)'; ctx.beginPath(); ctx.arc(player.x,player.y,player.r,0,6.28); ctx.fill(); } }
 
   // ★타일 한 겹: 브라우저 패턴 반복으로 한 번에 채움 → 이미지를 브라우저가 직접 이어붙여 그리므로
