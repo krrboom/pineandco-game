@@ -79,6 +79,7 @@
   .wslot{ width:clamp(26px,7.5vw,34px); height:clamp(26px,7.5vw,34px); border:1.5px solid #555; border-radius:4px;
     background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; position:relative; }
   .wslot.base{ border-color:#c89a3c; }
+  .wslot.ing{ border-color:#5a8a5e; background:rgba(20,40,24,.6); }
   .wslot img{ width:76%; height:76%; object-fit:contain; image-rendering:pixelated; }
   .wslot .wic{ font-size:15px; line-height:1; }
   .wslot .wlv{ position:absolute; bottom:-3px; right:-1px; font-family:'Press Start 2P',monospace; font-size:8px; color:var(--amber); font-weight:bold; text-shadow:1px 1px 0 #000; }
@@ -268,6 +269,24 @@
       fire:l=>{ const n=2+Math.min(3,Math.floor(l/1.5)); for(let i=0;i<n;i++) shoot(9,(i-(n-1)/2)*0.28,0,{dmg:7+l*2,r:11,img:'cocktail_corpsereviver',upright:true,splash:26+l*3}); } },
   };
   const HEAL={ name:'ON THE HOUSE', ic:'❤️', col:'#ff6a7a', desc:'체력 회복 + 최대체력 +20' };
+  // ★칵테일 디펜스 재료(패시브) — 먹으면 능력치가 계속 유지됨. 이미지 ing_*.png 사용.
+  const INGREDIENTS={
+    ing_lemon:{ name:'LEMON', max:5, desc:'공격력 +10%' },
+    ing_agave:{ name:'AGAVE', max:5, desc:'공격력 +9%' },
+    ing_coffee:{ name:'COFFEE', max:5, desc:'공격속도 +7%' },
+    ing_mint:{ name:'MINT', max:5, desc:'이동속도 +7%' },
+    ing_sugar:{ name:'SUGAR', max:5, desc:'최대 체력 +16' },
+    ing_syrup:{ name:'SYRUP', max:5, desc:'최대 체력 +12' },
+    ing_angostura:{ name:'ANGOSTURA', max:5, desc:'코인 획득 +40%' },
+    ing_tomato:{ name:'TOMATO', max:5, desc:'최대 체력 +10 · 코인 +15%' },
+  };
+  function recalcPassives(){ const P=player.passives||{};
+    player.dmgMul = 1 + (P.ing_lemon||0)*0.10 + (P.ing_agave||0)*0.09;
+    player.cdMul  = Math.max(0.4, 1 - (P.ing_coffee||0)*0.07);
+    player.moveMul= 1 + (P.ing_mint||0)*0.07;
+    player.coinMul= 1 + (P.ing_angostura||0)*0.40 + (P.ing_tomato||0)*0.15;
+    const hpAdd = (P.ing_sugar||0)*16 + (P.ing_syrup||0)*12 + (P.ing_tomato||0)*10;
+    const oldMax=player.maxHp; player.maxHp=player.baseMaxHp+hpAdd; player.hp=Math.min(player.maxHp, player.hp+(player.maxHp-oldMax)); }
 
   // ── state ──
   let state='title', frame=0, score=0, best=parseInt(localStorage.getItem('pine_blitz_best')||'0')||0, level=1, coins=0, coinNeed=6, t=0;
@@ -290,9 +309,9 @@
   const fireBtn=document.getElementById('fireBtn');
   function fireOn(e){ if(e){e.preventDefault();} firing=true; fireBtn.classList.add('on'); }
   function fireOff(){ firing=false; fireBtn.classList.remove('on'); }
-  fireBtn.addEventListener('pointerdown',fireOn); fireBtn.addEventListener('pointerup',fireOff);
-  fireBtn.addEventListener('pointerleave',fireOff); fireBtn.addEventListener('pointercancel',fireOff);
-  fireBtn.addEventListener('touchstart',fireOn,{passive:false}); fireBtn.addEventListener('touchend',fireOff);
+  fireBtn.addEventListener('pointerdown',e=>{ fireOn(e); try{fireBtn.setPointerCapture(e.pointerId);}catch(_){} });
+  fireBtn.addEventListener('pointerup',fireOff); fireBtn.addEventListener('pointercancel',fireOff);
+  fireBtn.addEventListener('touchstart',fireOn,{passive:false}); fireBtn.addEventListener('touchend',e=>{e.preventDefault();fireOff();},{passive:false});
   document.getElementById('startBtn').onclick=start; document.getElementById('retryBtn').onclick=start;
   document.querySelectorAll('#charpick .cbtn').forEach(b=>{ b.onclick=()=>{ selectedChar=b.getAttribute('data-char'); ac();
     document.querySelectorAll('#charpick .cbtn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); sfx('sfx_select',0.6); playMusic('music_title'); }; });
@@ -319,9 +338,10 @@
   function start(){ ac(); state='play'; frame=0; score=0; level=1; coins=0; coinNeed=6; t=0;
     enemies=[]; bullets=[]; ebullets=[]; coinDrops=[]; parts=[]; boss=null; bossbar.classList.remove('show');
     spawnT=0; shake=0; flashHit=0; bossTimer=26*60; bossCount=0;
-    computeOrient(); if(LAND){ player.x=W*0.16; player.y=H/2; } else { player.x=W/2; player.y=H*0.80; } player.tx=player.x; player.ty=player.y; player.hp=100; player.maxHp=100; player.invuln=0; player.trail=[];
+    computeOrient(); if(LAND){ player.x=W*0.16; player.y=H/2; } else { player.x=W/2; player.y=H*0.80; } player.tx=player.x; player.ty=player.y; player.baseMaxHp=100; player.maxHp=100; player.hp=100; player.invuln=0; player.trail=[];
     player.char=selectedChar; player.throwTimer=0;
     player.weapons = player.char==='joe' ? { barspoon:1 } : { shaker:1 }; player.wcd={};
+    player.passives={}; player.dmgMul=1; player.cdMul=1; player.moveMul=1; player.coinMul=1;   // ★재료(패시브)
     document.getElementById('title').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('levelup').classList.add('hidden');
     document.getElementById('hud').classList.remove('hidden'); fireBtn.classList.remove('hidden'); fireOff(); updWchips();
     document.getElementById('waveVal').textContent=1; document.getElementById('lvVal').textContent=1;
@@ -334,6 +354,9 @@
     const keys=Object.keys(player.weapons).sort((a,b)=> (WEAPONS[a].sig?0:1)-(WEAPONS[b].sig?0:1));
     for(const k of keys){ const w=WEAPONS[k], lv=player.weapons[k];
       h+=`<div class="wslot${w.sig?' base':''}"><img src="assets/${wImg(k)}.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wic',textContent:'${w.ic||'🍸'}'}))"><span class="wlv">${lv}</span></div>`; }
+    // ★재료(패시브) 슬롯도 함께 표시(초록 테)
+    for(const k in (player.passives||{})){ const lv=player.passives[k];
+      h+=`<div class="wslot ing"><img src="assets/${k}.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wic',textContent:'🧪'}))"><span class="wlv">${lv}</span></div>`; }
     el.innerHTML=h; }
 
   function enemyHpBase(){ return 6 + t*0.55 + level*1.5; }   // ★난이도↓: 체력 완만
@@ -345,16 +368,16 @@
   function spawnEnemy(cfg){ cfg=cfg||{};
     let type=cfg.type;
     if(!type){ const r=Math.random(); type = r<0.16?'thrower':r<0.32?'bomber':r<0.5?'runner':'drunk'; }
-    const T=ETYPE[type]; let rad=Math.round(T.rad*1.4), spdm=T.spdm;   // ★기본 몬스터 크기 +40%
+    const T=ETYPE[type]; const sc=cfg.scale||1; let rad=Math.round(T.rad*1.4*sc), spdm=T.spdm;   // ★기본 +40%, cfg.scale로 확대
     const sprite = T.sprite || EVAR[Math.floor(Math.random()*EVAR.length)];
-    const hp=enemyHpBase()*T.hpm, spd=(1.25+t*0.013)*spdm;   // ★기본 이동속도 +25%
+    const hp=enemyHpBase()*T.hpm*(sc>1?sc*0.8:1), spd=(1.25+t*0.013)*spdm;   // ★큰 몬스터는 체력↑, 이동속도 +25%
     const ex = (cfg.x!=null) ? cfg.x : W+30;
     const ey = (cfg.y!=null) ? cfg.y : Math.random()*(H-60)+30;
     // ★이동 패턴: straight/diag(대각선,화면밖으로)/sine(파도)/dive(추적). runner는 항상 sine.
     const pat = cfg.pat || (type==='runner' ? 'sine' : ['straight','straight','straight','diag','sine','dive'][Math.floor(Math.random()*6)]);
     let vx = (cfg.vx!=null) ? cfg.vx : -spd;
     let vy = (cfg.vy!=null) ? cfg.vy : (pat==='diag' ? (Math.random()<0.5?-1:1)*spd*0.6 : 0);
-    const e={ type, sprite, x:ex, y:ey, r:rad, hp, maxHp:hp, spd, vx, vy, coin:T.coin, wob:Math.random()*6.28, fireT:70, vomit:0, pat };
+    const e={ type, sprite, x:ex, y:ey, r:rad, hp, maxHp:hp, spd, vx, vy, coin:T.coin, wob:(cfg.wob!=null?cfg.wob:Math.random()*6.28), fireT:70, vomit:0, pat };
     enemies.push(e); }
   // ★대각선 편대: 같은 종류·같은 속도로 강체 이동해 '줄'을 유지하며 대각선으로 화면 밖으로(고전 슈팅)
   function spawnFormation(){ const n=5+Math.floor(Math.random()*3); const d=(Math.random()<0.5?1:-1);
@@ -363,6 +386,10 @@
     const vx=-spd, vy=d*spd*0.55;                       // 편대 전원 동일 속도 → 줄이 안 흐트러짐
     const y0 = d>0 ? H*0.20 : H*0.80;
     for(let i=0;i<n;i++) spawnEnemy({ type, x:W+34+i*50, y:y0 + i*32*d, pat:'diag', vx, vy }); }
+  // ★웨이브 편대: 큰 몬스터들이 줄지어 파도(sine)를 그리며 등장(300% 크게)
+  function spawnWave(){ const n=4+Math.floor(Math.random()*2); const type='drunk';
+    const spd=(1.25+t*0.013)*ETYPE[type].spdm*0.85;
+    for(let i=0;i<n;i++) spawnEnemy({ type, x:W+50+i*130, y:H*0.5, pat:'sine', vx:-spd, vy:0, scale:2.6, wob:i*0.9 }); }
 
   function explodeBomber(e){ const R=60; explo(e.x,e.y,'#ff7a2a',26,7); explo(e.x,e.y,'#ffd28a',14,5); boom(false); shake=Math.max(shake,9);
     if(Math.hypot(e.x-player.x,e.y-player.y)<R+player.r) hurt(22);   // 반경 안이면 플레이어 피해
@@ -384,34 +411,45 @@
   function explo(x,y,col,n,sp){ for(let i=0;i<(n||14);i++){ const a=Math.random()*6.28,s=1+Math.random()*(sp||4); parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,r:1+Math.random()*3,col}); } }
   function nearestEnemy(x,y){ let n=null,nd=1e9; for(const e of enemies){ const d=(e.x-x)**2+(e.y-y)**2; if(d<nd){nd=d;n=e;} } if(boss&&!boss.enter){ const d=(boss.x-x)**2+(boss.y-y)**2; if(d<nd){nd=d;n=boss;} } return n; }
 
-  function dropCoin(x,y){ const c={x:x+(Math.random()-0.5)*14,y:y+(Math.random()-0.5)*14,r:6};
+  function dropCoin(x,y){ const c={x:x+(Math.random()-0.5)*14,y:y+(Math.random()-0.5)*14,r:6,val:1};
     if(LAND){ c.vx=-(1.0+Math.random()); c.vy=(Math.random()-0.5)*1.2; } else { c.vx=(Math.random()-0.5)*1.4; c.vy=1.2+Math.random(); } coinDrops.push(c); }
+  function dropBill(x,y){ const c={x:x+(Math.random()-0.5)*14,y:y+(Math.random()-0.5)*14,r:9,val:5,bill:true};   // ★지폐: 코인 5개 값
+    if(LAND){ c.vx=-(0.8+Math.random()); c.vy=(Math.random()-0.5)*1.0; } else { c.vx=(Math.random()-0.5)*1.2; c.vy=1.0+Math.random(); } coinDrops.push(c); }
   function killEnemy(e,i){ enemies.splice(i,1);
     if(e.type==='bomber'){ explodeBomber(e); return; }   // 폭발몹은 죽어도 폭발
     explo(e.x,e.y,'#ffcf8a',12,4); score+=e.type==='thrower'?20:(e.type==='runner'?12:10); sfx('hit',0.4);
     for(let k=0;k<e.coin;k++) dropCoin(e.x,e.y); }
 
-  function gainCoin(){ coins++; score+=2; coinSfx(); if(coins>=coinNeed) levelUp(); }
+  function gainCoin(v){ const g=Math.max(1,Math.round((v||1)*(player.coinMul||1))); coins+=g; score+=2*g; coinSfx(); if(coins>=coinNeed) levelUp(); }
   function levelUp(){ level++; coins-=coinNeed; coinNeed=5+level*3; document.getElementById('lvVal').textContent=level;
     lvlFlashEl.classList.remove('boss'); sfx('sfx_tipcoin',0.6);
     state='levelup'; fireBtn.classList.add('hidden'); fireOff(); showCards(); document.getElementById('levelup').classList.remove('hidden'); }
 
   function showCards(){ const pool=[];
-    for(const k in WEAPONS){ const w=WEAPONS[k]; if(w.sig && w.sig!==player.char) continue;   // ★상대 캐릭터 시그니처는 안 나옴
-      const lv=player.weapons[k]||0; if(lv>=w.max) continue; pool.push({k, upgrade:lv>0}); }
+    // ★칵테일: 슬롯 4칸 상한(새 칵테일은 4개 미만일 때만, 기존 건 업그레이드)
+    const cocktailCount = Object.keys(player.weapons).filter(k=>!WEAPONS[k].sig).length;
+    for(const k in WEAPONS){ const w=WEAPONS[k]; if(w.sig) continue;   // 시그니처(기본무기)는 카드에 안 나옴
+      const lv=player.weapons[k]||0; if(lv>=w.max) continue;
+      if(lv===0 && cocktailCount>=4) continue; pool.push({kind:'cocktail', k, upgrade:lv>0}); }
+    // ★재료(패시브): 슬롯 6칸 상한
+    const ingCount = Object.keys(player.passives).length;
+    for(const k in INGREDIENTS){ const g=INGREDIENTS[k]; const lv=player.passives[k]||0; if(lv>=g.max) continue;
+      if(lv===0 && ingCount>=6) continue; pool.push({kind:'ing', k, upgrade:lv>0}); }
     // 셔플
     for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
-    const pick=pool.slice(0,3); if(Math.random()<0.35 || pick.length<3) pick.push({heal:true});
+    const pick=pool.slice(0,3); if(Math.random()<0.3 || pick.length<3) pick.push({heal:true});
     const cards=pick.slice(0,3);
     const el=document.getElementById('cards'); el.innerHTML='';
-    // ★Cocktail Defense 동일 액자 카드(levelup_frame.png) — 아이콘 이미지 + 이름 + Lv + 설명
+    const frame='<img class="upframe-img" src="assets/levelup_frame.png" alt="" onerror="this.style.display=\'none\'">';
     cards.forEach(c=>{ const d=document.createElement('div');
       if(c.heal){ d.className='up-card new';
-        d.innerHTML=`<div class="up-inner"><div class="ic"><span>${HEAL.ic}</span></div><h4>${HEAL.name}</h4><div class="lv">RECOVER</div><p>${HEAL.desc}</p></div><img class="upframe-img" src="assets/levelup_frame.png" alt="" onerror="this.style.display='none'">`;
-        d.onclick=()=>{ player.maxHp+=20; player.hp=Math.min(player.maxHp,player.hp+60); pickDone(); }; }
-      else { const w=WEAPONS[c.k], lv=player.weapons[c.k]||0;
-        d.className='up-card'+(c.upgrade?'':' new');
-        d.innerHTML=`<div class="up-inner"><div class="ic"><img class="up-ic" src="assets/${wImg(c.k)}.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${w.ic||'🍸'}'}))"></div><h4>${w.name}</h4><div class="lv">${c.upgrade?('Lv '+lv+'→'+(lv+1)+'/'+w.max):'NEW · Lv 1'}</div><p>${w.desc}</p></div><img class="upframe-img" src="assets/levelup_frame.png" alt="" onerror="this.style.display='none'">`;
+        d.innerHTML=`<div class="up-inner"><div class="ic"><span>${HEAL.ic}</span></div><h4>${HEAL.name}</h4><div class="lv">RECOVER</div><p>${HEAL.desc}</p></div>`+frame;
+        d.onclick=()=>{ player.baseMaxHp+=20; recalcPassives(); player.hp=Math.min(player.maxHp,player.hp+60); pickDone(); }; }
+      else if(c.kind==='ing'){ const g=INGREDIENTS[c.k], lv=player.passives[c.k]||0; d.className='up-card'+(c.upgrade?'':' new');
+        d.innerHTML=`<div class="up-inner"><div class="ic"><img class="up-ic" src="assets/${c.k}.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'🧪'}))"></div><h4>${g.name}</h4><div class="lv">${c.upgrade?('Lv '+lv+'→'+(lv+1)+'/'+g.max):'NEW 재료'}</div><p>${g.desc}</p></div>`+frame;
+        d.onclick=()=>{ player.passives[c.k]=(player.passives[c.k]||0)+1; recalcPassives(); pickDone(); }; }
+      else { const w=WEAPONS[c.k], lv=player.weapons[c.k]||0; d.className='up-card'+(c.upgrade?'':' new');
+        d.innerHTML=`<div class="up-inner"><div class="ic"><img class="up-ic" src="assets/${wImg(c.k)}.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${w.ic||'🍸'}'}))"></div><h4>${w.name}</h4><div class="lv">${c.upgrade?('Lv '+lv+'→'+(lv+1)+'/'+w.max):'NEW · Lv 1'}</div><p>${w.desc}</p></div>`+frame;
         d.onclick=()=>{ player.weapons[c.k]=(player.weapons[c.k]||0)+1; pickDone(); }; }
       el.appendChild(d); });
   }
@@ -432,28 +470,31 @@
       t+=1/60;
       // 스폰
       spawnT--; const rate=Math.max(24, 58 - t*0.4)*(boss?2.0:1); if(spawnT<=0){
-        if(t>6 && !boss && Math.random()<0.34) spawnFormation();   // ★대각선 편대 등장(6초 이후 자주)
-        else { spawnEnemy(); if(t>45 && !boss && Math.random()<0.3) spawnEnemy(); }
-        spawnT=rate*(0.7+Math.random()*0.8); }   // ★스폰 완만
+        if(t>5 && !boss){ const rr=Math.random();          // ★랜덤 단발 대신 패턴(줄지어) 위주
+          if(rr<0.55) spawnFormation();                    // 대각선 편대
+          else if(rr<0.72) spawnWave();                    // 큰 파도(웨이브) 편대
+          else spawnEnemy(); }
+        else spawnEnemy();
+        spawnT=rate*(0.8+Math.random()*0.7); }   // ★스폰 완만
       if(!boss){ bossTimer--; if(bossTimer<=0) spawnBoss(); }
       // 이동
-      const kb=6.5; if(keys['ArrowLeft']||keys['a']) player.tx-=kb; if(keys['ArrowRight']||keys['d']) player.tx+=kb; if(keys['ArrowUp']||keys['w']) player.ty-=kb; if(keys['ArrowDown']||keys['s']) player.ty+=kb;
+      const kb=6.5*(player.moveMul||1); if(keys['ArrowLeft']||keys['a']) player.tx-=kb; if(keys['ArrowRight']||keys['d']) player.tx+=kb; if(keys['ArrowUp']||keys['w']) player.ty-=kb; if(keys['ArrowDown']||keys['s']) player.ty+=kb;
       player.tx=Math.max(player.r,Math.min(W-player.r,player.tx)); player.ty=Math.max(player.r,Math.min(H-player.r,player.ty));
       // ★이동 방향으로 포즈: 앞(오른쪽)=straight, 뒤(왼쪽)/위=rear, 그 외=stay
       const pdx=player.tx-player.x, pdy=player.ty-player.y;
       player.pose = (pdx>3) ? 'straight' : (pdx<-3||pdy<-3) ? 'rear' : 'stay';
-      player.x+=(player.tx-player.x)*0.35; player.y+=(player.ty-player.y)*0.35;
+      const ease=Math.min(0.6,0.35*(player.moveMul||1)); player.x+=(player.tx-player.x)*ease; player.y+=(player.ty-player.y)*ease;
       player.trail.push({x:player.x,y:player.y}); if(player.trail.length>8) player.trail.shift();
       if(player.invuln>0) player.invuln--; if(player.throwTimer>0) player.throwTimer--;
       // 무기 발사 — ★고전 슈팅게임처럼 발사 버튼(또는 스페이스)을 누르고 있을 때만 발사
-      // ★궤도 칵테일: 획득한 칵테일이 플레이어 주위를 빙글빙글 돎(기본 쉐이커/바스푼 제외)
+      // ★칵테일은 회전 없이 캐릭터 위/아래/뒷대각선 2개(총 4칸) 고정 위치에서 발사
       const orb=Object.keys(player.weapons).filter(k=>!WEAPONS[k].sig); orbitPos={};
-      const NR=orb.length, OR=player.r*2.7, spin=frame*0.035;
-      orb.forEach((k,i)=>{ const a=spin + i*(6.28/Math.max(1,NR)); orbitPos[k]={x:player.x+Math.cos(a)*OR, y:player.y+Math.sin(a)*OR}; });
+      const SD=player.r*2.5, SLOTS=[[0,-SD],[0,SD],[-SD*0.72,-SD*0.72],[-SD*0.72,SD*0.72]];   // 위·아래·뒤위·뒤아래
+      orb.slice(0,4).forEach((k,i)=>{ orbitPos[k]={x:player.x+SLOTS[i][0], y:player.y+SLOTS[i][1]}; });
       const shooting = firing || keys[' '] || keys['j'] || keys['k'];
       for(const k in player.weapons){ player.wcd[k]=(player.wcd[k]||0)-1;
-        if(shooting && player.wcd[k]<=0){ const lv=player.weapons[k]; const op=(WEAPONS[k].sig||!orbitPos[k])?player:orbitPos[k]; fireOX=op.x; fireOY=op.y;   // 시그니처=플레이어, 칵테일=궤도 위치에서 발사
-          WEAPONS[k].fire(lv); player.wcd[k]=WEAPONS[k].cd(lv); if(WEAPONS[k].sig) player.throwTimer=9; }
+        if(shooting && player.wcd[k]<=0){ const lv=player.weapons[k]; const op=(WEAPONS[k].sig||!orbitPos[k])?player:orbitPos[k]; fireOX=op.x; fireOY=op.y;   // 시그니처=플레이어, 칵테일=4칸 슬롯에서 발사
+          WEAPONS[k].fire(lv); player.wcd[k]=Math.round(WEAPONS[k].cd(lv)*(player.cdMul||1)); if(WEAPONS[k].sig) player.throwTimer=9; }
         if(player.wcd[k]<0) player.wcd[k]=0; }
       // 총알
       for(let i=bullets.length-1;i>=0;i--){ const b=bullets[i]; b.life--;
@@ -462,18 +503,19 @@
         let gone=false;
         for(let j=enemies.length-1;j>=0;j--){ const e=enemies[j]; if(Math.hypot(e.x-b.x,e.y-b.y)<e.r+b.r){
           if(b.splash){ explo(b.x,b.y,'#ffb14d',18,5); boom(false);   // ★쉐이커 폭발: 반경 안 전부 타격
-            for(let mm=enemies.length-1;mm>=0;mm--){ const e2=enemies[mm]; if(Math.hypot(e2.x-b.x,e2.y-b.y)<b.splash+e2.r){ e2.hp-=b.dmg; if(e2.hp<=0) killEnemy(e2,mm); } }
-            if(boss&&!boss.enter&&Math.hypot(boss.x-b.x,boss.y-b.y)<b.splash+boss.r){ boss.hp-=b.dmg; score+=1; }
+            for(let mm=enemies.length-1;mm>=0;mm--){ const e2=enemies[mm]; if(Math.hypot(e2.x-b.x,e2.y-b.y)<b.splash+e2.r){ e2.hp-=b.dmg*player.dmgMul; if(e2.hp<=0) killEnemy(e2,mm); } }
+            if(boss&&!boss.enter&&Math.hypot(boss.x-b.x,boss.y-b.y)<b.splash+boss.r){ boss.hp-=b.dmg*player.dmgMul; score+=1; }
             gone=true; break; }
-          e.hp-=b.dmg; explo(b.x,b.y,'#ffe08a',3,2);
+          e.hp-=b.dmg*player.dmgMul; explo(b.x,b.y,'#ffe08a',3,2);
           if(b.knock){ if(LAND) e.x+=b.knock; else e.y+=b.knock; }   // ★넉백(진행 반대로 밀어냄)
           if(b.slow) e.slowUntil=frame+b.slow;                        // ★빙결/둔화
           if(b.lifesteal && player.hp<player.maxHp){ player.hp=Math.min(player.maxHp,player.hp+b.lifesteal); if(frame%3===0) explo(player.x,player.y,'#ff5a7a',2,1); }  // ★흡혈
           if(e.hp<=0) killEnemy(e,j); if(b.pierce>0){ b.pierce--; } else { gone=true; } break; } }
         if(gone){ bullets.splice(i,1); continue; }
-        if(boss&&!boss.enter&&Math.hypot(boss.x-b.x,boss.y-b.y)<boss.r){ boss.hp-=b.dmg; explo(b.x,b.y,'#ffd24a',2,2); score+=1;
+        if(boss&&!boss.enter&&Math.hypot(boss.x-b.x,boss.y-b.y)<boss.r){ boss.hp-=b.dmg*player.dmgMul; explo(b.x,b.y,'#ffd24a',2,2); score+=1;
           if(boss.hp<=0){ explo(boss.x,boss.y,'#ff6a4d',50,7); explo(boss.x,boss.y,'#ffd24a',30,6); boom(true); shake=18; score+=400*bossCount;
             for(let k=0;k<12;k++) dropCoin(boss.x+(Math.random()-0.5)*40, boss.y+(Math.random()-0.5)*40);
+            for(let k=0;k<4+bossCount;k++) dropBill(boss.x+(Math.random()-0.5)*50, boss.y+(Math.random()-0.5)*50);   // ★보스는 지폐도 드롭
             boss=null; bossbar.classList.remove('show'); bossTimer=22*60; lvlFlashEl.classList.remove('boss'); lvlFlashEl.textContent='RIVAL DOWN!'; lvlFlashEl.style.opacity='1'; setTimeout(()=>lvlFlashEl.style.opacity='0',900); }
           if(b.pierce>0) b.pierce--; else bullets.splice(i,1); continue; }
       }
@@ -518,7 +560,7 @@
         if(d<player.magnet){ const a=Math.atan2(player.y-c.y,player.x-c.x); c.vx+=(Math.cos(a)*7-c.vx)*0.2; c.vy+=(Math.sin(a)*7-c.vy)*0.2; }
         else { if(LAND) c.vx-=0.03; else c.vy+=0.03; }
         c.x+=c.vx; c.y+=c.vy;
-        if(d<player.r+c.r){ coinDrops.splice(i,1); gainCoin(); continue; }
+        if(d<player.r+c.r){ coinDrops.splice(i,1); gainCoin(c.val); continue; }
         if(c.y>H+40||c.y<-40||c.x<-40||c.x>W+40) coinDrops.splice(i,1); }
     }
     for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.02; p.life-=(p.fade||0.03); if(p.life<=0) parts.splice(i,1); }
@@ -568,7 +610,7 @@
     const bgi=IMG.bg_gangnam, fgi=IMG.fg_gangnam;
     if(bgi){
       tileMirror(bgi, 0, H, 0.18, 0);                             // 뒤: 스카이라인(느리게)
-      ctx.fillStyle='rgba(4,6,14,0.55)'; ctx.fillRect(0,0,W,H);   // 어둠막(이미지+막 = 더 어둡게)
+      ctx.fillStyle='rgba(3,5,12,0.72)'; ctx.fillRect(0,0,W,H);   // 어둠막(이미지+막 = 더 어둡게)
     }
     if(fgi){                                                      // 앞 3겹(뒤→앞: 느리고 높음 → 빠르고 낮음), 하단정렬
       tileMirror(fgi, H-H*0.60, H*0.60, 0.40, 0.15);
@@ -581,6 +623,14 @@
       // coins
       for(const c of coinDrops){
         const pulse=0.6+0.4*Math.sin(frame*0.18+(c.x+c.y)*0.05);                          // ★반짝이는 맥동
+        if(c.bill){   // ★지폐(초록 지폐, 발광)
+          const gr=ctx.createRadialGradient(c.x,c.y,1,c.x,c.y,c.r*3);
+          gr.addColorStop(0,'rgba(120,240,150,'+(0.5*pulse)+')'); gr.addColorStop(1,'rgba(90,200,120,0)');
+          ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(c.x,c.y,c.r*3,0,6.28); ctx.fill();
+          ctx.save(); ctx.shadowColor='#8bf5a8'; ctx.shadowBlur=12+6*pulse;
+          ctx.fillStyle='#4caf6a'; ctx.strokeStyle='#1e5b32'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.rect(c.x-c.r*1.4,c.y-c.r*0.9,c.r*2.8,c.r*1.8); ctx.fill(); ctx.stroke(); ctx.restore();
+          ctx.fillStyle='#eafff0'; ctx.font='bold 9px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('₩5',c.x,c.y+1); ctx.textBaseline='alphabetic'; continue;
+        }
         const gr=ctx.createRadialGradient(c.x,c.y,1,c.x,c.y,c.r*3.2);                       // 금빛 후광
         gr.addColorStop(0,'rgba(255,230,130,'+(0.55*pulse)+')'); gr.addColorStop(1,'rgba(255,210,74,0)');
         ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(c.x,c.y,c.r*3.2,0,6.28); ctx.fill();
