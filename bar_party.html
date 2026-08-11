@@ -200,13 +200,13 @@
   // 타이밍 바: 마커가 왕복, STOP으로 초록칸에 멈추기
   function engTiming(cfg, done){
     stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">'+cfg.hint+'</div><div class="tbar" id="tbar"><div class="tzone" id="tz"></div><div class="tmark" id="tm"></div></div><button class="btn amber bigbtn" id="tstop">STOP!</button>';
-    requestAnimationFrame(()=>{ const bar=$('tbar'); const W=bar.clientWidth; const zw=Math.round(W*cfg.zone); const zx=Math.round(16+Math.random()*(W-32-zw));
-      $('tz').style.left=zx+'px'; $('tz').style.width=zw+'px'; const tm=$('tm'); let x=0,dir=1,raf,settled=false; const spd=cfg.speed*(W/300);
-      function loop(){ if(settled) return; x+=dir*spd; if(x<=0){x=0;dir=1;} if(x>=W-5){x=W-5;dir=-1;} tm.style.left=x+'px'; raf=requestAnimationFrame(loop); }
-      function stop(e){ if(e)e.preventDefault(); if(settled) return; settled=true; cancelAnimationFrame(raf); const c=x+2.5, center=zx+zw/2, d=Math.abs(c-center);
-        let sc,txt,cls; if(c>=zx && c<=zx+zw){ sc=Math.round(100-(d/(zw/2))*22); if(sc>=96){txt='PERFECT!';cls='perfect';flash('#6fcf8f');}else{txt='NICE';cls='good';} }
-        else { sc=Math.max(0,Math.round(50-(d-zw/2)*0.5)); txt='MISS'; cls='miss'; } done(sc,txt,cls); }
-      const b=$('tstop'); b.addEventListener('click',stop); loop(); });
+    const bar=$('tbar'); const W=bar.clientWidth||330; const zw=Math.round(W*cfg.zone); const zx=Math.round(16+Math.random()*Math.max(1,(W-32-zw)));
+    $('tz').style.left=zx+'px'; $('tz').style.width=zw+'px'; const tm=$('tm'); let x=0,dir=1,raf,settled=false; const spd=cfg.speed*(W/300);
+    function loop(){ if(settled) return; x+=dir*spd; if(x<=0){x=0;dir=1;} if(x>=W-5){x=W-5;dir=-1;} tm.style.left=x+'px'; raf=requestAnimationFrame(loop); }
+    function stop(e){ if(e)e.preventDefault(); if(settled) return; settled=true; cancelAnimationFrame(raf); const c=x+2.5, center=zx+zw/2, d=Math.abs(c-center);
+      let sc,txt,cls; if(c>=zx && c<=zx+zw){ sc=Math.round(100-(d/(zw/2))*22); if(sc>=96){txt='PERFECT!';cls='perfect';flash('#6fcf8f');}else{txt='NICE';cls='good';} }
+      else { sc=Math.max(0,Math.round(50-(d-zw/2)*0.5)); txt='MISS'; cls='miss'; } done(sc,txt,cls); }
+    const b=$('tstop'); b.addEventListener('click',stop); loop();
   }
   // 홀드 채우기: 잔이 차오르고 목표에서 놓기(넘치면 꽝)
   function engHold(cfg, done){
@@ -230,7 +230,8 @@
     function tap(e){ if(e)e.preventDefault(); if(done_) return; taps++; sTap(); $('mf').style.width=Math.min(100,taps/goal*100)+'%'; mi.style.transform='rotate('+(taps%2?12:-12)+'deg) translateY(-4px)'; }
     const b=$('mb'); b.addEventListener('pointerdown',tap); b.addEventListener('touchstart',tap,{passive:false});
     function tick(now){ if(done_) return; const left=Math.max(0,cfg.dur-(now-start)); $('mc').textContent=(left/1000).toFixed(1); if(left<=0){ fin(); return; } raf=requestAnimationFrame(tick); }
-    function fin(){ done_=true; cancelAnimationFrame(raf); b.removeEventListener('pointerdown',tap); b.removeEventListener('touchstart',tap); mi.style.transform='';
+    setTimeout(fin, cfg.dur+150);   // rAF 멈춰도 종료 보장
+    function fin(){ if(done_) return; done_=true; cancelAnimationFrame(raf); b.removeEventListener('pointerdown',tap); b.removeEventListener('touchstart',tap); mi.style.transform='';
       const sc=Math.min(100,Math.round(taps/goal*100)); let txt,cls; if(sc>=95){txt='LEGEND!';cls='perfect';flash('#6fcf8f');} else if(sc>=60){txt='NICE!';cls='good';} else {txt='SLOW…';cls='miss';} done(sc,txt,cls); }
     raf=requestAnimationFrame(tick);
   }
