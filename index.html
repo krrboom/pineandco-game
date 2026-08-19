@@ -1086,19 +1086,14 @@
     </div>
     <div class="menu-lang js-langbar"></div>
     <div class="menu-nav" id="menuNav"></div>
-    <button class="promo-btn" onclick="openPromo()">🥃 HENNESSY MY WAY <span class="promo-tag">PROMOTION</span></button>
     <button class="promo-btn" onclick="openCampari()">🍅 CAMPARI RED HANDS <span class="promo-tag">APAC 2026</span></button>
     <div class="scrollbox"><div class="menu-list" id="menuList"></div></div>
     <button class="imgbtn backbtn" onclick="menuBack()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
     <!-- 프로모션 삽지: 헤네시 마이웨이 메뉴 이미지 -->
-    <div id="promoModal" class="promo-modal hidden" onclick="closePromo()">
-      <button class="promo-x" onclick="closePromo()">✕</button>
-      <img class="promo-img" src="assets/promo_hennessy.png" alt="Hennessy My Way promotional menu">
-    </div>
     <!-- Campari Red Hands 대회 메뉴(문구 채움 + 칵테일 이름 클릭시 이미지) -->
     <div id="campariModal" class="promo-modal hidden" onclick="if(event.target===this)closeCampari()">
       <button class="promo-x" onclick="closeCampari()">✕</button>
-      <iframe id="campariFrame" src="" title="Campari Red Hands menu" style="width:min(100%,520px);height:100%;max-height:100vh;border:none;background:#0d0f0c;display:block;margin:0 auto;"></iframe>
+      <iframe id="campariFrame" src="" title="Campari Red Hands menu" style="width:min(100%,520px);height:100%;max-height:100vh;border:none;background:#bd1a26;display:block;margin:0 auto;"></iframe>
     </div>
     <!-- 칵테일 사진 모달: 카드 탭 시 큰 사진 + 이름/재료/가격/설명 -->
     <div id="ckModal" class="ck-modal hidden" onclick="closeCkModal()">

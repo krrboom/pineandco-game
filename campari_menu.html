@@ -29,12 +29,12 @@
   .cat small{ display:block; font-size:.6em; color:#f3c9cb; margin-top:8px; letter-spacing:2px; }
   .cat.soon{ background:#2a2d2a; color:#777; box-shadow:0 5px 0 #000; }
   /* 메뉴 이미지 + 오버레이 */
-  #menu{ justify-content:flex-start; padding:0; background:#0d0f0c; }
-  .menuwrap{ position:relative; width:100%; max-width:520px; aspect-ratio:1191/1684; background:#bd1a26 center/contain no-repeat; margin:auto; }
-  /* 각 컬럼 = 하나의 세로 흐름(이름→재료→가격) → 서로 안 겹침. 좌우 대칭(중심 26% / 74%) */
-  .mcol{ position:absolute; top:26.5%; width:42%; display:flex; flex-direction:column; align-items:center; text-align:center; }
-  .mcol.left{ left:5%; } .mcol.right{ left:53%; }
-  .cname{ font-family:'Press Start 2P',monospace; font-size:clamp(8px,2.5vw,11px); line-height:1.55; color:var(--ink); background:none; border:none; cursor:pointer; padding:2px 0; letter-spacing:.2px; }
+  #menu{ justify-content:center; padding:0; background:var(--red); }
+  .menuwrap{ position:relative; width:100%; max-width:520px; aspect-ratio:1191/1684; background:var(--red) center/contain no-repeat; margin:auto; }
+  /* 각 컬럼 = 하나의 세로 흐름(이름→재료→가격) → 서로 안 겹침. 흰영역 안에 대칭(중심 26% / 74%), 폭 좁혀 빨간영역 침범 방지 */
+  .mcol{ position:absolute; top:26.5%; width:38%; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .mcol.left{ left:7%; } .mcol.right{ left:55%; }
+  .cname{ font-family:'Press Start 2P',monospace; font-size:clamp(7px,2.2vw,10px); line-height:1.55; color:var(--ink); background:none; border:none; cursor:pointer; padding:2px 0; letter-spacing:0; }
   .cname:active{ transform:scale(.95); }
   .cname .dot{ display:block; margin-top:4px; font-size:.7em; color:var(--wine); }
   .ckr{ font-size:clamp(8px,2.7vw,11px); font-weight:700; color:#3a3d45; margin-top:4px; margin-bottom:10px; }
@@ -47,7 +47,9 @@
   #modal{ position:fixed; inset:0; z-index:40; background:rgba(8,6,6,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; }
   #modalImg{ max-width:74%; max-height:56vh; object-fit:contain; image-rendering:pixelated; filter:drop-shadow(0 8px 24px rgba(0,0,0,.6)); }
   #modalName{ font-size:clamp(12px,4vw,18px); color:var(--cream); text-shadow:2px 2px 0 #000; line-height:1.5; }
-  #modalKr{ font-size:12px; color:#e6b; }
+  #modalIngs{ background:var(--cream); color:var(--ink); border:3px solid #000; box-shadow:0 4px 0 #000;
+    padding:14px 18px; font-family:'Press Start 2P',monospace; font-size:clamp(6px,2vw,9px); line-height:1.9; text-align:center; max-width:86%; }
+  #modalIngs .ig{ margin:8px 0; }
   #modalClose{ font-family:'Press Start 2P',monospace; font-size:11px; color:#0d140a; background:var(--cream); border:3px solid #000; box-shadow:0 4px 0 #000; padding:12px 22px; cursor:pointer; margin-top:6px; }
   #modalClose:active{ transform:translateY(3px); box-shadow:0 1px 0 #000; }
 </style>
@@ -103,7 +105,7 @@
   <div id="modal" class="hidden">
     <img id="modalImg" src="" alt="">
     <div id="modalName">—</div>
-    <div id="modalKr" class="kr">—</div>
+    <div id="modalIngs"></div>
     <button id="modalClose">✕ CLOSE</button>
   </div>
 </div>
@@ -111,8 +113,11 @@
 <script>
 (function(){
   const $=id=>document.getElementById(id);
-  const CK={ americano:{ img:'assets/cocktail_americano.png', name:'Twilling Americano', kr:'아메리카노' },
-             italyjuice:{ img:'assets/cocktail_italyjuice.png', name:'Italy Juice', kr:'이태리' } };
+  const CK={
+    americano:{ img:'assets/cocktail_americano.png', name:'Twilling Americano',
+      ings:['Campari','Sweet Vermouth','Cacao & Coffee Infuse Skyy Vodka','Distilled Coffee Soda','Yakgwa & Toffee Espuma'] },
+    italyjuice:{ img:'assets/cocktail_italyjuice.png', name:'Italy Juice',
+      ings:['Campari','Tomato Juice','Fresh Pineapple Puree','Basil Vermouth','Olive & Savory Cream Cheese'] } };
   // 메뉴 배경 이미지
   $('menuwrap').style.backgroundImage="url('assets/campari_menu.png')";
   // 카테고리 → 메뉴
@@ -120,7 +125,9 @@
   $('backBtn').onclick=()=>{ $('menu').classList.add('hidden'); $('home').classList.remove('hidden'); };
   // 칵테일 이름 → 이미지 모달
   document.querySelectorAll('.cname').forEach(b=>{ b.onclick=()=>{ const c=CK[b.getAttribute('data-ck')]; if(!c) return;
-    $('modalImg').src=c.img; $('modalName').textContent=c.name; $('modalKr').textContent=c.kr; $('modal').classList.remove('hidden'); }; });
+    $('modalImg').src=c.img; $('modalName').textContent=c.name;
+    $('modalIngs').innerHTML=c.ings.map(x=>'<div class="ig">'+x+'</div>').join('');
+    $('modal').classList.remove('hidden'); }; });
   $('modalClose').onclick=()=>$('modal').classList.add('hidden');
   $('modal').onclick=e=>{ if(e.target===$('modal')) $('modal').classList.add('hidden'); };
   // 이미지 프리로드
