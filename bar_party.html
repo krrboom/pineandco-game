@@ -380,7 +380,7 @@
     let ml=0, hold=false, released=false, finished=false, flip=0, lastTick=0;
     let stampObj=null, stampT=0, shake=0, settleT=0, dribble=0, tailTau=0.2, t0=0, lastT=0, raf=0;
     let armT=INTRO, glassPopT=LOGO_T, bannerUntil=0; // armT: t0 기준 입력 허용 시각
-    const parts=[]; const noise=fpNoise();
+    const parts=[], streamPts=[]; const noise=fpNoise();
     const lvlY=v=>inBot-(inBot-inTop)*Math.min(1,v/g.cap);
     const hwAt=y=>{ const f=(inBot-y)/Math.max(1,inBot-inTop); return (g.in.hwB+(g.in.hwT-g.in.hwB)*f)*GW; };
     function pose(){ const e=flip*flip*(3-2*flip);
@@ -410,7 +410,7 @@
         else { ftxt='±'+tot.toFixed(1)+'ml'; fcls='miss'; }
         done(avg,ftxt,fcls,tot,pourErrs.slice()); },1350);
     }
-    function nextPour(){ pourIdx++; setGlass(pourIdx);
+    function nextPour(){ pourIdx++; setGlass(pourIdx); streamPts.length=0;
       ml=0; lastTick=0; hold=false; released=false; flip=0; stampObj=null; dribble=0;
       t0=lastT; armT=700; glassPopT=0; bannerUntil=lastT+1000; beep(700,0.08); }
     function release(force){ if(released||finished) return; if(!hold&&!force) return;
@@ -461,18 +461,24 @@
       if(!blind&&!stampObj&&it>glassPopT+340){ const ty2=lvlY(target); ctx.strokeStyle='#e6b450'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
         ctx.beginPath(); ctx.moveTo(gx0-8,ty2); ctx.lineTo(gx0+GW+8,ty2); ctx.stroke(); ctx.setLineDash([]);
         ctx.font='8px "Press Start 2P"'; ctx.textAlign='right'; ctx.fillStyle='#e6b450'; ctx.fillText(target+'ml',gx0-12,ty2+3); }
+      // ── 물줄기: 팁에서 방출된 액체 조각이 각자 중력 낙하 (병이 움직여도 이미 나온 액체는 제자리에서 떨어진다) ──
       const flow=pouring?FP_RATE:((released&&!stampObj)?dribble:0);
-      if(flow>0.15){ const tp=tip(); const landX=GX+Math.sin(t/70)*1.5;
-        const landY=(ml>0.05?lvlY(ml):inBot)-1; const w2=0.7+flow*0.38;
+      const spout=flip>0.55; // 주둥이가 아래를 향할 때만 액체가 나온다 (세워지면 방출 중단, 공중 기둥만 낙하)
+      if(spout&&flow>0.35){ const tp=tip(); streamPts.push({x:tp.x,y:tp.y+3,vy:110,w:0.7+flow*0.38}); }
+      else if(flip>0.35&&flow>0.08&&Math.random()<0.5){ const tp=tip(); // 기울어진 주둥이 끝의 마지막 방울들
+        parts.push({x:tp.x+(Math.random()*3-1.5),y:tp.y+4,vx:(Math.random()*2-1)*8,vy:70+Math.random()*50,gv:1100,r:1.4+Math.random()*1.4,c:'#ffd977',life:0.8}); }
+      const surfY=(ml>0.05?lvlY(ml):inBot)-1;
+      for(let i=streamPts.length-1;i>=0;i--){ const sp=streamPts[i]; sp.vy+=1500*dt; sp.y+=sp.vy*dt;
+        if(sp.y>=surfY){ streamPts.splice(i,1); // 수면 도착 → 스플래시
+          if(Math.random()<0.45) parts.push({x:sp.x+(Math.random()*8-4),y:surfY,vx:(Math.random()*2-1)*55,vy:-30-Math.random()*60,gv:520,r:1.4+Math.random()*1.5,c:'#ffd977',life:0.3}); } }
+      if(streamPts.length){ const pts=streamPts.slice().sort((a,b)=>a.y-b.y);
+        if(spout&&flow>0.35){ const tp=tip(); pts.unshift({x:tp.x,y:tp.y+2,vy:110,w:pts[0].w}); } // 아직 팁에 붙어있음
+        pts.push({x:pts[pts.length-1].x,y:Math.min(surfY,pts[pts.length-1].y+pts[pts.length-1].vy*0.03),vy:pts[pts.length-1].vy,w:pts[pts.length-1].w});
         ctx.lineCap='round';
-        if(flow>1.1){ // 이어진 물줄기 (유량 따라 가늘어짐)
-          ctx.strokeStyle='#c87f1e'; ctx.lineWidth=w2+2; ctx.beginPath(); ctx.moveTo(tp.x,tp.y);
-          ctx.quadraticCurveTo(tp.x+2,(tp.y+landY)/2,landX,landY); ctx.stroke();
-          ctx.strokeStyle='#ffd977'; ctx.lineWidth=w2; ctx.beginPath(); ctx.moveTo(tp.x,tp.y);
-          ctx.quadraticCurveTo(tp.x+2,(tp.y+landY)/2,landX,landY); ctx.stroke(); }
-        else if(Math.random()<0.6) // 끊어져 떨어지는 마지막 방울들
-          parts.push({x:tp.x+(Math.random()*4-2),y:tp.y+4,vx:(landX-tp.x)*1.6,vy:60+Math.random()*80,gv:620,r:1.6+Math.random()*1.6,c:'#ffd977',life:0.6});
-        if(flow>2&&Math.random()<0.55) parts.push({x:landX+(Math.random()*12-6),y:landY,vx:(Math.random()*2-1)*60,vy:-40-Math.random()*70,gv:520,r:1.5+Math.random()*1.6,c:'#ffd977',life:0.35}); }
+        for(let i=0;i<pts.length-1;i++){ const a2=pts[i], b2=pts[i+1];
+          const ww=Math.max(0.8,((a2.w+b2.w)/2)*Math.sqrt(110/Math.max(110,(a2.vy+b2.vy)/2))); // 가속할수록 가늘게 (질량 보존)
+          ctx.strokeStyle='#c87f1e'; ctx.lineWidth=ww+1.6; ctx.beginPath(); ctx.moveTo(a2.x,a2.y); ctx.lineTo(b2.x,b2.y); ctx.stroke();
+          ctx.strokeStyle='#ffd977'; ctx.lineWidth=ww; ctx.beginPath(); ctx.moveTo(a2.x,a2.y); ctx.lineTo(b2.x,b2.y); ctx.stroke(); } }
       const bimg=FP.imgs.bottle;
       if(bimg){ const p=pose(); let off=0;
         if(pourIdx===0){ const be=Math.max(0,Math.min(1,(it-LOGO_T)/500)); off=(1-be)*(1-be)*160; }
