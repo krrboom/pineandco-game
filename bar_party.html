@@ -356,22 +356,30 @@
     const gn=a.createGain(); gn.gain.value=0.0001; src.connect(bp); bp.connect(gn); gn.connect(a.destination); src.start();
     return { set:(on,f)=>{ const t=a.currentTime; gn.gain.setTargetAtTime(on?0.09:0.0001,t,0.05); bp.frequency.setTargetAtTime(650+f*950,t,0.08); },
       kill:()=>{ try{ src.stop(); }catch(e){} } }; }catch(e){ return null; } }
-  // cfg: { glass:0..2(없으면 랜덤), blind:카운터 숨김, chal:{pour,total} } / done(score,txt,cls,errMl)
+  // 한 판 = 3연속 챌린지: 샷 30ml → 지거 45ml → 록스 60ml
+  // cfg: { blind:카운터 숨김 } / done(평균점수, txt, cls, 오차합, 오차배열)
   function engFreePour(cfg, done){
     fpLoad();
-    const g=FP_GLASS[(cfg.glass!=null)?cfg.glass:rnd(FP_GLASS.length)], target=g.target, blind=!!cfg.blind, chal=cfg.chal||null;
+    const blind=!!cfg.blind;
     stage.innerHTML='<div class="mgtitle">'+(blind?'BLIND POUR':'FREE POUR MASTER')+'</div>'
-      +'<div class="mghint">'+(chal?('POUR '+chal.pour+'/3 — '):'')+'꾹 누르면 병이 완전히 뒤집힌다. '
-      +(blind?'카운터 없이 감으로 <b>'+target+'ml</b>!':'카운터를 보고 정확히 <b>'+target+'.00ml</b>에서 놓아라!')+'</div>'
+      +'<div class="mghint">30ml → 45ml → 60ml 3연속! 꾹 누르면 병이 완전히 뒤집힌다. '
+      +(blind?'카운터 없이 감으로!':'카운터를 보고 정확한 순간에 놓아라!')+'</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="fpb">HOLD TO POUR</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('fpb');
-    const GX=200, GBASE=444, GH=g.h, GW=g.h, gx0=GX-GW/2, gy0=GBASE-GH;
-    const inTop=gy0+g.in.top*GH, inBot=gy0+g.in.bot*GH;
+    const GX=200, GBASE=444;
     const BH=280, BW=BH*0.75, GRIPX=0.47, GRIPY=0.31, TIPX=0.415, TIPY=0.05;
     const IDLE={x:312,y:176,a:0.14}, POUR={x:197,y:150,a:-Math.PI}, DUR=9500;
+    const LOGO_T=1150, INTRO=1900; // 첫 인트로: 로고 크게(~1.15초) → 병/잔 등장 → 1.9초부터 입력
+    const eob=x=>{ const c=1.70158, f=x-1; return 1+f*f*((c+1)*f+c); }; // easeOutBack
+    let pourIdx=0, g, GH, GW, gx0, gy0, inTop, inBot, target;
+    function setGlass(i){ g=FP_GLASS[i]; target=g.target; GH=g.h; GW=g.h; gx0=GX-GW/2; gy0=GBASE-GH;
+      inTop=gy0+g.in.top*GH; inBot=gy0+g.in.bot*GH; }
+    setGlass(0);
+    const pourErrs=[], pourScores=[];
     let ml=0, hold=false, released=false, finished=false, flip=0, lastTick=0;
-    let stampObj=null, stampT=0, shake=0, settleT=0, dribble=0, t0=0, lastT=0, raf=0;
+    let stampObj=null, stampT=0, shake=0, settleT=0, dribble=0, tailTau=0.2, t0=0, lastT=0, raf=0;
+    let armT=INTRO, glassPopT=LOGO_T, bannerUntil=0; // armT: t0 기준 입력 허용 시각
     const parts=[]; const noise=fpNoise();
     const lvlY=v=>inBot-(inBot-inTop)*Math.min(1,v/g.cap);
     const hwAt=y=>{ const f=(inBot-y)/Math.max(1,inBot-inTop); return (g.in.hwB+(g.in.hwT-g.in.hwB)*f)*GW; };
@@ -389,14 +397,27 @@
       else if(ae<=6.0){ sc=Math.round(72-(ae-3)*7); txt=err<0?'TOO SHY':'TOO MUCH'; cls='miss'; quip=err<0?'손님이 째려본다…':'욕심이 과했다…'; }
       else { sc=Math.max(0,Math.round(50-(ae-6)*4)); txt=err<0?'TOO SHY':'TOO MUCH'; cls='miss'; quip=err<0?'그건 향만 나는데?':'그건 더블인데?'; }
       stampObj={txt,cls,quip,err}; stampT=lastT;
+      pourErrs.push(Math.min(ae,99.99)); pourScores.push(sc);
       if(cls==='perfect'){ flash('#6fcf8f'); sGood(); setTimeout(()=>beep(1320,0.14,'square',0.12),140); burst(GX,lvlY(ml),44,['#ffd977','#6fcf8f','#e6b450','#fff'],1.4); }
       else if(cls==='good') sGood();
       else { sBad(); shake=(txt==='SPILL!')?13:7; }
-      setTimeout(()=>{ if(finished) return; finished=true; cleanup(); done(sc,txt,cls,Math.min(ae,99.99)); },1350);
+      setTimeout(()=>{ if(finished) return;
+        if(pourIdx<2){ nextPour(); return; }
+        finished=true; cleanup();
+        const tot=pourErrs.reduce((a,b)=>a+b,0), avg=Math.round(pourScores.reduce((a,b)=>a+b,0)/3);
+        let ftxt,fcls; if(tot<=3){ ftxt='POUR MASTER!'; fcls='perfect'; }
+        else if(tot<=9){ ftxt='±'+tot.toFixed(1)+'ml'; fcls='good'; }
+        else { ftxt='±'+tot.toFixed(1)+'ml'; fcls='miss'; }
+        done(avg,ftxt,fcls,tot,pourErrs.slice()); },1350);
     }
+    function nextPour(){ pourIdx++; setGlass(pourIdx);
+      ml=0; lastTick=0; hold=false; released=false; flip=0; stampObj=null; dribble=0;
+      t0=lastT; armT=700; glassPopT=0; bannerUntil=lastT+1000; beep(700,0.08); }
     function release(force){ if(released||finished) return; if(!hold&&!force) return;
-      released=true; hold=false; dribble=0.35+Math.random()*0.3; if(noise) noise.set(false,0); settleT=lastT; }
-    function dn(e){ e.preventDefault(); ac(); if(finished||released||!t0||now()-t0<650) return;
+      // 병이 돌아오는 동안 물줄기가 가늘어지며 잔여분이 더 들어간다 (매번 조금씩 다름, 약 1.7~2.4ml)
+      released=true; hold=false; dribble=(flip>0.92)?FP_RATE:flip*3; tailTau=0.17+Math.random()*0.07;
+      if(noise) noise.set(false,0); settleT=lastT; }
+    function dn(e){ e.preventDefault(); ac(); if(finished||released||stampObj||!t0||now()-t0<armT) return;
       if(!hold){ hold=true; beep(500,0.05,'square',0.08); } }
     function up(e){ if(e&&e.cancelable) e.preventDefault(); release(false); }
     cv.addEventListener('pointerdown',dn); btn.addEventListener('pointerdown',dn);
@@ -413,9 +434,10 @@
         if(Math.floor(ml/10)>Math.floor(lastTick/10)) beep(880,0.04,'square',0.1);
         lastTick=ml; if(ml>=g.cap){ ml=g.cap; release(true); } }
       else if(noise&&hold) noise.set(false,0);
-      if(released&&dribble>0){ const d2=Math.min(dribble,dt*2.2); ml+=d2; dribble-=d2; }
+      if(released&&!stampObj&&dribble>0.03){ ml+=dribble*dt; dribble*=Math.exp(-dt/tailTau);
+        if(ml>=g.cap){ ml=g.cap; dribble=0; } }
       if(released&&!stampObj&&t-settleT>620) judge();
-      if(!released&&t-t0>DUR) release(true);
+      if(!released&&!stampObj&&t-t0>armT+DUR) release(true);
       shake=Math.max(0,shake-dt*26);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
@@ -424,7 +446,10 @@
         ctx.drawImage(bgi,(400-bw2)/2,(480-bh2)/2,bw2,bh2); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(0,0,400,480);
-      const gimg=FP.imgs[g.key]; if(gimg) ctx.drawImage(gimg,gx0,gy0,GW,GH);
+      const it=t-t0;
+      const gimg=FP.imgs[g.key];
+      if(gimg&&it>glassPopT){ const gp=Math.min(1,(it-glassPopT)/350), s2=gp>=1?1:Math.max(0.01,eob(gp));
+        ctx.save(); ctx.translate(GX,GBASE); ctx.scale(s2,s2); ctx.drawImage(gimg,-GW/2,-GH,GW,GH); ctx.restore(); }
       if(ml>0.05){ const wA=pouring?2.0:(released?Math.max(0.4,2-(t-settleT)/350):0.8);
         const sy2=Math.max(inTop-2,lvlY(ml))+Math.sin(t/60)*wA;
         const hwS=hwAt(sy2), hwB2=g.in.hwB*GW;
@@ -433,48 +458,65 @@
         ctx.fillStyle=lg; ctx.beginPath(); ctx.moveTo(GX-hwS,sy2); ctx.lineTo(GX+hwS,sy2);
         ctx.lineTo(GX+hwB2,inBot); ctx.lineTo(GX-hwB2,inBot); ctx.closePath(); ctx.fill(); ctx.restore();
         ctx.globalAlpha=0.7; ctx.fillStyle='#ffe08a'; ctx.beginPath(); ctx.ellipse(GX,sy2,hwS,3,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
-      if(!blind&&!stampObj){ const ty2=lvlY(target); ctx.strokeStyle='#e6b450'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+      if(!blind&&!stampObj&&it>glassPopT+340){ const ty2=lvlY(target); ctx.strokeStyle='#e6b450'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
         ctx.beginPath(); ctx.moveTo(gx0-8,ty2); ctx.lineTo(gx0+GW+8,ty2); ctx.stroke(); ctx.setLineDash([]);
         ctx.font='8px "Press Start 2P"'; ctx.textAlign='right'; ctx.fillStyle='#e6b450'; ctx.fillText(target+'ml',gx0-12,ty2+3); }
-      if(pouring||(released&&dribble>0.02)){ const tp=tip(); const landX=GX+Math.sin(t/70)*1.5;
-        const landY=(ml>0.05?lvlY(ml):inBot)-1; const w2=pouring?4.6:2;
+      const flow=pouring?FP_RATE:((released&&!stampObj)?dribble:0);
+      if(flow>0.15){ const tp=tip(); const landX=GX+Math.sin(t/70)*1.5;
+        const landY=(ml>0.05?lvlY(ml):inBot)-1; const w2=0.7+flow*0.38;
         ctx.lineCap='round';
-        ctx.strokeStyle='#c87f1e'; ctx.lineWidth=w2+2; ctx.beginPath(); ctx.moveTo(tp.x,tp.y);
-        ctx.quadraticCurveTo(tp.x+2,(tp.y+landY)/2,landX,landY); ctx.stroke();
-        ctx.strokeStyle='#ffd977'; ctx.lineWidth=w2; ctx.beginPath(); ctx.moveTo(tp.x,tp.y);
-        ctx.quadraticCurveTo(tp.x+2,(tp.y+landY)/2,landX,landY); ctx.stroke();
-        if(pouring&&Math.random()<0.55) parts.push({x:landX+(Math.random()*12-6),y:landY,vx:(Math.random()*2-1)*60,vy:-40-Math.random()*70,gv:520,r:1.5+Math.random()*1.6,c:'#ffd977',life:0.35}); }
+        if(flow>1.1){ // 이어진 물줄기 (유량 따라 가늘어짐)
+          ctx.strokeStyle='#c87f1e'; ctx.lineWidth=w2+2; ctx.beginPath(); ctx.moveTo(tp.x,tp.y);
+          ctx.quadraticCurveTo(tp.x+2,(tp.y+landY)/2,landX,landY); ctx.stroke();
+          ctx.strokeStyle='#ffd977'; ctx.lineWidth=w2; ctx.beginPath(); ctx.moveTo(tp.x,tp.y);
+          ctx.quadraticCurveTo(tp.x+2,(tp.y+landY)/2,landX,landY); ctx.stroke(); }
+        else if(Math.random()<0.6) // 끊어져 떨어지는 마지막 방울들
+          parts.push({x:tp.x+(Math.random()*4-2),y:tp.y+4,vx:(landX-tp.x)*1.6,vy:60+Math.random()*80,gv:620,r:1.6+Math.random()*1.6,c:'#ffd977',life:0.6});
+        if(flow>2&&Math.random()<0.55) parts.push({x:landX+(Math.random()*12-6),y:landY,vx:(Math.random()*2-1)*60,vy:-40-Math.random()*70,gv:520,r:1.5+Math.random()*1.6,c:'#ffd977',life:0.35}); }
       const bimg=FP.imgs.bottle;
-      if(bimg){ const p=pose(); ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a+(hold?0:Math.sin(t/320)*0.02));
+      if(bimg){ const p=pose(); let off=0;
+        if(pourIdx===0){ const be=Math.max(0,Math.min(1,(it-LOGO_T)/500)); off=(1-be)*(1-be)*160; }
+        ctx.save(); ctx.translate(p.x+off,p.y); ctx.rotate(p.a+(hold?0:Math.sin(t/320)*0.02));
         ctx.drawImage(bimg,-GRIPX*BW,-GRIPY*BH,BW,BH); ctx.restore(); }
       for(let i=parts.length-1;i>=0;i--){ const pp=parts[i]; pp.life-=dt; if(pp.life<=0){ parts.splice(i,1); continue; }
         pp.vy+=pp.gv*dt; pp.x+=pp.vx*dt; pp.y+=pp.vy*dt;
         ctx.globalAlpha=Math.min(1,pp.life*2.5); ctx.fillStyle=pp.c; ctx.fillRect(pp.x-pp.r/2,pp.y-pp.r/2,pp.r,pp.r); }
       ctx.globalAlpha=1;
+      // ── 첫 인트로: 로고 크게 → 병/잔 등장 ──
+      if(pourIdx===0&&it<INTRO&&!stampObj){
+        const lgi=FP.imgs.logo;
+        if(it<LOGO_T){ ctx.fillStyle='rgba(0,0,0,0.58)'; ctx.fillRect(0,0,400,480);
+          if(lgi){ const k=0.55+eob(Math.min(1,it/280))*0.45, lw=330*k, lh=lw*(lgi.height/lgi.width);
+            ctx.drawImage(lgi,200-lw/2,228-lh/2,lw,lh); } }
+        else { const f=Math.min(1,(it-LOGO_T)/500);
+          ctx.fillStyle='rgba(0,0,0,'+(0.4*(1-f)).toFixed(3)+')'; ctx.fillRect(0,0,400,480);
+          if(lgi&&f<1){ ctx.globalAlpha=1-f; const lw=330*(1-0.4*f), lh=lw*(lgi.height/lgi.width);
+            ctx.drawImage(lgi,200-lw/2,(228-130*f)-lh/2,lw,lh); ctx.globalAlpha=1; } } }
+      // 잔 이름 (등장/교체 직후)
+      if(it>glassPopT&&it<glassPopT+1400&&!stampObj){ ctx.font='10px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(g.name,202,469); ctx.fillStyle='#ffd977'; ctx.fillText(g.name,200,467); }
+      // 잔 교체 배너
+      if(t<bannerUntil&&!stampObj){ ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,100,400,42);
+        ctx.font='12px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('NEXT > '+g.name,202,127); ctx.fillStyle='#ffd977'; ctx.fillText('NEXT > '+g.name,200,125); }
       // ── ml 카운터 시계 ──
-      const cw=232,chh=62,cx0=200-cw/2,cy0=14;
-      ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(cx0,cy0,cw,chh);
-      ctx.strokeStyle=pouring?'#6fcf8f':'#333'; ctx.lineWidth=3; ctx.strokeRect(cx0,cy0,cw,chh);
-      ctx.textAlign='center'; ctx.font='19px "Press Start 2P"';
-      const mlTxt=(blind&&!stampObj)?'??.??':Math.min(ml,99.99).toFixed(2);
-      ctx.fillStyle='#000'; ctx.fillText(mlTxt+'ml',202,cy0+32);
-      ctx.fillStyle=pouring?'#ffd977':'#e8e6dd'; ctx.fillText(mlTxt+'ml',200,cy0+30);
-      ctx.font='9px "Press Start 2P"';
-      ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET '+target+'.00ml',200,cy0+50);
-      if(!released){ const tlf=Math.max(0,1-(t-t0)/DUR); ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,86,280,6);
-        ctx.fillStyle=tlf<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,86,280*tlf,6); }
-      if(chal){ ctx.font='9px "Press Start 2P"'; ctx.textAlign='left';
-        ctx.fillStyle='#000'; ctx.fillText('ERR ±'+chal.total.toFixed(2)+'ml',14,472);
-        ctx.fillStyle='#8fd7a0'; ctx.fillText('ERR ±'+chal.total.toFixed(2)+'ml',12,470); }
-      const it=t-t0;
-      if(it<1000&&!stampObj){ const al=it<720?1:1-(it-720)/280;
-        ctx.save(); ctx.globalAlpha=Math.max(0,al);
-        ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,400,480);
-        const lgi=FP.imgs.logo; if(lgi){ const k=1+Math.max(0,1-it/240)*0.3, lw=215*k, lh=lw*(lgi.height/lgi.width);
-          ctx.drawImage(lgi,200-lw/2,185-lh/2,lw,lh); }
-        ctx.font='11px "Press Start 2P"'; ctx.textAlign='center';
-        ctx.fillStyle='#000'; ctx.fillText(g.name,202,398); ctx.fillStyle='#ffd977'; ctx.fillText(g.name,200,396);
-        ctx.restore(); ctx.globalAlpha=1; }
+      if(!(pourIdx===0&&it<LOGO_T)){
+        const cw=232,chh=62,cx0=200-cw/2,cy0=14;
+        ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(cx0,cy0,cw,chh);
+        ctx.strokeStyle=pouring?'#6fcf8f':'#333'; ctx.lineWidth=3; ctx.strokeRect(cx0,cy0,cw,chh);
+        ctx.textAlign='center'; ctx.font='19px "Press Start 2P"';
+        const mlTxt=(blind&&!stampObj)?'??.??':Math.min(ml,99.99).toFixed(2);
+        ctx.fillStyle='#000'; ctx.fillText(mlTxt+'ml',202,cy0+32);
+        ctx.fillStyle=pouring?'#ffd977':'#e8e6dd'; ctx.fillText(mlTxt+'ml',200,cy0+30);
+        ctx.font='9px "Press Start 2P"';
+        ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET '+target+'.00ml',200,cy0+50);
+        ctx.textAlign='left'; ctx.fillStyle='#000'; ctx.fillText('POUR '+(pourIdx+1)+'/3',14,cy0+18);
+        ctx.fillStyle='#e8e6dd'; ctx.fillText('POUR '+(pourIdx+1)+'/3',12,cy0+16);
+        if(!released){ const tlf=Math.max(0,Math.min(1,1-(t-t0-armT)/DUR)); ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,86,280,6);
+          ctx.fillStyle=tlf<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,86,280*tlf,6); }
+        if(pourErrs.length){ const tot=pourErrs.reduce((a,b)=>a+b,0); ctx.font='9px "Press Start 2P"'; ctx.textAlign='left';
+          ctx.fillStyle='#000'; ctx.fillText('ERR ±'+tot.toFixed(2)+'ml',14,472);
+          ctx.fillStyle='#8fd7a0'; ctx.fillText('ERR ±'+tot.toFixed(2)+'ml',12,470); } }
       if(stampObj){ const st2=(t-stampT)/1000;
         ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
         ctx.save(); ctx.translate(200,198); ctx.rotate(-0.06);
@@ -494,20 +536,19 @@
     raf=requestAnimationFrame(draw);
   }
   /* ── FREE POUR CHALLENGE: 30→45→60ml 3연속, 오차 합이 적은 순으로 순위 ── */
-  let fpBest=parseFloat(localStorage.getItem('pine_freepour_best')||'NaN'), fpPlayers=[], fpCur=0, fpPour=0;
+  let fpBest=parseFloat(localStorage.getItem('pine_freepour_best')||'NaN'), fpPlayers=[], fpCur=0;
   function fpBestShow(){ $('fpBestVal').textContent=isNaN(fpBest)?'—':('±'+fpBest.toFixed(2)+'ml'); }
   fpBestShow();
   $('fpChalBtn').onclick=()=>{ ac(); beep(700,0.1); startFpChallenge(); };
   function startFpChallenge(){ mode='fp'; fpLoad(); fpPlayers=[]; for(let i=0;i<pn;i++) fpPlayers.push({name:'PLAYER '+(i+1),err:0,errs:[]});
     fpCur=0; fpTurn(); }
-  function fpTurn(){ fpPour=0; const p=fpPlayers[fpCur]; $('turnWho').textContent=p.name;
+  function fpTurn(){ const p=fpPlayers[fpCur]; $('turnWho').textContent=p.name;
     $('turnMsg').innerHTML='FREE POUR CHALLENGE<br>30ml → 45ml → 60ml<br>오차 합이 가장 적은 사람이 이긴다'; show('turn'); $('hud').classList.add('hidden'); }
-  function fpNext(){ if(fpPour>=3){ fpEndTurn(); return; }
-    const p=fpPlayers[fpCur];
-    $('hudWho').textContent=p.name; $('hudRd').textContent='POUR '+(fpPour+1)+'/3'; $('hudSc').textContent='±'+p.err.toFixed(2); $('hud').classList.remove('hidden');
+  function fpNext(){ const p=fpPlayers[fpCur];
+    $('hudWho').textContent=p.name; $('hudRd').textContent='3 POURS'; $('hudSc').textContent='±0.00'; $('hud').classList.remove('hidden');
     show('game'); stage.innerHTML=''; let done_=false;
-    engFreePour({glass:fpPour, chal:{pour:fpPour+1,total:p.err}}, function(s,t2,c,err){ if(done_) return; done_=true;
-      p.err+=(err!=null?err:99); p.errs.push(err!=null?err:99); fpPour++; $('hudSc').textContent='±'+p.err.toFixed(2); setTimeout(fpNext,120); }); }
+    engFreePour({}, function(s,t2,c,total,errs){ if(done_) return; done_=true;
+      p.err=(total!=null?total:99); p.errs=errs||[]; $('hudSc').textContent='±'+p.err.toFixed(2); setTimeout(fpEndTurn,150); }); }
   function fpEndTurn(){ $('hud').classList.add('hidden'); fpCur++; if(fpCur<fpPlayers.length) fpTurn(); else fpFinal(); }
   function fpFinal(){
     const ranked=[...fpPlayers].sort((a,b)=>a.err-b.err), top=ranked[0].err;
