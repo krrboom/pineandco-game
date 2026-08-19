@@ -80,6 +80,8 @@
   .sbtn{ font-family:'Press Start 2P',monospace; font-size:9px; line-height:1.3; color:var(--ink); background:var(--panel); border:2px solid #333; box-shadow:0 3px 0 #000; padding:12px 6px; cursor:pointer; text-align:center; }
   .sbtn:active{ transform:translateY(2px); box-shadow:0 1px 0 #000; } .sbtn .cat{ display:block; font-size:7px; color:var(--pine-light); margin-bottom:5px; letter-spacing:1px; }
   .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:9; }
+  /* 프리푸어 마스터 */
+  #fpcv{ height:min(46vh,460px); max-width:92vw; border:3px solid #000; box-shadow:0 6px 0 rgba(0,0,0,.45); background:#000; touch-action:none; }
 </style>
 </head>
 <body>
@@ -94,8 +96,9 @@
     <div class="kr" style="font-size:11px;color:var(--dim)">인원 수</div>
     <div class="pcount" id="pcount"></div>
     <button class="btn amber" id="startBtn">START</button>
+    <button class="btn" id="fpChalBtn">🥃 POUR CHALLENGE</button>
     <button class="btn ghost" id="sandboxBtn">🎮 SANDBOX 체험</button>
-    <div class="best">BEST · <b id="bestVal">0</b></div>
+    <div class="best">BEST · <b id="bestVal">0</b> &nbsp;·&nbsp; POUR · <b id="fpBestVal">—</b></div>
   </div>
 
   <div id="sandbox" class="screen hidden">
@@ -164,16 +167,16 @@
   const POUR_COLORS=['#ffe08a','#e6a94a','#ff8a3c','#c96b5a','#8fe0a0','#ff6a5a','#bfe6ff','#ff8ab0','#d9a441'];
   const gr=c=>'linear-gradient('+c+',#a86a2a)';
 
-  let players=[], cur=0, round=0, ROUNDS=5, best=parseInt(localStorage.getItem('pine_barparty_best')||'0')||0, lastGame=-1;
+  let players=[], cur=0, round=0, ROUNDS=5, best=parseInt(localStorage.getItem('pine_barparty_best')||'0')||0, lastGame=-1, mode='party';
   $('bestVal').textContent=best.toLocaleString();
 
   let pn=2;
   (function(){ const box=$('pcount'); for(let i=1;i<=4;i++){ const b=document.createElement('button'); b.className='pbtn'+(i===2?' sel':''); b.textContent=i;
     b.onclick=()=>{ pn=i; ac(); beep(500,0.05); [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); }; box.appendChild(b); } })();
 
-  $('startBtn').onclick=()=>{ ac(); beep(700,0.1); players=[]; for(let i=0;i<pn;i++) players.push({name:'PLAYER '+(i+1),score:0}); cur=0; startTurn(); };
+  $('startBtn').onclick=()=>{ ac(); beep(700,0.1); mode='party'; players=[]; for(let i=0;i<pn;i++) players.push({name:'PLAYER '+(i+1),score:0}); cur=0; startTurn(); };
   function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'폰을 넘겨받았으면 눌러라':'준비되면 눌러라'); show('turn'); $('hud').classList.add('hidden'); }
-  $('turnBtn').onclick=()=>{ beep(700,0.1); nextRound(); };
+  $('turnBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp') fpNext(); else nextRound(); };
   function hud(){ const p=players[cur]; $('hudWho').textContent=p.name; $('hudRd').textContent='ROUND '+(round+1)+'/'+ROUNDS; $('hudSc').textContent=p.score; $('hud').classList.remove('hidden'); }
   function nextRound(){ if(round>=ROUNDS){ endTurn(); return; } hud(); let g; do{ g=rnd(GAMES.length); }while(GAMES.length>1 && g===lastGame); lastGame=g;
     show('game'); stage.innerHTML=''; let done=false; GAMES[g].run(function(s,t,c){ if(done) return; done=true; award(Math.round(s),t,c); }); }
@@ -186,7 +189,7 @@
     const list=$('rankList'); list.innerHTML=''; ranked.forEach((p,i)=>{ const row=document.createElement('div'); row.className='rrow'+(i===0?' win':'');
       row.innerHTML='<span class="nm">'+(i===0?'<span class="crown">👑</span> ':'#'+(i+1)+' ')+p.name+'</span><span class="pt">'+p.score.toLocaleString()+'</span>'; list.appendChild(row); });
     show('final'); sGood(); flash('#e6b450'); }
-  $('againBtn').onclick=()=>{ beep(700,0.1); players.forEach(p=>p.score=0); cur=0; startTurn(); };
+  $('againBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp'){ startFpChallenge(); return; } players.forEach(p=>p.score=0); cur=0; startTurn(); };
   $('homeBtn').onclick=()=>{ beep(500,0.08); show('title'); };
 
   // 샌드박스
@@ -320,6 +323,202 @@
       $('tstop').addEventListener('click',stop); loop(); }
   }
 
+  /* ====================== FREE POUR MASTER ====================== */
+  // 실사 픽셀아트 캔버스 프리푸어: 병을 완전히 뒤집고 ml 카운터를 보며 정확한 순간에 놓아라
+  const FP={ imgs:{}, loading:false };
+  function fpKey(img,maxW){ // 흰 배경을 테두리 플러드필로만 제거(내부 흰 하이라이트 보존) 후 프리스케일
+    const w=img.naturalWidth,h=img.naturalHeight,c=document.createElement('canvas'); c.width=w; c.height=h;
+    const x=c.getContext('2d'); x.drawImage(img,0,0); let d; try{ d=x.getImageData(0,0,w,h); }catch(e){ return c; }
+    const p=d.data, seen=new Uint8Array(w*h), q=[];
+    const isW=i=>p[i*4]>224&&p[i*4+1]>224&&p[i*4+2]>224;
+    for(let i=0;i<w;i++){ q.push(i,(h-1)*w+i); } for(let j=1;j<h-1;j++){ q.push(j*w, j*w+w-1); }
+    while(q.length){ const i=q.pop(); if(seen[i]) continue; seen[i]=1; if(!isW(i)) continue; p[i*4+3]=0;
+      const cx=i%w; if(cx>0&&!seen[i-1]) q.push(i-1); if(cx<w-1&&!seen[i+1]) q.push(i+1);
+      if(i>=w&&!seen[i-w]) q.push(i-w); if(i<w*(h-1)&&!seen[i+w]) q.push(i+w); }
+    x.putImageData(d,0,0);
+    if(maxW&&w>maxW){ const c2=document.createElement('canvas'); c2.width=maxW; c2.height=Math.round(h*maxW/w);
+      const x2=c2.getContext('2d'); x2.imageSmoothingQuality='high'; x2.drawImage(c,0,0,c2.width,c2.height); return c2; }
+    return c; }
+  function fpLoad(){ if(FP.loading) return; FP.loading=true;
+    const srcs={ bg:['fp_bg',0], bottle:['fp_bottle',620], logo:['fp_logo',540], shot:['fp_shot',440], jigger:['fp_jigger',440], rocks:['fp_rocks',440] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FP.imgs[k]=srcs[k][1]?fpKey(im,srcs[k][1]):im; }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+  // 잔 스펙: cap/target = ml (1oz=30ml). in = 잔 내부 영역(그린 크기 대비 비율)
+  const FP_GLASS=[
+    { key:'shot',   name:'SHOT GLASS / 1oz',  cap:45, target:30, h:146, in:{top:.225,bot:.665,hwT:.245,hwB:.155} },
+    { key:'jigger', name:'JIGGER / 1.5oz',    cap:60, target:45, h:164, in:{top:.095,bot:.495,hwT:.205,hwB:.04} },
+    { key:'rocks',  name:'ROCKS GLASS / 2oz', cap:90, target:60, h:170, in:{top:.195,bot:.655,hwT:.285,hwB:.245} } ];
+  const FP_RATE=10; // ml/초 — 3초=1oz(30ml), 실제 스피드푸어러 카운트 속도
+  function fpNoise(){ const a=ac(); if(!a) return null; try{
+    const len=Math.floor(a.sampleRate*0.4), buf=a.createBuffer(1,len,a.sampleRate), ch=buf.getChannelData(0);
+    for(let i=0;i<len;i++) ch[i]=Math.random()*2-1;
+    const src=a.createBufferSource(); src.buffer=buf; src.loop=true;
+    const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=900; bp.Q.value=0.8;
+    const gn=a.createGain(); gn.gain.value=0.0001; src.connect(bp); bp.connect(gn); gn.connect(a.destination); src.start();
+    return { set:(on,f)=>{ const t=a.currentTime; gn.gain.setTargetAtTime(on?0.09:0.0001,t,0.05); bp.frequency.setTargetAtTime(650+f*950,t,0.08); },
+      kill:()=>{ try{ src.stop(); }catch(e){} } }; }catch(e){ return null; } }
+  // cfg: { glass:0..2(없으면 랜덤), blind:카운터 숨김, chal:{pour,total} } / done(score,txt,cls,errMl)
+  function engFreePour(cfg, done){
+    fpLoad();
+    const g=FP_GLASS[(cfg.glass!=null)?cfg.glass:rnd(FP_GLASS.length)], target=g.target, blind=!!cfg.blind, chal=cfg.chal||null;
+    stage.innerHTML='<div class="mgtitle">'+(blind?'BLIND POUR':'FREE POUR MASTER')+'</div>'
+      +'<div class="mghint">'+(chal?('POUR '+chal.pour+'/3 — '):'')+'꾹 누르면 병이 완전히 뒤집힌다. '
+      +(blind?'카운터 없이 감으로 <b>'+target+'ml</b>!':'카운터를 보고 정확히 <b>'+target+'.00ml</b>에서 놓아라!')+'</div>'
+      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+      +'<button class="btn amber bigbtn" id="fpb">HOLD TO POUR</button>';
+    const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('fpb');
+    const GX=200, GBASE=444, GH=g.h, GW=g.h, gx0=GX-GW/2, gy0=GBASE-GH;
+    const inTop=gy0+g.in.top*GH, inBot=gy0+g.in.bot*GH;
+    const BH=280, BW=BH*0.75, GRIPX=0.47, GRIPY=0.31, TIPX=0.415, TIPY=0.05;
+    const IDLE={x:312,y:176,a:0.14}, POUR={x:197,y:150,a:-Math.PI}, DUR=9500;
+    let ml=0, hold=false, released=false, finished=false, flip=0, lastTick=0;
+    let stampObj=null, stampT=0, shake=0, settleT=0, dribble=0, t0=0, lastT=0, raf=0;
+    const parts=[]; const noise=fpNoise();
+    const lvlY=v=>inBot-(inBot-inTop)*Math.min(1,v/g.cap);
+    const hwAt=y=>{ const f=(inBot-y)/Math.max(1,inBot-inTop); return (g.in.hwB+(g.in.hwT-g.in.hwB)*f)*GW; };
+    function pose(){ const e=flip*flip*(3-2*flip);
+      return { x:IDLE.x+(POUR.x-IDLE.x)*e, y:IDLE.y+(POUR.y-IDLE.y)*e, a:IDLE.a+(POUR.a-IDLE.a)*e }; }
+    function tip(){ const p=pose(), lx=(TIPX-GRIPX)*BW, ly=(TIPY-GRIPY)*BH, c=Math.cos(p.a), s=Math.sin(p.a);
+      return { x:p.x+lx*c-ly*s, y:p.y+lx*s+ly*c }; }
+    function burst(x,y,n,cols,pw){ for(let i=0;i<n;i++){ const a2=Math.random()*Math.PI*2, v=(0.4+Math.random())*(pw||1);
+      parts.push({x,y,vx:Math.cos(a2)*95*v,vy:Math.sin(a2)*95*v-130*v,gv:430,r:2+Math.random()*3,c:cols[rnd(cols.length)],life:0.5+Math.random()*0.45}); } }
+    function judge(){
+      const err=ml-target, ae=Math.abs(err); let sc,txt,cls,quip;
+      if(ml>=g.cap-0.01){ sc=0; txt='SPILL!'; cls='miss'; quip=['사장님 등장!!','바닥이 더 마셨다…'][rnd(2)]; burst(GX,inTop,36,['#ffd977','#c87f1e','#d9544d'],1.3); }
+      else if(ae<=1.0){ sc=100; txt='PERFECT!'; cls='perfect'; quip=['손목에 신이 들렸다!!','이게 프로의 카운트다','소름 돋는 정확도'][rnd(3)]; }
+      else if(ae<=3.0){ sc=Math.round(95-(ae-1)*8); txt='GOOD'; cls='good'; quip=err<0?'반 박자 빨랐다':'반 박자 늦었다'; }
+      else if(ae<=6.0){ sc=Math.round(72-(ae-3)*7); txt=err<0?'TOO SHY':'TOO MUCH'; cls='miss'; quip=err<0?'손님이 째려본다…':'욕심이 과했다…'; }
+      else { sc=Math.max(0,Math.round(50-(ae-6)*4)); txt=err<0?'TOO SHY':'TOO MUCH'; cls='miss'; quip=err<0?'그건 향만 나는데?':'그건 더블인데?'; }
+      stampObj={txt,cls,quip,err}; stampT=lastT;
+      if(cls==='perfect'){ flash('#6fcf8f'); sGood(); setTimeout(()=>beep(1320,0.14,'square',0.12),140); burst(GX,lvlY(ml),44,['#ffd977','#6fcf8f','#e6b450','#fff'],1.4); }
+      else if(cls==='good') sGood();
+      else { sBad(); shake=(txt==='SPILL!')?13:7; }
+      setTimeout(()=>{ if(finished) return; finished=true; cleanup(); done(sc,txt,cls,Math.min(ae,99.99)); },1350);
+    }
+    function release(force){ if(released||finished) return; if(!hold&&!force) return;
+      released=true; hold=false; dribble=0.35+Math.random()*0.3; if(noise) noise.set(false,0); settleT=lastT; }
+    function dn(e){ e.preventDefault(); ac(); if(finished||released||!t0||now()-t0<650) return;
+      if(!hold){ hold=true; beep(500,0.05,'square',0.08); } }
+    function up(e){ if(e&&e.cancelable) e.preventDefault(); release(false); }
+    cv.addEventListener('pointerdown',dn); btn.addEventListener('pointerdown',dn);
+    ['pointerup','pointercancel'].forEach(ev=>window.addEventListener(ev,up));
+    function cleanup(){ cancelAnimationFrame(raf); if(noise) noise.kill();
+      ['pointerup','pointercancel'].forEach(ev=>window.removeEventListener(ev,up)); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      flip+=((hold&&!released)?1:-1)*dt/0.28; flip=Math.max(0,Math.min(1,flip));
+      const pouring=hold&&!released&&flip>0.92;
+      if(pouring){ ml+=FP_RATE*dt; if(noise) noise.set(true,Math.min(1,ml/g.cap));
+        if(Math.floor(ml/10)>Math.floor(lastTick/10)) beep(880,0.04,'square',0.1);
+        lastTick=ml; if(ml>=g.cap){ ml=g.cap; release(true); } }
+      else if(noise&&hold) noise.set(false,0);
+      if(released&&dribble>0){ const d2=Math.min(dribble,dt*2.2); ml+=d2; dribble-=d2; }
+      if(released&&!stampObj&&t-settleT>620) judge();
+      if(!released&&t-t0>DUR) release(true);
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      const bgi=FP.imgs.bg;
+      if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height), bw2=bgi.width*s, bh2=bgi.height*s;
+        ctx.drawImage(bgi,(400-bw2)/2,(480-bh2)/2,bw2,bh2); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(0,0,400,480);
+      const gimg=FP.imgs[g.key]; if(gimg) ctx.drawImage(gimg,gx0,gy0,GW,GH);
+      if(ml>0.05){ const wA=pouring?2.0:(released?Math.max(0.4,2-(t-settleT)/350):0.8);
+        const sy2=Math.max(inTop-2,lvlY(ml))+Math.sin(t/60)*wA;
+        const hwS=hwAt(sy2), hwB2=g.in.hwB*GW;
+        ctx.save(); ctx.globalCompositeOperation='multiply'; ctx.globalAlpha=0.88;
+        const lg=ctx.createLinearGradient(0,sy2,0,inBot); lg.addColorStop(0,'#f6c14a'); lg.addColorStop(1,'#b96f14');
+        ctx.fillStyle=lg; ctx.beginPath(); ctx.moveTo(GX-hwS,sy2); ctx.lineTo(GX+hwS,sy2);
+        ctx.lineTo(GX+hwB2,inBot); ctx.lineTo(GX-hwB2,inBot); ctx.closePath(); ctx.fill(); ctx.restore();
+        ctx.globalAlpha=0.7; ctx.fillStyle='#ffe08a'; ctx.beginPath(); ctx.ellipse(GX,sy2,hwS,3,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+      if(!blind&&!stampObj){ const ty2=lvlY(target); ctx.strokeStyle='#e6b450'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+        ctx.beginPath(); ctx.moveTo(gx0-8,ty2); ctx.lineTo(gx0+GW+8,ty2); ctx.stroke(); ctx.setLineDash([]);
+        ctx.font='8px "Press Start 2P"'; ctx.textAlign='right'; ctx.fillStyle='#e6b450'; ctx.fillText(target+'ml',gx0-12,ty2+3); }
+      if(pouring||(released&&dribble>0.02)){ const tp=tip(); const landX=GX+Math.sin(t/70)*1.5;
+        const landY=(ml>0.05?lvlY(ml):inBot)-1; const w2=pouring?4.6:2;
+        ctx.lineCap='round';
+        ctx.strokeStyle='#c87f1e'; ctx.lineWidth=w2+2; ctx.beginPath(); ctx.moveTo(tp.x,tp.y);
+        ctx.quadraticCurveTo(tp.x+2,(tp.y+landY)/2,landX,landY); ctx.stroke();
+        ctx.strokeStyle='#ffd977'; ctx.lineWidth=w2; ctx.beginPath(); ctx.moveTo(tp.x,tp.y);
+        ctx.quadraticCurveTo(tp.x+2,(tp.y+landY)/2,landX,landY); ctx.stroke();
+        if(pouring&&Math.random()<0.55) parts.push({x:landX+(Math.random()*12-6),y:landY,vx:(Math.random()*2-1)*60,vy:-40-Math.random()*70,gv:520,r:1.5+Math.random()*1.6,c:'#ffd977',life:0.35}); }
+      const bimg=FP.imgs.bottle;
+      if(bimg){ const p=pose(); ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a+(hold?0:Math.sin(t/320)*0.02));
+        ctx.drawImage(bimg,-GRIPX*BW,-GRIPY*BH,BW,BH); ctx.restore(); }
+      for(let i=parts.length-1;i>=0;i--){ const pp=parts[i]; pp.life-=dt; if(pp.life<=0){ parts.splice(i,1); continue; }
+        pp.vy+=pp.gv*dt; pp.x+=pp.vx*dt; pp.y+=pp.vy*dt;
+        ctx.globalAlpha=Math.min(1,pp.life*2.5); ctx.fillStyle=pp.c; ctx.fillRect(pp.x-pp.r/2,pp.y-pp.r/2,pp.r,pp.r); }
+      ctx.globalAlpha=1;
+      // ── ml 카운터 시계 ──
+      const cw=232,chh=62,cx0=200-cw/2,cy0=14;
+      ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(cx0,cy0,cw,chh);
+      ctx.strokeStyle=pouring?'#6fcf8f':'#333'; ctx.lineWidth=3; ctx.strokeRect(cx0,cy0,cw,chh);
+      ctx.textAlign='center'; ctx.font='19px "Press Start 2P"';
+      const mlTxt=(blind&&!stampObj)?'??.??':Math.min(ml,99.99).toFixed(2);
+      ctx.fillStyle='#000'; ctx.fillText(mlTxt+'ml',202,cy0+32);
+      ctx.fillStyle=pouring?'#ffd977':'#e8e6dd'; ctx.fillText(mlTxt+'ml',200,cy0+30);
+      ctx.font='9px "Press Start 2P"';
+      ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET '+target+'.00ml',200,cy0+50);
+      if(!released){ const tlf=Math.max(0,1-(t-t0)/DUR); ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,86,280,6);
+        ctx.fillStyle=tlf<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,86,280*tlf,6); }
+      if(chal){ ctx.font='9px "Press Start 2P"'; ctx.textAlign='left';
+        ctx.fillStyle='#000'; ctx.fillText('ERR ±'+chal.total.toFixed(2)+'ml',14,472);
+        ctx.fillStyle='#8fd7a0'; ctx.fillText('ERR ±'+chal.total.toFixed(2)+'ml',12,470); }
+      const it=t-t0;
+      if(it<1000&&!stampObj){ const al=it<720?1:1-(it-720)/280;
+        ctx.save(); ctx.globalAlpha=Math.max(0,al);
+        ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,400,480);
+        const lgi=FP.imgs.logo; if(lgi){ const k=1+Math.max(0,1-it/240)*0.3, lw=215*k, lh=lw*(lgi.height/lgi.width);
+          ctx.drawImage(lgi,200-lw/2,185-lh/2,lw,lh); }
+        ctx.font='11px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(g.name,202,398); ctx.fillStyle='#ffd977'; ctx.fillText(g.name,200,396);
+        ctx.restore(); ctx.globalAlpha=1; }
+      if(stampObj){ const st2=(t-stampT)/1000;
+        ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
+        ctx.save(); ctx.translate(200,198); ctx.rotate(-0.06);
+        const k2=1+Math.max(0,1-st2*6)*1.5; ctx.scale(k2,k2);
+        ctx.font='24px "Press Start 2P"'; ctx.textAlign='center';
+        const col=stampObj.cls==='perfect'?'#6fcf8f':(stampObj.cls==='good'?'#e6b450':'#d9544d');
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.txt,3,3); ctx.fillStyle=col; ctx.fillText(stampObj.txt,0,0);
+        ctx.restore();
+        ctx.font='13px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(ml.toFixed(2)+' / '+target+'.00ml',202,258);
+        ctx.fillStyle='#fff'; ctx.fillText(ml.toFixed(2)+' / '+target+'.00ml',200,256);
+        ctx.font='11px "Press Start 2P"'; ctx.fillStyle='#ffd977';
+        ctx.fillText('ERROR ±'+Math.abs(stampObj.err).toFixed(2)+'ml',200,284);
+        ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif';
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,314); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,313); }
+    }
+    raf=requestAnimationFrame(draw);
+  }
+  /* ── FREE POUR CHALLENGE: 30→45→60ml 3연속, 오차 합이 적은 순으로 순위 ── */
+  let fpBest=parseFloat(localStorage.getItem('pine_freepour_best')||'NaN'), fpPlayers=[], fpCur=0, fpPour=0;
+  function fpBestShow(){ $('fpBestVal').textContent=isNaN(fpBest)?'—':('±'+fpBest.toFixed(2)+'ml'); }
+  fpBestShow();
+  $('fpChalBtn').onclick=()=>{ ac(); beep(700,0.1); startFpChallenge(); };
+  function startFpChallenge(){ mode='fp'; fpLoad(); fpPlayers=[]; for(let i=0;i<pn;i++) fpPlayers.push({name:'PLAYER '+(i+1),err:0,errs:[]});
+    fpCur=0; fpTurn(); }
+  function fpTurn(){ fpPour=0; const p=fpPlayers[fpCur]; $('turnWho').textContent=p.name;
+    $('turnMsg').innerHTML='FREE POUR CHALLENGE<br>30ml → 45ml → 60ml<br>오차 합이 가장 적은 사람이 이긴다'; show('turn'); $('hud').classList.add('hidden'); }
+  function fpNext(){ if(fpPour>=3){ fpEndTurn(); return; }
+    const p=fpPlayers[fpCur];
+    $('hudWho').textContent=p.name; $('hudRd').textContent='POUR '+(fpPour+1)+'/3'; $('hudSc').textContent='±'+p.err.toFixed(2); $('hud').classList.remove('hidden');
+    show('game'); stage.innerHTML=''; let done_=false;
+    engFreePour({glass:fpPour, chal:{pour:fpPour+1,total:p.err}}, function(s,t2,c,err){ if(done_) return; done_=true;
+      p.err+=(err!=null?err:99); p.errs.push(err!=null?err:99); fpPour++; $('hudSc').textContent='±'+p.err.toFixed(2); setTimeout(fpNext,120); }); }
+  function fpEndTurn(){ $('hud').classList.add('hidden'); fpCur++; if(fpCur<fpPlayers.length) fpTurn(); else fpFinal(); }
+  function fpFinal(){
+    const ranked=[...fpPlayers].sort((a,b)=>a.err-b.err), top=ranked[0].err;
+    if(isNaN(fpBest)||top<fpBest){ fpBest=top; localStorage.setItem('pine_freepour_best',String(fpBest)); fpBestShow(); }
+    const list=$('rankList'); list.innerHTML='';
+    ranked.forEach((p,i)=>{ const row=document.createElement('div'); row.className='rrow'+(i===0?' win':'');
+      row.innerHTML='<span class="nm">'+(i===0?'<span class="crown">👑</span> ':'#'+(i+1)+' ')+p.name
+        +'<span style="display:block;font-size:11px;color:var(--dim)">'+p.errs.map(e=>'±'+e.toFixed(1)).join(' · ')+'</span></span>'
+        +'<span class="pt">±'+p.err.toFixed(2)+'ml</span>'; list.appendChild(row); });
+    show('final'); sGood(); flash('#e6b450'); }
+
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
     // 타이밍
@@ -331,8 +530,8 @@
     { name:'STRAIN POUR', cat:'타이밍', run:d=>engTiming({title:'STRAIN POUR',hint:'스트레이너 타이밍에 멈춰라',zone:0.22,speed:3.0},d) },
     { name:'DROP IN', cat:'타이밍', run:d=>engTiming({title:'DROP IN',hint:'셰이커 입구(초록칸)에 재료를 투하!',zone:0.17,speed:4.0},d) },
     // 홀드
-    { name:'FREE POUR', cat:'홀드', run:d=>engHold({title:'FREE POUR',hint:'점선까지 정확히 따라라. 넘치면 꽝!',label:'HOLD TO POUR',showLine:true,target:()=>52+rnd(30)},d) },
-    { name:'4-COUNT POUR', cat:'홀드', run:d=>engHold({title:'4-COUNT POUR',hint:'눈금이 없다! 마음속으로 넷 세고 놓아라',label:'HOLD & COUNT',showLine:false,target:()=>58+rnd(14)},d) },
+    { name:'FREE POUR MASTER', cat:'홀드', run:d=>engFreePour({},d) },
+    { name:'BLIND POUR', cat:'홀드', run:d=>engFreePour({blind:true},d) },
     { name:'CITRUS SQUEEZE', cat:'홀드', run:d=>engHold({title:'CITRUS SQUEEZE',hint:'라임즙을 목표선까지 짜라',label:'HOLD TO SQUEEZE',showLine:true,target:()=>44+rnd(26)},d) },
     { name:'BEER HEAD', cat:'홀드', run:d=>engHold({title:'BEER HEAD',hint:'거품(헤드)까지 딱 맞게 따라라',label:'HOLD TO POUR',showLine:true,target:()=>70+rnd(16)},d) },
     // 연타
@@ -371,6 +570,7 @@
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
+  fpLoad(); // 프리푸어 실사 에셋 미리 키잉
   show('title');
 })();
 </script>

@@ -65,6 +65,11 @@ no generic stats). **XP need ×5** (slow leveling). Base HP regen halved. Spirit
 the unreachable Rainbow Gun).
 
 ## 📌 Current state / next steps
+- **bar_party.html**: FREE POUR MASTER 추가 — 실사 픽셀아트 캔버스 프리푸어(`assets/fp_*.png`, 흰 배경은
+  로드 시 플러드필 키잉). 병을 꾹 누르면 완전히 뒤집혀 10ml/초(3초=1oz)로 따라지고, 상단 ml 카운터(0.01 단위)를
+  보고 정확한 ml에서 놓는 방식. 판정 ±1ml PERFECT / ±3 GOOD / ±6 miss / cap 초과 SPILL. 랜덤 로테이션에
+  FREE POUR MASTER + BLIND POUR(카운터 숨김) 2종, 타이틀에 🥃 POUR CHALLENGE 모드(30→45→60ml 3연속,
+  오차 합 최소가 우승, 순위표 + `pine_freepour_best` 로컬 베스트).
 - Repo unified at commit `baecec5` (this session's rebalance + desktop's Mint-Rain/HP-scaling + a bug fix
   where cointreau-evo cocktails could never evolve). Local == origin/main.
 - **Next:** hook up a **custom domain** to remove `onrender.com` from the hosted URL (buy a domain →
