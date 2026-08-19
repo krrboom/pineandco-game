@@ -125,6 +125,8 @@
   $('modal').onclick=e=>{ if(e.target===$('modal')) $('modal').classList.add('hidden'); };
   // 이미지 프리로드
   ['assets/campari_menu.png','assets/cocktail_americano.png','assets/cocktail_italyjuice.png'].forEach(s=>{ const i=new Image(); i.src=s; });
+  // 임베드(메뉴 안 카테고리로 열림): 홈 건너뛰고 메뉴 바로 표시 + BACK 숨김
+  try{ const p=new URLSearchParams(location.search); if(p.has('menu')||p.has('embed')){ $('catRedHands').click(); $('backBtn').style.display='none'; } }catch(e){}
 })();
 </script>
 </body>
