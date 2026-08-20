@@ -382,13 +382,16 @@
       if(prevCam==null) prevCam=cam;
       bgOff+=(cam-prevCam)*((state==='fly'||state==='rest')?0.75:0.35); prevCam=cam;
       const bgi=FP.imgs.bg;
-      const bgH=305; // 배경 상판 라인이 캐릭터 허리 위(가슴께 y≈300)에 오도록 맞춤
-      ctx.fillStyle='#0a0c09'; ctx.fillRect(0,0,400,GY-bgH+4); // 천장 어둠
+      const bgH=150, bgY=305-Math.round(bgH*0.66); // 작게(멀리) + 상판 라인은 허리 위(y≈305)
+      ctx.fillStyle='#0a0c09'; ctx.fillRect(0,0,400,bgY+4); // 천장 어둠
       if(bgi){ const s=bgH/bgi.height, bw2=bgi.width*s;
         const off=-(((bgOff)%bw2+bw2)%bw2);
-        ctx.drawImage(bgi,off,GY-bgH,bw2,bgH); ctx.drawImage(bgi,off+bw2,GY-bgH,bw2,bgH); }
-      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,GY-bgH,400,bgH); }
-      ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(0,GY-bgH,400,bgH);
+        ctx.drawImage(bgi,off,bgY,bw2,bgH); ctx.drawImage(bgi,off+bw2,bgY,bw2,bgH); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,bgY,400,bgH); }
+      ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.fillRect(0,bgY,400,bgH);
+      // 배경 하단 ~ 바닥: 멀리 뻗은 어두운 바닥 (원근)
+      const mg3=ctx.createLinearGradient(0,bgY+bgH-2,0,GY); mg3.addColorStop(0,'#150e08'); mg3.addColorStop(1,'#2b1c10');
+      ctx.fillStyle=mg3; ctx.fillRect(0,bgY+bgH-2,400,GY-(bgY+bgH-2));
       // 바닥
       ctx.fillStyle='#2b1c10'; ctx.fillRect(0,GY,400,480-GY);
       ctx.fillStyle='#3a2817'; ctx.fillRect(0,GY,400,5);
