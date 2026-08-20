@@ -825,6 +825,138 @@
     raf=requestAnimationFrame(draw);
   }
 
+  /* ====================== QUICK TAB ====================== */
+  // 손님이 내민 영수증의 달러 합계를 키패드로 빠르게 암산 입력 — 품목 4→10개, 손님 7명 전원 정산
+  const QT={ imgs:{}, loading:false };
+  function qtLoad(){ if(QT.loading) return; QT.loading=true;
+    const srcs={ receipt:['qt_receipt',420], register:['qt_register',520], logo:['qt_logo',560],
+      c1:['qt_cust1',420], c2:['qt_cust2',420], c3:['qt_cust3',420], c4:['qt_cust4',420], c5:['qt_cust5',420], c6:['qt_cust6',420], c7:['qt_cust7',420] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ QT.imgs[k]=fpKey(im,srcs[k][1]);
+      if(k==='receipt'){ const c=QT.imgs.receipt, w=c.width, h=c.height, d=c.getContext('2d').getImageData(0,0,w,h).data;
+        let x0=w,x1=0,y0=h,y1=0; for(let cy=0;cy<h;cy+=2){ for(let cx=0;cx<w;cx+=2){ if(d[(cy*w+cx)*4+3]>30){ if(cx<x0)x0=cx; if(cx>x1)x1=cx; if(cy<y0)y0=cy; if(cy>y1)y1=cy; } } }
+        QT.rb={fx0:x0/w,fx1:x1/w,fy0:y0/h,fy1:y1/h}; } }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+  const QT_MENU=[ ['OLD FASHIONED',14,22],['MANHATTAN',14,22],['NEGRONI',13,20],['DRY MARTINI',15,23],['MARGARITA',12,18],
+    ['MOJITO',12,18],['DAIQUIRI',12,18],['GIMLET',12,18],['WHISKY SOUR',13,19],['SAZERAC',15,22],
+    ['BOULEVARDIER',14,21],['COSMOPOLITAN',13,19],['ESPRESSO MARTINI',14,21],['GIN TONIC',10,16],['HIGHBALL',9,15],
+    ['WHISKY SHOT',6,12],['TEQUILA SHOT',6,11],['VODKA SHOT',5,10],['RUM SHOT',5,10],['JAGER SHOT',6,11],
+    ['DRAFT BEER',7,12],['IPA DRAFT',8,13],['GLASS OF WINE',9,16],['CHAMPAGNE GLASS',14,25],['SODA WATER',3,6] ];
+  function engQuickTab(done){
+    fpLoad(); qtLoad();
+    stage.innerHTML='<div class="mgtitle">QUICK TAB</div>'
+      +'<div class="mghint">손님 7명의 영수증 합계($)를 암산해서 입력! 빠를수록 고득점, 오답은 -20점</div>'
+      +'<canvas id="fpcv" width="400" height="480" style="height:min(40vh,420px)"></canvas>'
+      +'<div id="qtPad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(290px,78vw)"></div>';
+    const cv=$('fpcv'), ctx=cv.getContext('2d'), pad=$('qtPad');
+    const CUSTS=shuffle(['c1','c2','c3','c4','c5','c6']).concat(['c7']); // 마지막은 진상 손님
+    const ARM=1500, MAXWAIT=28000;
+    let round=0, lines=[], total=0, input='', printT=0, solveT=0, wrong=0, state='intro'; // intro|print|answer|win|end
+    let winT=0, custIn=0, roundScores=[], t0=0, lastT=0, raf=0, shake=0, badT=-1e9;
+    const parts=[];
+    function newRound(){ const n=4+round; lines=sample(QT_MENU,n).map(m=>[m[0], m[1]+rnd(m[2]-m[1]+1)]);
+      total=lines.reduce((a,l)=>a+l[1],0); input=''; wrong=0; custIn=lastT; state='print'; printT=lastT+500;
+      window.__qtT=total; window.__qtR=round; }
+    function key(k){ ac(); if(state!=='answer'||!t0) return;
+      if(k==='C'){ input=''; sTap(); return; }
+      if(k==='O'){ if(!input) return;
+        if(parseInt(input,10)===total){ state='win'; winT=lastT; sGood(); setTimeout(()=>beep(1500,0.12,'square',0.1),100);
+          const el=(lastT-solveT)/1000; roundScores.push(Math.max(0,Math.min(100,Math.round(112-el*6)-wrong*20)));
+          for(let j=0;j<16;j++) parts.push({x:200+(Math.random()*80-40),y:250,vx:(Math.random()*2-1)*140,vy:-100-Math.random()*160,gv:600,r:2+Math.random()*2.5,c:['#ffd977','#6fcf8f','#fff'][rnd(3)],life:0.5+Math.random()*0.4});
+          setTimeout(()=>{ if(round>=6){ finish(); } else { round++; newRound(); } },1100); }
+        else { wrong++; input=''; badT=lastT; shake=7; sBad(); }
+        return; }
+      if(input.length<3){ input+=k; sTap(); } }
+    [['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['6','6'],['7','7'],['8','8'],['9','9'],['C','←지움'],['0','0'],['O','입력']].forEach(([k,label])=>{
+      const b=document.createElement('button'); b.className='btn'+(k==='O'?' amber':(k==='C'?' ghost':''));
+      b.style.cssText='padding:11px 0;font-size:'+(k==='C'||k==='O'?'11px':'15px'); b.textContent=label;
+      b.addEventListener('pointerdown',e=>{ e.preventDefault(); key(k); }); pad.appendChild(b); });
+    let ended=false;
+    function finish(){ state='end';
+      const avg=roundScores.length?Math.round(roundScores.reduce((a,b)=>a+b,0)/7):0;
+      const cls=avg>=80?'perfect':(avg>=50?'good':'miss');
+      setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(avg,'정산 완료!',cls); },1500); }
+    function cleanup(){ cancelAnimationFrame(raf); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      const it=t-t0;
+      if(state==='intro'&&it>=ARM){ newRound(); }
+      if(state==='print'&&t>printT+lines.length*90+250){ state='answer'; solveT=t; }
+      if(state==='answer'&&t-solveT>MAXWAIT){ roundScores.push(0); state='win'; winT=t; sBad();
+        setTimeout(()=>{ if(round>=6){ finish(); } else { round++; newRound(); } },900); }
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      const bgi=FP.imgs.bg;
+      if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(0,0,400,480);
+      if(state==='intro'){ // 로고 + 금전등록기 함께 등장
+        const lgi=QT.imgs.logo, rg=QT.imgs.register;
+        if(rg){ const k=eob2(Math.min(1,Math.max(0,(it-250)/350))), rw=250*k, rh=rw*(rg.height/rg.width);
+          ctx.drawImage(rg,200-rw/2,330-rh/2,rw,rh); }
+        if(lgi){ const k=0.55+eob2(Math.min(1,it/280))*0.45, lw=340*k, lh=lw*(lgi.height/lgi.width);
+          ctx.drawImage(lgi,200-lw/2,130-lh/2,lw,lh); }
+        return; }
+      // 손님 (오른쪽에서 쑥 올라옴)
+      const cust=QT.imgs[CUSTS[round]];
+      if(cust){ const k=eob2(Math.min(1,(t-custIn)/380)); const ch=210, cw2=ch*(cust.width/cust.height);
+        let bob=Math.sin(t/260)*3; if(state==='win') bob=-Math.abs(Math.sin(t/90))*10;
+        ctx.drawImage(cust,398-cw2,90+(1-k)*220+bob,cw2,ch); }
+      // 영수증 (왼쪽, 프린트되며 내려옴) — 종이 실제 영역(bbox)에 맞춰 텍스트 배치
+      const rc=QT.imgs.receipt;
+      if(rc&&state!=='intro'){ const rw2=240, rh3=404, rx=8;
+        const pk2=Math.min(1,(t-(printT-500))/350);
+        const ry=50+(1-eob2(pk2))*(-460);
+        ctx.drawImage(rc,rx,ry,rw2,rh3);
+        const rb=QT.rb||{fx0:0.12,fy0:0.04,fx1:0.88,fy1:0.96};
+        const tx0=rx+rw2*rb.fx0+28, tx1=rx+rw2*rb.fx1-16;
+        const shown=state==='print'?Math.max(0,Math.floor((t-printT)/90)):lines.length;
+        let y=ry+rh3*rb.fy0+42;
+        ctx.textAlign='left'; ctx.fillStyle='#2a2a2a'; ctx.font='8px "Press Start 2P"';
+        ctx.fillText('PINE & CO - TAB',tx0,y); y+=9;
+        ctx.fillStyle='#9a9a92'; ctx.fillText('---------------',tx0,y); y+=16;
+        const lh=lines.length>7?15:21;
+        for(let i=0;i<Math.min(shown,lines.length);i++){ let nm=lines[i][0];
+          let f=8; ctx.font=f+'px "Press Start 2P"';
+          while(f>6&&ctx.measureText(nm).width>tx1-tx0-46){ f--; ctx.font=f+'px "Press Start 2P"'; }
+          while(nm.length>4&&ctx.measureText(nm).width>tx1-tx0-46) nm=nm.slice(0,-1);
+          ctx.fillStyle='#2a2a2a'; ctx.fillText(nm,tx0,y);
+          ctx.textAlign='right'; ctx.font='9px "Press Start 2P"'; ctx.fillText('$'+lines[i][1],tx1,y);
+          ctx.textAlign='left'; y+=lh; }
+        if(shown>=lines.length){ y+=2; ctx.fillStyle='#9a9a92'; ctx.font='8px "Press Start 2P"'; ctx.fillText('---------------',tx0,y); y+=19;
+          ctx.font='11px "Press Start 2P"';
+          const cur=(state==='answer'&&Math.floor(t/300)%2===0)?'_':'';
+          ctx.fillStyle=state==='win'?'#3a7d4f':'#1a1a1a';
+          ctx.fillText('TOTAL',tx0,y);
+          ctx.textAlign='right'; ctx.fillText('$'+(state==='win'?total:(input||'?'))+(state==='answer'?cur:''),tx1,y); ctx.textAlign='left'; }
+        if(state==='print'&&shown<lines.length&&Math.floor(t/90)%2===0) beep(660,0.015,'square',0.03); }
+      // 정답 연출: 금전등록기 챙!
+      if(state==='win'){ const rg=QT.imgs.register;
+        if(rg){ const k=eob2(Math.min(1,(t-winT)/300)), rw=180*k, rh=rw*(rg.height/rg.width);
+          ctx.drawImage(rg,205-rw/2,368-rh/2,rw,rh); }
+        ctx.font='15px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('+$'+total,207,300); ctx.fillStyle='#ffd977'; ctx.fillText('+$'+total,205,298); }
+      if(t-badT<220){ ctx.fillStyle='rgba(217,84,77,0.25)'; ctx.fillRect(0,0,400,480); }
+      // 파티클
+      for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
+        pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
+        ctx.globalAlpha=Math.min(1,pp2.life*2.5); ctx.fillStyle=pp2.c; ctx.fillRect(pp2.x-pp2.r/2,pp2.y-pp2.r/2,pp2.r,pp2.r); }
+      ctx.globalAlpha=1;
+      // HUD
+      ctx.font='10px "Press Start 2P"'; ctx.textAlign='left';
+      ctx.fillStyle='#000'; ctx.fillText('BILL '+(round+1)+'/7',14,32); ctx.fillStyle='#e8e6dd'; ctx.fillText('BILL '+(round+1)+'/7',12,30);
+      if(state==='answer'){ const el=((t-solveT)/1000).toFixed(1); ctx.textAlign='right';
+        ctx.fillStyle='#000'; ctx.fillText(el+'s',390,32); ctx.fillStyle=parseFloat(el)>12?'#d9544d':'#e8e6dd'; ctx.fillText(el+'s',388,30); }
+      if(state==='end'){ ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
+        ctx.font='20px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('LAST CALL!',203,213); ctx.fillStyle='#e6b450'; ctx.fillText('LAST CALL!',200,210);
+        ctx.font='700 16px -apple-system,"Malgun Gothic",sans-serif';
+        ctx.fillStyle='#000'; ctx.fillText('7명 정산 완료',201,249); ctx.fillStyle='#fff'; ctx.fillText('7명 정산 완료',200,248); }
+    }
+    raf=requestAnimationFrame(draw);
+  }
+
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
     // 타이밍
@@ -865,6 +997,7 @@
         engChoiceIcon({title:'FIND: '+ING[ans],hint:ING[ans]+' 재료를 찾아 탭!',cells},d); } },
     { name:'ODD ONE OUT', cat:'퀴즈', run:d=>{ const base=IK[rnd(IK.length)]; let odd; do{ odd=IK[rnd(IK.length)]; }while(odd===base); const cells=[]; for(let i=0;i<6;i++) cells.push({src:'assets/ing_'+base+'.png',correct:false}); cells[rnd(6)]={src:'assets/ing_'+odd+'.png',correct:true};
         engChoiceIcon({title:'ODD ONE OUT',hint:'다른 하나를 찾아 탭!',cells,dur:4200},d); } },
+    { name:'QUICK TAB', cat:'퀴즈', run:d=>engQuickTab(d) },
     // 기억
     { name:'ORDER MEMORY', cat:'기억', run:d=>engMemory({title:'ORDER MEMORY',len:4},d) },
     { name:'TAB ORDER', cat:'기억', run:d=>engMemory({title:'TAB ORDER',len:3,pool:CK,path:k=>'assets/cocktail_'+k+'.png'},d) },
@@ -878,7 +1011,7 @@
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
-  fpLoad(); icLoad(); tcLoad(); // 프리푸어/아이스카빙/팁캐치 실사 에셋 미리 키잉
+  fpLoad(); icLoad(); tcLoad(); qtLoad(); // 프리푸어/아이스카빙/팁캐치/퀵탭 실사 에셋 미리 키잉
   show('title');
 })();
 </script>

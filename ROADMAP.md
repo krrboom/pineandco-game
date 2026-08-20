@@ -5,7 +5,7 @@
 
 ---
 
-## 1. PINE BAR PARTY 라이브 미니게임 (32종)
+## 1. PINE BAR PARTY 라이브 미니게임 (33종)
 
 `bar_party.html` — https://pineandco-game.showjojo100.workers.dev/bar_party.html
 
@@ -16,7 +16,7 @@
 | 연타 (6) | SHAKE IT · ICE SMASH · **ICE CARVING** ★ · MUDDLE · CORK POP · BLEND | ★ 15초 볼 아이스 개수, 수직 스탭 타격 |
 | 리듬 (2) | SHAKE RHYTHM · STIR RHYTHM | |
 | 스페셜 (1) | CHAMPAGNE LAUNCH | 연타→타이밍 2단계 |
-| 퀴즈 (6) | GUESS COCKTAIL · NAME SPIRIT · RECIPE MATCH · GARNISH MATCH · FIND INGREDIENT · ODD ONE OUT | |
+| 퀴즈 (7) | GUESS COCKTAIL · NAME SPIRIT · RECIPE MATCH · GARNISH MATCH · FIND INGREDIENT · ODD ONE OUT · **QUICK TAB** ★ | ★ 손님 7명 영수증 암산, 키패드 입력 |
 | 기억 (2) | ORDER MEMORY · TAB ORDER | |
 | 반응 (4) | **TIP CATCH** ★ · LAST CALL RUSH · SPILL WIPE · FLY SWAT | ★ 7지점 낙하+병 드래그, 빈병 -1 |
 
@@ -35,7 +35,7 @@
 | 40 | MYSTERY SHOT | 복불복 | 잔 4개 중 하나만 꽝, 운빨 파티 감초 | |
 | 41 | DRUNK GUARD | 타이밍 | 취객이 잔에 손 뻗는 순간 치우기 | |
 | 42 | BARREL STOP | 타이밍 | 굴러가는 배럴을 정지선에 멈추기 | |
-| 45 | QUICK TAB | 암산 퀴즈 | 영수증 달러 합계 암산, 3→10품목, 빠를수록 고득점 | 🎨 에셋 제작 중 (프롬프트 전달됨: 빈 영수증·로고·금전등록기·손님 7종) |
+| 45 | ~~QUICK TAB~~ | 암산 퀴즈 | 손님 7명 영수증($) 합계를 키패드 입력, 품목 4→10개, 속도 점수 | ✅ 완료 |
 | 49 | STEP ORDER | 순서 퍼즐 | 칵테일 제조 단계 순서 탭 | |
 
 ### 중 — 엔진 변형 필요
