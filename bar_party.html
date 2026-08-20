@@ -657,15 +657,16 @@
           ctx.drawImage(IC.imgs.ice,r.sx,r.sy,r.sw,r.sh,-iw/2,-ih,iw,ih); ctx.restore();
           if(stIdx===4&&Math.random()<0.25) parts.push({x:ICEX+(Math.random()*70-35),y:ICEY-30-Math.random()*80,
             vx:0,vy:-20,gv:0,r:1.5+Math.random()*1.5,c:'#fff',life:0.35}); } }
-      // 아이스픽: 팔꿈치 축(얼음 위 고정 피벗) 기준 호 회전으로 내리찍는다 — 찍는 순간 끝이 접촉점에 닿음
+      // 아이스픽: 수직 스탭 — 얼음 바로 위에 수직으로 들고 있다가 뾰족한 끝이 곧장 내리꽂힌다
       const pk=IC.imgs.pick;
       if(pk&&!(t-brokeT<520)){ const ph=210, pw=ph*(pk.width/pk.height);
-        const ds=t-strikeT; const k=(ds>=0&&ds<110)?Math.sin(Math.PI*ds/110):0;
-        const pvx=contactX+10, pvy=contactY-190; // 회전축 (팔이 들어오는 위쪽)
-        const a3=-0.55*(1-k)+(k>0?0:Math.sin(t/300)*0.025); // 대기: 위로 젖힘 + 잔들림, 타격: 0
-        ctx.save(); ctx.translate(pvx,pvy); ctx.rotate(a3);
-        ctx.drawImage(pk,-10-pw*0.40,190-ph*0.965,pw,ph); ctx.restore();
-        if(k>0.72){ // 접촉 순간 타격 스파크
+        const ds=t-strikeT; let k=0;
+        if(ds>=0&&ds<130) k=ds<45?(ds/45):(1-(ds-45)/85); // 빠르게 꽂고(45ms) 천천히 든다(85ms)
+        const lift=54*(1-k), sink=9*k; // 타격 순간 끝이 표면 아래로 살짝 박힌다
+        const tipY=contactY-lift+sink+(ds>=130||ds<0?Math.sin(t/300)*3:0);
+        ctx.save(); ctx.translate(contactX,tipY); ctx.rotate(-0.03*k);
+        ctx.drawImage(pk,-pw*0.40,-ph*0.965,pw,ph); ctx.restore();
+        if(k>0.8){ // 꽂히는 순간 타격 스파크
           ctx.save(); ctx.translate(contactX,contactY); ctx.rotate((t%97)/97*6.28);
           ctx.fillStyle='#fff'; for(let s2=0;s2<4;s2++){ ctx.rotate(Math.PI/2); ctx.fillRect(3,-1.5,11,3); }
           ctx.restore(); } }
