@@ -320,23 +320,23 @@
       +'<button class="btn amber" id="clTap" style="width:min(190px,44vw);height:70px;font-size:15px">RUN!</button>'
       +'<button class="btn" id="clGo" style="width:min(150px,34vw);height:70px;font-size:12px">🍾 HOLD</button></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const ARM=1300, TRACK=2200, GY=402, RX=110, FRAMES=['run1','run2','run3','run4','run5'], PXM=14, GRV=430;
+    const ARM=1300, TRACK=2200, GY=402, RX=110, FRAMES=['run1','run2','run3','run4','run5'], PXM=22, GRV=300, RH=105, VSQ=0.6;
     let state='intro', worldX=0, vel=0, power=0, runPh=0, angle=12, holdA=false, prevAng=12;
     let ckX=0, ckY=0, ckVX=0, ckVY=0, ckRot=0, bounces=0, launchX=0, meters=0, maxM=100;
     let stampObj=null, stampT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
     const parts=[]; const armed=()=>t0&&now()-t0>=ARM;
     function tap(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return;
-      power+=3; vel=Math.min(460,vel+62); runPh+=0.5; sTap();
-      parts.push({x:RX+20,y:GY-90,vx:-60-Math.random()*40,vy:-20-Math.random()*40,gv:300,r:1.5+Math.random()*1.5,c:'#eef6d8',life:0.35}); }
+      power+=3; vel=Math.min(460,vel+62); runPh+=0.3; sTap();
+      parts.push({x:RX+14,y:GY-64,vx:-60-Math.random()*40,vy:-20-Math.random()*40,gv:300,r:1.5+Math.random()*1.5,c:'#eef6d8',life:0.35}); }
     function holdStart(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return; holdA=true; }
     function fire(){ if(state!=='run') return; holdA=false;
       const th=angle*Math.PI/180;
       const R=Math.max(24,power*2.6*Math.sin(2*th))*PXM; // 실제 포물선: 45°가 최적
       const v0=Math.sqrt(R*GRV/Math.max(0.06,Math.sin(2*th)));
-      launchX=worldX+42; ckX=launchX; ckY=GY-96; ckVX=v0*Math.cos(th); ckVY=-v0*Math.sin(th); bounces=0; ckRot=0;
+      launchX=worldX+30; ckX=launchX; ckY=GY-67; ckVX=v0*Math.cos(th); ckVY=-v0*Math.sin(th); bounces=0; ckRot=0;
       maxM=Math.max(50,Math.ceil((R/PXM*1.35+10)/25)*25);
       state='fly'; beep(300,0.08,'square',0.12); setTimeout(()=>beep(900,0.15,'square',0.12),60); flash('#fff'); shake=8;
-      for(let j=0;j<10;j++) parts.push({x:RX+45,y:GY-100,vx:Math.random()*120,vy:-Math.random()*120,gv:300,r:1.5+Math.random()*2,c:['#fff','#eef6d8'][rnd(2)],life:0.5}); }
+      for(let j=0;j<10;j++) parts.push({x:RX+32,y:GY-70,vx:Math.random()*120,vy:-Math.random()*120,gv:300,r:1.5+Math.random()*2,c:['#fff','#eef6d8'][rnd(2)],life:0.5}); }
     function rest(){ state='rest';
       const fm=Math.max(1,Math.round((ckX-launchX)/PXM));
       const cls=fm>=80?'perfect':(fm>=45?'good':'miss');
@@ -359,7 +359,7 @@
       const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
       const it=t-t0;
       if(state==='intro'&&it>=ARM) state='run';
-      if(state==='run'){ vel=Math.max(30,vel-dt*230); worldX+=vel*dt; runPh+=dt*vel/34;
+      if(state==='run'){ vel=Math.max(30,vel-dt*230); worldX+=vel*dt; runPh+=dt*vel/20; // 애니 속도 ∝ 연타 속도
         power=Math.max(0,power-power*dt*1.05-dt*0.4); // 연타를 멈추면 파워가 빠르게 샌다
         if(holdA){ angle=Math.min(88,angle+dt*62);
           if(Math.floor(angle/8)>Math.floor(prevAng/8)) beep(380+angle*7,0.03,'square',0.07); prevAng=angle; }
@@ -396,15 +396,15 @@
       const runnerX=RX+(worldX-cam);
       if(runnerX>-120){
         if(state==='run'||state==='intro'){ const fr=CL.imgs[FRAMES[Math.floor(runPh)%5]];
-          if(fr){ const rh2=150, rw2=rh2*(fr.width/fr.height);
+          if(fr){ const rw2=RH*(fr.width/fr.height);
             const bob=Math.sin(runPh*3.14)*2;
-            if(holdA){ const sk=CL.imgs.skid; if(sk){ const sw2=rh2*(sk.width/sk.height); ctx.drawImage(sk,runnerX-sw2/2,GY-rh2,sw2,rh2); } }
-            else ctx.drawImage(fr,runnerX-rw2/2,GY-rh2+bob,rw2,rh2); } }
+            if(holdA){ const sk=CL.imgs.skid; if(sk){ const sw2=RH*(sk.width/sk.height); ctx.drawImage(sk,runnerX-sw2/2,GY-RH,sw2,RH); } }
+            else ctx.drawImage(fr,runnerX-rw2/2,GY-RH+bob,rw2,RH); } }
         else { const sk=CL.imgs.skid;
-          if(sk){ const rh2=150, rw2=rh2*(sk.width/sk.height); ctx.drawImage(sk,runnerX-rw2/2,GY-rh2,rw2,rh2); } } }
+          if(sk){ const rw2=RH*(sk.width/sk.height); ctx.drawImage(sk,runnerX-rw2/2,GY-RH,rw2,RH); } } }
       // 코르크 (실제 포물선 + 카메라 추적)
       if(state==='fly'||state==='rest'){ const ck=CL.imgs.cork;
-        const sx2=RX+(ckX-cam), sy2=ckY;
+        const sx2=RX+(ckX-cam), sy2=GY-(GY-ckY)*VSQ; // 세로 압축: 높이 날아도 화면 안에 보이게
         if(ck){ ctx.save(); ctx.translate(sx2,sy2); ctx.rotate(ckRot);
           ctx.drawImage(ck,-14,-14,28,28); ctx.restore(); }
         if(state==='fly'&&Math.random()<0.7) parts.push({x:sx2-8,y:sy2,vx:-70-Math.random()*60,vy:(Math.random()*2-1)*30,gv:120,r:1.5+Math.random()*1.6,c:['#fff','#eef6d8'][rnd(2)],life:0.4});
@@ -431,7 +431,7 @@
         const angCol=Math.abs(angle-45)<7?'#6fcf8f':'#e8e6dd';
         ctx.fillStyle='#000'; ctx.fillText(Math.round(angle)+'°',390,52); ctx.fillStyle=angCol; ctx.fillText(Math.round(angle)+'°',388,50);
         // 각도 화살표 (홀드 중에만 상승)
-        if(state==='run'){ ctx.save(); ctx.translate(runnerX+55,GY-110); ctx.rotate(-angle*Math.PI/180);
+        if(state==='run'){ ctx.save(); ctx.translate(runnerX+40,GY-78); ctx.rotate(-angle*Math.PI/180);
           ctx.strokeStyle=holdA?'rgba(111,207,143,0.95)':'rgba(255,217,119,0.7)'; ctx.lineWidth=3; ctx.setLineDash([4,4]);
           ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(52,0); ctx.stroke(); ctx.setLineDash([]);
           ctx.fillStyle=holdA?'#6fcf8f':'#ffd977'; ctx.beginPath(); ctx.moveTo(60,0); ctx.lineTo(48,-5); ctx.lineTo(48,5); ctx.closePath(); ctx.fill(); ctx.restore(); } }
