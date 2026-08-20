@@ -657,13 +657,14 @@
           ctx.drawImage(IC.imgs.ice,r.sx,r.sy,r.sw,r.sh,-iw/2,-ih,iw,ih); ctx.restore();
           if(stIdx===4&&Math.random()<0.25) parts.push({x:ICEX+(Math.random()*70-35),y:ICEY-30-Math.random()*80,
             vx:0,vy:-20,gv:0,r:1.5+Math.random()*1.5,c:'#fff',life:0.35}); } }
-      // 아이스픽: 스파이크 끝이 접촉점까지 내리꽂힌다
+      // 아이스픽: 팔꿈치 축(얼음 위 고정 피벗) 기준 호 회전으로 내리찍는다 — 찍는 순간 끝이 접촉점에 닿음
       const pk=IC.imgs.pick;
       if(pk&&!(t-brokeT<520)){ const ph=210, pw=ph*(pk.width/pk.height);
         const ds=t-strikeT; const k=(ds>=0&&ds<110)?Math.sin(Math.PI*ds/110):0;
-        const tipX=contactX+(1-k)*30, tipY=contactY-(1-k)*54, rot=-0.14*k;
-        ctx.save(); ctx.translate(tipX,tipY); ctx.rotate(rot);
-        ctx.drawImage(pk,-pw*0.40,-ph*0.965,pw,ph); ctx.restore();
+        const pvx=contactX+10, pvy=contactY-190; // 회전축 (팔이 들어오는 위쪽)
+        const a3=-0.55*(1-k)+(k>0?0:Math.sin(t/300)*0.025); // 대기: 위로 젖힘 + 잔들림, 타격: 0
+        ctx.save(); ctx.translate(pvx,pvy); ctx.rotate(a3);
+        ctx.drawImage(pk,-10-pw*0.40,190-ph*0.965,pw,ph); ctx.restore();
         if(k>0.72){ // 접촉 순간 타격 스파크
           ctx.save(); ctx.translate(contactX,contactY); ctx.rotate((t%97)/97*6.28);
           ctx.fillStyle='#fff'; for(let s2=0;s2<4;s2++){ ctx.rotate(Math.PI/2); ctx.fillRect(3,-1.5,11,3); }
@@ -718,7 +719,8 @@
   function tcLoad(){ if(TC.loading) return; TC.loading=true;
     const keyed={ jar:['tc_jar',520], receipt:['tc_receipt',300], env:['tc_env',320], cap:['tc_cap',300], logo:['tc_logo',560] };
     Object.keys(keyed).forEach(k=>{ const im=new Image(); im.onload=()=>{ TC.imgs[k]=fpKey(im,keyed[k][1]); }; im.src='assets/'+keyed[k][0]+'.png'; });
-    const raw={ bill10:'bill_10000', bill50:'bill_50000', coin:'coin_gold' }; // 기존 스프라이트 재활용(이미 투명)
+    const raw={ bill10:'bill_10000', bill50:'bill_50000', coin:'coin_gold',
+      bottle1:'bottle_whiskey', bottle2:'bottle_gin', bottle3:'bottle_rum' }; // 기존 스프라이트 재활용(이미 투명)
     Object.keys(raw).forEach(k=>{ const im=new Image(); im.onload=()=>{ TC.imgs[k]=im; }; im.src='assets/'+raw[k]+'.png'; }); }
   function engTipCatch(done){
     fpLoad(); tcLoad();
@@ -728,7 +730,8 @@
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const LANES=[44,96,148,200,252,304,356], ARM=1200, TOTAL=15000, MOUTHY=330;
     const KINDS=[ {k:'bill10',good:1,s:46,wt:28},{k:'bill50',good:1,s:46,wt:18},{k:'coin',good:1,s:27,wt:26,spin:1},
-      {k:'receipt',good:0,s:48,wt:11,sway:1},{k:'env',good:0,s:40,wt:8},{k:'cap',good:0,s:27,wt:9,spin:1} ];
+      {k:'receipt',good:0,s:48,wt:11,sway:1},{k:'env',good:0,s:40,wt:8},{k:'cap',good:0,s:27,wt:9,spin:1},
+      {k:'bottle',good:0,s:50,wt:12,spin:1} ];
     const WT=KINDS.reduce((a,b)=>a+b.wt,0);
     let jarX=200, jarTX=200, count=0, nextSpawn=0, finished=false, ended=false;
     let squashT=-1e9, badT=-1e9, shake=0, t0=0, lastT=0, raf=0;
@@ -736,10 +739,11 @@
     function pickKind(){ let r=rnd(WT); for(const kd of KINDS){ if(r<kd.wt) return kd; r-=kd.wt; } return KINDS[0]; }
     function spawn(elapsed,t){ const rush=elapsed>TOTAL-4200;
       const mk=()=>{ const kd=pickKind(); items.push({x:LANES[rnd(7)]+(Math.random()*10-5), y:80,
-        vy:(185+Math.random()*70)*(rush?1.45:1)+elapsed/TOTAL*50, kd, rot:Math.random()*6.28,
+        vy:(185+Math.random()*70)*(rush?1.45:1)+elapsed/TOTAL*50, kd,
+        imgK:kd.k==='bottle'?('bottle'+(1+rnd(3))):kd.k, rot:Math.random()*6.28,
         rv:(Math.random()*2-1)*(kd.spin?6:1.4), ph:Math.random()*6.28}); };
-      mk(); if(Math.random()<(rush?0.5:0.3)) mk();
-      nextSpawn=t+(rush?140:330-120*(elapsed/TOTAL))+rnd(60); }
+      mk(); if(Math.random()<(rush?0.6:0.38)) mk();
+      nextSpawn=t+(rush?115:270-95*(elapsed/TOTAL))+rnd(50); }
     function pop(txt,bad,x){ pops.push({txt,bad,x:x||jarX,y:MOUTHY-24,t:now()}); }
     function moveTo(e){ const r=cv.getBoundingClientRect(); jarTX=Math.max(36,Math.min(364,(e.clientX-r.left)*(400/r.width))); }
     function pdn(e){ e.preventDefault(); ac(); moveTo(e); }
@@ -773,7 +777,7 @@
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(0,0,400,480);
       // 아이템
-      for(const o of items){ const im=TC.imgs[o.kd.k]; if(!im) continue;
+      for(const o of items){ const im=TC.imgs[o.imgK]; if(!im) continue;
         const a2=im.width/im.height, iw=a2>=1?o.kd.s:o.kd.s*a2, ih=a2>=1?o.kd.s/a2:o.kd.s;
         ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.kd.spin?o.rot:Math.sin(o.rot)*0.35);
         ctx.drawImage(im,-iw/2,-ih/2,iw,ih); ctx.restore(); }
