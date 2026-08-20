@@ -15,7 +15,7 @@
 | 홀드 (4) | **FREE POUR MASTER** ★ · **BLIND POUR** ★ · CITRUS SQUEEZE · BEER HEAD | ★ 실사 캔버스 엔진, 30→45→60ml 3연속 |
 | 연타 (6) | SHAKE IT · ICE SMASH · **ICE CARVING** ★ · MUDDLE · CORK POP · BLEND | ★ 15초 볼 아이스 개수, 수직 스탭 타격 |
 | 리듬 (2) | SHAKE RHYTHM · STIR RHYTHM | |
-| 스페셜 (1) | CHAMPAGNE LAUNCH | 연타→타이밍 2단계 |
+| 스페셜 (1) | **CHAMPAGNE LAUNCH** ★ | ★ 실사 러너 리뉴얼: 연타로 달리며 흔들고 끝에 닿기 전 발사(버틸수록 각도↑, 벽=CRASH), 비거리 승부 |
 | 퀴즈 (7) | GUESS COCKTAIL · NAME SPIRIT · RECIPE MATCH · GARNISH MATCH · FIND INGREDIENT · ODD ONE OUT · **QUICK TAB** ★ | ★ 손님 7명 영수증 암산, 키패드 입력 |
 | 기억 (2) | ORDER MEMORY · TAB ORDER | |
 | 반응 (4) | **TIP CATCH** ★ · LAST CALL RUSH · SPILL WIPE · FLY SWAT | ★ 7지점 낙하+병 드래그, 빈병 -1 |
@@ -42,6 +42,7 @@
 
 | # | 게임명 | 방식 | 한 줄 설명 | 상태 |
 |---|---|---|---|---|
+| 51 | SHAKE MASTER | 폰 흔들기 | 가속도 센서로 13초 동안 폰을 실제로 흔든 횟수 승부 (iOS 권한 팝업, PC는 연타 폴백) | 🎨 에셋 제작 중 (프롬프트 전달됨) |
 | 32 | TRAY BALANCE | 밸런스 | 좌/우 탭으로 트레이 6초 버티기 | |
 | 34 | ID CHECK | 판단 | 신분증 통과/거절 스피드 판정, 위조 찾기 | |
 | 36 | PINECONE CATCH | 캐치 | 솔방울 받기, 벌 피하기 (Pine 브랜드) | |

@@ -305,22 +305,127 @@
       const good=taps.filter(h=>h<130).length, ok=taps.filter(h=>h>=130&&h<250).length; const sc=Math.min(100, Math.round((good*Math.ceil(100/beats)) + ok*Math.ceil(50/beats)));
       let txt,cls; if(sc>=85){txt='ON BEAT!';cls='perfect';flash('#6fcf8f');} else if(sc>=45){txt='GROOVY';cls='good';} else {txt='OFF BEAT';cls='miss';} done(sc,txt,cls); }, (start-now())+beats*interval+500);
   }
-  // 샴페인: 1)연타로 흔들기 → 2)각도 타이밍으로 코르크 발사(멀리)
-  function engChampagne(cfg, done){
-    stage.innerHTML='<div class="mgtitle">CHAMPAGNE LAUNCH</div><div class="mghint">1단계: 연타로 병을 흔들어라!</div><div class="mashemoji" id="mi">🍾</div><div class="bignum" id="mc">2.5</div><div class="meter"><i id="mf"></i></div><button class="btn amber bigbtn" id="mb">SHAKE!</button>';
-    let taps=0, s1=true; const goal=32, dur1=2500, start=now(); const mi=$('mi'), b=$('mb');
-    function tap(e){ if(e)e.preventDefault(); if(!s1) return; taps++; sTap(); $('mf').style.width=Math.min(100,taps/goal*100)+'%'; mi.style.transform='rotate('+(taps%2?14:-14)+'deg)'; }
-    b.addEventListener('pointerdown',tap); b.addEventListener('touchstart',tap,{passive:false});
-    const iv=setInterval(()=>{ const left=Math.max(0,dur1-(now()-start)); $('mc').textContent=(left/1000).toFixed(1); if(left<=0){ clearInterval(iv); stage2(); } },100);
-    function stage2(){ s1=false; b.removeEventListener('pointerdown',tap); b.removeEventListener('touchstart',tap); const power=Math.min(1,taps/goal);
-      stage.innerHTML='<div class="mgtitle">CHAMPAGNE LAUNCH</div><div class="mghint">2단계: 45° 초록칸에서 LAUNCH! 코르크를 멀리 날려라</div><div class="tbar" id="tbar"><div class="tzone" id="tz"></div><div class="tmark" id="tm"></div></div><div class="bignum">🍾 SHAKE '+Math.round(power*100)+'%</div><button class="btn amber bigbtn" id="tstop">LAUNCH!</button>';
-      const bar=$('tbar'), W=bar.clientWidth||330, zw=Math.round(W*0.22), zx=Math.round(W*0.5-zw/2); $('tz').style.left=zx+'px'; $('tz').style.width=zw+'px';
-      const tm=$('tm'); let x=0,dir=1,raf,settled=false; const spd=3.4*(W/300);
-      function loop(){ if(settled) return; x+=dir*spd; if(x<=0){x=0;dir=1;} if(x>=W-5){x=W-5;dir=-1;} tm.style.left=x+'px'; raf=requestAnimationFrame(loop); }
-      function stop(e){ if(e)e.preventDefault(); if(settled) return; settled=true; cancelAnimationFrame(raf); const c=x+2.5, center=zx+zw/2, d=Math.abs(c-center);
-        const angleAcc=Math.max(0,1-d/(W*0.45)); const dist=Math.round(power*angleAcc*100);
-        let txt,cls; if(dist>=80){txt='🚀 '+dist+'m!';cls='perfect';flash('#6fcf8f');} else if(dist>=45){txt=dist+'m NICE';cls='good';} else {txt=dist+'m…';cls='miss';} done(dist,txt,cls); }
-      $('tstop').addEventListener('click',stop); loop(); }
+  // 샴페인 런치: 연타로 달리며 흔들고(파워), 끝에 닿기 전에 발사 — 버틸수록 각도·비거리 상승, 끝에 닿으면 CRASH
+  const CL={ imgs:{}, loading:false };
+  function clLoad(){ if(CL.loading) return; CL.loading=true;
+    const srcs={ run1:['cl_run1',420], run2:['cl_run2',420], run3:['cl_run3',420], run4:['cl_run4',420], run5:['cl_run5',420],
+      skid:['cl_skid',440], cork:['cl_cork',200], logo:['cl_logo',560] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ CL.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+  function engChampagne(done){
+    fpLoad(); clLoad();
+    stage.innerHTML='<div class="mgtitle">CHAMPAGNE LAUNCH</div>'
+      +'<div class="mghint">연타로 달리며 병을 흔들어라! 끝에 닿기 전에 <b>LAUNCH</b> — 버틸수록 각도가 서고 멀리 난다. 벽에 닿으면 꽝!</div>'
+      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+      +'<div style="display:flex;gap:10px;justify-content:center">'
+      +'<button class="btn amber" id="clTap" style="width:min(190px,44vw);height:70px;font-size:15px">RUN!</button>'
+      +'<button class="btn" id="clGo" style="width:min(150px,34vw);height:70px;font-size:13px">🍾 LAUNCH</button></div>';
+    const cv=$('fpcv'), ctx=cv.getContext('2d');
+    const ARM=1300, TRACK=2200, GY=402, RX=110, FRAMES=['run1','run2','run3','run4','run5'];
+    let state='intro', worldX=0, vel=0, taps=0, runPh=0, angle=8, t0=0, lastT=0, raf=0, shake=0;
+    let meters=0, shownM=0, flyP=0, flyT=0, flyR=0, flyH=0, corkG=0, stampObj=null, stampT=0, ended=false;
+    const parts=[]; const armed=()=>t0&&now()-t0>=ARM;
+    function tap(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return;
+      taps++; vel=Math.min(460,vel+62); runPh+=0.5; sTap();
+      parts.push({x:RX+20,y:GY-90,vx:-60-Math.random()*40,vy:-20-Math.random()*40,gv:300,r:1.5+Math.random()*1.5,c:'#eef6d8',life:0.35}); }
+    function launch(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return;
+      state='fly'; flyT=lastT;
+      meters=Math.max(2,Math.round((taps*1.35+14)*(0.22+0.78*Math.sin(angle*Math.PI/180))));
+      flyR=meters*16; flyH=50+flyR*0.16*Math.sin(angle*Math.PI/180); corkG=1.15+meters/85;
+      beep(300,0.08,'square',0.12); setTimeout(()=>beep(900,0.15,'square',0.12),60); flash('#fff'); shake=8; }
+    function crash(){ state='crash'; stampObj={txt:'CRASH!!',cls:'miss'}; stampT=lastT; sBad(); shake=13; flash('#d9544d');
+      for(let j=0;j<26;j++) parts.push({x:RX+40,y:GY-70,vx:Math.random()*-260,vy:-80-Math.random()*220,gv:600,r:2+Math.random()*3,c:['#eef6d8','#fff','#d9e6aa'][rnd(3)],life:0.5+Math.random()*0.4});
+      setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(4,'CRASH!!','miss'); },1500); }
+    const bT=$('clTap'), bG=$('clGo');
+    bT.addEventListener('pointerdown',tap); bT.addEventListener('touchstart',tap,{passive:false});
+    bG.addEventListener('pointerdown',launch); bG.addEventListener('touchstart',launch,{passive:false});
+    function cleanup(){ cancelAnimationFrame(raf); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      const it=t-t0;
+      if(state==='intro'&&it>=ARM) state='run';
+      if(state==='run'){ vel=Math.max(30,vel-dt*230); worldX+=vel*dt; runPh+=dt*vel/34;
+        angle=8+Math.min(1,worldX/TRACK)*82;
+        if(worldX>=TRACK) crash();
+        if(it>ARM+16000&&taps<3) launch(); } // 방치 방지
+      if(state==='fly'){ flyP=Math.min(1,flyP+dt/corkG); shownM=Math.round(meters*flyP);
+        if(flyP>=1&&!stampObj){ let cls=meters>=75?'perfect':(meters>=40?'good':'miss');
+          stampObj={txt:'🚀 '+meters+'m!',cls}; stampT=t;
+          if(cls==='perfect'){ flash('#6fcf8f'); sGood(); } else if(cls==='good') sGood(); else sBad();
+          for(let j=0;j<14;j++) parts.push({x:300,y:GY-6,vx:(Math.random()*2-1)*120,vy:-60-Math.random()*120,gv:600,r:2+Math.random()*2,c:'#c9a96e',life:0.4});
+          setTimeout(()=>{ if(ended) return; ended=true; cleanup();
+            done(Math.min(100,meters),meters+'m!',cls); },1400); } }
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      // 스크롤 배경 (바 홀을 옆으로 달린다)
+      const bgi=FP.imgs.bg, scroll=state==='fly'?worldX+flyP*flyR:worldX;
+      if(bgi){ const s=480/bgi.height, bw2=bgi.width*s; const off=-(scroll*0.55)%bw2;
+        ctx.drawImage(bgi,off,0,bw2,480); ctx.drawImage(bgi,off+bw2,0,bw2,480); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fillRect(0,0,400,480);
+      // 바닥
+      ctx.fillStyle='#2b1c10'; ctx.fillRect(0,GY,400,480-GY);
+      ctx.fillStyle='#3a2817'; ctx.fillRect(0,GY,400,5);
+      ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=2;
+      for(let px=-(scroll%64);px<400;px+=64){ ctx.beginPath(); ctx.moveTo(px,GY+5); ctx.lineTo(px-18,480); ctx.stroke(); }
+      // 결승 벽 (트랙 끝)
+      const wallX=RX+(TRACK-worldX)*(state==='fly'?0:1)+(state==='fly'?TRACK-worldX-flyP*flyR:0);
+      if(state!=='intro'&&wallX<440){ ctx.fillStyle='#4a3520'; ctx.fillRect(wallX,GY-130,26,130);
+        ctx.fillStyle='#c9a96e'; ctx.fillRect(wallX,GY-130,26,8);
+        ctx.font='9px "Press Start 2P"'; ctx.textAlign='center'; ctx.fillStyle='#d9544d';
+        if(state==='run') ctx.fillText('벽!',wallX+13,GY-140); }
+      // 러너
+      if(state==='run'||state==='intro'){ const fr=CL.imgs[FRAMES[Math.floor(runPh)%5]];
+        if(fr){ const rh2=150, rw2=rh2*(fr.width/fr.height);
+          const bob=Math.sin(runPh*3.14)*2;
+          ctx.drawImage(fr,RX-rw2/2,GY-rh2+bob,rw2,rh2); } }
+      else { const sk=CL.imgs.skid;
+        if(sk){ const rh2=150, rw2=rh2*(sk.width/sk.height); ctx.drawImage(sk,RX-rw2/2,GY-rh2,rw2,rh2); } }
+      // 코르크 비행
+      if(state==='fly'){ const ck=CL.imgs.cork;
+        const cx2=RX+40+flyP*260, cy2=GY-95-Math.sin(flyP*Math.PI)*flyH*(400/(flyR+200));
+        if(ck){ ctx.save(); ctx.translate(cx2,cy2); ctx.rotate(flyP*14);
+          ctx.drawImage(ck,-14,-14,28,28); ctx.restore(); }
+        if(Math.random()<0.7) parts.push({x:cx2-8,y:cy2,vx:-60-Math.random()*60,vy:(Math.random()*2-1)*30,gv:120,r:1.5+Math.random()*1.6,c:['#fff','#eef6d8'][rnd(2)],life:0.4});
+        ctx.font='19px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(shownM+'m',202,92); ctx.fillStyle='#ffd977'; ctx.fillText(shownM+'m',200,90); }
+      // 파티클
+      for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
+        pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
+        ctx.globalAlpha=Math.min(1,pp2.life*2.5); ctx.fillStyle=pp2.c; ctx.fillRect(pp2.x-pp2.r/2,pp2.y-pp2.r/2,pp2.r,pp2.r); }
+      ctx.globalAlpha=1;
+      // HUD: 진행 바 + 각도 + 파워
+      if(state!=='intro'){ const prog=Math.min(1,worldX/TRACK);
+        ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(30,18,340,10);
+        ctx.fillStyle=prog>0.85?'#d9544d':'#3a7d4f'; ctx.fillRect(30,18,340*prog,10);
+        ctx.fillStyle='#e6b450'; ctx.fillRect(30+340*prog-2,14,4,18);
+        ctx.font='10px "Press Start 2P"'; ctx.textAlign='left';
+        ctx.fillStyle='#000'; ctx.fillText('PWR '+taps,14,52); ctx.fillStyle='#ffd977'; ctx.fillText('PWR '+taps,12,50);
+        ctx.textAlign='right';
+        ctx.fillStyle='#000'; ctx.fillText(Math.round(angle)+'°',390,52); ctx.fillStyle=angle>72?'#6fcf8f':'#e8e6dd'; ctx.fillText(Math.round(angle)+'°',388,50);
+        // 각도 화살표
+        if(state==='run'){ ctx.save(); ctx.translate(RX+55,GY-110); ctx.rotate(-angle*Math.PI/180);
+          ctx.strokeStyle='rgba(255,217,119,0.85)'; ctx.lineWidth=3; ctx.setLineDash([4,4]);
+          ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(52,0); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle='#ffd977'; ctx.beginPath(); ctx.moveTo(60,0); ctx.lineTo(48,-5); ctx.lineTo(48,5); ctx.closePath(); ctx.fill(); ctx.restore(); } }
+      // 인트로 로고
+      if(state==='intro'){ const al=it<ARM-300?1:1-(it-(ARM-300))/300;
+        ctx.globalAlpha=Math.max(0,al); ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,400,480);
+        const lgi=CL.imgs.logo; if(lgi){ const k=0.55+eob2(Math.min(1,it/280))*0.45, lw=350*k, lh=lw*(lgi.height/lgi.width);
+          ctx.drawImage(lgi,200-lw/2,215-lh/2,lw,lh); }
+        ctx.globalAlpha=1; }
+      // 스탬프
+      if(stampObj){ const st2=(t-stampT)/1000;
+        ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(0,0,400,480);
+        ctx.save(); ctx.translate(200,210); ctx.rotate(-0.06);
+        const k2=1+Math.max(0,1-st2*6)*1.4; ctx.scale(k2,k2);
+        ctx.font='22px "Press Start 2P"'; ctx.textAlign='center';
+        const col=stampObj.cls==='perfect'?'#6fcf8f':(stampObj.cls==='good'?'#e6b450':'#d9544d');
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.txt,3,3); ctx.fillStyle=col; ctx.fillText(stampObj.txt,0,0); ctx.restore(); }
+    }
+    raf=requestAnimationFrame(draw);
   }
 
   /* ====================== FREE POUR MASTER ====================== */
@@ -990,7 +1095,7 @@
     { name:'SHAKE RHYTHM', cat:'리듬', run:d=>engRhythm({title:'SHAKE RHYTHM',hint:'박자에 맞춰 셰이킹!',beats:8,interval:600},d) },
     { name:'STIR RHYTHM', cat:'리듬', run:d=>engRhythm({title:'STIR RHYTHM',hint:'느린 박자에 맞춰 스터',beats:6,interval:760},d) },
     // 다단계
-    { name:'CHAMPAGNE LAUNCH', cat:'스페셜', run:d=>engChampagne({},d) },
+    { name:'CHAMPAGNE LAUNCH', cat:'스페셜', run:d=>engChampagne(d) },
     // 퀴즈
     { name:'GUESS COCKTAIL', cat:'퀴즈', run:d=>{ const ans=CK[rnd(CK.length)]; const opts=shuffle([ans,...sample(CK.filter(k=>k!==ans),3)]).map(k=>({label:COCKTAILS[k],correct:k===ans}));
         engChoiceText({title:'GUESS THE COCKTAIL',hint:'이미지 보고 이름 맞히기',promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
@@ -1018,7 +1123,7 @@
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
-  fpLoad(); icLoad(); tcLoad(); qtLoad(); // 프리푸어/아이스카빙/팁캐치/퀵탭 실사 에셋 미리 키잉
+  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); // 실사 에셋 미리 키잉
   show('title');
 })();
 </script>
