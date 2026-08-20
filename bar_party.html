@@ -320,23 +320,24 @@
       +'<button class="btn amber" id="clTap" style="width:min(190px,44vw);height:70px;font-size:15px">RUN!</button>'
       +'<button class="btn" id="clGo" style="width:min(150px,34vw);height:70px;font-size:12px">🍾 HOLD</button></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const ARM=1300, TRACK=2200, GY=402, RX=110, FRAMES=['run1','run2','run3','run4','run5'], PXM=22, GRV=300, RH=105, VSQ=0.6;
+    const ARM=1300, TRACK=2200, GY=402, RX=110, FRAMES=['run1','run2','run3','run4','run5'], PXM=30, GRV=300, RH=137, VSQ=0.5;
+    let bgOff=0, prevCam=null;
     let state='intro', worldX=0, vel=0, power=0, runPh=0, angle=12, holdA=false, prevAng=12;
     let ckX=0, ckY=0, ckVX=0, ckVY=0, ckRot=0, bounces=0, launchX=0, meters=0, maxM=100;
     let stampObj=null, stampT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
     const parts=[]; const armed=()=>t0&&now()-t0>=ARM;
     function tap(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return;
       power+=3; vel=Math.min(460,vel+62); runPh+=0.3; sTap();
-      parts.push({x:RX+14,y:GY-64,vx:-60-Math.random()*40,vy:-20-Math.random()*40,gv:300,r:1.5+Math.random()*1.5,c:'#eef6d8',life:0.35}); }
+      parts.push({x:RX+18,y:GY-84,vx:-60-Math.random()*40,vy:-20-Math.random()*40,gv:300,r:1.5+Math.random()*1.5,c:'#eef6d8',life:0.35}); }
     function holdStart(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return; holdA=true; }
     function fire(){ if(state!=='run') return; holdA=false;
       const th=angle*Math.PI/180;
       const R=Math.max(20,power*2.6*Math.pow(Math.max(0,Math.sin(2*th)),2.2))*PXM; // 45° 최적, 낮거나 너무 세우면 확 짧아짐
       const v0=Math.sqrt(R*GRV/Math.max(0.06,Math.sin(2*th)));
-      launchX=worldX+30; ckX=launchX; ckY=GY-67; ckVX=v0*Math.cos(th); ckVY=-v0*Math.sin(th); bounces=0; ckRot=0;
+      launchX=worldX+39; ckX=launchX; ckY=GY-87; ckVX=v0*Math.cos(th); ckVY=-v0*Math.sin(th); bounces=0; ckRot=0;
       maxM=Math.max(50,Math.ceil(((launchX+R*1.35-TRACK)/PXM+12)/25)*25);
       state='fly'; beep(300,0.08,'square',0.12); setTimeout(()=>beep(900,0.15,'square',0.12),60); flash('#fff'); shake=8;
-      for(let j=0;j<10;j++) parts.push({x:RX+32,y:GY-70,vx:Math.random()*120,vy:-Math.random()*120,gv:300,r:1.5+Math.random()*2,c:['#fff','#eef6d8'][rnd(2)],life:0.5}); }
+      for(let j=0;j<10;j++) parts.push({x:RX+42,y:GY-91,vx:Math.random()*120,vy:-Math.random()*120,gv:300,r:1.5+Math.random()*2,c:['#fff','#eef6d8'][rnd(2)],life:0.5}); }
     function rest(){ state='rest';
       const fm=Math.round((ckX-TRACK)/PXM); // 벽(끝지점) 기준 — 벽 전에 떨어지면 마이너스
       const cls=fm>=80?'perfect':(fm>=45?'good':'miss');
@@ -376,13 +377,14 @@
       const cam=camW();
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
-      // 스크롤 배경: 백바를 멀리(위쪽 원근 축소 + 느린 패럴랙스) — 바닥을 달리는 느낌
+      // 스크롤 배경: 백바를 멀리(원근 축소) — 비행 중엔 배경이 2배 빠르게 지나가 속도감
+      if(prevCam==null) prevCam=cam;
+      bgOff+=(cam-prevCam)*((state==='fly'||state==='rest')?0.75:0.35); prevCam=cam;
       const bgi=FP.imgs.bg;
-      if(bgi){ const bgH=332, s=bgH/bgi.height, bw2=bgi.width*s; const off=-(cam*0.35)%bw2;
+      if(bgi){ const bgH=GY+2, s=bgH/bgi.height, bw2=bgi.width*s;
+        const off=-(((bgOff)%bw2+bw2)%bw2);
         ctx.drawImage(bgi,off,0,bw2,bgH); ctx.drawImage(bgi,off+bw2,0,bw2,bgH); }
-      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,332); }
-      const mg2=ctx.createLinearGradient(0,328,0,GY); mg2.addColorStop(0,'#150e08'); mg2.addColorStop(1,'#241708');
-      ctx.fillStyle=mg2; ctx.fillRect(0,328,400,GY-328);
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,GY); }
       ctx.fillStyle='rgba(0,0,0,0.24)'; ctx.fillRect(0,0,400,480);
       // 바닥
       ctx.fillStyle='#2b1c10'; ctx.fillRect(0,GY,400,480-GY);
@@ -435,7 +437,7 @@
         const angCol=Math.abs(angle-45)<7?'#6fcf8f':'#e8e6dd';
         ctx.fillStyle='#000'; ctx.fillText(Math.round(angle)+'°',390,52); ctx.fillStyle=angCol; ctx.fillText(Math.round(angle)+'°',388,50);
         // 각도 화살표 (홀드 중에만 상승)
-        if(state==='run'){ ctx.save(); ctx.translate(runnerX+40,GY-78); ctx.rotate(-angle*Math.PI/180);
+        if(state==='run'){ ctx.save(); ctx.translate(runnerX+52,GY-101); ctx.rotate(-angle*Math.PI/180);
           ctx.strokeStyle=holdA?'rgba(111,207,143,0.95)':'rgba(255,217,119,0.7)'; ctx.lineWidth=3; ctx.setLineDash([4,4]);
           ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(52,0); ctx.stroke(); ctx.setLineDash([]);
           ctx.fillStyle=holdA?'#6fcf8f':'#ffd977'; ctx.beginPath(); ctx.moveTo(60,0); ctx.lineTo(48,-5); ctx.lineTo(48,5); ctx.closePath(); ctx.fill(); ctx.restore(); } }
