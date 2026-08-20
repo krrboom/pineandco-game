@@ -65,6 +65,10 @@ no generic stats). **XP need ×5** (slow leveling). Base HP regen halved. Spirit
 the unreachable Rainbow Gun).
 
 ## 📌 Current state / next steps
+- **bar_party.html**: ICE CARVING 추가 — 연타로 게이지 상승(+9/탭, 방치 시 -38/초 감소), 얼음이 블록→구로
+  깎이고 게이지 88+ 완성 존에서 완성! 버튼 → 볼 아이스 +1 (덜 깎고 누르면 와장창+0.6초 경직).
+  15초 최대 개수 승부(5개=100점). 에셋 `assets/ic_*.png`, 5단계 시트는 로드 시 알파 열 스캔으로 자동 분리.
+  원본 이미지는 `Downloads/bar party/` 폴더에 게임별로 모음(freepour, ice carving, …).
 - **bar_party.html**: FREE POUR MASTER 추가 — 실사 픽셀아트 캔버스 프리푸어(`assets/fp_*.png`, 흰 배경은
   로드 시 플러드필 키잉). 병을 꾹 누르면 완전히 뒤집혀 10ml/초(3초=1oz)로 따라지고, 상단 ml 카운터(0.01 단위)를
   보고 정확한 ml에서 놓는 방식. 판정 ±1ml PERFECT / ±3 GOOD / ±6 miss / cap 초과 SPILL. 랜덤 로테이션에

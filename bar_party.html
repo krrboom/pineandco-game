@@ -566,6 +566,139 @@
         +'<span class="pt">±'+p.err.toFixed(2)+'ml</span>'; list.appendChild(row); });
     show('final'); sGood(); flash('#e6b450'); }
 
+  /* ====================== ICE CARVING ====================== */
+  // 연타로 게이지를 올려 얼음을 구로 깎고(안 누르면 빠르게 감소) 완성 존에서 완성! — 15초 동안 최대 개수
+  const IC={ imgs:{}, loading:false, stages:null };
+  function icLoad(){ if(IC.loading) return; IC.loading=true;
+    const srcs={ ice:['ic_ice',900], pick:['ic_pick',520], broke:['ic_broke',420], logo:['ic_logo',560] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image();
+      im.onload=()=>{ IC.imgs[k]=fpKey(im,srcs[k][1]); if(k==='ice') icSegment(); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+  function icSegment(){ // 5단계 시트를 알파 열 스캔으로 자동 분리
+    const c=IC.imgs.ice, w=c.width, h=c.height, d=c.getContext('2d').getImageData(0,0,w,h).data;
+    const colHas=new Uint8Array(w);
+    for(let cx=0;cx<w;cx++){ for(let cy=0;cy<h;cy++){ if(d[(cy*w+cx)*4+3]>30){ colHas[cx]=1; break; } } }
+    const runs=[]; let s=-1;
+    for(let cx=0;cx<=w;cx++){ const on=cx<w&&colHas[cx]; if(on&&s<0) s=cx; else if(!on&&s>=0){ if(cx-s>12) runs.push([s,cx]); s=-1; } }
+    const rects=(runs.length===5)?runs:[0,1,2,3,4].map(i=>[Math.round(w*i/5),Math.round(w*(i+1)/5)]);
+    IC.stages=rects.map(r=>{ let top=h-1,bot=0;
+      for(let cy=0;cy<h;cy++){ for(let cx=r[0];cx<r[1];cx++){ if(d[(cy*w+cx)*4+3]>30){ if(cy<top)top=cy; if(cy>bot)bot=cy; break; } } }
+      return {sx:r[0],sy:top,sw:r[1]-r[0],sh:Math.max(1,bot-top+1)}; }); }
+  function engIceCarve(done){
+    fpLoad(); icLoad();
+    stage.innerHTML='<div class="mgtitle">ICE CARVING</div>'
+      +'<div class="mghint">연타로 깎아라! 손을 놓으면 도로 언다. 완벽한 구가 되면 <b>완성!</b> — 15초 동안 최대한 많이. 덜 깎고 누르면 와장창!</div>'
+      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+      +'<div style="display:flex;gap:10px;justify-content:center">'
+      +'<button class="btn amber" id="icTap" style="width:min(200px,46vw);height:70px;font-size:16px">TAP!</button>'
+      +'<button class="btn" id="icDone" style="width:min(140px,32vw);height:70px;font-size:13px">완성!</button></div>';
+    const cv=$('fpcv'), ctx=cv.getContext('2d');
+    const ICEX=185, ICEY=392, ZONE=88, TOTAL=15000, ARM=1200, DECAY=38, TAPUP=9;
+    let gauge=0, count=0, stunUntil=0, strikeT=-1e9, brokeT=-1e9, popT=0, finished=false, ended=false;
+    let t0=0, lastT=0, raf=0, shake=0; const parts=[], flyBalls=[], msgs=[];
+    const armed=()=>t0&&now()-t0>=ARM;
+    function chip(n,px,py){ for(let i=0;i<n;i++) parts.push({x:px+(Math.random()*30-15),y:py+(Math.random()*20-10),
+      vx:(Math.random()*2-1)*160,vy:-120-Math.random()*160,gv:900,r:2+Math.random()*2.5,c:['#dff1ff','#9fd2f5','#fff'][rnd(3)],life:0.45+Math.random()*0.3}); }
+    function tap(e){ if(e)e.preventDefault(); ac(); if(!armed()||finished||now()<stunUntil||now()-t0-ARM>=TOTAL) return;
+      gauge=Math.min(100,gauge+TAPUP); strikeT=now(); sTap(); chip(3,ICEX,ICEY-70); }
+    function fin(e){ if(e)e.preventDefault(); ac(); if(!armed()||finished||now()<stunUntil||now()-t0-ARM>=TOTAL) return;
+      if(gauge>=ZONE){ count++; gauge=0; popT=now(); sGood(); setTimeout(()=>beep(1400,0.1,'square',0.1),90);
+        flyBalls.push({x:ICEX,y:ICEY-60,tx:22+((count-1)%12)*30,ty:66,t:now()});
+        msgs.push({txt:'볼 아이스 +1!',t:now()}); flash('#6fcf8f'); }
+      else { brokeT=now(); gauge=0; stunUntil=now()+600; shake=10; sBad(); msgs.push({txt:'와장창!!',t:now(),bad:1}); } }
+    const bT=$('icTap'), bD=$('icDone');
+    bT.addEventListener('pointerdown',tap); bT.addEventListener('touchstart',tap,{passive:false});
+    bD.addEventListener('pointerdown',fin); bD.addEventListener('touchstart',fin,{passive:false});
+    function cleanup(){ cancelAnimationFrame(raf); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; popT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      const it=t-t0, elapsed=Math.max(0,it-ARM), left=Math.max(0,TOTAL-elapsed);
+      if(armed()&&!finished&&left>0&&t>=stunUntil) gauge=Math.max(0,gauge-DECAY*dt);
+      if(!finished&&armed()&&left<=0){ finished=true;
+        const sc=Math.min(100,count*22); const txt=count+'개 완성!';
+        const cls=count>=5?'perfect':(count>=3?'good':'miss');
+        setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,txt,cls); },1400); }
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      const bgi=FP.imgs.bg;
+      if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(0,0,400,480);
+      // 완성된 볼 컬렉션
+      if(IC.stages){ const s5=IC.stages[4];
+        for(let i=0;i<count;i++){ if(flyBalls.some(f=>f.slot===i)) continue;
+          ctx.drawImage(IC.imgs.ice,s5.sx,s5.sy,s5.sw,s5.sh,22+(i%12)*30-13,66-13,26,26); }
+        for(let i=flyBalls.length-1;i>=0;i--){ const f=flyBalls[i]; const p2=Math.min(1,(t-f.t)/450);
+          if(f.slot==null) f.slot=count-1;
+          const e2=1-(1-p2)*(1-p2), fx=f.x+(f.tx-f.x)*e2, fy=f.y+(f.ty-f.y)*e2-Math.sin(p2*Math.PI)*60;
+          const fs=44-18*e2; ctx.drawImage(IC.imgs.ice,s5.sx,s5.sy,s5.sw,s5.sh,fx-fs/2,fy-fs/2,fs,fs);
+          if(p2>=1) flyBalls.splice(i,1); } }
+      // 얼음 (게이지에 따라 단계 변화 / 와장창 / 새 블록 팝)
+      const stIdx=gauge>=ZONE?4:Math.min(3,Math.floor(gauge/22));
+      if(IC.stages&&IC.imgs.ice){
+        if(t-brokeT<520){ const bk=IC.imgs.broke; const bw2=170;
+          ctx.drawImage(bk,ICEX-bw2/2,ICEY-bw2*0.72,bw2,bw2*(bk.height/bk.width)); }
+        else { const r=IC.stages[stIdx]; const maxH=Math.max(...IC.stages.map(q=>q.sh));
+          let ih=150*(r.sh/maxH), iw=ih*(r.sw/r.sh);
+          const pp=Math.min(1,(t-popT)/300); let sc2=pp>=1?1:Math.max(0.01,eob2(pp));
+          if(t-strikeT<70) sc2*=1-0.06*Math.sin(Math.PI*(t-strikeT)/70); // 타격 스쿼시
+          ctx.save(); ctx.translate(ICEX,ICEY); ctx.scale(sc2,sc2);
+          ctx.drawImage(IC.imgs.ice,r.sx,r.sy,r.sw,r.sh,-iw/2,-ih,iw,ih); ctx.restore();
+          if(stIdx===4&&Math.random()<0.25) parts.push({x:ICEX+(Math.random()*70-35),y:ICEY-30-Math.random()*80,
+            vx:0,vy:-20,gv:0,r:1.5+Math.random()*1.5,c:'#fff',life:0.35}); } }
+      // 아이스픽 (탭마다 내려찍기)
+      const pk=IC.imgs.pick;
+      if(pk&&!(t-brokeT<520)){ const ph=200, pw=ph*(pk.width/pk.height);
+        let ox=0,oy=0,rot=0; const ds=t-strikeT;
+        if(ds<90&&ds>=0){ const k=Math.sin(Math.PI*ds/90); ox=-14*k; oy=20*k; rot=-0.1*k; }
+        ctx.save(); ctx.translate(272+ox,180+oy); ctx.rotate(rot);
+        ctx.drawImage(pk,-pw*0.38,-ph*0.12,pw,ph); ctx.restore(); }
+      // 파티클
+      for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
+        pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
+        ctx.globalAlpha=Math.min(1,pp2.life*2.5); ctx.fillStyle=pp2.c; ctx.fillRect(pp2.x-pp2.r/2,pp2.y-pp2.r/2,pp2.r,pp2.r); }
+      ctx.globalAlpha=1;
+      // 게이지 (오른쪽 세로, 완성 존 표시)
+      const gx=352, gy1=150, gy2=420, gw=20;
+      ctx.fillStyle='rgba(0,0,0,0.62)'; ctx.fillRect(gx-6,gy1-24,gw+12,gy2-gy1+34);
+      ctx.strokeStyle='#000'; ctx.lineWidth=3; ctx.strokeRect(gx,gy1,gw,gy2-gy1);
+      const zy=gy2-(gy2-gy1)*ZONE/100;
+      const inZone=gauge>=ZONE;
+      ctx.fillStyle=inZone?'rgba(111,207,143,0.65)':'rgba(111,207,143,0.28)'; ctx.fillRect(gx,gy1,gw,zy-gy1);
+      const fy=gy2-(gy2-gy1)*gauge/100;
+      const grd2=ctx.createLinearGradient(0,gy2,0,gy1); grd2.addColorStop(0,'#4a89c9'); grd2.addColorStop(1,'#bfe6ff');
+      ctx.fillStyle=grd2; ctx.fillRect(gx+2,fy,gw-4,gy2-fy);
+      ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
+      ctx.fillStyle=inZone?'#6fcf8f':'#8a8d82'; ctx.fillText('완성',gx+gw/2,gy1-10);
+      // 타이머 + 카운트
+      ctx.font='17px "Press Start 2P"'; ctx.textAlign='center';
+      const secs=(left/1000).toFixed(1);
+      ctx.fillStyle='#000'; ctx.fillText(secs+'s',202,36); ctx.fillStyle=left<4000?'#d9544d':'#e8e6dd'; ctx.fillText(secs+'s',200,34);
+      ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,44,280,6);
+      ctx.fillStyle=left<4000?'#d9544d':'#3a7d4f'; ctx.fillRect(60,44,280*(left/TOTAL),6);
+      // 메시지 팝
+      for(let i=msgs.length-1;i>=0;i--){ const m=msgs[i]; const mt=(t-m.t)/1000; if(mt>0.9){ msgs.splice(i,1); continue; }
+        ctx.globalAlpha=Math.max(0,1-mt*1.2); ctx.font=(m.bad?'18px':'13px')+' "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(m.txt,202,(m.bad?230:150)-mt*40+2); ctx.fillStyle=m.bad?'#d9544d':'#6fcf8f'; ctx.fillText(m.txt,200,(m.bad?230:150)-mt*40); ctx.globalAlpha=1; }
+      // 인트로 로고
+      if(it<ARM){ const al=it<900?1:1-(it-900)/300;
+        ctx.globalAlpha=Math.max(0,al); ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,400,480);
+        const lgi=IC.imgs.logo; if(lgi){ const k=0.55+eob2(Math.min(1,it/280))*0.45, lw=350*k, lh=lw*(lgi.height/lgi.width);
+          ctx.drawImage(lgi,200-lw/2,220-lh/2,lw,lh); }
+        ctx.globalAlpha=1; }
+      // 종료
+      if(finished){ ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
+        ctx.font='22px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('TIME UP!',203,213); ctx.fillStyle='#e6b450'; ctx.fillText('TIME UP!',200,210);
+        ctx.font='700 17px -apple-system,"Malgun Gothic",sans-serif';
+        ctx.fillStyle='#000'; ctx.fillText('볼 아이스 '+count+'개 완성!',201,251); ctx.fillStyle='#fff'; ctx.fillText('볼 아이스 '+count+'개 완성!',200,250); }
+    }
+    raf=requestAnimationFrame(draw);
+  }
+  const eob2=x=>{ const c=1.70158, f=x-1; return 1+f*f*((c+1)*f+c); };
+
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
     // 타이밍
@@ -584,6 +717,7 @@
     // 연타
     { name:'SHAKE IT', cat:'연타', run:d=>engMash({title:'SHAKE IT!',hint:'시간 안에 최대한 빠르게 흔들어라',img:'proj_shaker',goal:42,dur:3800,label:'SHAKE!'},d) },
     { name:'ICE SMASH', cat:'연타', run:d=>engMash({title:'ICE SMASH',hint:'얼음을 마구 깨부숴라',emoji:'🧊',goal:40,dur:3600,label:'SMASH!'},d) },
+    { name:'ICE CARVING', cat:'연타', run:d=>engIceCarve(d) },
     { name:'MUDDLE', cat:'연타', run:d=>engMash({title:'MUDDLE',hint:'민트를 힘껏 짓이겨라',emoji:'🌿',goal:38,dur:3600,label:'MUDDLE!'},d) },
     { name:'CORK POP', cat:'연타', run:d=>engMash({title:'CORK POP',hint:'코르크를 마구 비틀어 뽑아라',emoji:'🍾',goal:36,dur:3400,label:'TWIST!'},d) },
     { name:'BLEND', cat:'연타', run:d=>engMash({title:'BLEND',hint:'블렌더를 최고속으로 돌려라',emoji:'🌀',goal:44,dur:3600,label:'BLEND!'},d) },
@@ -617,7 +751,7 @@
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
-  fpLoad(); // 프리푸어 실사 에셋 미리 키잉
+  fpLoad(); icLoad(); // 프리푸어/아이스카빙 실사 에셋 미리 키잉
   show('title');
 })();
 </script>
