@@ -382,13 +382,13 @@
       if(prevCam==null) prevCam=cam;
       bgOff+=(cam-prevCam)*((state==='fly'||state==='rest')?0.75:0.35); prevCam=cam;
       const bgi=FP.imgs.bg;
-      const bgH=150; // 배경 전체를 그대로, 훨씬 작게 뒤로
+      const bgH=305; // 배경 상판 라인이 캐릭터 허리 위(가슴께 y≈300)에 오도록 맞춤
       ctx.fillStyle='#0a0c09'; ctx.fillRect(0,0,400,GY-bgH+4); // 천장 어둠
       if(bgi){ const s=bgH/bgi.height, bw2=bgi.width*s;
         const off=-(((bgOff)%bw2+bw2)%bw2);
         ctx.drawImage(bgi,off,GY-bgH,bw2,bgH); ctx.drawImage(bgi,off+bw2,GY-bgH,bw2,bgH); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,GY-bgH,400,bgH); }
-      ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.fillRect(0,GY-bgH,400,bgH);
+      ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(0,GY-bgH,400,bgH);
       // 바닥
       ctx.fillStyle='#2b1c10'; ctx.fillRect(0,GY,400,480-GY);
       ctx.fillStyle='#3a2817'; ctx.fillRect(0,GY,400,5);
