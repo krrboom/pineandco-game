@@ -91,26 +91,26 @@
 
   <div id="title" class="screen">
     <div class="brand">PINE &amp; CO · PARTY</div>
-    <h1>BAR<br>PARTY<span class="sub" id="subCount">바텐더 미니게임</span></h1>
-    <p class="desc">따르고 · 맞히고 · 흔들고 · 던져라.<br>번갈아 플레이하고 <b>최고 점수</b>를 가려라.</p>
-    <div class="kr" style="font-size:11px;color:var(--dim)">인원 수</div>
+    <h1>BAR<br>PARTY<span class="sub" id="subCount">BARTENDER MINIGAMES</span></h1>
+    <p class="desc">POUR · GUESS · SHAKE · TOSS.<br>Take turns and battle for the <b>high score</b>.</p>
+    <div class="kr" style="font-size:11px;color:var(--dim)">PLAYERS</div>
     <div class="pcount" id="pcount"></div>
     <button class="btn amber" id="startBtn">START</button>
     <button class="btn" id="fpChalBtn">🥃 POUR CHALLENGE</button>
-    <button class="btn ghost" id="sandboxBtn">🎮 SANDBOX 체험</button>
+    <button class="btn ghost" id="sandboxBtn">🎮 SANDBOX</button>
     <div class="best">BEST · <b id="bestVal">0</b> &nbsp;·&nbsp; POUR · <b id="fpBestVal">—</b></div>
   </div>
 
   <div id="sandbox" class="screen hidden">
     <div class="mgtitle">🎮 SANDBOX</div>
-    <div class="mghint">해보고 싶은 미니게임을 골라라</div>
+    <div class="mghint">Pick a minigame to try</div>
     <div class="sbwrap" id="sbwrap"></div>
     <button class="btn ghost" id="sbBack">← HOME</button>
   </div>
 
   <div id="turn" class="screen hidden">
     <div class="mgtitle" id="turnWho">PLAYER 1</div>
-    <p class="desc" id="turnMsg">준비되면 눌러라</p>
+    <p class="desc" id="turnMsg">Press when ready</p>
     <button class="btn" id="turnBtn">READY!</button>
   </div>
 
@@ -175,7 +175,7 @@
     b.onclick=()=>{ pn=i; ac(); beep(500,0.05); [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); }; box.appendChild(b); } })();
 
   $('startBtn').onclick=()=>{ ac(); beep(700,0.1); mode='party'; players=[]; for(let i=0;i<pn;i++) players.push({name:'PLAYER '+(i+1),score:0}); cur=0; startTurn(); };
-  function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'폰을 넘겨받았으면 눌러라':'준비되면 눌러라'); show('turn'); $('hud').classList.add('hidden'); }
+  function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'Got the phone? Press!':'Press when ready'); show('turn'); $('hud').classList.add('hidden'); }
   $('turnBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp') fpNext(); else nextRound(); };
   function hud(){ const p=players[cur]; $('hudWho').textContent=p.name; $('hudRd').textContent='ROUND '+(round+1)+'/'+ROUNDS; $('hudSc').textContent=p.score; $('hud').classList.remove('hidden'); }
   function nextRound(){ if(round>=ROUNDS){ endTurn(); return; } hud(); let g; do{ g=rnd(GAMES.length); }while(GAMES.length>1 && g===lastGame); lastGame=g;
@@ -213,7 +213,7 @@
     $('tstop').addEventListener('click',stop); loop();
   }
   function engHold(cfg, done){
-    stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">'+cfg.hint+'</div><div class="glass"><div class="gband" id="gb"></div><div class="gfill" id="gf"></div><div class="gline" id="gl"><span class="lbl">'+(cfg.showLine?'여기':'')+'</span></div></div><button class="btn amber bigbtn" id="hb">'+cfg.label+'</button>';
+    stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">'+cfg.hint+'</div><div class="glass"><div class="gband" id="gb"></div><div class="gfill" id="gf"></div><div class="gline" id="gl"><span class="lbl">'+(cfg.showLine?'HERE':'')+'</span></div></div><button class="btn amber bigbtn" id="hb">'+cfg.label+'</button>';
     const target=cfg.target(), band=6; const gl=$('gl'); if(cfg.showLine){ gl.style.bottom=target+'%'; const gb=$('gb'); gb.style.bottom=(target-band)+'%'; gb.style.height=(band*2)+'%'; } else { gl.style.display='none'; }
     const gf=$('gf'); gf.style.background=gr(POUR_COLORS[rnd(POUR_COLORS.length)]); let h=0,hold=false,done_=false,raf,spd=0.8+Math.random()*0.35;
     function loop(){ if(done_) return; if(hold){ h+=spd; gf.style.height=Math.min(100,h)+'%'; if(h>=101){ fin(true); return; } } raf=requestAnimationFrame(loop); }
@@ -264,10 +264,10 @@
   function engMemory(cfg, done){
     const POOL=cfg.pool||IK, path=cfg.path||(k=>'assets/ing_'+k+'.png');
     const pool=sample(POOL, 4); const len=cfg.len; const seq=[]; for(let i=0;i<len;i++) seq.push(pool[rnd(pool.length)]);
-    stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">순서를 외워라!</div><div class="seqrow" id="sr"></div>';
+    stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">Memorize the order!</div><div class="seqrow" id="sr"></div>';
     const sr=$('sr'); let i=0;
     function reveal(){ if(i>=len){ setTimeout(input, 500); return; } sr.innerHTML='<span class="num">'+(i+1)+'</span><img src="'+path(seq[i])+'">'; beep(500+i*60,0.1); i++; setTimeout(reveal, 720); }
-    function input(){ stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">외운 순서대로 눌러라</div><div class="prog" id="pg"></div><div class="padgrid" id="pad"></div>';
+    function input(){ stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">Tap in the same order!</div><div class="prog" id="pg"></div><div class="padgrid" id="pad"></div>';
       const pg=$('pg'); for(let k=0;k<len;k++){ pg.appendChild(document.createElement('b')); }
       const pad=$('pad'); let idx=0,correct=0,answered=false;
       pool.forEach(k=>{ const d=document.createElement('div'); d.className='icell'; d.innerHTML='<img src="'+path(k)+'">';
@@ -314,7 +314,7 @@
   function engChampagne(done){
     fpLoad(); clLoad();
     stage.innerHTML='<div class="mgtitle">CHAMPAGNE LAUNCH</div>'
-      +'<div class="mghint">연타로 달리며 흔들어라 — 멈추면 파워가 빠르게 샌다! <b>LAUNCH를 꾹</b> 누르면 병이 들리며 각도가 오르고, 놓는 순간 발사. 45°가 최적, 벽에 닿으면 꽝!</div>'
+      +'<div class="mghint">Mash RUN to sprint & shake — stop tapping and power drains! <b>HOLD LAUNCH</b> to raise the angle, release to fire. 45° is best. Hit the wall = CRASH!</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
       +'<button class="btn amber" id="clTap" style="width:min(190px,44vw);height:70px;font-size:15px">RUN!</button>'
@@ -402,7 +402,7 @@
       if(state!=='intro'&&wallX>-40&&wallX<440){ ctx.fillStyle='#4a3520'; ctx.fillRect(wallX,GY-130,26,130);
         ctx.fillStyle='#c9a96e'; ctx.fillRect(wallX,GY-130,26,8);
         ctx.font='9px "Press Start 2P"'; ctx.textAlign='center'; ctx.fillStyle='#d9544d';
-        if(state==='run') ctx.fillText('벽!',wallX+13,GY-140); }
+        if(state==='run') ctx.fillText('WALL!',wallX+13,GY-140); }
       // 러너 (발사 후엔 제자리에 남는다)
       const runnerX=RX+(worldX-cam);
       if(runnerX>-120){
@@ -525,8 +525,8 @@
     fpLoad();
     const blind=!!cfg.blind;
     stage.innerHTML='<div class="mgtitle">'+(blind?'BLIND POUR':'FREE POUR MASTER')+'</div>'
-      +'<div class="mghint">30ml → 45ml → 60ml 3연속! 꾹 누르면 병이 완전히 뒤집힌다. '
-      +(blind?'카운터 없이 감으로!':'카운터를 보고 정확한 순간에 놓아라!')+'</div>'
+      +'<div class="mghint">30ml → 45ml → 60ml, three pours! Hold to flip the bottle. '
+      +(blind?'No counter — pour by feel!':'Watch the counter, release at the exact moment!')+'</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="fpb">HOLD TO POUR</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('fpb');
@@ -554,11 +554,11 @@
       parts.push({x,y,vx:Math.cos(a2)*95*v,vy:Math.sin(a2)*95*v-130*v,gv:430,r:2+Math.random()*3,c:cols[rnd(cols.length)],life:0.5+Math.random()*0.45}); } }
     function judge(){
       const err=ml-target, ae=Math.abs(err); let sc,txt,cls,quip;
-      if(ml>=g.cap-0.01){ sc=0; txt='SPILL!'; cls='miss'; quip=['사장님 등장!!','바닥이 더 마셨다…'][rnd(2)]; burst(GX,inTop,36,['#ffd977','#c87f1e','#d9544d'],1.3); }
-      else if(ae<=1.0){ sc=100; txt='PERFECT!'; cls='perfect'; quip=['손목에 신이 들렸다!!','이게 프로의 카운트다','소름 돋는 정확도'][rnd(3)]; }
-      else if(ae<=3.0){ sc=Math.round(95-(ae-1)*8); txt='GOOD'; cls='good'; quip=err<0?'반 박자 빨랐다':'반 박자 늦었다'; }
-      else if(ae<=6.0){ sc=Math.round(72-(ae-3)*7); txt=err<0?'TOO SHY':'TOO MUCH'; cls='miss'; quip=err<0?'손님이 째려본다…':'욕심이 과했다…'; }
-      else { sc=Math.max(0,Math.round(50-(ae-6)*4)); txt=err<0?'TOO SHY':'TOO MUCH'; cls='miss'; quip=err<0?'그건 향만 나는데?':'그건 더블인데?'; }
+      if(ml>=g.cap-0.01){ sc=0; txt='SPILL!'; cls='miss'; quip=['THE BOSS SAW THAT!!','The floor drank more…'][rnd(2)]; burst(GX,inTop,36,['#ffd977','#c87f1e','#d9544d'],1.3); }
+      else if(ae<=1.0){ sc=100; txt='PERFECT!'; cls='perfect'; quip=['Godlike wrist!!','A true pro count','Chilling accuracy'][rnd(3)]; }
+      else if(ae<=3.0){ sc=Math.round(95-(ae-1)*8); txt='GOOD'; cls='good'; quip=err<0?'Half a beat early':'Half a beat late'; }
+      else if(ae<=6.0){ sc=Math.round(72-(ae-3)*7); txt=err<0?'TOO SHY':'TOO MUCH'; cls='miss'; quip=err<0?'The guest is glaring…':'Got greedy…'; }
+      else { sc=Math.max(0,Math.round(50-(ae-6)*4)); txt=err<0?'TOO SHY':'TOO MUCH'; cls='miss'; quip=err<0?"That's just a mist?":"That's a double!"; }
       stampObj={txt,cls,quip,err}; stampT=lastT;
       pourErrs.push(Math.min(ae,99.99)); pourScores.push(sc);
       if(cls==='perfect'){ flash('#6fcf8f'); sGood(); setTimeout(()=>beep(1320,0.14,'square',0.12),140); burst(GX,lvlY(ml),44,['#ffd977','#6fcf8f','#e6b450','#fff'],1.4); }
@@ -712,7 +712,7 @@
   function startFpChallenge(){ mode='fp'; fpLoad(); fpPlayers=[]; for(let i=0;i<pn;i++) fpPlayers.push({name:'PLAYER '+(i+1),err:0,errs:[]});
     fpCur=0; fpTurn(); }
   function fpTurn(){ const p=fpPlayers[fpCur]; $('turnWho').textContent=p.name;
-    $('turnMsg').innerHTML='FREE POUR CHALLENGE<br>30ml → 45ml → 60ml<br>오차 합이 가장 적은 사람이 이긴다'; show('turn'); $('hud').classList.add('hidden'); }
+    $('turnMsg').innerHTML='FREE POUR CHALLENGE<br>30ml → 45ml → 60ml<br>Lowest total error wins'; show('turn'); $('hud').classList.add('hidden'); }
   function fpNext(){ const p=fpPlayers[fpCur];
     $('hudWho').textContent=p.name; $('hudRd').textContent='3 POURS'; $('hudSc').textContent='±0.00'; $('hud').classList.remove('hidden');
     show('game'); stage.innerHTML=''; let done_=false;
@@ -749,11 +749,11 @@
   function engIceCarve(done){
     fpLoad(); icLoad();
     stage.innerHTML='<div class="mgtitle">ICE CARVING</div>'
-      +'<div class="mghint">연타로 깎아라! 손을 놓으면 도로 언다. 완벽한 구가 되면 <b>완성!</b> — 15초 동안 최대한 많이. 덜 깎고 누르면 와장창!</div>'
+      +'<div class="mghint">Mash to carve! Let go and it refreezes. Perfect sphere? Hit <b>DONE!</b> — as many as you can in 15s. Too early = it shatters!</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
       +'<button class="btn amber" id="icTap" style="width:min(200px,46vw);height:70px;font-size:16px">TAP!</button>'
-      +'<button class="btn" id="icDone" style="width:min(140px,32vw);height:70px;font-size:13px">완성!</button></div>';
+      +'<button class="btn" id="icDone" style="width:min(140px,32vw);height:70px;font-size:13px">DONE!</button></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const ICEX=185, ICEY=392, ZONE=88, TOTAL=15000, ARM=1200, DECAY=38, TAPUP=9;
     let gauge=0, count=0, stunUntil=0, strikeT=-1e9, brokeT=-1e9, popT=0, finished=false, ended=false;
@@ -768,8 +768,8 @@
     function fin(e){ if(e)e.preventDefault(); ac(); if(!armed()||finished||now()<stunUntil||now()-t0-ARM>=TOTAL) return;
       if(gauge>=ZONE){ count++; gauge=0; popT=now(); sGood(); setTimeout(()=>beep(1400,0.1,'square',0.1),90);
         flyBalls.push({x:ICEX,y:ICEY-60,tx:22+((count-1)%12)*30,ty:66,t:now()});
-        msgs.push({txt:'볼 아이스 +1!',t:now()}); flash('#6fcf8f'); }
-      else { brokeT=now(); gauge=0; stunUntil=now()+600; shake=10; sBad(); msgs.push({txt:'와장창!!',t:now(),bad:1}); } }
+        msgs.push({txt:'+1 BALL ICE!',t:now()}); flash('#6fcf8f'); }
+      else { brokeT=now(); gauge=0; stunUntil=now()+600; shake=10; sBad(); msgs.push({txt:'SHATTERED!!',t:now(),bad:1}); } }
     const bT=$('icTap'), bD=$('icDone');
     bT.addEventListener('pointerdown',tap); bT.addEventListener('touchstart',tap,{passive:false});
     bD.addEventListener('pointerdown',fin); bD.addEventListener('touchstart',fin,{passive:false});
@@ -781,7 +781,7 @@
       const it=t-t0, elapsed=Math.max(0,it-ARM), left=Math.max(0,TOTAL-elapsed);
       if(armed()&&!finished&&left>0&&t>=stunUntil) gauge=Math.max(0,gauge-DECAY*dt);
       if(!finished&&armed()&&left<=0){ finished=true;
-        const sc=Math.min(100,count*22); const txt=count+'개 완성!';
+        const sc=Math.min(100,count*22); const txt=count+' BALLS!';
         const cls=count>=5?'perfect':(count>=3?'good':'miss');
         setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,txt,cls); },1400); }
       shake=Math.max(0,shake-dt*26);
@@ -849,7 +849,7 @@
       const grd2=ctx.createLinearGradient(0,gy2,0,gy1); grd2.addColorStop(0,'#4a89c9'); grd2.addColorStop(1,'#bfe6ff');
       ctx.fillStyle=grd2; ctx.fillRect(gx+2,fy,gw-4,gy2-fy);
       ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
-      ctx.fillStyle=inZone?'#6fcf8f':'#8a8d82'; ctx.fillText('완성',gx+gw/2,gy1-10);
+      ctx.fillStyle=inZone?'#6fcf8f':'#8a8d82'; ctx.fillText('DONE',gx+gw/2,gy1-10);
       // 타이머 + 카운트
       ctx.font='17px "Press Start 2P"'; ctx.textAlign='center';
       const secs=(left/1000).toFixed(1);
@@ -871,7 +871,7 @@
         ctx.font='22px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('TIME UP!',203,213); ctx.fillStyle='#e6b450'; ctx.fillText('TIME UP!',200,210);
         ctx.font='700 17px -apple-system,"Malgun Gothic",sans-serif';
-        ctx.fillStyle='#000'; ctx.fillText('볼 아이스 '+count+'개 완성!',201,251); ctx.fillStyle='#fff'; ctx.fillText('볼 아이스 '+count+'개 완성!',200,250); }
+        ctx.fillStyle='#000'; ctx.fillText('BALL ICE × '+count+'!',201,251); ctx.fillStyle='#fff'; ctx.fillText('BALL ICE × '+count+'!',200,250); }
     }
     raf=requestAnimationFrame(draw);
   }
@@ -889,7 +889,7 @@
   function engTipCatch(done){
     fpLoad(); tcLoad();
     stage.innerHTML='<div class="mgtitle">TIP CATCH</div>'
-      +'<div class="mghint">병을 좌우로 드래그해 쏟아지는 팁을 받아라! 영수증·고지서·병뚜껑이 들어가면 <b>-1</b>. 15초 동안 최대한 많이!</div>'
+      +'<div class="mghint">Drag the jar to catch the falling tips! Receipts, bills & caps are <b>-1</b>. 15 seconds — grab as many as you can!</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const LANES=[44,96,148,200,252,304,356], ARM=1200, TOTAL=15000, MOUTHY=330;
@@ -930,7 +930,7 @@
         if(o.y>474){ items.splice(i,1);
           parts.push({x:o.x,y:468,vx:0,vy:-30,gv:0,r:2,c:'#8a8d82',life:0.25}); } }
       if(!finished&&it>=ARM&&left<=0){ finished=true;
-        const sc=Math.min(100,Math.round(count*4.5)), txt=count+'개 팁!';
+        const sc=Math.min(100,Math.round(count*4.5)), txt=count+' TIPS!';
         const cls=count>=18?'perfect':(count>=10?'good':'miss');
         setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,txt,cls); },1400); }
       shake=Math.max(0,shake-dt*26);
@@ -983,7 +983,7 @@
         ctx.font='22px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('TIME UP!',203,213); ctx.fillStyle='#e6b450'; ctx.fillText('TIME UP!',200,210);
         ctx.font='700 17px -apple-system,"Malgun Gothic",sans-serif';
-        ctx.fillStyle='#000'; ctx.fillText('팁 '+count+'개 획득!',201,251); ctx.fillStyle='#fff'; ctx.fillText('팁 '+count+'개 획득!',200,250); }
+        ctx.fillStyle='#000'; ctx.fillText(count+' TIPS COLLECTED!',201,251); ctx.fillStyle='#fff'; ctx.fillText(count+' TIPS COLLECTED!',200,250); }
     }
     raf=requestAnimationFrame(draw);
   }
@@ -1007,7 +1007,7 @@
   function engQuickTab(done){
     fpLoad(); qtLoad();
     stage.innerHTML='<div class="mgtitle">QUICK TAB</div>'
-      +'<div class="mghint">손님 7명의 영수증 합계($)를 암산해서 입력! 빠를수록 고득점, 오답은 -20점</div>'
+      +'<div class="mghint">Add up all 7 tabs ($) in your head! Faster = more points, wrong answer = -20</div>'
       +'<canvas id="fpcv" width="400" height="480" style="height:min(40vh,420px)"></canvas>'
       +'<div id="qtPad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(290px,78vw)"></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), pad=$('qtPad');
@@ -1029,7 +1029,7 @@
         else { wrong++; input=''; badT=lastT; shake=7; sBad(); }
         return; }
       if(input.length<3){ input+=k; sTap(); } }
-    [['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['6','6'],['7','7'],['8','8'],['9','9'],['C','←지움'],['0','0'],['O','입력']].forEach(([k,label])=>{
+    [['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['6','6'],['7','7'],['8','8'],['9','9'],['C','CLR'],['0','0'],['O','OK']].forEach(([k,label])=>{
       const b=document.createElement('button'); b.className='btn'+(k==='O'?' amber':(k==='C'?' ghost':''));
       b.style.cssText='padding:11px 0;font-size:'+(k==='C'||k==='O'?'11px':'15px'); b.textContent=label;
       b.addEventListener('pointerdown',e=>{ e.preventDefault(); key(k); }); pad.appendChild(b); });
@@ -1037,7 +1037,7 @@
     function finish(){ state='end';
       const avg=roundScores.length?Math.round(roundScores.reduce((a,b)=>a+b,0)/7):0;
       const cls=avg>=80?'perfect':(avg>=50?'good':'miss');
-      setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(avg,'정산 완료!',cls); },1500); }
+      setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(avg,'TAB CLEARED!',cls); },1500); }
     function cleanup(){ cancelAnimationFrame(raf); }
     function draw(t){
       raf=requestAnimationFrame(draw);
@@ -1122,7 +1122,7 @@
         ctx.font='20px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('LAST CALL!',203,213); ctx.fillStyle='#e6b450'; ctx.fillText('LAST CALL!',200,210);
         ctx.font='700 16px -apple-system,"Malgun Gothic",sans-serif';
-        ctx.fillStyle='#000'; ctx.fillText('7명 정산 완료',201,249); ctx.fillStyle='#fff'; ctx.fillText('7명 정산 완료',200,248); }
+        ctx.fillStyle='#000'; ctx.fillText('ALL 7 TABS CLEARED',201,249); ctx.fillStyle='#fff'; ctx.fillText('ALL 7 TABS CLEARED',200,248); }
     }
     raf=requestAnimationFrame(draw);
   }
@@ -1137,7 +1137,7 @@
   function engShakeMaster(done){
     fpLoad(); smLoad();
     stage.innerHTML='<div class="mgtitle">SHAKE MASTER</div>'
-      +'<div class="mghint">폰을 두 손으로 잡고 13초 동안 미친 듯이 흔들어라! 많이 흔든 사람이 이긴다 (PC는 화면 연타)</div>'
+      +'<div class="mghint">Hold your phone with both hands and shake like crazy for 13s! Most shakes wins (PC: tap the screen)</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="smStart">START</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('smStart');
@@ -1210,8 +1210,8 @@
         const lg2=SM.imgs.logo; if(lg2){ const k=1+Math.sin(t/400)*0.02, lw=360*k, lh=lw*(lg2.height/lg2.width);
           ctx.drawImage(lg2,200-lw/2,190-lh/2,lw,lh); }
         ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif';
-        ctx.fillStyle='#000'; ctx.fillText('START를 누르면 센서 권한을 물어봅니다',201,373);
-        ctx.fillStyle='#e8e6dd'; ctx.fillText('START를 누르면 센서 권한을 물어봅니다',200,372); }
+        ctx.fillStyle='#000'; ctx.fillText('Press START to allow the motion sensor',201,373);
+        ctx.fillStyle='#e8e6dd'; ctx.fillText('Press START to allow the motion sensor',200,372); }
       if(state==='hold'){ ctx.font='16px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('HOLD YOUR PHONE',203,133); ctx.fillText('WITH BOTH HANDS!',203,163);
         ctx.fillStyle='#ffd977'; ctx.fillText('HOLD YOUR PHONE',200,130); ctx.fillText('WITH BOTH HANDS!',200,160); }
@@ -1243,55 +1243,55 @@
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
     // 타이밍
-    { name:'JIGGER STOP', cat:'타이밍', run:d=>engTiming({title:'JIGGER STOP',hint:'초록 계량칸에 딱 멈춰라',zone:0.20,speed:3.2},d) },
-    { name:'FLAIR CATCH', cat:'타이밍', run:d=>engTiming({title:'FLAIR CATCH',hint:'날아오는 병을 제 타이밍에 받아라',zone:0.16,speed:4.2},d) },
-    { name:'GARNISH LAND', cat:'타이밍', run:d=>engTiming({title:'GARNISH LAND',hint:'가니쉬를 잔 위에 정확히 얹어라',zone:0.24,speed:2.6},d) },
-    { name:'STIR STOP', cat:'타이밍', run:d=>engTiming({title:'STIR STOP',hint:'완벽한 순간에 스터를 멈춰라',zone:0.19,speed:3.6},d) },
-    { name:'TORCH BRULEE', cat:'타이밍', run:d=>engTiming({title:'TORCH BRÛLÉE',hint:'딱 알맞게 그을려라 (초록칸)',zone:0.18,speed:3.9},d) },
-    { name:'STRAIN POUR', cat:'타이밍', run:d=>engTiming({title:'STRAIN POUR',hint:'스트레이너 타이밍에 멈춰라',zone:0.22,speed:3.0},d) },
-    { name:'DROP IN', cat:'타이밍', run:d=>engTiming({title:'DROP IN',hint:'셰이커 입구(초록칸)에 재료를 투하!',zone:0.17,speed:4.0},d) },
+    { name:'JIGGER STOP', cat:'TIMING', run:d=>engTiming({title:'JIGGER STOP',hint:'Stop right in the green zone!',zone:0.20,speed:3.2},d) },
+    { name:'FLAIR CATCH', cat:'TIMING', run:d=>engTiming({title:'FLAIR CATCH',hint:'Catch the flying bottle at the right moment!',zone:0.16,speed:4.2},d) },
+    { name:'GARNISH LAND', cat:'TIMING', run:d=>engTiming({title:'GARNISH LAND',hint:'Land the garnish right on the glass!',zone:0.24,speed:2.6},d) },
+    { name:'STIR STOP', cat:'TIMING', run:d=>engTiming({title:'STIR STOP',hint:'Stop the stir at the perfect moment!',zone:0.19,speed:3.6},d) },
+    { name:'TORCH BRULEE', cat:'TIMING', run:d=>engTiming({title:'TORCH BRÛLÉE',hint:'Torch it just right (green zone)!',zone:0.18,speed:3.9},d) },
+    { name:'STRAIN POUR', cat:'TIMING', run:d=>engTiming({title:'STRAIN POUR',hint:'Stop at the strainer timing!',zone:0.22,speed:3.0},d) },
+    { name:'DROP IN', cat:'TIMING', run:d=>engTiming({title:'DROP IN',hint:'Drop it into the shaker mouth (green zone)!',zone:0.17,speed:4.0},d) },
     // 홀드
-    { name:'FREE POUR MASTER', cat:'홀드', run:d=>engFreePour({},d) },
-    { name:'BLIND POUR', cat:'홀드', run:d=>engFreePour({blind:true},d) },
-    { name:'CITRUS SQUEEZE', cat:'홀드', run:d=>engHold({title:'CITRUS SQUEEZE',hint:'라임즙을 목표선까지 짜라',label:'HOLD TO SQUEEZE',showLine:true,target:()=>44+rnd(26)},d) },
-    { name:'BEER HEAD', cat:'홀드', run:d=>engHold({title:'BEER HEAD',hint:'거품(헤드)까지 딱 맞게 따라라',label:'HOLD TO POUR',showLine:true,target:()=>70+rnd(16)},d) },
+    { name:'FREE POUR MASTER', cat:'HOLD', run:d=>engFreePour({},d) },
+    { name:'BLIND POUR', cat:'HOLD', run:d=>engFreePour({blind:true},d) },
+    { name:'CITRUS SQUEEZE', cat:'HOLD', run:d=>engHold({title:'CITRUS SQUEEZE',hint:'Squeeze lime juice up to the target line!',label:'HOLD TO SQUEEZE',showLine:true,target:()=>44+rnd(26)},d) },
+    { name:'BEER HEAD', cat:'HOLD', run:d=>engHold({title:'BEER HEAD',hint:'Pour a perfect head of foam!',label:'HOLD TO POUR',showLine:true,target:()=>70+rnd(16)},d) },
     // 연타
-    { name:'SHAKE IT', cat:'연타', run:d=>engMash({title:'SHAKE IT!',hint:'시간 안에 최대한 빠르게 흔들어라',img:'proj_shaker',goal:42,dur:3800,label:'SHAKE!'},d) },
-    { name:'ICE SMASH', cat:'연타', run:d=>engMash({title:'ICE SMASH',hint:'얼음을 마구 깨부숴라',emoji:'🧊',goal:40,dur:3600,label:'SMASH!'},d) },
-    { name:'ICE CARVING', cat:'연타', run:d=>engIceCarve(d) },
-    { name:'MUDDLE', cat:'연타', run:d=>engMash({title:'MUDDLE',hint:'민트를 힘껏 짓이겨라',emoji:'🌿',goal:38,dur:3600,label:'MUDDLE!'},d) },
-    { name:'CORK POP', cat:'연타', run:d=>engMash({title:'CORK POP',hint:'코르크를 마구 비틀어 뽑아라',emoji:'🍾',goal:36,dur:3400,label:'TWIST!'},d) },
-    { name:'BLEND', cat:'연타', run:d=>engMash({title:'BLEND',hint:'블렌더를 최고속으로 돌려라',emoji:'🌀',goal:44,dur:3600,label:'BLEND!'},d) },
+    { name:'SHAKE IT', cat:'MASH', run:d=>engMash({title:'SHAKE IT!',hint:'Shake as fast as you can!',img:'proj_shaker',goal:42,dur:3800,label:'SHAKE!'},d) },
+    { name:'ICE SMASH', cat:'MASH', run:d=>engMash({title:'ICE SMASH',hint:'Smash the ice to bits!',emoji:'🧊',goal:40,dur:3600,label:'SMASH!'},d) },
+    { name:'ICE CARVING', cat:'MASH', run:d=>engIceCarve(d) },
+    { name:'MUDDLE', cat:'MASH', run:d=>engMash({title:'MUDDLE',hint:'Muddle that mint hard!',emoji:'🌿',goal:38,dur:3600,label:'MUDDLE!'},d) },
+    { name:'CORK POP', cat:'MASH', run:d=>engMash({title:'CORK POP',hint:'Twist the cork out like mad!',emoji:'🍾',goal:36,dur:3400,label:'TWIST!'},d) },
+    { name:'BLEND', cat:'MASH', run:d=>engMash({title:'BLEND',hint:'Run the blender at full speed!',emoji:'🌀',goal:44,dur:3600,label:'BLEND!'},d) },
     // 리듬
-    { name:'SHAKE RHYTHM', cat:'리듬', run:d=>engRhythm({title:'SHAKE RHYTHM',hint:'박자에 맞춰 셰이킹!',beats:8,interval:600},d) },
-    { name:'STIR RHYTHM', cat:'리듬', run:d=>engRhythm({title:'STIR RHYTHM',hint:'느린 박자에 맞춰 스터',beats:6,interval:760},d) },
+    { name:'SHAKE RHYTHM', cat:'RHYTHM', run:d=>engRhythm({title:'SHAKE RHYTHM',hint:'Shake on the beat!',beats:8,interval:600},d) },
+    { name:'STIR RHYTHM', cat:'RHYTHM', run:d=>engRhythm({title:'STIR RHYTHM',hint:'Stir to the slow beat!',beats:6,interval:760},d) },
     // 다단계
-    { name:'CHAMPAGNE LAUNCH', cat:'스페셜', run:d=>engChampagne(d) },
-    { name:'SHAKE MASTER', cat:'스페셜', run:d=>engShakeMaster(d) },
+    { name:'CHAMPAGNE LAUNCH', cat:'SPECIAL', run:d=>engChampagne(d) },
+    { name:'SHAKE MASTER', cat:'SPECIAL', run:d=>engShakeMaster(d) },
     // 퀴즈
-    { name:'GUESS COCKTAIL', cat:'퀴즈', run:d=>{ const ans=CK[rnd(CK.length)]; const opts=shuffle([ans,...sample(CK.filter(k=>k!==ans),3)]).map(k=>({label:COCKTAILS[k],correct:k===ans}));
-        engChoiceText({title:'GUESS THE COCKTAIL',hint:'이미지 보고 이름 맞히기',promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
-    { name:'NAME SPIRIT', cat:'퀴즈', run:d=>{ const ans=SP[rnd(SP.length)]; const opts=shuffle([ans,...sample(SP.filter(k=>k!==ans),3)]).map(k=>({label:SPIRITS[k],correct:k===ans}));
-        engChoiceText({title:'NAME THE SPIRIT',hint:'베이스 스피릿을 맞혀라',promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
-    { name:'RECIPE MATCH', cat:'퀴즈', run:d=>{ const ans=RK[rnd(RK.length)]; const icons=RECIPES[ans].map(k=>'<img src="assets/ing_'+k+'.png">').join(''); const opts=shuffle([ans,...sample(CK.filter(k=>k!==ans),3)]).map(k=>({label:COCKTAILS[k],correct:k===ans}));
-        engChoiceText({title:'RECIPE MATCH',hint:'이 재료들의 칵테일은?',promptHTML:'<div class="qicons">'+icons+'</div>',options:opts},d); } },
-    { name:'GARNISH MATCH', cat:'퀴즈', run:d=>{ const ans=GK[rnd(GK.length)]; const g=GARNISH[ans]; const opts=shuffle([g,...sample(GARNISH_SET.filter(x=>x!==g),3)]).map(x=>({label:x,correct:x===g}));
-        engChoiceText({title:'GARNISH MATCH',hint:'이 칵테일의 가니쉬는?',promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
-    { name:'FIND INGREDIENT', cat:'퀴즈', run:d=>{ const ans=IK[rnd(IK.length)]; const cells=shuffle([ans,...sample(IK.filter(k=>k!==ans),5)]).map(k=>({src:'assets/ing_'+k+'.png',correct:k===ans}));
-        engChoiceIcon({title:'FIND: '+ING[ans],hint:ING[ans]+' 재료를 찾아 탭!',cells},d); } },
-    { name:'ODD ONE OUT', cat:'퀴즈', run:d=>{ const base=IK[rnd(IK.length)]; let odd; do{ odd=IK[rnd(IK.length)]; }while(odd===base); const cells=[]; for(let i=0;i<6;i++) cells.push({src:'assets/ing_'+base+'.png',correct:false}); cells[rnd(6)]={src:'assets/ing_'+odd+'.png',correct:true};
-        engChoiceIcon({title:'ODD ONE OUT',hint:'다른 하나를 찾아 탭!',cells,dur:4200},d); } },
-    { name:'QUICK TAB', cat:'퀴즈', run:d=>engQuickTab(d) },
+    { name:'GUESS COCKTAIL', cat:'QUIZ', run:d=>{ const ans=CK[rnd(CK.length)]; const opts=shuffle([ans,...sample(CK.filter(k=>k!==ans),3)]).map(k=>({label:COCKTAILS[k],correct:k===ans}));
+        engChoiceText({title:'GUESS THE COCKTAIL',hint:'Name the cocktail from the picture!',promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
+    { name:'NAME SPIRIT', cat:'QUIZ', run:d=>{ const ans=SP[rnd(SP.length)]; const opts=shuffle([ans,...sample(SP.filter(k=>k!==ans),3)]).map(k=>({label:SPIRITS[k],correct:k===ans}));
+        engChoiceText({title:'NAME THE SPIRIT',hint:'Guess the base spirit!',promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
+    { name:'RECIPE MATCH', cat:'QUIZ', run:d=>{ const ans=RK[rnd(RK.length)]; const icons=RECIPES[ans].map(k=>'<img src="assets/ing_'+k+'.png">').join(''); const opts=shuffle([ans,...sample(CK.filter(k=>k!==ans),3)]).map(k=>({label:COCKTAILS[k],correct:k===ans}));
+        engChoiceText({title:'RECIPE MATCH',hint:'Which cocktail uses these?',promptHTML:'<div class="qicons">'+icons+'</div>',options:opts},d); } },
+    { name:'GARNISH MATCH', cat:'QUIZ', run:d=>{ const ans=GK[rnd(GK.length)]; const g=GARNISH[ans]; const opts=shuffle([g,...sample(GARNISH_SET.filter(x=>x!==g),3)]).map(x=>({label:x,correct:x===g}));
+        engChoiceText({title:'GARNISH MATCH',hint:"This cocktail's garnish is?",promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
+    { name:'FIND INGREDIENT', cat:'QUIZ', run:d=>{ const ans=IK[rnd(IK.length)]; const cells=shuffle([ans,...sample(IK.filter(k=>k!==ans),5)]).map(k=>({src:'assets/ing_'+k+'.png',correct:k===ans}));
+        engChoiceIcon({title:'FIND: '+ING[ans],hint:'Find & tap the '+ING[ans]+'!',cells},d); } },
+    { name:'ODD ONE OUT', cat:'QUIZ', run:d=>{ const base=IK[rnd(IK.length)]; let odd; do{ odd=IK[rnd(IK.length)]; }while(odd===base); const cells=[]; for(let i=0;i<6;i++) cells.push({src:'assets/ing_'+base+'.png',correct:false}); cells[rnd(6)]={src:'assets/ing_'+odd+'.png',correct:true};
+        engChoiceIcon({title:'ODD ONE OUT',hint:'Find the odd one and tap it!',cells,dur:4200},d); } },
+    { name:'QUICK TAB', cat:'QUIZ', run:d=>engQuickTab(d) },
     // 기억
-    { name:'ORDER MEMORY', cat:'기억', run:d=>engMemory({title:'ORDER MEMORY',len:4},d) },
-    { name:'TAB ORDER', cat:'기억', run:d=>engMemory({title:'TAB ORDER',len:3,pool:CK,path:k=>'assets/cocktail_'+k+'.png'},d) },
+    { name:'ORDER MEMORY', cat:'MEMORY', run:d=>engMemory({title:'ORDER MEMORY',len:4},d) },
+    { name:'TAB ORDER', cat:'MEMORY', run:d=>engMemory({title:'TAB ORDER',len:3,pool:CK,path:k=>'assets/cocktail_'+k+'.png'},d) },
     // 반응
-    { name:'TIP CATCH', cat:'반응', run:d=>engTipCatch(d) },
-    { name:'LAST CALL RUSH', cat:'반응', run:d=>engReaction({title:'LAST CALL RUSH',hint:'주문을 빠르게 쳐내라!',img:()=>'assets/cocktail_'+CK[rnd(CK.length)]+'.png',goal:11,dur:6000,gap:()=>360},d) },
-    { name:'SPILL WIPE', cat:'반응', run:d=>engReaction({title:'SPILL WIPE',hint:'흘린 것을 빠르게 치워라!',img:()=>'assets/ing_'+['bubble','droplet','water','lime','lemon'][rnd(5)]+'.png',goal:12,dur:6000,gap:()=>320},d) },
-    { name:'FLY SWAT', cat:'반응', run:d=>engReaction({title:'FLY SWAT',hint:'초파리를 잡아라!',emoji:['🪰','🦟'],goal:10,dur:6000,gap:()=>380,life:900},d) },
+    { name:'TIP CATCH', cat:'REFLEX', run:d=>engTipCatch(d) },
+    { name:'LAST CALL RUSH', cat:'REFLEX', run:d=>engReaction({title:'LAST CALL RUSH',hint:'Clear the orders fast!',img:()=>'assets/cocktail_'+CK[rnd(CK.length)]+'.png',goal:11,dur:6000,gap:()=>360},d) },
+    { name:'SPILL WIPE', cat:'REFLEX', run:d=>engReaction({title:'SPILL WIPE',hint:'Wipe up the spills fast!',img:()=>'assets/ing_'+['bubble','droplet','water','lime','lemon'][rnd(5)]+'.png',goal:12,dur:6000,gap:()=>320},d) },
+    { name:'FLY SWAT', cat:'REFLEX', run:d=>engReaction({title:'FLY SWAT',hint:'Swat the fruit flies!',emoji:['🪰','🦟'],goal:10,dur:6000,gap:()=>380,life:900},d) },
   ];
-  document.getElementById('subCount').textContent='바텐더 미니게임 '+GAMES.length+'종';
+  document.getElementById('subCount').textContent='BARTENDER MINIGAMES × '+GAMES.length;
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
