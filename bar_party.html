@@ -85,7 +85,7 @@
     border:none; background:#000; touch-action:none; image-rendering:pixelated; }
   #game{ padding:0 0 6px; gap:5px; justify-content:flex-start; }
   #game #stage{ flex:1 1 auto; min-height:0; width:100%; gap:6px; }
-  #gameLogo{ max-height:60px; width:auto; max-width:80vw; margin-top:8px; image-rendering:pixelated; display:none; }
+  #gameLogo{ max-height:72px; width:auto; max-width:80vw; margin-top:8px; image-rendering:pixelated; display:none; }
   /* 비시바시 타이틀 */
   /* 주의: position:relative를 주면 .screen의 absolute inset:0이 무효화되어 화면이 안 차게 됨 */
   /* 배경은 폰 비율(720x1560) 전용 제작본 — cover로 항상 꽉 참 */
@@ -388,10 +388,8 @@
   const GLOGO_PFX={ 'FREE POUR MASTER':'fp','BLIND POUR':'fp','STIR STOP':'st','ICE CARVING':'ic','CHAMPAGNE LAUNCH':'cl',
     'SHAKE MASTER':'sm','QUICK TAB':'qt','ORDER UP!':'ou','WHERE IS MY SHOT?':'ws','FRESH SQUEEZE':'sq','TIP CATCH':'tc','FLY SWAT':'fs' };
   function loadLogo(pfx,cb){ if(GLOGO[pfx]){ if(cb)cb(); return; }
-    const im=new Image(); im.onload=()=>{ try{ const c=fpKeyUI(im,520);
-      const g=c.getContext('2d'); const dd=g.getImageData(0,0,c.width,c.height); const p=dd.data;
-      for(let i=0;i<p.length;i+=4){ if(p[i+3]>0&&p[i]>243&&p[i+1]>243&&p[i+2]>243) p[i+3]=0; }
-      g.putImageData(dd,0,0); GLOGO[pfx]=c.toDataURL(); }catch(e){} if(cb)cb(); };
+    // 로고는 일러스트 재작업본(투명 배경) — 키잉 없이 원본 그대로 (화질 유지)
+    const im=new Image(); im.onload=()=>{ GLOGO[pfx]='assets/'+pfx+'_logo.png'; if(cb)cb(); };
     im.onerror=()=>{ if(cb)cb(); };
     im.src='assets/'+pfx+'_logo.png'; }
   function showGameLogo(name){ const el=$('gameLogo'); const pfx=GLOGO_PFX[name];
@@ -514,7 +512,7 @@
   const CL={ imgs:{}, loading:false };
   function clLoad(){ if(CL.loading) return; CL.loading=true;
     const srcs={ run1:['cl_run1',420], run2:['cl_run2',420], run3:['cl_run3',420], run4:['cl_run4',420], run5:['cl_run5',420],
-      skid:['cl_skid',440], cork:['cl_cork',200], logo:['cl_logo',560,224,1] };
+      skid:['cl_skid',440], cork:['cl_cork',200], logo:['cl_logo',560] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ CL.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engChampagne(done){
     fpLoad(); clLoad();
@@ -720,7 +718,7 @@
       g.putImageData(dd,0,0); }catch(e){}
     return c; }
   function fpLoad(){ if(FP.loading) return; FP.loading=true; gbLoad();
-    const srcs={ bg:['fp_bg',0], bottle:['fp_bottle',620], logo:['fp_logo',540,224,1], shot:['fp_shot',440], jigger:['fp_jigger',440], rocks:['fp_rocks',440] };
+    const srcs={ bg:['fp_bg',0], bottle:['fp_bottle',620], logo:['fp_logo',540], shot:['fp_shot',440], jigger:['fp_jigger',440], rocks:['fp_rocks',440] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FP.imgs[k]=srcs[k][1]?fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]):im; }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   // 잔 스펙: cap/target = ml (1oz=30ml). in = 잔 내부 영역(그린 크기 대비 비율)
   const FP_GLASS=[
@@ -946,7 +944,7 @@
   // 연타로 게이지를 올려 얼음을 구로 깎고(안 누르면 빠르게 감소) 완성 존에서 완성! — 15초 동안 최대 개수
   const IC={ imgs:{}, loading:false, stages:null };
   function icLoad(){ if(IC.loading) return; IC.loading=true;
-    const srcs={ ice:['ic_ice',900], pick:['ic_pick',520], broke:['ic_broke',420], logo:['ic_logo',560,224,1] };
+    const srcs={ ice:['ic_ice',900], pick:['ic_pick',520], broke:['ic_broke',420], logo:['ic_logo',560] };
     Object.keys(srcs).forEach(k=>{ const im=new Image();
       im.onload=()=>{ IC.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); if(k==='ice') icSegment(); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function icSegment(){ // 5단계 시트를 알파 열 스캔으로 자동 분리
@@ -1092,7 +1090,7 @@
   // 7개 지점에서 쏟아지는 팁을 병을 드래그해 받아라 — 15초 최대 개수, 팁 아닌 게 들어가면 -1
   const TC={ imgs:{}, loading:false };
   function tcLoad(){ if(TC.loading) return; TC.loading=true;
-    const keyed={ jar:['tc_jar',520], receipt:['tc_receipt',300], env:['tc_env',320], cap:['tc_cap',300], logo:['tc_logo',560,224,1] };
+    const keyed={ jar:['tc_jar',520], receipt:['tc_receipt',300], env:['tc_env',320], cap:['tc_cap',300], logo:['tc_logo',560] };
     Object.keys(keyed).forEach(k=>{ const im=new Image(); im.onload=()=>{ TC.imgs[k]=fpKey(im,keyed[k][1]); }; im.src='assets/'+keyed[k][0]+'.png'; });
     const raw={ bill10:'bill_10000', bill50:'bill_50000', coin:'coin_gold',
       bottle1:'bottle_whiskey', bottle2:'bottle_gin', bottle3:'bottle_rum' }; // 기존 스프라이트 재활용(이미 투명)
@@ -1201,7 +1199,7 @@
   // 손님이 내민 영수증의 달러 합계를 키패드로 빠르게 암산 입력 — 품목 4→10개, 손님 7명 전원 정산
   const QT={ imgs:{}, loading:false };
   function qtLoad(){ if(QT.loading) return; QT.loading=true;
-    const srcs={ receipt:['qt_receipt',420], register:['qt_register',520], logo:['qt_logo',560,224,1],
+    const srcs={ receipt:['qt_receipt',420], register:['qt_register',520], logo:['qt_logo',560],
       c1:['qt_cust1',420], c2:['qt_cust2',420], c3:['qt_cust3',420], c4:['qt_cust4',420], c5:['qt_cust5',420], c6:['qt_cust6',420], c7:['qt_cust7',420] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ QT.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]);
       if(k==='receipt'){ const c=QT.imgs.receipt, w=c.width, h=c.height, d=c.getContext('2d').getImageData(0,0,w,h).data;
@@ -1339,7 +1337,7 @@
   const SM={ imgs:{}, loading:false };
   function smLoad(){ if(SM.loading) return; SM.loading=true;
     const srcs={ ice1:['sm_ice1',420], ice2:['sm_ice2',420], ice3:['sm_ice3',420],
-      cap1:['sm_cap1',420], cap2:['sm_cap2',420], closed:['sm_closed',420], logo:['sm_logo',600,224,1] };
+      cap1:['sm_cap1',420], cap2:['sm_cap2',420], closed:['sm_closed',420], logo:['sm_logo',600] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ SM.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engShakeMaster(done){
     fpLoad(); smLoad();
@@ -1459,7 +1457,7 @@
   const ST={ imgs:{}, loading:false };
   function stLoad(){ if(ST.loading) return; ST.loading=true;
     const srcs={ glass:['st_glass',420], ice1:['st_ice1',420], ice2:['st_ice2',420],
-      top:['st_top',560], spoon:['st_spoon',560], logo:['st_logo',560,224,1] };
+      top:['st_top',560], spoon:['st_spoon',560], logo:['st_logo',560] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ ST.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engStirStop(done){
     fpLoad(); stLoad();
@@ -1586,7 +1584,7 @@
   // 과일 바구니에 꼬이는 파리들을 탭 사격으로 잡아라 — 인트로: 큰 파리가 윙윙 돌다 바구니에 앉는 순간 펑!
   const FS={ imgs:{}, loading:false };
   function fsLoad(){ if(FS.loading) return; FS.loading=true;
-    const srcs={ logo:['fs_logo',600,224,1], bigfly:['fs_bigfly',420], fly1:['fs_fly1',260], fly2:['fs_fly2',260],
+    const srcs={ logo:['fs_logo',600], bigfly:['fs_bigfly',420], fly1:['fs_fly1',260], fly2:['fs_fly2',260],
       basket:['fs_basket',520], basket2:['fs_basket2',520], basket3:['fs_basket3',520] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FS.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function fsBuzz(){ const a=ac(); if(!a) return null; try{
@@ -1749,7 +1747,7 @@
   const OU={ imgs:{}, loading:false };
   const OU_MENU=['OLD FASHIONED','MARTINI','MARGARITA','MOJITO','HIGHBALL','NEGRONI','ESP. MARTINI','PINA COLADA','BLOODY MARY','WHISKY SOUR'];
   function ouLoad(){ if(OU.loading) return; OU.loading=true;
-    const srcs={ pos:['ou_pos',560], logo:['ou_logo',560,224,1] };
+    const srcs={ pos:['ou_pos',560], logo:['ou_logo',560] };
     for(let i=0;i<10;i++) srcs['ck'+i]=['ou_ck'+i,240];
     for(let i=1;i<=8;i++) srcs['cu'+i]=['ou_cu'+i,340,198]; // 손님은 임계값 낮춰 흰 배경 잔재 제거
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ OU.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
@@ -1901,7 +1899,7 @@
   // 야바위: 샷잔이 뚜껑에 숨고 섞인다 — 맞히면 다음 라운드(뚜껑 2→5개, 점점 빠름), 틀리면 끝
   const WS={ imgs:{}, loading:false };
   function wsLoad(){ if(WS.loading) return; WS.loading=true;
-    const srcs={ cover:['ws_cover',420,185], shot:['ws_shot',260,185], logo:['ws_logo',560,224,1] };
+    const srcs={ cover:['ws_cover',420,185], shot:['ws_shot',260,185], logo:['ws_logo',560] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ WS.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engWhereShot(done){
     fpLoad(); wsLoad();
