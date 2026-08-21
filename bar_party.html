@@ -87,7 +87,9 @@
   #game #stage{ flex:1 1 auto; min-height:0; width:100%; gap:6px; }
   #gameLogo{ max-height:60px; width:auto; max-width:80vw; margin-top:8px; image-rendering:pixelated; display:none; }
   /* 비시바시 타이틀 */
-  #title{ background:#0d0f0c url('assets/bp_title_bg.jpg') center/cover no-repeat; position:relative;
+  /* 주의: position:relative를 주면 .screen의 absolute inset:0이 무효화되어 화면이 안 차게 됨 */
+  #title{ background:url('assets/bp_title_bg.jpg') top center/100% auto no-repeat,
+      linear-gradient(#241209 0%,#140b06 55%,#0d0f0c 100%); background-color:#120a06;
     justify-content:space-evenly; gap:8px; padding:34px 16px 26px; }
   #decoCv{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
   #title>*:not(#decoCv){ position:relative; z-index:1; }
@@ -1353,16 +1355,21 @@
       count++; wob=1; lastShakeT=now(); sTap(); if(count%10===0) beep(880,0.06,'square',0.1);
       for(let j=0;j<3;j++) parts.push({x:200+(Math.random()*80-40),y:250+(Math.random()*100-50),
         vx:(Math.random()*2-1)*160,vy:(Math.random()*2-1)*160,gv:500,r:1.6+Math.random()*1.8,c:['#bfe6ff','#fff','#dff1ff'][rnd(3)],life:0.35}); }
-    function onMotion(e){ let mag=null;
+    let gotMotion=false, permMsg='';
+    function onMotion(e){ gotMotion=true; let mag=null;
       const a=e.acceleration;
       if(a&&a.x!=null) mag=Math.hypot(a.x||0,a.y||0,a.z||0);
       else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null) mag=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81); }
-      if(mag!=null&&mag>13&&now()-lastShakeT>130) addShake(); }
-    function begin(){ btn.style.display='none'; ac(); state='ice'; stT=now();
+      if(mag!=null&&mag>11&&now()-lastShakeT>130) addShake(); }
+    function begin(){ btn.style.display='none'; permMsg=''; ac(); state='ice'; stT=now();
       try{ window.addEventListener('devicemotion',onMotion); }catch(e){} }
-    btn.addEventListener('pointerdown',e=>{ e.preventDefault(); if(state!=='title') return;
-      try{ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function')
-        DeviceMotionEvent.requestPermission().then(begin).catch(begin);
+    // iOS는 사용자 제스처(click) 안에서 requestPermission을 불러야 수락 팝업이 뜸
+    btn.addEventListener('click',e=>{ e.preventDefault(); if(state!=='title') return; ac();
+      try{ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
+        DeviceMotionEvent.requestPermission().then(res=>{
+          if(res==='granted') begin();
+          else { permMsg='MOTION DENIED! ALLOW IN SETTINGS & RETRY'; sBad(); } })
+        .catch(()=>{ permMsg='TAP START AGAIN TO ALLOW MOTION'; }); }
       else begin(); }catch(err){ begin(); } });
     // 탭 폴백 제거 — 실제 폰 흔들기(모션 센서)로만 카운트
     function cleanup(){ cancelAnimationFrame(raf); try{ window.removeEventListener('devicemotion',onMotion); }catch(e){} }
@@ -1413,7 +1420,12 @@
           ctx.drawImage(lg2,200-lw/2,190-lh/2,lw,lh); }
         ctx.font='9px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('PRESS START TO ALLOW',201,363); ctx.fillText('THE MOTION SENSOR',201,383);
-        ctx.fillStyle='#e8e6dd'; ctx.fillText('PRESS START TO ALLOW',200,362); ctx.fillText('THE MOTION SENSOR',200,382); }
+        ctx.fillStyle='#e8e6dd'; ctx.fillText('PRESS START TO ALLOW',200,362); ctx.fillText('THE MOTION SENSOR',200,382);
+        if(permMsg){ ctx.font='8px "Press Start 2P"';
+          ctx.fillStyle='#000'; ctx.fillText(permMsg,201,411); ctx.fillStyle='#ff7a6a'; ctx.fillText(permMsg,200,410); } }
+      if(state==='play'&&!gotMotion&&t-playT0>2500){ ctx.font='8px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText('NO MOTION? CHECK SENSOR PERMISSION',201,411);
+        ctx.fillStyle='#ff7a6a'; ctx.fillText('NO MOTION? CHECK SENSOR PERMISSION',200,410); }
       if(state==='hold'){ ctx.font='16px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('HOLD YOUR PHONE',203,133); ctx.fillText('WITH BOTH HANDS!',203,163);
         ctx.fillStyle='#ffd977'; ctx.fillText('HOLD YOUR PHONE',200,130); ctx.fillText('WITH BOTH HANDS!',200,160); }
@@ -2184,9 +2196,10 @@
   ];
   document.getElementById('subCount').textContent="BARTENDER'S MINIGAMES × "+GAMES.length;
 
-  // 모바일 주소창 변동에도 화면이 항상 실제 보이는 높이에 꽉 차게
+  // 모바일 주소창 변동에도 화면이 항상 실제 보이는 높이에 꽉 차게 (인앱 브라우저는 늦게 안정화되므로 재측정)
   function fitVH(){ try{ $('wrap').style.height=window.innerHeight+'px'; }catch(e){} }
-  window.addEventListener('resize',fitVH); fitVH();
+  window.addEventListener('resize',fitVH); window.addEventListener('orientationchange',fitVH);
+  fitVH(); setTimeout(fitVH,400); setTimeout(fitVH,1500);
   // 프리로드: 타이틀/리스트 필수분만 즉시, 게임 에셋은 지연 워밍 (각 게임은 진입 시 자기 로더 호출)
   frLoad();
   setTimeout(()=>{ [...new Set(Object.values(GLOGO_PFX))].forEach(p=>loadLogo(p)); },1800); // 게임 로고 선로딩 (start 탭 즉시 표시)
@@ -2237,7 +2250,8 @@
       if($('title').classList.contains('hidden')){ last=t; return; }
       const dt=Math.min(0.05,(t-last)/1000); last=t;
       const W=dcv.width,H=dcv.height; ctx2.clearRect(0,0,W,H);
-      for(const o of items){ const kk=46/o.sp.height, hw=o.sp.width*kk/2, hh=23;
+      const cap=Math.max(26,Math.min(W,H)*0.10); // 데코 크기: 화면 짧은 변의 10% 이내 (폰 비율 유지)
+      for(const o of items){ const kk=Math.min(cap/o.sp.height,cap/o.sp.width), hw=o.sp.width*kk/2, hh=o.sp.height*kk/2;
         o.vy+=760*dt; o.x+=o.vx*dt; o.y+=o.vy*dt; o.rot+=o.rv*dt;
         if(o.y>H-hh){ o.y=H-hh; o.vy=-Math.abs(o.vy)*0.82-60-Math.random()*90; o.vx+=(Math.random()*2-1)*70; o.rv=(Math.random()*2-1)*3; }
         if(o.x<hw){ o.x=hw; o.vx=Math.abs(o.vx); } if(o.x>W-hw){ o.x=W-hw; o.vx=-Math.abs(o.vx); }
