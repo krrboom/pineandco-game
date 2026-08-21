@@ -105,10 +105,15 @@
   .rkempty{ font-size:9px; color:var(--dim); }
   .imgbtn{ image-rendering:pixelated; cursor:pointer; display:none; transition:transform .06s, filter .06s; }
   .imgbtn:active{ transform:translateY(4px) scale(0.98); filter:brightness(1.15); }
-  .sbtn2{ font-family:'Press Start 2P',monospace; font-size:clamp(10px,2.8vw,13px); border:none; width:100%;
-    aspect-ratio:2.5/1; max-height:72px; background:transparent center/100% 100% no-repeat; cursor:pointer;
-    letter-spacing:.5px; image-rendering:pixelated; text-shadow:1px 1px 0 rgba(0,0,0,.5); transition:transform .06s; padding:0 16px; }
+  .sbtn2{ font-family:'Press Start 2P',monospace; font-size:clamp(7px,2vw,10px); border:none; width:100%;
+    aspect-ratio:2.5/1; background:transparent center/100% 100% no-repeat; cursor:pointer; line-height:1.35;
+    letter-spacing:.3px; image-rendering:pixelated; text-shadow:1px 1px 0 rgba(0,0,0,.5); transition:transform .06s; padding:0 12px; }
   .sbtn2:active{ transform:translateY(3px) scale(.98); }
+  #sandbox{ background:#0d0f0c url('assets/pick_bg.png') center/cover no-repeat; }
+  #backBtn{ position:absolute; top:10px; right:10px; z-index:30; width:42px; height:42px;
+    font-family:'Press Start 2P',monospace; font-size:15px; color:#e8e6dd; background:rgba(0,0,0,0.6);
+    border:3px solid #444; box-shadow:0 3px 0 #000; cursor:pointer; }
+  #backBtn:active{ transform:translateY(3px); box-shadow:none; }
 </style>
 </head>
 <body>
@@ -138,18 +143,17 @@
 
   <div id="setting" class="screen hidden">
     <div class="mgtitle">⚙ SETTINGS</div>
-    <div class="kr" style="font-size:11px;color:var(--dim)">PLAYER NAME (for rankings)</div>
-    <input id="setName" maxlength="6" style="font-family:'Press Start 2P',monospace;font-size:14px;text-transform:uppercase;width:150px;text-align:center;padding:10px;background:#000;color:var(--amber);border:3px solid #333">
     <div class="kr" style="font-size:11px;color:var(--dim)">BGM VOLUME</div>
-    <input type="range" id="setVol" min="0" max="100" style="width:200px">
-    <button class="btn" id="setSound">SOUND: ON</button>
-    <button class="btn ghost" id="setReset">RESET RANKINGS</button>
+    <input type="range" id="setVol" min="0" max="100" style="width:220px">
     <button class="btn ghost" id="setBack">← HOME</button>
   </div>
+  <button id="backBtn" class="hidden">✕</button>
 
   <div id="sandbox" class="screen hidden">
-    <div class="mgtitle">🍸 PICK A GAME!</div>
-    <div class="mghint">Every game keeps its own TOP 5 — go set some records!</div>
+    <img id="pickTitle" alt="PICK A GAME!" style="width:min(330px,86vw);image-rendering:pixelated;display:none">
+    <div class="mgtitle" id="pickTitleTxt">🍸 PICK A GAME!</div>
+    <img id="pickSub" alt="SET YOUR RECORDS!" style="width:min(290px,76vw);image-rendering:pixelated;display:none;margin-top:-8px">
+    <div class="mghint" id="pickSubTxt">Every game keeps its own TOP 5 — go set some records!</div>
     <div class="sbwrap" id="sbwrap"></div>
     <button class="btn ghost" id="sbBack">← HOME</button>
   </div>
@@ -182,7 +186,9 @@
   const $=id=>document.getElementById(id);
   const stage=$('stage');
   function show(id){ ['title','sandbox','turn','game','roundResult','final','rank','setting'].forEach(s=>$(s).classList.toggle('hidden', s!==id));
+    const bb=$('backBtn'); if(bb) bb.classList.toggle('hidden', id==='title'||id==='roundResult');
     if(id==='title') playTitleBgm(); }
+  let runToken=0;
   // ── BGM: 타이틀 1곡 루프 / 플레이 3곡 연속 루프 ──
   const BGM={ cur:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6') };
   function bgmVol(){ return window.__mute?0:BGM.vol; }
@@ -299,17 +305,16 @@
       d.innerHTML=html; w.appendChild(d); }); }
   // 설정 화면
   $('setBtn').onclick=()=>{ ac(); beep(600,0.08);
-    $('setName').value=localStorage.getItem('bp_name')||'PINE';
-    $('setVol').value=Math.round(BGM.vol*100);
-    $('setSound').textContent='SOUND: '+(window.__mute?'OFF':'ON'); show('setting'); };
+    $('setVol').value=Math.round(BGM.vol*100); show('setting'); };
   $('setVol').addEventListener('input',()=>{ BGM.vol=$('setVol').value/100;
     localStorage.setItem('bp_vol',String(BGM.vol)); bgmApplyVol(); });
   $('setBack').onclick=()=>{ beep(500,0.08); show('title'); };
-  $('setName').addEventListener('input',()=>{ const v=$('setName').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
-    $('setName').value=v; localStorage.setItem('bp_name',v||'PINE'); });
-  $('setSound').onclick=()=>{ window.__mute=!window.__mute; localStorage.setItem('bp_mute',window.__mute?'1':'0');
-    $('setSound').textContent='SOUND: '+(window.__mute?'OFF':'ON'); bgmApplyVol(); if(!window.__mute) beep(700,0.08); };
-  $('setReset').onclick=()=>{ if(confirm('Reset all rankings?')){ localStorage.removeItem('bp_ranks'); beep(300,0.1); } };
+  // 전역 BACK 버튼 (타이틀 외 어디서나, 게임 중이면 즉시 중단하고 리스트로)
+  $('backBtn').onclick=()=>{ ac(); beep(400,0.06);
+    const cur=['title','sandbox','turn','game','roundResult','final','rank','setting'].find(s=>!$(s).classList.contains('hidden'));
+    if(cur==='game'){ runToken++; (window.__noises||[]).forEach(n=>{ try{ n.kill(); }catch(e){} }); window.__noises=[];
+      $('howto').classList.add('hidden'); stage.innerHTML=''; buildSandbox(); show('sandbox'); }
+    else show('title'); };
   // (구 샌드박스 버튼은 제거 — START가 게임 리스트를 연다)
   $('sbBack').onclick=()=>{ beep(500,0.08); show('title'); };
   const FR={ data:{}, loading:false };
@@ -318,15 +323,16 @@
       im.onload=()=>{ try{ FR.data[k]=fpKey(im,700,190).toDataURL(); }catch(e){} }; im.src='assets/fr_'+k+'.png'; }); }
   const FR_ORDER=['amber','blue','green','red','purple'];
   const FR_COMP={ amber:'#1d3fa0', blue:'#f08a1d', green:'#b3125e', red:'#22d9c8', purple:'#ffd23e' }; // 프레임 보색 폰트
-  function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; w.style.gridTemplateColumns='1fr';
+  function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; w.style.gridTemplateColumns='1fr 1fr'; // 2열
     GAMES.forEach((g,i)=>{ const b=document.createElement('button'); const key=FR_ORDER[i%5];
       if(FR.data[key]){ b.className='sbtn2'; b.style.backgroundImage="url('"+FR.data[key]+"')"; b.style.color=FR_COMP[key]; }
       else b.className='sbtn';
       b.textContent=g.name;
       b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(i); }; w.appendChild(b); }); }
   function playSandbox(i){ $('hud').classList.add('hidden'); show('game'); stage.innerHTML='';
-    showHowto(GAMES[i].name,()=>{ let done=false;
-      GAMES[i].run(function(s,t,c){ if(done) return; done=true; record(GAMES[i].name,s,t);
+    const my=++runToken;
+    showHowto(GAMES[i].name,()=>{ if(my!==runToken) return; let done=false;
+      GAMES[i].run(function(s,t,c){ if(done||my!==runToken) return; done=true; record(GAMES[i].name,s,t);
         $('rrRate').textContent=t; $('rrRate').className='rate '+c; $('rrAdd').textContent='SCORE '+Math.round(s); show('roundResult');
         if(c==='miss') sBad(); else sGood(); setTimeout(()=>{ buildSandbox(); show('sandbox'); }, 1200); }); }); }
 
@@ -648,8 +654,9 @@
     const src=a.createBufferSource(); src.buffer=buf; src.loop=true;
     const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=900; bp.Q.value=0.8;
     const gn=a.createGain(); gn.gain.value=0.0001; src.connect(bp); bp.connect(gn); gn.connect(a.destination); src.start();
-    return { set:(on,f)=>{ if(window.__mute) on=false; const t=a.currentTime; gn.gain.setTargetAtTime(on?0.09:0.0001,t,0.05); bp.frequency.setTargetAtTime(650+f*950,t,0.08); },
-      kill:()=>{ try{ src.stop(); }catch(e){} } }; }catch(e){ return null; } }
+    const ret={ set:(on,f)=>{ if(window.__mute) on=false; const t=a.currentTime; gn.gain.setTargetAtTime(on?0.09:0.0001,t,0.05); bp.frequency.setTargetAtTime(650+f*950,t,0.08); },
+      kill:()=>{ try{ src.stop(); }catch(e){} } };
+    (window.__noises=window.__noises||[]).push(ret); return ret; }catch(e){ return null; } }
   // 한 판 = 3연속 챌린지: 샷 30ml → 지거 45ml → 록스 60ml
   // cfg: { blind:카운터 숨김 } / done(평균점수, txt, cls, 오차합, 오차배열)
   function engFreePour(cfg, done){
@@ -1509,8 +1516,9 @@
   function fsBuzz(){ const a=ac(); if(!a) return null; try{
     const o=a.createOscillator(), g=a.createGain(); o.type='sawtooth'; o.frequency.value=170;
     g.gain.value=0.0001; o.connect(g); g.connect(a.destination); o.start();
-    return { set:(on,f)=>{ if(window.__mute) on=false; const t=a.currentTime; g.gain.setTargetAtTime(on?0.035:0.0001,t,0.06); o.frequency.setTargetAtTime(f,t,0.05); },
-      kill:()=>{ try{ o.stop(); }catch(e){} } }; }catch(e){ return null; } }
+    const ret={ set:(on,f)=>{ if(window.__mute) on=false; const t=a.currentTime; g.gain.setTargetAtTime(on?0.035:0.0001,t,0.06); o.frequency.setTargetAtTime(f,t,0.05); },
+      kill:()=>{ try{ o.stop(); }catch(e){} } };
+    (window.__noises=window.__noises||[]).push(ret); return ret; }catch(e){ return null; } }
   function engFlySwat(done){
     fpLoad(); fsLoad();
     stage.innerHTML='<div class="mgtitle">FLY SWAT</div>'
@@ -2120,9 +2128,11 @@
   ];
   document.getElementById('subCount').textContent="BARTENDER'S MINIGAMES × "+GAMES.length;
 
-  // 프리로드
-  ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
-  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); frLoad(); // 실사 에셋 미리 키잉
+  // 프리로드: 타이틀/리스트 필수분만 즉시, 게임 에셋은 지연 워밍 (각 게임은 진입 시 자기 로더 호출)
+  frLoad();
+  setTimeout(()=>{ fpLoad(); icLoad(); tcLoad(); },2500);
+  setTimeout(()=>{ qtLoad(); clLoad(); smLoad(); },6500);
+  setTimeout(()=>{ stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); },11000);
   // 타이틀 로고: 키잉 + 글자 안 갇힌 흰 구멍(C 내부, R-T 사이 등)까지 전역 제거
   (function(){ const L=new Image(); L.onload=()=>{ try{ const c=fpKey(L,720);
       const g2=c.getContext('2d'); const dd=g2.getImageData(0,0,c.width,c.height); const p2=dd.data;
@@ -2130,6 +2140,11 @@
       g2.putImageData(dd,0,0);
       const el=$('titleLogo'); el.src=c.toDataURL(); el.style.display='block';
       const h=$('titleH1'); if(h) h.style.display='none'; }catch(e){} }; L.src='assets/bp_title_logo.png';
+    // 게임 선택 화면 타이틀/리본
+    [['pick_title','pickTitle','pickTitleTxt',330],['pick_sub','pickSub','pickSubTxt',290]].forEach(([src,imgId,txtId,mw])=>{
+      const P2=new Image(); P2.onload=()=>{ try{ const c=fpKey(P2,640,190);
+        const el=$(imgId); el.src=c.toDataURL(); el.style.display='block';
+        $(txtId).style.display='none'; }catch(e){} }; P2.src='assets/'+src+'.png'; });
     // 버튼 이미지 (키잉 후 텍스트 버튼과 교체)
     [['bp_btn_start','startImg','startBtn'],['bp_btn_rank','rankImg','rankBtn'],['bp_btn_set','setImg','setBtn']].forEach(([src,imgId,btnId])=>{
       const B=new Image(); B.onload=()=>{ try{ const c=fpKey(B,560,190);
