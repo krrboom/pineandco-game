@@ -1250,7 +1250,7 @@
   function engStirStop(done){
     fpLoad(); stLoad();
     stage.innerHTML='<div class="mgtitle">STIR STOP</div>'
-      +'<div class="mghint">Stir in circles — the drink chills below zero as you go, and warms back up when you stop. Hit <b>SERVE!</b> right at the target temp!</div>'
+      +'<div class="mghint">Stir in circles to chill the drink below zero. Hit <b>SERVE!</b> at the exact target temp — <b>as FAST as you can</b>. Score = accuracy + speed!</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="stServe">SERVE!</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('stServe');
@@ -1271,12 +1271,13 @@
     cv.addEventListener('pointerdown',pdn); cv.addEventListener('pointermove',pmv);
     window.addEventListener('pointerup',pup);
     function judge(){ if(state!=='play'||stampObj) return;
-      const diff=Math.abs(temp-target); let sc,txt,cls,quip;
-      if(diff<=0.3){ sc=100; txt='PERFECT!'; cls='perfect'; quip='Diamond-clear and ice cold'; }
-      else if(diff<=0.8){ sc=Math.round(92-diff*20); txt='GOOD'; cls='good'; quip=temp>target?'A touch warm':'A touch overchilled'; }
-      else if(diff<=1.8){ sc=Math.round(70-diff*14); txt=temp>target?'TOO WARM':'OVER-CHILLED'; cls='miss'; quip=temp>target?'The guest wanted it colder…':'Watered it down…'; }
-      else { sc=Math.max(0,Math.round(40-diff*8)); txt=temp>target?'TOO WARM':'OVER-DILUTED!'; cls='miss'; quip=temp>target?'That is room temp, chief':'That is meltwater now'; }
-      stampObj={txt,cls,quip}; stampT=lastT;
+      const diff=Math.abs(temp-target), el3=(lastT-stT)/1000; let base,txt,cls,quip;
+      if(diff<=0.3){ base=114; txt='PERFECT!'; cls='perfect'; quip='Diamond-clear and ice cold'; }
+      else if(diff<=0.8){ base=100-diff*20; txt='GOOD'; cls='good'; quip=temp>target?'A touch warm':'A touch overchilled'; }
+      else if(diff<=1.8){ base=76-diff*14; txt=temp>target?'TOO WARM':'OVER-CHILLED'; cls='miss'; quip=temp>target?'The guest wanted it colder…':'Watered it down…'; }
+      else { base=46-diff*8; txt=temp>target?'TOO WARM':'OVER-DILUTED!'; cls='miss'; quip=temp>target?'That is room temp, chief':'That is meltwater now'; }
+      const sc=Math.max(0,Math.min(100,Math.round(base-Math.max(0,el3-5)*3.5))); // 빠를수록 고득점 (5초 이후 초당 -3.5)
+      stampObj={txt,cls,quip,el3}; stampT=lastT;
       if(cls==='perfect'){ flash('#6fcf8f'); sGood(); setTimeout(()=>beep(1320,0.14,'square',0.12),140);
         for(let j=0;j<30;j++) parts.push({x:CX+(Math.random()*160-80),y:CY+(Math.random()*160-80),vx:(Math.random()*2-1)*120,vy:-60-Math.random()*120,gv:400,r:1.6+Math.random()*2,c:['#bfe6ff','#fff','#6fcf8f'][rnd(3)],life:0.6}); }
       else if(cls==='good') sGood(); else { sBad(); shake=8; }
@@ -1343,7 +1344,9 @@
         ctx.fillText('TARGET '+target.toFixed(1)+'°C',200,cy0+52);
         if(state==='play'&&!stampObj){ const tl2=Math.max(0,1-(t-stT)/TOTAL);
           ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,84,280,6);
-          ctx.fillStyle=tl2<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,84,280*tl2,6); } }
+          ctx.fillStyle=tl2<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,84,280*tl2,6);
+          const el4=((t-stT)/1000).toFixed(1); ctx.font='11px "Press Start 2P"'; ctx.textAlign='right';
+          ctx.fillStyle='#000'; ctx.fillText(el4+'s',392,106); ctx.fillStyle='#ffd977'; ctx.fillText(el4+'s',390,104); } }
       if(state==='play'&&!stampObj&&t-stT<2600){ ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('Drag in circles to stir!',201,451); ctx.fillStyle='#e8e6dd'; ctx.fillText('Drag in circles to stir!',200,450); }
       if(state==='intro'){ ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,400,480);
@@ -1359,8 +1362,10 @@
         ctx.font='12px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText(temp.toFixed(1)+' / '+target.toFixed(1)+'°C',202,252);
         ctx.fillStyle='#fff'; ctx.fillText(temp.toFixed(1)+' / '+target.toFixed(1)+'°C',200,250);
+        ctx.fillStyle='#000'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',202,274);
+        ctx.fillStyle='#ffd977'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',200,272);
         ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif';
-        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,283); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,282); }
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,301); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,300); }
     }
     raf=requestAnimationFrame(draw);
   }
@@ -1369,7 +1374,8 @@
   // 과일 바구니에 꼬이는 파리들을 탭 사격으로 잡아라 — 인트로: 큰 파리가 윙윙 돌다 바구니에 앉는 순간 펑!
   const FS={ imgs:{}, loading:false };
   function fsLoad(){ if(FS.loading) return; FS.loading=true;
-    const srcs={ logo:['fs_logo',600], bigfly:['fs_bigfly',420], fly1:['fs_fly1',260], fly2:['fs_fly2',260], basket:['fs_basket',520] };
+    const srcs={ logo:['fs_logo',600], bigfly:['fs_bigfly',420], fly1:['fs_fly1',260], fly2:['fs_fly2',260],
+      basket:['fs_basket',520], basket2:['fs_basket2',520], basket3:['fs_basket3',520] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FS.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function fsBuzz(){ const a=ac(); if(!a) return null; try{
     const o=a.createOscillator(), g=a.createGain(); o.type='sawtooth'; o.frequency.value=170;
@@ -1379,12 +1385,12 @@
   function engFlySwat(done){
     fpLoad(); fsLoad();
     stage.innerHTML='<div class="mgtitle">FLY SWAT</div>'
-      +'<div class="mghint">A HUGE swarm of flies is after the fruit basket! Tap to shoot them down — 15 seconds, rack up the count!</div>'
+      +'<div class="mghint">A HUGE swarm is after the fruit! Tap to shoot flies — ones SITTING on the fruit rot it away. Fruit HP at 0 = game over!</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const BX=200, BY=352, TOTAL=15000;
     let state='cine', stT=0, pts=0, nextSpawn=0, finished=false, ended=false;
-    let t0=0, lastT=0, raf=0, shake=0, crossT=-1e9, crossX=0, crossY=0, popped=false;
+    let t0=0, lastT=0, raf=0, shake=0, crossT=-1e9, crossX=0, crossY=0, popped=false, fruitHP=100, hpStage=0;
     const flies=[], parts=[], pops=[]; const buzz=fsBuzz();
     function spawnFly(elapsed){ // 전부 날파리 (로고 파리는 인트로 전용)
       const side=rnd(4); let x,y;
@@ -1443,7 +1449,17 @@
           else { const sp=f.sp; f.vx+=(dx/d2*sp-f.vx)*dt*4; f.vy+=(dy/d2*sp-f.vy)*dt*4;
             f.x+=f.vx*dt+Math.sin(t/60+f.ph)*36*dt; f.y+=f.vy*dt+Math.cos(t/47+f.ph)*30*dt; } }
         if(buzz) buzz.set(flies.length>0,140+flies.length*12+Math.sin(t/90)*20);
-        if(left<=0){ finished=true; if(buzz) buzz.set(false,100);
+        // 과일 HP: 앉아있는 파리가 갉아먹는다
+        let sitters=0; for(const f of flies) if(f.sit>0) sitters++;
+        fruitHP=Math.max(0,fruitHP-sitters*2.6*dt);
+        const stg=fruitHP>60?0:(fruitHP>25?1:2);
+        if(stg!==hpStage){ hpStage=stg; beep(180,0.15,'sawtooth',0.12); shake=Math.max(shake,5);
+          for(let j=0;j<12;j++) parts.push({x:BX+(Math.random()*160-80),y:280+Math.random()*60,
+            vx:(Math.random()*2-1)*50,vy:-30-Math.random()*50,gv:0,r:2+Math.random()*2,c:'#7a9c3a',life:0.7}); }
+        if(fruitHP<=0){ finished=true; if(buzz) buzz.set(false,100); flash('#d9544d'); sBad(); shake=10;
+          const sc=Math.min(40,pts);
+          setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,'FRUIT RUINED!','miss'); },1500); }
+        else if(left<=0){ finished=true; if(buzz) buzz.set(false,100);
           const sc=Math.min(100,Math.round(pts*2.4)), cls=pts>=36?'perfect':(pts>=20?'good':'miss');
           setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,pts+' FLIES!',cls); },1500); } }
       shake=Math.max(0,shake-dt*26);
@@ -1453,8 +1469,8 @@
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.34)'; ctx.fillRect(0,0,400,480);
-      // 과일 바구니
-      const bk=FS.imgs.basket;
+      // 과일 바구니 (HP 단계에 따라 상해간다)
+      const bk=hpStage===0?FS.imgs.basket:(hpStage===1?FS.imgs.basket2:FS.imgs.basket3)||FS.imgs.basket;
       if(bk){ const bw2=225, bh2=bw2*(bk.height/bk.width); ctx.drawImage(bk,BX-bw2/2,BY-bh2+40,bw2,bh2); }
       // 인트로 큰 파리
       if(state==='cine'&&!popped){ const bf=FS.imgs.bigfly;
@@ -1491,7 +1507,13 @@
         ctx.textAlign='right'; const secs=(left/1000).toFixed(1);
         ctx.fillStyle='#000'; ctx.fillText(secs+'s',390,40); ctx.fillStyle=left<4200?'#d9544d':'#e8e6dd'; ctx.fillText(secs+'s',388,38);
         ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,50,280,6);
-        ctx.fillStyle=left<4200?'#d9544d':'#3a7d4f'; ctx.fillRect(60,50,280*(left/TOTAL),6); }
+        ctx.fillStyle=left<4200?'#d9544d':'#3a7d4f'; ctx.fillRect(60,50,280*(left/TOTAL),6);
+        // 과일 HP 바
+        ctx.font='8px "Press Start 2P"'; ctx.textAlign='left';
+        ctx.fillStyle='#000'; ctx.fillText('FRUIT',16,72); ctx.fillStyle='#e8e6dd'; ctx.fillText('FRUIT',14,70);
+        ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(62,63,120,9);
+        ctx.fillStyle=fruitHP>60?'#6fcf8f':(fruitHP>25?'#e6b450':'#d9544d');
+        ctx.fillRect(62,63,120*(fruitHP/100),9); }
       // 인트로 로고
       if(state==='cine'){ const lg2=FS.imgs.logo;
         if(lg2){ const k=el2<400?eob2(Math.min(1,el2/400)):1; const lw=330*k, lh=lw*(lg2.height/lg2.width);
@@ -1507,53 +1529,14 @@
 
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
-    // 타이밍
-    { name:'JIGGER STOP', cat:'TIMING', run:d=>engTiming({title:'JIGGER STOP',hint:'Stop right in the green zone!',zone:0.20,speed:3.2},d) },
-    { name:'FLAIR CATCH', cat:'TIMING', run:d=>engTiming({title:'FLAIR CATCH',hint:'Catch the flying bottle at the right moment!',zone:0.16,speed:4.2},d) },
-    { name:'GARNISH LAND', cat:'TIMING', run:d=>engTiming({title:'GARNISH LAND',hint:'Land the garnish right on the glass!',zone:0.24,speed:2.6},d) },
-    { name:'STIR STOP', cat:'TIMING', run:d=>engStirStop(d) },
-    { name:'TORCH BRULEE', cat:'TIMING', run:d=>engTiming({title:'TORCH BRÛLÉE',hint:'Torch it just right (green zone)!',zone:0.18,speed:3.9},d) },
-    { name:'STRAIN POUR', cat:'TIMING', run:d=>engTiming({title:'STRAIN POUR',hint:'Stop at the strainer timing!',zone:0.22,speed:3.0},d) },
-    { name:'DROP IN', cat:'TIMING', run:d=>engTiming({title:'DROP IN',hint:'Drop it into the shaker mouth (green zone)!',zone:0.17,speed:4.0},d) },
-    // 홀드
     { name:'FREE POUR MASTER', cat:'HOLD', run:d=>engFreePour({},d) },
     { name:'BLIND POUR', cat:'HOLD', run:d=>engFreePour({blind:true},d) },
-    { name:'CITRUS SQUEEZE', cat:'HOLD', run:d=>engHold({title:'CITRUS SQUEEZE',hint:'Squeeze lime juice up to the target line!',label:'HOLD TO SQUEEZE',showLine:true,target:()=>44+rnd(26)},d) },
-    { name:'BEER HEAD', cat:'HOLD', run:d=>engHold({title:'BEER HEAD',hint:'Pour a perfect head of foam!',label:'HOLD TO POUR',showLine:true,target:()=>70+rnd(16)},d) },
-    // 연타
-    { name:'SHAKE IT', cat:'MASH', run:d=>engMash({title:'SHAKE IT!',hint:'Shake as fast as you can!',img:'proj_shaker',goal:42,dur:3800,label:'SHAKE!'},d) },
-    { name:'ICE SMASH', cat:'MASH', run:d=>engMash({title:'ICE SMASH',hint:'Smash the ice to bits!',emoji:'🧊',goal:40,dur:3600,label:'SMASH!'},d) },
+    { name:'STIR STOP', cat:'TIMING', run:d=>engStirStop(d) },
     { name:'ICE CARVING', cat:'MASH', run:d=>engIceCarve(d) },
-    { name:'MUDDLE', cat:'MASH', run:d=>engMash({title:'MUDDLE',hint:'Muddle that mint hard!',emoji:'🌿',goal:38,dur:3600,label:'MUDDLE!'},d) },
-    { name:'CORK POP', cat:'MASH', run:d=>engMash({title:'CORK POP',hint:'Twist the cork out like mad!',emoji:'🍾',goal:36,dur:3400,label:'TWIST!'},d) },
-    { name:'BLEND', cat:'MASH', run:d=>engMash({title:'BLEND',hint:'Run the blender at full speed!',emoji:'🌀',goal:44,dur:3600,label:'BLEND!'},d) },
-    // 리듬
-    { name:'SHAKE RHYTHM', cat:'RHYTHM', run:d=>engRhythm({title:'SHAKE RHYTHM',hint:'Shake on the beat!',beats:8,interval:600},d) },
-    { name:'STIR RHYTHM', cat:'RHYTHM', run:d=>engRhythm({title:'STIR RHYTHM',hint:'Stir to the slow beat!',beats:6,interval:760},d) },
-    // 다단계
     { name:'CHAMPAGNE LAUNCH', cat:'SPECIAL', run:d=>engChampagne(d) },
     { name:'SHAKE MASTER', cat:'SPECIAL', run:d=>engShakeMaster(d) },
-    // 퀴즈
-    { name:'GUESS COCKTAIL', cat:'QUIZ', run:d=>{ const ans=CK[rnd(CK.length)]; const opts=shuffle([ans,...sample(CK.filter(k=>k!==ans),3)]).map(k=>({label:COCKTAILS[k],correct:k===ans}));
-        engChoiceText({title:'GUESS THE COCKTAIL',hint:'Name the cocktail from the picture!',promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
-    { name:'NAME SPIRIT', cat:'QUIZ', run:d=>{ const ans=SP[rnd(SP.length)]; const opts=shuffle([ans,...sample(SP.filter(k=>k!==ans),3)]).map(k=>({label:SPIRITS[k],correct:k===ans}));
-        engChoiceText({title:'NAME THE SPIRIT',hint:'Guess the base spirit!',promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
-    { name:'RECIPE MATCH', cat:'QUIZ', run:d=>{ const ans=RK[rnd(RK.length)]; const icons=RECIPES[ans].map(k=>'<img src="assets/ing_'+k+'.png">').join(''); const opts=shuffle([ans,...sample(CK.filter(k=>k!==ans),3)]).map(k=>({label:COCKTAILS[k],correct:k===ans}));
-        engChoiceText({title:'RECIPE MATCH',hint:'Which cocktail uses these?',promptHTML:'<div class="qicons">'+icons+'</div>',options:opts},d); } },
-    { name:'GARNISH MATCH', cat:'QUIZ', run:d=>{ const ans=GK[rnd(GK.length)]; const g=GARNISH[ans]; const opts=shuffle([g,...sample(GARNISH_SET.filter(x=>x!==g),3)]).map(x=>({label:x,correct:x===g}));
-        engChoiceText({title:'GARNISH MATCH',hint:"This cocktail's garnish is?",promptHTML:'<div class="qwrap"><img src="assets/cocktail_'+ans+'.png"></div>',options:opts},d); } },
-    { name:'FIND INGREDIENT', cat:'QUIZ', run:d=>{ const ans=IK[rnd(IK.length)]; const cells=shuffle([ans,...sample(IK.filter(k=>k!==ans),5)]).map(k=>({src:'assets/ing_'+k+'.png',correct:k===ans}));
-        engChoiceIcon({title:'FIND: '+ING[ans],hint:'Find & tap the '+ING[ans]+'!',cells},d); } },
-    { name:'ODD ONE OUT', cat:'QUIZ', run:d=>{ const base=IK[rnd(IK.length)]; let odd; do{ odd=IK[rnd(IK.length)]; }while(odd===base); const cells=[]; for(let i=0;i<6;i++) cells.push({src:'assets/ing_'+base+'.png',correct:false}); cells[rnd(6)]={src:'assets/ing_'+odd+'.png',correct:true};
-        engChoiceIcon({title:'ODD ONE OUT',hint:'Find the odd one and tap it!',cells,dur:4200},d); } },
     { name:'QUICK TAB', cat:'QUIZ', run:d=>engQuickTab(d) },
-    // 기억
-    { name:'ORDER MEMORY', cat:'MEMORY', run:d=>engMemory({title:'ORDER MEMORY',len:4},d) },
-    { name:'TAB ORDER', cat:'MEMORY', run:d=>engMemory({title:'TAB ORDER',len:3,pool:CK,path:k=>'assets/cocktail_'+k+'.png'},d) },
-    // 반응
     { name:'TIP CATCH', cat:'REFLEX', run:d=>engTipCatch(d) },
-    { name:'LAST CALL RUSH', cat:'REFLEX', run:d=>engReaction({title:'LAST CALL RUSH',hint:'Clear the orders fast!',img:()=>'assets/cocktail_'+CK[rnd(CK.length)]+'.png',goal:11,dur:6000,gap:()=>360},d) },
-    { name:'SPILL WIPE', cat:'REFLEX', run:d=>engReaction({title:'SPILL WIPE',hint:'Wipe up the spills fast!',img:()=>'assets/ing_'+['bubble','droplet','water','lime','lemon'][rnd(5)]+'.png',goal:12,dur:6000,gap:()=>320},d) },
     { name:'FLY SWAT', cat:'REFLEX', run:d=>engFlySwat(d) },
   ];
   document.getElementById('subCount').textContent='BARTENDER MINIGAMES × '+GAMES.length;

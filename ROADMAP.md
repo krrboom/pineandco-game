@@ -5,20 +5,24 @@
 
 ---
 
-## 1. PINE BAR PARTY 라이브 미니게임 (33종)
+## 1. PINE BAR PARTY 라이브 미니게임 (9종 — 실사 리뉴얼만)
 
 `bar_party.html` — https://pineandco-game.showjojo100.workers.dev/bar_party.html
 
-| 카테고리 | 게임 | 비고 |
+[DECISION 2026-08-21 붐] 실사 이미지 리뉴얼된 게임만 목록에 남기고 구버전(이모지/CSS) 미니게임은 전부 목록에서 제외. 엔진 코드는 파일에 보관.
+
+| 카테고리 | 게임 | 설명 |
 |---|---|---|
-| 타이밍 (7) | JIGGER STOP · FLAIR CATCH · GARNISH LAND · **STIR STOP** ★ · TORCH BRÛLÉE · STRAIN POUR · DROP IN | ★ 실사 리뉴얼: 원형 드래그로 저어 온도를 영하 목표에 맞춰 SERVE |
-| 홀드 (4) | **FREE POUR MASTER** ★ · **BLIND POUR** ★ · CITRUS SQUEEZE · BEER HEAD | ★ 실사 캔버스 엔진, 30→45→60ml 3연속 |
-| 연타 (6) | SHAKE IT · ICE SMASH · **ICE CARVING** ★ · MUDDLE · CORK POP · BLEND | ★ 15초 볼 아이스 개수, 수직 스탭 타격 |
-| 리듬 (2) | SHAKE RHYTHM · STIR RHYTHM | |
-| 스페셜 (1) | **CHAMPAGNE LAUNCH** ★ | ★ 실사 러너 리뉴얼: 연타로 달리며 흔들고 끝에 닿기 전 발사(버틸수록 각도↑, 벽=CRASH), 비거리 승부 |
-| 퀴즈 (7) | GUESS COCKTAIL · NAME SPIRIT · RECIPE MATCH · GARNISH MATCH · FIND INGREDIENT · ODD ONE OUT · **QUICK TAB** ★ | ★ 손님 7명 영수증 암산, 키패드 입력 |
-| 기억 (2) | ORDER MEMORY · TAB ORDER | |
-| 반응 (4) | **TIP CATCH** ★ · **FLY SWAT** ★ · LAST CALL RUSH · SPILL WIPE | ★ 실사 리뉴얼 (팁캐치: 7지점 낙하+병 드래그 / 플라이스왓: 과일바구니 파리 탭 사격, 인트로 시네마틱) |
+| HOLD | FREE POUR MASTER / BLIND POUR | 병 풀 플립 + ml 카운터, 30→45→60ml 3연속 (블라인드는 카운터 숨김) |
+| TIMING | STIR STOP | 원형 드래그로 저어 목표 온도(영하)에 최대한 빨리 SERVE — 정확도+속도 점수 |
+| MASH | ICE CARVING | 연타 게이지(방치 감소)+완성 버튼, 15초 볼 아이스 개수 |
+| SPECIAL | CHAMPAGNE LAUNCH | 연타 러너+홀드 각도+포물선 코르크, 벽 기준 비거리 |
+| SPECIAL | SHAKE MASTER | 폰 흔들기 13초 (가속도 센서) |
+| QUIZ | QUICK TAB | 손님 7명 영수증 달러 암산, 키패드 입력 |
+| REFLEX | TIP CATCH | 7지점 낙하 팁을 병 드래그로 받기, 나쁜 것 -1 |
+| REFLEX | FLY SWAT | 파리떼 탭 사격 + 과일 HP(앉은 파리가 갉아먹음, 0 = FRUIT RUINED) |
+
+- 제외된 구버전 25종(JIGGER STOP, SHAKE IT, 퀴즈류 등)은 엔진 코드로만 보관 — 필요 시 목록에 복원 가능
 
 - 타이틀 전용 모드: **🥃 POUR CHALLENGE** (30/45/60ml 오차 합 순위, 로컬 베스트 저장)
 
