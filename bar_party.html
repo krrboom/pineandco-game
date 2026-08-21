@@ -82,6 +82,10 @@
   .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:9; }
   /* 프리푸어 마스터 */
   #fpcv{ height:min(46vh,460px); max-width:92vw; border:3px solid #000; box-shadow:0 6px 0 rgba(0,0,0,.45); background:#000; touch-action:none; }
+  /* 비시바시 타이틀 */
+  #title{ background:#0d0f0c url('assets/bp_title_bg.png') center/cover no-repeat; }
+  #title .desc{ color:#f0ead8; text-shadow:1px 1px 0 #000,2px 2px 0 rgba(0,0,0,.5); }
+  #title .best{ color:#e8e2d2; text-shadow:1px 1px 0 #000; }
 </style>
 </head>
 <body>
@@ -90,15 +94,17 @@
   <div class="flash" id="flash"></div>
 
   <div id="title" class="screen">
-    <div class="brand">PINE &amp; CO · PARTY</div>
-    <h1>BAR<br>PARTY<span class="sub" id="subCount">BARTENDER MINIGAMES</span></h1>
+    <img id="titleLogo" alt="PINE &amp; CO PARTY" style="width:min(330px,84vw);image-rendering:pixelated;display:none">
+    <h1 id="titleH1">BAR<br>PARTY</h1>
+    <div id="subCount" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#eef6d8;letter-spacing:1px;text-shadow:2px 2px 0 #000">BARTENDER MINIGAMES</div>
     <p class="desc">POUR · GUESS · SHAKE · TOSS.<br>Take turns and battle for the <b>high score</b>.</p>
-    <div class="kr" style="font-size:11px;color:var(--dim)">PLAYERS</div>
+    <div class="kr" style="font-size:11px;color:#e8e2d2;text-shadow:1px 1px 0 #000">PLAYERS</div>
     <div class="pcount" id="pcount"></div>
     <button class="btn amber" id="startBtn">START</button>
     <button class="btn" id="fpChalBtn">🥃 POUR CHALLENGE</button>
     <button class="btn ghost" id="sandboxBtn">🎮 SANDBOX</button>
     <div class="best">BEST · <b id="bestVal">0</b> &nbsp;·&nbsp; POUR · <b id="fpBestVal">—</b></div>
+    <img id="titleDeco" alt="" style="width:min(370px,94vw);image-rendering:pixelated;display:none;margin-top:2px">
   </div>
 
   <div id="sandbox" class="screen hidden">
@@ -1994,6 +2000,12 @@
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
   fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); // 실사 에셋 미리 키잉
+  // 타이틀 로고/장식: 흰 배경 키잉 후 표시
+  (function(){ const L=new Image(); L.onload=()=>{ try{ const c=fpKey(L,720);
+      const el=$('titleLogo'); el.src=c.toDataURL(); el.style.display='block';
+      const h=$('titleH1'); if(h) h.style.display='none'; }catch(e){} }; L.src='assets/bp_title_logo.png';
+    const D=new Image(); D.onload=()=>{ try{ const c=fpKey(D,860);
+      const el=$('titleDeco'); el.src=c.toDataURL(); el.style.display='block'; }catch(e){} }; D.src='assets/bp_title_deco.png'; })();
   show('title');
 })();
 </script>
