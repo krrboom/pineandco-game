@@ -1527,6 +1527,143 @@
     raf=requestAnimationFrame(draw);
   }
 
+  /* ====================== ORDER UP! ====================== */
+  // 손님들이 말풍선으로 부르는 칵테일 주문을 순서대로 기억해 포스기에 입력 — 4잔부터 시작, 틀릴 때까지 무한
+  const OU={ imgs:{}, loading:false };
+  const OU_MENU=['OLD FASHIONED','MARTINI','MARGARITA','MOJITO','HIGHBALL','NEGRONI','ESP. MARTINI','PINA COLADA','BLOODY MARY','WHISKY SOUR'];
+  function ouLoad(){ if(OU.loading) return; OU.loading=true;
+    const srcs={ pos:['ou_pos',560], logo:['ou_logo',560] };
+    for(let i=0;i<10;i++) srcs['ck'+i]=['ou_ck'+i,240];
+    for(let i=1;i<=8;i++) srcs['cu'+i]=['ou_cu'+i,340];
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ OU.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+  function engOrderUp(done){
+    fpLoad(); ouLoad();
+    stage.innerHTML='<div class="mgtitle">ORDER UP!</div>'
+      +'<div class="mghint">Memorize the drinks as each guest calls their order, then punch them into the POS <b>in the same order</b>. One mistake = closing time. How far can you go?</div>'
+      +'<canvas id="fpcv" width="400" height="480"></canvas>';
+    const cv=$('fpcv'), ctx=cv.getContext('2d');
+    const ARM=1400;
+    // 포스 화면 영역 (ou_pos 이미지 비율)
+    const PW=396, PX=2, PY=62, SFX0=0.118, SFX1=0.772, SFY0=0.262, SFY1=0.832;
+    let state='intro', stT=0, round=1, seq=[], showIdx=0, input=[], cleared=0;
+    let stampObj=null, stampT=0, wrongCk=-1, t0=0, lastT=0, raf=0, shake=0, finished=false, ended=false;
+    let best=parseInt(localStorage.getItem('pine_orderup_best')||'0')||0;
+    const parts=[];
+    function newRound(){ const n=3+round; seq=[]; for(let i=0;i<n;i++) seq.push(rnd(10));
+      showIdx=0; input=[]; state='order'; stT=lastT;
+      window.__ouSeq=seq.slice(); window.__ouRound=round; }
+    function itemDur(){ return Math.max(650,1200-round*60); }
+    function btnRect(i){ const sx0=PX+PW*SFX0+8, sx1=PX+PW*SFX1-8, sy0=PY+PW*SFY0+46, sy1=PY+PW*SFY1-8;
+      const cw=(sx1-sx0)/5, chh=(sy1-sy0)/2;
+      return { x:sx0+(i%5)*cw+3, y:sy0+Math.floor(i/5)*chh+3, w:cw-6, h:chh-6 }; }
+    function tap(e){ e.preventDefault(); ac(); if(state!=='input'||finished) return;
+      const r=cv.getBoundingClientRect();
+      const x=(e.clientX-r.left)*(400/r.width), y=(e.clientY-r.top)*(480/r.height);
+      for(let i=0;i<10;i++){ const b=btnRect(i);
+        if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){
+          if(i===seq[input.length]){ input.push(i); sTap(); beep(880+input.length*40,0.05,'square',0.08);
+            if(input.length>=seq.length){ cleared=round; state='clear'; stT=lastT; sGood(); flash('#6fcf8f');
+              for(let j=0;j<20;j++) parts.push({x:200+(Math.random()*200-100),y:240+(Math.random()*160-80),vx:(Math.random()*2-1)*140,vy:-80-Math.random()*140,gv:500,r:2+Math.random()*2.5,c:['#6fcf8f','#ffd977','#fff'][rnd(3)],life:0.55}); } }
+          else { wrongCk=seq[input.length]; state='fail'; stT=lastT; finished=true; sBad(); flash('#d9544d'); shake=10;
+            if(cleared>best){ best=cleared; localStorage.setItem('pine_orderup_best',String(best)); }
+            const sc=Math.min(100,cleared*25), cls=cleared>=4?'perfect':(cleared>=2?'good':'miss');
+            setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,'ROUND '+round+' KO',cls); },2200); }
+          return; } } }
+    cv.addEventListener('pointerdown',tap);
+    function cleanup(){ cancelAnimationFrame(raf); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; stT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      const el2=t-stT;
+      if(state==='intro'&&el2>=ARM){ newRound(); }
+      if(state==='order'){ const idx=Math.floor(el2/itemDur());
+        if(idx!==showIdx&&idx<=seq.length){ showIdx=idx; if(idx<seq.length) beep(600+seq[idx]*30,0.06,'square',0.09); }
+        if(el2>=itemDur()*seq.length+350){ state='input'; stT=t; beep(900,0.1,'square',0.1); } }
+      if(state==='clear'&&el2>=1300){ round++; newRound(); }
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      const bgi=FP.imgs.bg;
+      if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.36)'; ctx.fillRect(0,0,400,480);
+      // ── 주문 단계: 손님 + 말풍선 ──
+      if(state==='order'&&showIdx<seq.length){
+        const cust=OU.imgs['cu'+(1+(showIdx+round)%8)];
+        const p2=Math.min(1,(el2-showIdx*itemDur())/240);
+        if(cust){ const chh2=215, cw2=chh2*(cust.width/cust.height);
+          ctx.drawImage(cust,398-cw2+(1-eob2(p2))*120,170,cw2,chh2); }
+        // 말풍선
+        const bx=22, by=180, bw2=215, bh2=140;
+        ctx.save(); ctx.globalAlpha=Math.min(1,p2*1.4);
+        ctx.fillStyle='#fafaf7'; ctx.strokeStyle='#000'; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.roundRect(bx,by,bw2,bh2,14); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx+bw2-4,by+70); ctx.lineTo(bx+bw2+22,by+82); ctx.lineTo(bx+bw2-4,by+96); ctx.closePath(); ctx.fill(); ctx.stroke();
+        const ck=OU.imgs['ck'+seq[showIdx]];
+        if(ck){ const cs=86; ctx.drawImage(ck,bx+bw2/2-cs/2,by+10,cs,cs); }
+        ctx.font='8px "Press Start 2P"'; ctx.textAlign='center'; ctx.fillStyle='#1a1a1a';
+        ctx.fillText(OU_MENU[seq[showIdx]],bx+bw2/2,by+bh2-16); ctx.restore();
+        ctx.font='11px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('ORDER '+(showIdx+1)+' / '+seq.length,202,142);
+        ctx.fillStyle='#ffd977'; ctx.fillText('ORDER '+(showIdx+1)+' / '+seq.length,200,140); }
+      if(state==='order'&&showIdx>=seq.length){ ctx.font='13px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('GOT ALL THAT?',202,232); ctx.fillStyle='#ffd977'; ctx.fillText('GOT ALL THAT?',200,230); }
+      // ── 입력 단계: 포스기 ──
+      if(state==='input'||state==='clear'||state==='fail'){
+        const ps=OU.imgs.pos;
+        const rise=state==='input'?eob2(Math.min(1,el2/350)):1;
+        const py2=PY+(1-rise)*440;
+        if(ps) ctx.drawImage(ps,PX,py2,PW,PW);
+        if(rise>=0.99){
+          // 진행 스트립 (입력한 잔들)
+          const sx0=PX+PW*SFX0+8, sy0=PY+PW*SFY0+6;
+          ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fillRect(sx0,sy0,PW*(SFX1-SFX0)-16,34);
+          for(let i=0;i<seq.length;i++){ const ix=sx0+4+i*26;
+            if(i<input.length){ const ck=OU.imgs['ck'+input[i]]; if(ck) ctx.drawImage(ck,ix,sy0+3,24,24); }
+            else { ctx.fillStyle='rgba(255,255,255,0.16)'; ctx.fillRect(ix+7,sy0+13,10,4); } }
+          // 칵테일 버튼 10개
+          for(let i=0;i<10;i++){ const b=btnRect(i);
+            ctx.fillStyle='#20242b'; ctx.fillRect(b.x,b.y,b.w,b.h);
+            ctx.strokeStyle='#3a4150'; ctx.lineWidth=2; ctx.strokeRect(b.x,b.y,b.w,b.h);
+            const ck=OU.imgs['ck'+i]; if(ck){ const cs=Math.min(b.w,b.h)-8;
+              ctx.drawImage(ck,b.x+b.w/2-cs/2,b.y+b.h/2-cs/2,cs,cs); } } }
+        ctx.font='10px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('PUNCH THE ORDER!',202,56); ctx.fillStyle='#e8e6dd'; ctx.fillText('PUNCH THE ORDER!',200,54); }
+      // 파티클
+      for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
+        pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
+        ctx.globalAlpha=Math.min(1,pp2.life*2.5); ctx.fillStyle=pp2.c; ctx.fillRect(pp2.x-pp2.r/2,pp2.y-pp2.r/2,pp2.r,pp2.r); }
+      ctx.globalAlpha=1;
+      // HUD
+      if(state!=='intro'){ ctx.font='10px "Press Start 2P"'; ctx.textAlign='left';
+        ctx.fillStyle='#000'; ctx.fillText('ROUND '+round,14,30); ctx.fillStyle='#ffd977'; ctx.fillText('ROUND '+round,12,28);
+        ctx.textAlign='right';
+        ctx.fillStyle='#000'; ctx.fillText('BEST '+best,390,30); ctx.fillStyle='#8a8d82'; ctx.fillText('BEST '+best,388,28); }
+      // 인트로
+      if(state==='intro'){ ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,400,480);
+        const lg2=OU.imgs.logo; if(lg2){ const k=0.55+eob2(Math.min(1,el2/280))*0.45, lw=330*k, lh=lw*(lg2.height/lg2.width);
+          ctx.drawImage(lg2,200-lw/2,210-lh/2,lw,lh); } }
+      // 클리어/실패 스탬프
+      if(state==='clear'){ ctx.save(); ctx.translate(200,120); ctx.rotate(-0.05);
+        const k2=1+Math.max(0,1-el2/160)*1.3; ctx.scale(k2,k2);
+        ctx.font='20px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('ROUND CLEAR!',3,3); ctx.fillStyle='#6fcf8f'; ctx.fillText('ROUND CLEAR!',0,0); ctx.restore(); }
+      if(state==='fail'){ ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,400,480);
+        ctx.save(); ctx.translate(200,150); ctx.rotate(-0.06);
+        const k2=1+Math.max(0,1-el2/180)*1.4; ctx.scale(k2,k2);
+        ctx.font='19px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('WRONG ORDER!',3,3); ctx.fillStyle='#d9544d'; ctx.fillText('WRONG ORDER!',0,0); ctx.restore();
+        const ck=OU.imgs['ck'+wrongCk];
+        if(ck){ ctx.drawImage(ck,200-55,190,110,110);
+          ctx.font='9px "Press Start 2P"'; ctx.textAlign='center';
+          ctx.fillStyle='#000'; ctx.fillText('IT WAS: '+OU_MENU[wrongCk],202,322); ctx.fillStyle='#fff'; ctx.fillText('IT WAS: '+OU_MENU[wrongCk],200,320); }
+        ctx.font='12px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText('ROUNDS CLEARED: '+cleared,202,352); ctx.fillStyle='#ffd977'; ctx.fillText('ROUNDS CLEARED: '+cleared,200,350); }
+    }
+    raf=requestAnimationFrame(draw);
+  }
+
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
     { name:'FREE POUR MASTER', cat:'HOLD', run:d=>engFreePour({},d) },
@@ -1536,6 +1673,7 @@
     { name:'CHAMPAGNE LAUNCH', cat:'SPECIAL', run:d=>engChampagne(d) },
     { name:'SHAKE MASTER', cat:'SPECIAL', run:d=>engShakeMaster(d) },
     { name:'QUICK TAB', cat:'QUIZ', run:d=>engQuickTab(d) },
+    { name:'ORDER UP!', cat:'MEMORY', run:d=>engOrderUp(d) },
     { name:'TIP CATCH', cat:'REFLEX', run:d=>engTipCatch(d) },
     { name:'FLY SWAT', cat:'REFLEX', run:d=>engFlySwat(d) },
   ];
@@ -1543,7 +1681,7 @@
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
-  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); // 실사 에셋 미리 키잉
+  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); ouLoad(); // 실사 에셋 미리 키잉
   show('title');
 })();
 </script>

@@ -19,7 +19,8 @@
 | SPECIAL | CHAMPAGNE LAUNCH | 연타 러너+홀드 각도+포물선 코르크, 벽 기준 비거리 |
 | SPECIAL | SHAKE MASTER | 폰 흔들기 13초 (가속도 센서) |
 | QUIZ | QUICK TAB | 손님 7명 영수증 달러 암산, 키패드 입력 |
-| REFLEX | TIP CATCH | 7지점 낙하 팁을 병 드래그로 받기, 나쁜 것 -1 |
+| MEMORY | ORDER UP! | 손님 8명이 말풍선으로 부르는 칵테일 10종 주문을 순서대로 포스기에 입력, 4잔부터 무한(틀리면 끝) |
+| REFLEX | TIP CATCH | 7지점 낙하 팁을 병 드래그로 받기(동전+1/만원+2/오만원+3), 나쁜 것 -1 |
 | REFLEX | FLY SWAT | 파리떼 탭 사격 + 과일 HP(앉은 파리가 갉아먹음, 0 = FRUIT RUINED) |
 
 - 제외된 구버전 25종(JIGGER STOP, SHAKE IT, 퀴즈류 등)은 엔진 코드로만 보관 — 필요 시 목록에 복원 가능
