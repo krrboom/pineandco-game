@@ -83,9 +83,26 @@
   /* 프리푸어 마스터 */
   #fpcv{ height:min(46vh,460px); max-width:92vw; border:3px solid #000; box-shadow:0 6px 0 rgba(0,0,0,.45); background:#000; touch-action:none; }
   /* 비시바시 타이틀 */
-  #title{ background:#0d0f0c url('assets/bp_title_bg.png') center/cover no-repeat; }
-  #title .desc{ color:#f0ead8; text-shadow:1px 1px 0 #000,2px 2px 0 rgba(0,0,0,.5); }
-  #title .best{ color:#e8e2d2; text-shadow:1px 1px 0 #000; }
+  #title{ background:#0d0f0c url('assets/bp_title_bg.png') center/cover no-repeat; position:relative; }
+  #decoCv{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  #title>*:not(#decoCv){ position:relative; z-index:1; }
+  /* HOW TO PLAY 오버레이 */
+  #howto{ position:absolute; inset:0; z-index:8; background:rgba(0,0,0,0.68); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:20px; padding:24px; text-align:center; }
+  .ht-bang{ font-family:'Press Start 2P',monospace; font-size:clamp(20px,6.4vw,30px); color:#ffd977;
+    text-shadow:4px 4px 0 #000; transform:rotate(-4deg); animation:htpop .32s cubic-bezier(.2,2.2,.4,1); }
+  @keyframes htpop{ from{ transform:scale(3.2) rotate(-12deg); opacity:0; } to{ transform:scale(1) rotate(-4deg); opacity:1; } }
+  .ht-panel{ background:rgba(0,0,0,0.74); border:3px solid rgba(255,255,255,0.18); border-radius:10px; padding:18px 16px; max-width:340px; }
+  .ht-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:#e6b450; margin-bottom:12px; letter-spacing:1px; }
+  .ht-desc{ font-family:-apple-system,"Segoe UI","Malgun Gothic",system-ui,sans-serif; font-size:14px; color:#fff; line-height:1.65; }
+  .ht-tap{ font-family:'Press Start 2P',monospace; font-size:10px; color:#6fcf8f; margin-top:14px; animation:htblink 1s step-end infinite; }
+  @keyframes htblink{ 50%{ opacity:0.25; } }
+  /* 랭킹 */
+  .rkgame{ background:var(--panel); border:2px solid #2a3a2a; padding:10px 12px; text-align:left; }
+  .rkgame h3{ font-size:10px; color:var(--amber); margin-bottom:7px; letter-spacing:1px; }
+  .rkrow{ display:flex; justify-content:space-between; font-size:9px; color:var(--ink); padding:2.5px 0; }
+  .rkrow .nm2{ color:#cde6d2; } .rkrow .sc2{ color:var(--amber); }
+  .rkempty{ font-size:9px; color:var(--dim); }
 </style>
 </head>
 <body>
@@ -94,17 +111,30 @@
   <div class="flash" id="flash"></div>
 
   <div id="title" class="screen">
+    <canvas id="decoCv"></canvas>
     <img id="titleLogo" alt="PINE &amp; CO PARTY" style="width:min(330px,84vw);image-rendering:pixelated;display:none">
     <h1 id="titleH1">BAR<br>PARTY</h1>
-    <div id="subCount" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#eef6d8;letter-spacing:1px;text-shadow:2px 2px 0 #000">BARTENDER MINIGAMES</div>
-    <p class="desc">POUR · GUESS · SHAKE · TOSS.<br>Take turns and battle for the <b>high score</b>.</p>
-    <div class="kr" style="font-size:11px;color:#e8e2d2;text-shadow:1px 1px 0 #000">PLAYERS</div>
-    <div class="pcount" id="pcount"></div>
+    <div id="subCount" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#eef6d8;letter-spacing:1px;text-shadow:2px 2px 0 #000">BARTENDER'S MINIGAMES</div>
     <button class="btn amber" id="startBtn">START</button>
-    <button class="btn" id="fpChalBtn">🥃 POUR CHALLENGE</button>
-    <button class="btn ghost" id="sandboxBtn">🎮 SANDBOX</button>
-    <div class="best">BEST · <b id="bestVal">0</b> &nbsp;·&nbsp; POUR · <b id="fpBestVal">—</b></div>
-    <img id="titleDeco" alt="" style="width:min(370px,94vw);image-rendering:pixelated;display:none;margin-top:2px">
+    <button class="btn" id="rankBtn">🏆 RANKING</button>
+    <button class="btn ghost" id="setBtn">⚙ SETTINGS</button>
+    <button class="btn ghost hidden" id="sandboxBtn">🎮 SANDBOX</button>
+  </div>
+
+  <div id="rank" class="screen hidden" style="justify-content:flex-start">
+    <div class="mgtitle">🏆 RANKING</div>
+    <div class="mghint">Top 5 per game</div>
+    <div class="sbwrap" id="rankWrap" style="grid-template-columns:1fr"></div>
+    <button class="btn ghost" id="rankBack">← HOME</button>
+  </div>
+
+  <div id="setting" class="screen hidden">
+    <div class="mgtitle">⚙ SETTINGS</div>
+    <div class="kr" style="font-size:11px;color:var(--dim)">PLAYER NAME (for rankings)</div>
+    <input id="setName" maxlength="6" style="font-family:'Press Start 2P',monospace;font-size:14px;text-transform:uppercase;width:150px;text-align:center;padding:10px;background:#000;color:var(--amber);border:3px solid #333">
+    <button class="btn" id="setSound">SOUND: ON</button>
+    <button class="btn ghost" id="setReset">RESET RANKINGS</button>
+    <button class="btn ghost" id="setBack">← HOME</button>
   </div>
 
   <div id="sandbox" class="screen hidden">
@@ -122,6 +152,11 @@
 
   <div id="game" class="screen hidden"><div id="stage"></div></div>
 
+  <div id="howto" class="hidden">
+    <div class="ht-bang">HOW TO PLAY!!</div>
+    <div class="ht-panel"><div class="ht-name" id="htName"></div><div class="ht-desc" id="htDesc"></div><div class="ht-tap">TAP TO START!</div></div>
+  </div>
+
   <div id="roundResult" class="screen hidden"><div class="rate" id="rrRate">GOOD</div><div class="addscore" id="rrAdd">+72</div></div>
 
   <div id="final" class="screen hidden">
@@ -136,14 +171,14 @@
 (function(){
   const $=id=>document.getElementById(id);
   const stage=$('stage');
-  function show(id){ ['title','sandbox','turn','game','roundResult','final'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+  function show(id){ ['title','sandbox','turn','game','roundResult','final','rank','setting'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
   const rnd=n=>Math.floor(Math.random()*n);
   function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
   const sample=(arr,n)=>shuffle([...arr]).slice(0,n);
   const now=()=>performance.now();
 
   let AC=null; function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); return AC; }
-  function beep(f,d,t,v){ const a=ac(); if(!a) return; try{ const o=a.createOscillator(),g=a.createGain(); o.type=t||'square'; o.frequency.value=f;
+  function beep(f,d,t,v){ if(window.__mute) return; const a=ac(); if(!a) return; try{ const o=a.createOscillator(),g=a.createGain(); o.type=t||'square'; o.frequency.value=f;
     g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(v||0.14,a.currentTime+0.006); g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+(d||0.12));
     o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+(d||0.12)+0.02); }catch(e){} }
   const sGood=()=>{beep(660,0.09);setTimeout(()=>beep(990,0.12),70);};
@@ -174,38 +209,89 @@
   const gr=c=>'linear-gradient('+c+',#a86a2a)';
 
   let players=[], cur=0, round=0, ROUNDS=5, best=parseInt(localStorage.getItem('pine_barparty_best')||'0')||0, lastGame=-1, mode='party';
-  $('bestVal').textContent=best.toLocaleString();
 
-  let pn=2;
-  (function(){ const box=$('pcount'); for(let i=1;i<=4;i++){ const b=document.createElement('button'); b.className='pbtn'+(i===2?' sel':''); b.textContent=i;
-    b.onclick=()=>{ pn=i; ac(); beep(500,0.05); [...box.children].forEach(c=>c.classList.remove('sel')); b.classList.add('sel'); }; box.appendChild(b); } })();
+  let pn=1; // 솔로 플레이 (인원 선택 제거)
+  window.__mute=localStorage.getItem('bp_mute')==='1';
 
   $('startBtn').onclick=()=>{ ac(); beep(700,0.1); mode='party'; players=[]; for(let i=0;i<pn;i++) players.push({name:'PLAYER '+(i+1),score:0}); cur=0; startTurn(); };
   function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'Got the phone? Press!':'Press when ready'); show('turn'); $('hud').classList.add('hidden'); }
   $('turnBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp') fpNext(); else nextRound(); };
   function hud(){ const p=players[cur]; $('hudWho').textContent=p.name; $('hudRd').textContent='ROUND '+(round+1)+'/'+ROUNDS; $('hudSc').textContent=p.score; $('hud').classList.remove('hidden'); }
+  // 게임별 로컬 랭킹 (top5)
+  function loadRanks(){ try{ return JSON.parse(localStorage.getItem('bp_ranks')||'{}'); }catch(e){ return {}; } }
+  function record(game,score,txt){ try{ const R=loadRanks(); const arr=R[game]||[];
+    arr.push({n:(localStorage.getItem('bp_name')||'PINE').slice(0,6),s:Math.round(score),t:String(txt).slice(0,14)});
+    arr.sort((a,b)=>b.s-a.s); R[game]=arr.slice(0,5); localStorage.setItem('bp_ranks',JSON.stringify(R)); }catch(e){} }
+  // 비시바시식 HOW TO PLAY 오버레이
+  const HOWTO={
+    'FREE POUR MASTER':'Flip the bottle, watch the ml counter, and nail 30 → 45 → 60ml like a pro. Spill it and the boss sees EVERYTHING.',
+    'BLIND POUR':'Same as Free Pour… but the counter is GONE. Count in your soul — 1oz = 3 seconds. Trust the wrist.',
+    'STIR STOP':'Stir in circles to chill the drink below zero. Hit the target temp FAST — stop and it warms, overdo it and you made meltwater.',
+    'ICE CARVING':'Mash to carve a perfect ice ball! Let go and it refreezes. Hit DONE on the sphere — too early and it SHATTERS.',
+    'CHAMPAGNE LAUNCH':'Sprint & shake the bottle! HOLD launch to raise the angle, release at 45°. Kiss the wall and you wear the foam.',
+    'SHAKE MASTER':'Grab your phone with BOTH hands and shake it like the shift just ended. 13 seconds. Go feral.',
+    'QUICK TAB':'7 guests, one brain. Add up each tab in your head and punch the total. Wrong math = -20. Math class finally pays off.',
+    'ORDER UP!':'Guests shout their drinks — you remember EVERYTHING. Punch the exact order into the POS. One slip = closing time.',
+    'WHERE IS MY SHOT?':'A shot hides under a dome. The domes dance. Your eyes are the only jigger — pick right or go home thirsty.',
+    'TIP CATCH':'Catch the raining tips in your jar! Coins +1, ₩10k +2, ₩50k +3. Receipts and bills? Those are BAD tips.',
+    'FLY SWAT':'A fly army wants your fruit. Tap-shoot them down and guard the basket — if it rots, YOU explain it to the boss.',
+    'FRESH SQUEEZE':'Drag, slice, squeeze, trash, repeat! 1 lime = 50ml. 30 seconds of pure citrus cardio.' };
+  function showHowto(name,cb){ const ht=$('howto');
+    $('htName').textContent=name; $('htDesc').textContent=HOWTO[name]||'Do the thing. Fast.';
+    const bang=ht.querySelector('.ht-bang'); bang.style.animation='none'; void bang.offsetWidth; bang.style.animation='';
+    ht.classList.remove('hidden'); beep(200,0.12,'sawtooth',0.14); setTimeout(()=>beep(700,0.1,'square',0.1),80);
+    const go=e=>{ if(e)e.preventDefault(); ht.classList.add('hidden'); ht.removeEventListener('pointerdown',go); beep(900,0.08); cb(); };
+    ht.addEventListener('pointerdown',go); }
   function nextRound(){ if(round>=ROUNDS){ endTurn(); return; } hud(); let g; do{ g=rnd(GAMES.length); }while(GAMES.length>1 && g===lastGame); lastGame=g;
-    show('game'); stage.innerHTML=''; let done=false; GAMES[g].run(function(s,t,c){ if(done) return; done=true; award(Math.round(s),t,c); }); }
+    show('game'); stage.innerHTML='';
+    showHowto(GAMES[g].name,()=>{ let done=false; GAMES[g].run(function(s,t,c){ if(done) return; done=true;
+      record(GAMES[g].name,s,t); award(Math.round(s),t,c); }); }); }
   function award(score, rateTxt, rateCls){ score=Math.max(0,Math.min(100,score)); players[cur].score+=score; $('hudSc').textContent=players[cur].score;
     $('rrRate').textContent=rateTxt; $('rrRate').className='rate '+rateCls; $('rrAdd').textContent='+'+score; show('roundResult');
     if(rateCls==='miss') sBad(); else sGood(); setTimeout(()=>{ round++; nextRound(); }, 1000); }
   function endTurn(){ $('hud').classList.add('hidden'); cur++; if(cur<players.length) startTurn(); else showFinal(); }
   function showFinal(){ const ranked=[...players].map(p=>({...p})).sort((a,b)=>b.score-a.score); const top=ranked[0].score;
-    if(top>best){ best=top; localStorage.setItem('pine_barparty_best',String(best)); $('bestVal').textContent=best.toLocaleString(); }
+    if(top>best){ best=top; localStorage.setItem('pine_barparty_best',String(best)); }
     const list=$('rankList'); list.innerHTML=''; ranked.forEach((p,i)=>{ const row=document.createElement('div'); row.className='rrow'+(i===0?' win':'');
       row.innerHTML='<span class="nm">'+(i===0?'<span class="crown">👑</span> ':'#'+(i+1)+' ')+p.name+'</span><span class="pt">'+p.score.toLocaleString()+'</span>'; list.appendChild(row); });
     show('final'); sGood(); flash('#e6b450'); }
   $('againBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp'){ startFpChallenge(); return; } players.forEach(p=>p.score=0); cur=0; startTurn(); };
   $('homeBtn').onclick=()=>{ beep(500,0.08); show('title'); };
 
-  // 샌드박스
+  // 랭킹 화면
+  $('rankBtn').onclick=()=>{ ac(); beep(600,0.08); buildRank(); show('rank'); };
+  $('rankBack').onclick=()=>{ beep(500,0.08); show('title'); };
+  function buildRank(){ const w=$('rankWrap'); w.innerHTML=''; const R=loadRanks();
+    GAMES.forEach(g=>{ const arr=R[g.name]||[]; const d=document.createElement('div'); d.className='rkgame';
+      let html='<h3>'+g.name+'</h3>';
+      if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
+      else arr.forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span><span class="sc2">'+r2.s+'</span> · '+r2.t+'</span></div>'; });
+      d.innerHTML=html; w.appendChild(d); }); }
+  // 설정 화면
+  $('setBtn').onclick=()=>{ ac(); beep(600,0.08);
+    $('setName').value=localStorage.getItem('bp_name')||'PINE';
+    $('setSound').textContent='SOUND: '+(window.__mute?'OFF':'ON'); show('setting'); };
+  $('setBack').onclick=()=>{ beep(500,0.08); show('title'); };
+  $('setName').addEventListener('input',()=>{ const v=$('setName').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+    $('setName').value=v; localStorage.setItem('bp_name',v||'PINE'); });
+  $('setSound').onclick=()=>{ window.__mute=!window.__mute; localStorage.setItem('bp_mute',window.__mute?'1':'0');
+    $('setSound').textContent='SOUND: '+(window.__mute?'OFF':'ON'); if(!window.__mute) beep(700,0.08); };
+  $('setReset').onclick=()=>{ if(confirm('Reset all rankings?')){ localStorage.removeItem('bp_ranks'); beep(300,0.1); } };
+  // 샌드박스 (비공개: ?sandbox=1 또는 타이틀 로고 5연타)
   $('sandboxBtn').onclick=()=>{ ac(); beep(600,0.08); buildSandbox(); show('sandbox'); };
+  if(location.search.indexOf('sandbox')>=0) $('sandboxBtn').classList.remove('hidden');
+  let logoTaps=0, logoTapT=0;
+  function logoSecret(){ const n2=Date.now(); if(n2-logoTapT>1600) logoTaps=0; logoTapT=n2;
+    if(++logoTaps>=5){ $('sandboxBtn').classList.remove('hidden'); beep(1200,0.12,'square',0.12); } }
+  $('titleLogo').addEventListener('pointerdown',logoSecret); $('titleH1').addEventListener('pointerdown',logoSecret);
   $('sbBack').onclick=()=>{ beep(500,0.08); show('title'); };
   function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; GAMES.forEach((g,i)=>{ const b=document.createElement('button'); b.className='sbtn'; b.innerHTML='<span class="cat">'+g.cat+'</span>'+g.name;
     b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(i); }; w.appendChild(b); }); }
-  function playSandbox(i){ $('hud').classList.add('hidden'); show('game'); stage.innerHTML=''; let done=false;
-    GAMES[i].run(function(s,t,c){ if(done) return; done=true; $('rrRate').textContent=t; $('rrRate').className='rate '+c; $('rrAdd').textContent='SCORE '+Math.round(s); show('roundResult');
-      if(c==='miss') sBad(); else sGood(); setTimeout(()=>{ buildSandbox(); show('sandbox'); }, 1200); }); }
+  function playSandbox(i){ $('hud').classList.add('hidden'); show('game'); stage.innerHTML='';
+    showHowto(GAMES[i].name,()=>{ let done=false;
+      GAMES[i].run(function(s,t,c){ if(done) return; done=true; record(GAMES[i].name,s,t);
+        $('rrRate').textContent=t; $('rrRate').className='rate '+c; $('rrAdd').textContent='SCORE '+Math.round(s); show('roundResult');
+        if(c==='miss') sBad(); else sGood(); setTimeout(()=>{ buildSandbox(); show('sandbox'); }, 1200); }); }); }
 
   /* ====================== 엔진 ====================== */
   function engTiming(cfg, done){
@@ -524,7 +610,7 @@
     const src=a.createBufferSource(); src.buffer=buf; src.loop=true;
     const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=900; bp.Q.value=0.8;
     const gn=a.createGain(); gn.gain.value=0.0001; src.connect(bp); bp.connect(gn); gn.connect(a.destination); src.start();
-    return { set:(on,f)=>{ const t=a.currentTime; gn.gain.setTargetAtTime(on?0.09:0.0001,t,0.05); bp.frequency.setTargetAtTime(650+f*950,t,0.08); },
+    return { set:(on,f)=>{ if(window.__mute) on=false; const t=a.currentTime; gn.gain.setTargetAtTime(on?0.09:0.0001,t,0.05); bp.frequency.setTargetAtTime(650+f*950,t,0.08); },
       kill:()=>{ try{ src.stop(); }catch(e){} } }; }catch(e){ return null; } }
   // 한 판 = 3연속 챌린지: 샷 30ml → 지거 45ml → 록스 60ml
   // cfg: { blind:카운터 숨김 } / done(평균점수, txt, cls, 오차합, 오차배열)
@@ -713,9 +799,7 @@
   }
   /* ── FREE POUR CHALLENGE: 30→45→60ml 3연속, 오차 합이 적은 순으로 순위 ── */
   let fpBest=parseFloat(localStorage.getItem('pine_freepour_best')||'NaN'), fpPlayers=[], fpCur=0;
-  function fpBestShow(){ $('fpBestVal').textContent=isNaN(fpBest)?'—':('±'+fpBest.toFixed(2)+'ml'); }
-  fpBestShow();
-  $('fpChalBtn').onclick=()=>{ ac(); beep(700,0.1); startFpChallenge(); };
+  function fpBestShow(){ const el=$('fpBestVal'); if(el) el.textContent=isNaN(fpBest)?'—':('±'+fpBest.toFixed(2)+'ml'); }
   function startFpChallenge(){ mode='fp'; fpLoad(); fpPlayers=[]; for(let i=0;i<pn;i++) fpPlayers.push({name:'PLAYER '+(i+1),err:0,errs:[]});
     fpCur=0; fpTurn(); }
   function fpTurn(){ const p=fpPlayers[fpCur]; $('turnWho').textContent=p.name;
@@ -1387,7 +1471,7 @@
   function fsBuzz(){ const a=ac(); if(!a) return null; try{
     const o=a.createOscillator(), g=a.createGain(); o.type='sawtooth'; o.frequency.value=170;
     g.gain.value=0.0001; o.connect(g); g.connect(a.destination); o.start();
-    return { set:(on,f)=>{ const t=a.currentTime; g.gain.setTargetAtTime(on?0.035:0.0001,t,0.06); o.frequency.setTargetAtTime(f,t,0.05); },
+    return { set:(on,f)=>{ if(window.__mute) on=false; const t=a.currentTime; g.gain.setTargetAtTime(on?0.035:0.0001,t,0.06); o.frequency.setTargetAtTime(f,t,0.05); },
       kill:()=>{ try{ o.stop(); }catch(e){} } }; }catch(e){ return null; } }
   function engFlySwat(done){
     fpLoad(); fsLoad();
@@ -1996,17 +2080,48 @@
     { name:'TIP CATCH', cat:'REFLEX', run:d=>engTipCatch(d) },
     { name:'FLY SWAT', cat:'REFLEX', run:d=>engFlySwat(d) },
   ];
-  document.getElementById('subCount').textContent='BARTENDER MINIGAMES × '+GAMES.length;
+  document.getElementById('subCount').textContent="BARTENDER'S MINIGAMES × "+GAMES.length;
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
   fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); // 실사 에셋 미리 키잉
-  // 타이틀 로고/장식: 흰 배경 키잉 후 표시
+  // 타이틀 로고: 키잉 + 글자 안 갇힌 흰 구멍(C 내부, R-T 사이 등)까지 전역 제거
   (function(){ const L=new Image(); L.onload=()=>{ try{ const c=fpKey(L,720);
+      const g2=c.getContext('2d'); const dd=g2.getImageData(0,0,c.width,c.height); const p2=dd.data;
+      for(let i=0;i<p2.length;i+=4){ if(p2[i+3]>0&&p2[i]>243&&p2[i+1]>243&&p2[i+2]>243) p2[i+3]=0; }
+      g2.putImageData(dd,0,0);
       const el=$('titleLogo'); el.src=c.toDataURL(); el.style.display='block';
       const h=$('titleH1'); if(h) h.style.display='none'; }catch(e){} }; L.src='assets/bp_title_logo.png';
-    const D=new Image(); D.onload=()=>{ try{ const c=fpKey(D,860);
-      const el=$('titleDeco'); el.src=c.toDataURL(); el.style.display='block'; }catch(e){} }; D.src='assets/bp_title_deco.png'; })();
+    // 장식 스트립: 아이템별로 쪼개서 타이틀에서 통통 튀는 물리 데코
+    const D=new Image(); D.onload=()=>{ try{
+      const key=fpKey(D,900); const w=key.width,h=key.height;
+      const d=key.getContext('2d').getImageData(0,0,w,h).data;
+      const colHas=new Uint8Array(w);
+      for(let cx=0;cx<w;cx++){ for(let cy=0;cy<h;cy++){ if(d[(cy*w+cx)*4+3]>30){ colHas[cx]=1; break; } } }
+      const runs=[]; let s=-1;
+      for(let cx=0;cx<=w;cx++){ const on=cx<w&&colHas[cx]; if(on&&s<0)s=cx; else if(!on&&s>=0){ if(cx-s>10) runs.push([s,cx]); s=-1; } }
+      const sprites=runs.map(rr=>{ let top=h-1,bot=0;
+        for(let cy=0;cy<h;cy++){ for(let cx=rr[0];cx<rr[1];cx++){ if(d[(cy*w+cx)*4+3]>30){ if(cy<top)top=cy; if(cy>bot)bot=cy; break; } } }
+        const c2=document.createElement('canvas'); c2.width=rr[1]-rr[0]; c2.height=Math.max(1,bot-top+1);
+        c2.getContext('2d').drawImage(key,rr[0],top,c2.width,c2.height,0,0,c2.width,c2.height); return c2; });
+      startDeco(sprites); }catch(e){} }; D.src='assets/bp_title_deco.png'; })();
+  function startDeco(sprites){ const dcv=$('decoCv'); if(!dcv||!sprites.length) return;
+    const ctx2=dcv.getContext('2d');
+    function fit(){ dcv.width=dcv.clientWidth||360; dcv.height=dcv.clientHeight||600; } fit();
+    window.addEventListener('resize',fit);
+    const items=sprites.map((sp,i)=>({sp, x:40+Math.random()*(dcv.width-80), y:-80-i*110,
+      vx:(Math.random()*2-1)*70, vy:0, rot:(Math.random()*2-1)*0.4, rv:(Math.random()*2-1)*2.5}));
+    let last=performance.now();
+    (function loop(t){ requestAnimationFrame(loop);
+      if($('title').classList.contains('hidden')){ last=t; return; }
+      const dt=Math.min(0.05,(t-last)/1000); last=t;
+      const W=dcv.width,H=dcv.height; ctx2.clearRect(0,0,W,H);
+      for(const o of items){ const kk=46/o.sp.height, hw=o.sp.width*kk/2, hh=23;
+        o.vy+=760*dt; o.x+=o.vx*dt; o.y+=o.vy*dt; o.rot+=o.rv*dt;
+        if(o.y>H-hh){ o.y=H-hh; o.vy=-Math.abs(o.vy)*0.82-60-Math.random()*90; o.vx+=(Math.random()*2-1)*70; o.rv=(Math.random()*2-1)*3; }
+        if(o.x<hw){ o.x=hw; o.vx=Math.abs(o.vx); } if(o.x>W-hw){ o.x=W-hw; o.vx=-Math.abs(o.vx); }
+        ctx2.save(); ctx2.translate(o.x,o.y); ctx2.rotate(o.rot);
+        ctx2.drawImage(o.sp,-hw,-hh,hw*2,46); ctx2.restore(); } })(performance.now()); }
   show('title');
 })();
 </script>
