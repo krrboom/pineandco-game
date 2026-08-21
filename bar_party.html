@@ -32,7 +32,7 @@
   #hud{ position:absolute; top:0; left:0; right:0; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; z-index:5; pointer-events:none; }
   #hud .who{ color:var(--pine-light); font-size:12px; } #hud .rd{ color:var(--dim); font-size:10px; } #hud .sc{ color:var(--amber); font-size:15px; text-shadow:2px 2px 0 #000; }
   .mgtitle{ font-size:clamp(15px,4.6vw,22px); color:var(--amber); text-shadow:2px 2px 0 #000; }
-  .mghint{ font-family:-apple-system,"Segoe UI","Malgun Gothic",system-ui,sans-serif; font-size:13px; color:var(--dim); max-width:420px; line-height:1.5; }
+  .mghint{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--dim); max-width:min(92vw,480px); line-height:1.8; }
   #stage{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; width:100%; }
   .bigbtn{ width:min(330px,86vw); height:74px; font-size:15px; }
   .bignum{ font-size:22px; color:var(--amber); text-shadow:2px 2px 0 #000; }
@@ -81,13 +81,13 @@
   .sbtn:active{ transform:translateY(2px); box-shadow:0 1px 0 #000; } .sbtn .cat{ display:block; font-size:7px; color:var(--pine-light); margin-bottom:5px; letter-spacing:1px; }
   .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:9; }
   /* 게임 캔버스: 남는 화면을 최대한 채움 (5:6 비율 유지) */
-  #fpcv{ width:min(96vw, max(240px, calc((100vh - 230px) * 0.8333))); width:min(96vw, max(240px, calc((100dvh - 230px) * 0.8333)));
+  #fpcv{ width:min(100vw, max(240px, calc((100vh - 250px) * 0.8333))); width:min(100vw, max(240px, calc((100dvh - 250px) * 0.8333)));
     height:auto; border:3px solid #000; box-shadow:0 6px 0 rgba(0,0,0,.45); background:#000; touch-action:none; image-rendering:pixelated; }
-  #game{ padding:46px 8px 14px; gap:10px; }
-  #game .mghint{ font-size:11px; line-height:1.4; max-width:min(90vw,560px); }
-  #game #stage{ gap:10px; }
+  #game{ padding:46px 0 10px; gap:8px; }
+  #game #stage{ gap:8px; }
+  #gameLogo{ width:min(280px,64vw); image-rendering:pixelated; display:none; }
   /* 비시바시 타이틀 */
-  #title{ background:#0d0f0c url('assets/bp_title_bg.png') center/cover no-repeat; position:relative; }
+  #title{ background:#0d0f0c url('assets/bp_title_bg.jpg') center/cover no-repeat; position:relative; }
   #decoCv{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
   #title>*:not(#decoCv){ position:relative; z-index:1; }
   /* HOW TO PLAY 오버레이 */
@@ -98,7 +98,7 @@
   @keyframes htpop{ from{ transform:scale(3.2) rotate(-12deg); opacity:0; } to{ transform:scale(1) rotate(-4deg); opacity:1; } }
   .ht-panel{ background:rgba(0,0,0,0.74); border:3px solid rgba(255,255,255,0.18); border-radius:10px; padding:18px 16px; max-width:340px; }
   .ht-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:#e6b450; margin-bottom:12px; letter-spacing:1px; }
-  .ht-desc{ font-family:-apple-system,"Segoe UI","Malgun Gothic",system-ui,sans-serif; font-size:14px; color:#fff; line-height:1.65; }
+  .ht-desc{ font-family:'Press Start 2P',monospace; font-size:10px; color:#fff; line-height:1.9; }
   .ht-tap{ font-family:'Press Start 2P',monospace; font-size:10px; color:#6fcf8f; margin-top:14px; animation:htblink 1s step-end infinite; }
   @keyframes htblink{ 50%{ opacity:0.25; } }
   /* 랭킹 */
@@ -113,7 +113,7 @@
     aspect-ratio:2.5/1; background:transparent center/100% 100% no-repeat; cursor:pointer; line-height:1.35;
     letter-spacing:.3px; image-rendering:pixelated; text-shadow:1px 1px 0 rgba(0,0,0,.5); transition:transform .06s; padding:0 12px; }
   .sbtn2:active{ transform:translateY(3px) scale(.98); }
-  #sandbox{ background:#0d0f0c url('assets/pick_bg.png') center/cover no-repeat; gap:4px; padding:10px 10px 14px; }
+  #sandbox{ background:#0d0f0c url('assets/pick_bg.jpg') center/cover no-repeat; gap:4px; padding:10px 10px 14px; }
   #sandbox .sbwrap{ width:min(640px,97vw); max-height:none; flex:1 1 auto; min-height:0; gap:10px; }
   #backBtn{ position:absolute; top:10px; right:10px; z-index:30; width:42px; height:42px;
     font-family:'Press Start 2P',monospace; font-size:15px; color:#e8e6dd; background:rgba(0,0,0,0.6);
@@ -168,7 +168,7 @@
     <button class="btn" id="turnBtn">READY!</button>
   </div>
 
-  <div id="game" class="screen hidden"><div id="stage"></div></div>
+  <div id="game" class="screen hidden"><img id="gameLogo" alt=""><div id="stage"></div></div>
 
   <div id="howto" class="hidden">
     <div class="ht-bang">HOW TO PLAY!!</div>
@@ -177,7 +177,7 @@
 
   <div id="roundResult" class="screen hidden">
     <div class="rate" id="rrRate">GOOD</div><div class="addscore" id="rrAdd">+72</div>
-    <div class="kr" style="font-size:11px;color:var(--dim)">YOUR NAME</div>
+    <div style="font-size:9px;color:var(--dim)">YOUR NAME</div>
     <input id="rrName" maxlength="8" style="font-family:'Press Start 2P',monospace;font-size:14px;text-transform:uppercase;width:170px;text-align:center;padding:10px;background:#000;color:var(--amber);border:3px solid #333">
     <button class="btn amber" id="rrSubmit">🏆 SUBMIT RANK</button>
     <div id="rrStatus" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#6fcf8f;min-height:14px"></div>
@@ -198,35 +198,42 @@
   const stage=$('stage');
   function show(id){ ['title','sandbox','turn','game','roundResult','final','rank','setting'].forEach(s=>$(s).classList.toggle('hidden', s!==id));
     const bb=$('backBtn'); if(bb) bb.classList.toggle('hidden', id==='title'||id==='roundResult');
+    if(id!=='game'){ const gl=$('gameLogo'); if(gl) gl.style.display='none'; }
     if(id==='title') playTitleBgm(true); }
   let runToken=0;
   // ── BGM: 타이틀 1곡 루프 / 플레이 3곡 연속 루프 ──
+  // iOS는 Audio.volume이 무시되므로 WebAudio GainNode로 볼륨을 제어 (설정 슬라이더 실동작)
   const BGM={ cur:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6') };
   function bgmVol(){ return window.__mute?0:BGM.vol; }
-  function bgmFade(a,to,ms,done){ if(!a){ if(done)done(); return; }
-    const from=a.volume, t0=performance.now();
+  function mkTrack(url,loop){ const a=new Audio(url); a.loop=!!loop; let g=null;
+    const c=ac(); if(c){ try{ const s=c.createMediaElementSource(a); g=c.createGain(); s.connect(g); g.connect(c.destination); }catch(e){ g=null; } }
+    if(g){ a.volume=1; } return {a,g}; }
+  function trkGet(t){ return t.g?t.g.gain.value:t.a.volume; }
+  function trkSet(t,v){ v=Math.max(0,Math.min(1,v)); try{ if(t.g) t.g.gain.value=v; else t.a.volume=v; }catch(e){} }
+  function bgmFade(t,to,ms,done){ if(!t){ if(done)done(); return; }
+    const from=trkGet(t), t0=performance.now();
     (function st(){ const k=Math.min(1,(performance.now()-t0)/ms);
-      try{ a.volume=Math.max(0,Math.min(1,from+(to-from)*k)); }catch(e){}
+      trkSet(t,from+(to-from)*k);
       if(k<1) setTimeout(st,50); else if(done) done(); })(); }
   function stopBgm(fadeMs){ const old=BGM.cur; BGM.cur=null; BGM.name='';
     if(!old) return;
-    if(fadeMs) bgmFade(old,0,fadeMs,()=>{ try{ old.pause(); }catch(e){} });
-    else { try{ old.pause(); }catch(e){} } }
+    if(fadeMs) bgmFade(old,0,fadeMs,()=>{ try{ old.a.pause(); }catch(e){} });
+    else { try{ old.a.pause(); }catch(e){} } }
   function playTitleBgm(xf){ if(BGM.name==='title') return; stopBgm(xf?800:0);
-    const a=new Audio('assets/bgm_title.mp3'); a.loop=true; a.volume=xf?0:bgmVol();
-    BGM.cur=a; BGM.name='title';
-    a.play().then(()=>{ if(xf&&BGM.cur===a) bgmFade(a,bgmVol(),800); })
-      .catch(()=>{ if(BGM.cur===a){ BGM.cur=null; BGM.name=''; } }); }
+    const t=mkTrack('assets/bgm_title.mp3',true); trkSet(t,xf?0:bgmVol());
+    BGM.cur=t; BGM.name='title';
+    t.a.play().then(()=>{ if(xf&&BGM.cur===t) bgmFade(t,bgmVol(),800); })
+      .catch(()=>{ if(BGM.cur===t){ BGM.cur=null; BGM.name=''; } }); }
   let ptIdx=Math.floor(Math.random()*3);
   function playGameBgm(xf){ if(BGM.name==='play') return; stopBgm(xf?800:0); BGM.name='play';
     let first=!!xf;
     const step=()=>{ if(BGM.name!=='play') return;
-      const a=new Audio('assets/bgm_play'+(ptIdx+1)+'.mp3'); a.volume=first?0:bgmVol();
-      a.onended=()=>{ ptIdx=(ptIdx+1)%3; step(); };
-      BGM.cur=a; a.play().then(()=>{ if(first&&BGM.cur===a){ first=false; bgmFade(a,bgmVol(),800); } })
-        .catch(()=>{ if(BGM.cur===a){ BGM.cur=null; BGM.name=''; } }); };
+      const t=mkTrack('assets/bgm_play'+(ptIdx+1)+'.mp3',false); trkSet(t,first?0:bgmVol());
+      t.a.onended=()=>{ ptIdx=(ptIdx+1)%3; step(); };
+      BGM.cur=t; t.a.play().then(()=>{ if(first&&BGM.cur===t){ first=false; bgmFade(t,bgmVol(),800); } })
+        .catch(()=>{ if(BGM.cur===t){ BGM.cur=null; BGM.name=''; } }); };
     step(); }
-  function bgmApplyVol(){ if(BGM.cur) BGM.cur.volume=bgmVol(); }
+  function bgmApplyVol(){ if(BGM.cur) trkSet(BGM.cur,bgmVol()); }
   const bgmKick=()=>{ if(!$('title').classList.contains('hidden')) playTitleBgm();
     document.removeEventListener('pointerdown',bgmKick); };
   document.addEventListener('pointerdown',bgmKick);
@@ -373,9 +380,30 @@
       if(j&&j.ok&&j.rank<=5){ flash('#e6b450'); sGood(); } }
     catch(e){ $('rrStatus').textContent='OFFLINE — SAVED LOCALLY'; } };
   $('rrDone').onclick=()=>{ beep(500,0.08); buildSandbox(); show('sandbox'); };
+  // 게임 상단 로고: 플레이 시작(HOW TO 탭) 후에만 표시, 흰 배경 키잉 후 캐시
+  const GLOGO={};
+  const GLOGO_PFX={ 'FREE POUR MASTER':'fp','BLIND POUR':'fp','STIR STOP':'st','ICE CARVING':'ic','CHAMPAGNE LAUNCH':'cl',
+    'SHAKE MASTER':'sm','QUICK TAB':'qt','ORDER UP!':'ou','WHERE IS MY SHOT?':'ws','FRESH SQUEEZE':'sq','TIP CATCH':'tc','FLY SWAT':'fs' };
+  function showGameLogo(name){ const el=$('gameLogo'); const pfx=GLOGO_PFX[name];
+    if(!el||!pfx){ if(el) el.style.display='none'; return; }
+    if(GLOGO[pfx]){ el.src=GLOGO[pfx]; el.style.display='block'; return; }
+    el.style.display='none';
+    const im=new Image(); im.onload=()=>{ try{ const c=fpKeyUI(im,520);
+      const g=c.getContext('2d'); const dd=g.getImageData(0,0,c.width,c.height); const p=dd.data;
+      for(let i=0;i<p.length;i+=4){ if(p[i+3]>0&&p[i]>243&&p[i+1]>243&&p[i+2]>243) p[i+3]=0; }
+      g.putImageData(dd,0,0); GLOGO[pfx]=c.toDataURL();
+      if(!$('game').classList.contains('hidden')){ el.src=GLOGO[pfx]; el.style.display='block'; } }catch(e){} };
+    im.src='assets/'+pfx+'_logo.png'; }
+  // 플레이 화면 배경: 캔버스 밖 영역까지 그 게임의 바 전경으로 채움 (폰에서 아래 빈 공간 제거)
+  const GAME_BG={ 'FREE POUR MASTER':'bg_freepour','BLIND POUR':'bg_freepour','STIR STOP':'bg_stir','ICE CARVING':'bg_icecarving',
+    'CHAMPAGNE LAUNCH':'bg_champagne','SHAKE MASTER':'bg_shake','QUICK TAB':'qt_bg','ORDER UP!':'bg_orderup',
+    'WHERE IS MY SHOT?':'bg_whereshot','FRESH SQUEEZE':'bg_squeeze','TIP CATCH':'bg_tipcatch','FLY SWAT':'bg_flyswat' };
   function playSandbox(i){ $('hud').classList.add('hidden'); show('game'); stage.innerHTML='';
+    const bgf=GAME_BG[GAMES[i].name];
+    $('game').style.background=bgf?("linear-gradient(rgba(6,8,5,.62),rgba(6,8,5,.78)), url('assets/"+bgf+".jpg') center/cover no-repeat"):'';
     const my=++runToken;
     showHowto(GAMES[i].name,()=>{ if(my!==runToken) return; let done=false;
+      showGameLogo(GAMES[i].name);
       GAMES[i].run(function(s,t,c){ if(done||my!==runToken) return; done=true; record(GAMES[i].name,s,t);
         showResult(GAMES[i].name,Math.round(s),t,c); }); }); }
 
@@ -491,9 +519,7 @@
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ CL.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engChampagne(done){
     fpLoad(); clLoad();
-    stage.innerHTML='<div class="mgtitle">CHAMPAGNE LAUNCH</div>'
-      +'<div class="mghint">Mash RUN to sprint & shake — stop tapping and power drains! <b>HOLD LAUNCH</b> to raise the angle, release to fire. 45° is best. Hit the wall = CRASH!</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
       +'<button class="btn amber" id="clTap" style="width:min(190px,44vw);height:70px;font-size:15px">RUN!</button>'
       +'<button class="btn" id="clGo" style="width:min(150px,34vw);height:70px;font-size:12px">🍾 HOLD</button></div>';
@@ -505,7 +531,7 @@
     let stampObj=null, stampT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
     const parts=[]; const armed=()=>t0&&now()-t0>=ARM;
     function tap(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return;
-      power+=4; vel=Math.min(460,vel+62); runPh+=0.3; sTap();
+      power+=1.6; vel=Math.min(460,vel+62); runPh+=0.3; sTap(); // 게이지 2.5배 어렵게
       parts.push({x:RX+22,y:GY-100,vx:-60-Math.random()*40,vy:-20-Math.random()*40,gv:300,r:1.5+Math.random()*1.5,c:'#eef6d8',life:0.35}); }
     function holdStart(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return; holdA=true; }
     function fire(){ if(state!=='run') return; holdA=false;
@@ -681,7 +707,7 @@
   const GB={ imgs:{}, loading:false };
   function gbLoad(){ if(GB.loading) return; GB.loading=true;
     ['freepour','stir','icecarving','champagne','shake','tipcatch','flyswat','orderup','whereshot','squeeze'].forEach(k=>{
-      const im=new Image(); im.onload=()=>{ GB.imgs[k]=im; }; im.src='assets/bg_'+k+'.png'; }); }
+      const im=new Image(); im.onload=()=>{ GB.imgs[k]=im; }; im.src='assets/bg_'+k+'.jpg'; }); }
   function fpKeyUI(img,maxW){ // UI 이미지용: 낮은 임계 키잉 + 가장자리 흰 잔재(halo) 2패스 제거
     const c=fpKey(img,maxW,205);
     try{ const g=c.getContext('2d'); const w=c.width,h=c.height;
@@ -717,10 +743,7 @@
   function engFreePour(cfg, done){
     fpLoad();
     const blind=!!cfg.blind;
-    stage.innerHTML='<div class="mgtitle">'+(blind?'BLIND POUR':'FREE POUR MASTER')+'</div>'
-      +'<div class="mghint">30ml → 45ml → 60ml, three pours! Hold to flip the bottle. '
-      +(blind?'No counter — pour by feel!':'Watch the counter, release at the exact moment!')+'</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="fpb">HOLD TO POUR</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('fpb');
     const GX=200, GBASE=444;
@@ -892,7 +915,7 @@
         ctx.fillStyle='#fff'; ctx.fillText(ml.toFixed(2)+' / '+target+'.00ml',200,256);
         ctx.font='11px "Press Start 2P"'; ctx.fillStyle='#ffd977';
         ctx.fillText('ERROR ±'+Math.abs(stampObj.err).toFixed(2)+'ml',200,284);
-        ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif';
+        ctx.font='9px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,314); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,313); }
     }
     raf=requestAnimationFrame(draw);
@@ -939,14 +962,12 @@
       return {sx:r[0],sy:top,sw:r[1]-r[0],sh:Math.max(1,bot-top+1)}; }); }
   function engIceCarve(done){
     fpLoad(); icLoad();
-    stage.innerHTML='<div class="mgtitle">ICE CARVING</div>'
-      +'<div class="mghint">Mash to carve! Let go and it refreezes. Perfect sphere? Hit <b>DONE!</b> — as many as you can in 15s. Too early = it shatters!</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
       +'<button class="btn amber" id="icTap" style="width:min(200px,46vw);height:70px;font-size:16px">TAP!</button>'
       +'<button class="btn" id="icDone" style="width:min(140px,32vw);height:70px;font-size:13px">DONE!</button></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const ICEX=185, ICEY=392, ZONE=88, TOTAL=15000, ARM=1200, DECAY=38, TAPUP=9;
+    const ICEX=185, ICEY=392, ZONE=88, TOTAL=15000, ARM=1200, DECAY=38, TAPUP=3; // 폰 연타 기준 3배 어렵게
     let gauge=0, count=0, stunUntil=0, strikeT=-1e9, brokeT=-1e9, popT=0, finished=false, ended=false;
     let t0=0, lastT=0, raf=0, shake=0, contactX=ICEX+22, contactY=ICEY-120, prevStage=0;
     const parts=[], flyBalls=[], msgs=[];
@@ -1061,8 +1082,8 @@
       if(finished){ ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
         ctx.font='22px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('TIME UP!',203,213); ctx.fillStyle='#e6b450'; ctx.fillText('TIME UP!',200,210);
-        ctx.font='700 17px -apple-system,"Malgun Gothic",sans-serif';
-        ctx.fillStyle='#000'; ctx.fillText('BALL ICE × '+count+'!',201,251); ctx.fillStyle='#fff'; ctx.fillText('BALL ICE × '+count+'!',200,250); }
+        ctx.font='14px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText('BALL ICE x '+count+'!',201,251); ctx.fillStyle='#fff'; ctx.fillText('BALL ICE x '+count+'!',200,250); }
     }
     raf=requestAnimationFrame(draw);
   }
@@ -1079,9 +1100,7 @@
     Object.keys(raw).forEach(k=>{ const im=new Image(); im.onload=()=>{ TC.imgs[k]=im; }; im.src='assets/'+raw[k]+'.png'; }); }
   function engTipCatch(done){
     fpLoad(); tcLoad();
-    stage.innerHTML='<div class="mgtitle">TIP CATCH</div>'
-      +'<div class="mghint">Drag the jar to catch the tips! Coin <b>+1</b> · ₩10,000 bill <b>+2</b> · ₩50,000 bill <b>+3</b>. Receipts, bills & caps are <b>-1</b>!</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>';
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const LANES=[44,96,148,200,252,304,356], ARM=1200, TOTAL=15000, MOUTHY=330;
     const KINDS=[ {k:'bill10',good:1,g:2,s:46,wt:28},{k:'bill50',good:1,g:3,s:46,wt:18},{k:'coin',good:1,g:1,s:27,wt:26,spin:1},
@@ -1173,7 +1192,7 @@
       if(finished){ ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
         ctx.font='22px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('TIME UP!',203,213); ctx.fillStyle='#e6b450'; ctx.fillText('TIME UP!',200,210);
-        ctx.font='700 17px -apple-system,"Malgun Gothic",sans-serif';
+        ctx.font='14px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('TIP SCORE '+count+'!',201,251); ctx.fillStyle='#fff'; ctx.fillText('TIP SCORE '+count+'!',200,250); }
     }
     raf=requestAnimationFrame(draw);
@@ -1189,7 +1208,7 @@
       if(k==='receipt'){ const c=QT.imgs.receipt, w=c.width, h=c.height, d=c.getContext('2d').getImageData(0,0,w,h).data;
         let x0=w,x1=0,y0=h,y1=0; for(let cy=0;cy<h;cy+=2){ for(let cx=0;cx<w;cx+=2){ if(d[(cy*w+cx)*4+3]>30){ if(cx<x0)x0=cx; if(cx>x1)x1=cx; if(cy<y0)y0=cy; if(cy>y1)y1=cy; } } }
         QT.rb={fx0:x0/w,fx1:x1/w,fy0:y0/h,fy1:y1/h}; } }; im.src='assets/'+srcs[k][0]+'.png'; });
-    const bgim=new Image(); bgim.onload=()=>{ QT.imgs.bg=bgim; }; bgim.src='assets/qt_bg.png'; } // 바 전경 (있으면 사용, 없으면 공용 배경)
+    const bgim=new Image(); bgim.onload=()=>{ QT.imgs.bg=bgim; }; bgim.src='assets/qt_bg.jpg'; } // 바 전경 (있으면 사용, 없으면 공용 배경)
   const QT_MENU=[ ['OLD FASHIONED',14,22],['MANHATTAN',14,22],['NEGRONI',13,20],['DRY MARTINI',15,23],['MARGARITA',12,18],
     ['MOJITO',12,18],['DAIQUIRI',12,18],['GIMLET',12,18],['WHISKY SOUR',13,19],['SAZERAC',15,22],
     ['BOULEVARDIER',14,21],['COSMOPOLITAN',13,19],['ESP. MARTINI',14,21],['GIN TONIC',10,16],['HIGHBALL',9,15],
@@ -1197,9 +1216,7 @@
     ['DRAFT BEER',7,12],['IPA DRAFT',8,13],['HOUSE WINE',9,16],['CHAMPAGNE',14,25],['SODA WATER',3,6] ];
   function engQuickTab(done){
     fpLoad(); qtLoad();
-    stage.innerHTML='<div class="mgtitle">QUICK TAB</div>'
-      +'<div class="mghint">Add up all 7 tabs ($) in your head! Faster = more points, wrong answer = -20</div>'
-      +'<canvas id="fpcv" width="400" height="480" style="width:min(80vw, max(200px, calc((100dvh - 420px) * 0.8333)))"></canvas>'
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480" style="width:min(88vw, max(200px, calc((100dvh - 400px) * 0.8333)))"></canvas>'
       +'<div id="qtPad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(290px,78vw)"></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), pad=$('qtPad');
     const CUSTS=shuffle(['c1','c2','c3','c4','c5','c6']).concat(['c7']); // 마지막은 진상 손님
@@ -1312,7 +1329,7 @@
       if(state==='end'){ ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
         ctx.font='20px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('LAST CALL!',203,213); ctx.fillStyle='#e6b450'; ctx.fillText('LAST CALL!',200,210);
-        ctx.font='700 16px -apple-system,"Malgun Gothic",sans-serif';
+        ctx.font='12px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('ALL 7 TABS CLEARED',201,249); ctx.fillStyle='#fff'; ctx.fillText('ALL 7 TABS CLEARED',200,248); }
     }
     raf=requestAnimationFrame(draw);
@@ -1327,9 +1344,7 @@
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ SM.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engShakeMaster(done){
     fpLoad(); smLoad();
-    stage.innerHTML='<div class="mgtitle">SHAKE MASTER</div>'
-      +'<div class="mghint">Hold your phone with both hands and shake like crazy for 13s! Most shakes wins (PC: tap the screen)</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="smStart">START</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('smStart');
     const TOTAL=13000;
@@ -1352,8 +1367,7 @@
       try{ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function')
         DeviceMotionEvent.requestPermission().then(begin).catch(begin);
       else begin(); }catch(err){ begin(); } });
-    function tapFallback(e){ e.preventDefault(); ac(); addShake(); }
-    cv.addEventListener('pointerdown',tapFallback);
+    // 탭 폴백 제거 — 실제 폰 흔들기(모션 센서)로만 카운트
     function cleanup(){ cancelAnimationFrame(raf); try{ window.removeEventListener('devicemotion',onMotion); }catch(e){} }
     function draw(t){
       raf=requestAnimationFrame(draw);
@@ -1400,9 +1414,9 @@
       if(state==='title'){ ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,400,480);
         const lg2=SM.imgs.logo; if(lg2){ const k=1+Math.sin(t/400)*0.02, lw=360*k, lh=lw*(lg2.height/lg2.width);
           ctx.drawImage(lg2,200-lw/2,190-lh/2,lw,lh); }
-        ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif';
-        ctx.fillStyle='#000'; ctx.fillText('Press START to allow the motion sensor',201,373);
-        ctx.fillStyle='#e8e6dd'; ctx.fillText('Press START to allow the motion sensor',200,372); }
+        ctx.font='9px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText('PRESS START TO ALLOW',201,363); ctx.fillText('THE MOTION SENSOR',201,383);
+        ctx.fillStyle='#e8e6dd'; ctx.fillText('PRESS START TO ALLOW',200,362); ctx.fillText('THE MOTION SENSOR',200,382); }
       if(state==='hold'){ ctx.font='16px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('HOLD YOUR PHONE',203,133); ctx.fillText('WITH BOTH HANDS!',203,163);
         ctx.fillStyle='#ffd977'; ctx.fillText('HOLD YOUR PHONE',200,130); ctx.fillText('WITH BOTH HANDS!',200,160); }
@@ -1440,9 +1454,7 @@
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ ST.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engStirStop(done){
     fpLoad(); stLoad();
-    stage.innerHTML='<div class="mgtitle">STIR STOP</div>'
-      +'<div class="mghint">Stir in circles to chill the drink below zero. Hit <b>SERVE!</b> at the exact target temp — <b>as FAST as you can</b>. Score = accuracy + speed!</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="stServe">SERVE!</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('stServe');
     const CX=200, CY=272, GR=272, ARM=1100, TOTAL=22000;
@@ -1538,8 +1550,8 @@
           ctx.fillStyle=tl2<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,84,280*tl2,6);
           const el4=((t-stT)/1000).toFixed(1); ctx.font='11px "Press Start 2P"'; ctx.textAlign='right';
           ctx.fillStyle='#000'; ctx.fillText(el4+'s',392,106); ctx.fillStyle='#ffd977'; ctx.fillText(el4+'s',390,104); } }
-      if(state==='play'&&!stampObj&&t-stT<2600){ ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif'; ctx.textAlign='center';
-        ctx.fillStyle='#000'; ctx.fillText('Drag in circles to stir!',201,451); ctx.fillStyle='#e8e6dd'; ctx.fillText('Drag in circles to stir!',200,450); }
+      if(state==='play'&&!stampObj&&t-stT<2600){ ctx.font='10px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('DRAG IN CIRCLES TO STIR!',201,451); ctx.fillStyle='#e8e6dd'; ctx.fillText('DRAG IN CIRCLES TO STIR!',200,450); }
       if(state==='intro'){ ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,400,480);
         const lgi=ST.imgs.logo; if(lgi){ const k=0.55+eob2(Math.min(1,el2/280))*0.45, lw=340*k, lh=lw*(lgi.height/lgi.width);
           ctx.drawImage(lgi,200-lw/2,215-lh/2,lw,lh); } }
@@ -1555,7 +1567,7 @@
         ctx.fillStyle='#fff'; ctx.fillText(temp.toFixed(1)+' / '+target.toFixed(1)+'°C',200,250);
         ctx.fillStyle='#000'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',202,274);
         ctx.fillStyle='#ffd977'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',200,272);
-        ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif';
+        ctx.font='9px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,301); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,300); }
     }
     raf=requestAnimationFrame(draw);
@@ -1576,9 +1588,7 @@
     (window.__noises=window.__noises||[]).push(ret); return ret; }catch(e){ return null; } }
   function engFlySwat(done){
     fpLoad(); fsLoad();
-    stage.innerHTML='<div class="mgtitle">FLY SWAT</div>'
-      +'<div class="mghint">A HUGE swarm is after the fruit! Tap to shoot flies — ones SITTING on the fruit rot it away. Fruit HP at 0 = game over!</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>';
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const BX=200, BY=352, TOTAL=25000;
     let state='cine', stT=0, pts=0, nextSpawn=0, finished=false, ended=false;
@@ -1736,9 +1746,7 @@
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ OU.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engOrderUp(done){
     fpLoad(); ouLoad();
-    stage.innerHTML='<div class="mgtitle">ORDER UP!</div>'
-      +'<div class="mghint">Memorize the drinks as each guest calls their order, then punch them into the POS <b>in the same order</b>. One mistake = closing time. How far can you go?</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>';
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const ARM=1400;
     // 포스 화면 영역 (ou_pos 이미지 비율)
@@ -1888,9 +1896,7 @@
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ WS.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engWhereShot(done){
     fpLoad(); wsLoad();
-    stage.innerHTML='<div class="mgtitle">WHERE IS MY SHOT?</div>'
-      +'<div class="mghint">Watch the shot get covered, follow the shuffle, then tap the right cover! More cups, faster shuffles — one wrong pick ends it.</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>';
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const CY=318, ARM=1300;
     let state='intro', stT=0, round=1, nCups=2, shotAt=0, picked=-1, cleared=0;
@@ -2014,9 +2020,7 @@
     names.forEach(k=>{ const im=new Image(); im.onload=()=>{ SQ.imgs[k]=fpKey(im,k==='logo'?560:400,185,k==='logo'); }; im.src='assets/sq_'+k+'.png'; }); }
   function engSqueeze(done){
     fpLoad(); sqLoad();
-    stage.innerHTML='<div class="mgtitle">FRESH SQUEEZE</div>'
-      +'<div class="mghint">DRAG a lime to the board, SLIDE to slice, DRAG a half into the squeezer, SLIDE DOWN to press, then DRAG the spent peel to the trash. 1 lime = 50ml. 30 seconds!</div>'
-      +'<canvas id="fpcv" width="400" height="480"></canvas>';
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const ARM=1300, TOTAL=30000;
     // 스테이션 좌표
