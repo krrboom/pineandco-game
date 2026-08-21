@@ -105,6 +105,10 @@
   .rkempty{ font-size:9px; color:var(--dim); }
   .imgbtn{ image-rendering:pixelated; cursor:pointer; display:none; transition:transform .06s, filter .06s; }
   .imgbtn:active{ transform:translateY(4px) scale(0.98); filter:brightness(1.15); }
+  .sbtn2{ font-family:'Press Start 2P',monospace; font-size:clamp(10px,2.8vw,13px); border:none; width:100%;
+    aspect-ratio:2.5/1; max-height:72px; background:transparent center/100% 100% no-repeat; cursor:pointer;
+    letter-spacing:.5px; image-rendering:pixelated; text-shadow:1px 1px 0 rgba(0,0,0,.5); transition:transform .06s; padding:0 16px; }
+  .sbtn2:active{ transform:translateY(3px) scale(.98); }
 </style>
 </head>
 <body>
@@ -308,8 +312,18 @@
   $('setReset').onclick=()=>{ if(confirm('Reset all rankings?')){ localStorage.removeItem('bp_ranks'); beep(300,0.1); } };
   // (구 샌드박스 버튼은 제거 — START가 게임 리스트를 연다)
   $('sbBack').onclick=()=>{ beep(500,0.08); show('title'); };
-  function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; GAMES.forEach((g,i)=>{ const b=document.createElement('button'); b.className='sbtn'; b.innerHTML='<span class="cat">'+g.cat+'</span>'+g.name;
-    b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(i); }; w.appendChild(b); }); }
+  const FR={ data:{}, loading:false };
+  function frLoad(){ if(FR.loading) return; FR.loading=true;
+    ['amber','blue','green','red','purple'].forEach(k=>{ const im=new Image();
+      im.onload=()=>{ try{ FR.data[k]=fpKey(im,700,190).toDataURL(); }catch(e){} }; im.src='assets/fr_'+k+'.png'; }); }
+  const FR_ORDER=['amber','blue','green','red','purple'];
+  const FR_COMP={ amber:'#1d3fa0', blue:'#f08a1d', green:'#b3125e', red:'#22d9c8', purple:'#ffd23e' }; // 프레임 보색 폰트
+  function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; w.style.gridTemplateColumns='1fr';
+    GAMES.forEach((g,i)=>{ const b=document.createElement('button'); const key=FR_ORDER[i%5];
+      if(FR.data[key]){ b.className='sbtn2'; b.style.backgroundImage="url('"+FR.data[key]+"')"; b.style.color=FR_COMP[key]; }
+      else b.className='sbtn';
+      b.textContent=g.name;
+      b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(i); }; w.appendChild(b); }); }
   function playSandbox(i){ $('hud').classList.add('hidden'); show('game'); stage.innerHTML='';
     showHowto(GAMES[i].name,()=>{ let done=false;
       GAMES[i].run(function(s,t,c){ if(done) return; done=true; record(GAMES[i].name,s,t);
@@ -2108,7 +2122,7 @@
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
-  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); // 실사 에셋 미리 키잉
+  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); frLoad(); // 실사 에셋 미리 키잉
   // 타이틀 로고: 키잉 + 글자 안 갇힌 흰 구멍(C 내부, R-T 사이 등)까지 전역 제거
   (function(){ const L=new Image(); L.onload=()=>{ try{ const c=fpKey(L,720);
       const g2=c.getContext('2d'); const dd=g2.getImageData(0,0,c.width,c.height); const p2=dd.data;
