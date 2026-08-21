@@ -11,7 +11,7 @@
 
 | 카테고리 | 게임 | 비고 |
 |---|---|---|
-| 타이밍 (7) | JIGGER STOP · FLAIR CATCH · GARNISH LAND · STIR STOP · TORCH BRÛLÉE · STRAIN POUR · DROP IN | |
+| 타이밍 (7) | JIGGER STOP · FLAIR CATCH · GARNISH LAND · **STIR STOP** ★ · TORCH BRÛLÉE · STRAIN POUR · DROP IN | ★ 실사 리뉴얼: 원형 드래그로 저어 온도를 영하 목표에 맞춰 SERVE |
 | 홀드 (4) | **FREE POUR MASTER** ★ · **BLIND POUR** ★ · CITRUS SQUEEZE · BEER HEAD | ★ 실사 캔버스 엔진, 30→45→60ml 3연속 |
 | 연타 (6) | SHAKE IT · ICE SMASH · **ICE CARVING** ★ · MUDDLE · CORK POP · BLEND | ★ 15초 볼 아이스 개수, 수직 스탭 타격 |
 | 리듬 (2) | SHAKE RHYTHM · STIR RHYTHM | |

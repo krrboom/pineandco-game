@@ -1240,13 +1240,136 @@
     raf=requestAnimationFrame(draw);
   }
 
+  /* ====================== STIR STOP ====================== */
+  // 원을 그리며 저어라 — 저을수록 온도가 영하로 떨어진다. 목표 온도에 맞춰 SERVE! (멈추면 서서히 데워짐)
+  const ST={ imgs:{}, loading:false };
+  function stLoad(){ if(ST.loading) return; ST.loading=true;
+    const srcs={ glass:['st_glass',420], ice1:['st_ice1',420], ice2:['st_ice2',420],
+      top:['st_top',560], spoon:['st_spoon',560], logo:['st_logo',560] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ ST.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+  function engStirStop(done){
+    fpLoad(); stLoad();
+    stage.innerHTML='<div class="mgtitle">STIR STOP</div>'
+      +'<div class="mghint">Stir in circles — the drink chills below zero as you go, and warms back up when you stop. Hit <b>SERVE!</b> right at the target temp!</div>'
+      +'<canvas id="fpcv" width="400" height="480"></canvas>'
+      +'<button class="btn amber bigbtn" id="stServe">SERVE!</button>';
+    const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('stServe');
+    const CX=200, CY=272, GR=272, ARM=1100, TOTAL=22000;
+    const target=-(15+rnd(26))/10; // -1.5 ~ -4.0
+    let state='intro', stT=0, temp=20.0, omega=0, spoonA=Math.random()*6.28, liquidA=0, lastPtrA=null, dragging=false;
+    let stampObj=null, stampT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
+    const parts=[]; const noise=fpNoise();
+    function ptrAngle(e){ const r=cv.getBoundingClientRect();
+      const x=(e.clientX-r.left)*(400/r.width)-CX, y=(e.clientY-r.top)*(480/r.height)-CY;
+      return Math.atan2(y,x); }
+    function pdn(e){ e.preventDefault(); ac(); if(state!=='play') return; dragging=true; lastPtrA=ptrAngle(e); }
+    function pmv(e){ if(e.cancelable)e.preventDefault(); if(!dragging||state!=='play') return;
+      const a2=ptrAngle(e); if(lastPtrA!=null){ let d2=a2-lastPtrA;
+        while(d2>Math.PI)d2-=6.283; while(d2<-Math.PI)d2+=6.283;
+        omega=Math.min(14,omega+Math.abs(d2)*3.2); spoonA=a2; } lastPtrA=a2; }
+    function pup(){ dragging=false; lastPtrA=null; }
+    cv.addEventListener('pointerdown',pdn); cv.addEventListener('pointermove',pmv);
+    window.addEventListener('pointerup',pup);
+    function judge(){ if(state!=='play'||stampObj) return;
+      const diff=Math.abs(temp-target); let sc,txt,cls,quip;
+      if(diff<=0.3){ sc=100; txt='PERFECT!'; cls='perfect'; quip='Diamond-clear and ice cold'; }
+      else if(diff<=0.8){ sc=Math.round(92-diff*20); txt='GOOD'; cls='good'; quip=temp>target?'A touch warm':'A touch overchilled'; }
+      else if(diff<=1.8){ sc=Math.round(70-diff*14); txt=temp>target?'TOO WARM':'OVER-CHILLED'; cls='miss'; quip=temp>target?'The guest wanted it colder…':'Watered it down…'; }
+      else { sc=Math.max(0,Math.round(40-diff*8)); txt=temp>target?'TOO WARM':'OVER-DILUTED!'; cls='miss'; quip=temp>target?'That is room temp, chief':'That is meltwater now'; }
+      stampObj={txt,cls,quip}; stampT=lastT;
+      if(cls==='perfect'){ flash('#6fcf8f'); sGood(); setTimeout(()=>beep(1320,0.14,'square',0.12),140);
+        for(let j=0;j<30;j++) parts.push({x:CX+(Math.random()*160-80),y:CY+(Math.random()*160-80),vx:(Math.random()*2-1)*120,vy:-60-Math.random()*120,gv:400,r:1.6+Math.random()*2,c:['#bfe6ff','#fff','#6fcf8f'][rnd(3)],life:0.6}); }
+      else if(cls==='good') sGood(); else { sBad(); shake=8; }
+      setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,txt,cls); },1500); }
+    btn.addEventListener('pointerdown',e=>{ e.preventDefault(); ac(); judge(); });
+    function cleanup(){ cancelAnimationFrame(raf); if(noise) noise.kill();
+      window.removeEventListener('pointerup',pup); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; stT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      const el2=t-stT;
+      if(state==='intro'&&el2>=ARM){ state='ice'; stT=t; beep(500,0.06,'square',0.1); }
+      else if(state==='ice'&&el2>=1100){ state='play'; stT=t; beep(700,0.08,'square',0.1); }
+      if(state==='play'&&!stampObj){
+        omega=Math.max(0,omega-dt*7);
+        liquidA+=omega*dt*0.4;
+        const cool=omega*dt*0.5*(0.35+0.65*Math.max(0,(temp+8)/28)); // 낮아질수록 식히기 어렵다
+        temp=Math.max(-8,temp-cool);
+        if(omega<0.5) temp=Math.min(20,temp+dt*0.33); // 멈추면 서서히 데워짐
+        if(noise) noise.set(omega>0.6,Math.min(1,omega/10));
+        if(omega>6&&Math.random()<0.06) beep(1700+Math.random()*400,0.02,'square',0.05);
+        if(t-stT>TOTAL) judge(); }
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      const bgi=FP.imgs.bg;
+      if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(0,0,400,480);
+      if(state==='ice'){ const img=el2<450?ST.imgs.ice1:(el2<900?ST.imgs.ice2:ST.imgs.ice2);
+        if(img){ const ih=250, iw=ih*(img.width/img.height); ctx.drawImage(img,200-iw/2,150,iw,ih); } }
+      if(state==='play'){
+        // 탑뷰 잔 (액체가 저은 만큼 천천히 회전)
+        const tp2=ST.imgs.top;
+        if(tp2){ ctx.save(); ctx.translate(CX,CY); ctx.rotate(liquidA);
+          ctx.drawImage(tp2,-GR/2,-GR/2,GR,GR); ctx.restore(); }
+        // 성에: 영하로 갈수록 림에 하얗게
+        if(temp<2){ const fr=Math.min(1,(2-temp)/9);
+          ctx.save(); ctx.globalAlpha=fr*0.75; ctx.strokeStyle='#eaf6ff'; ctx.lineWidth=10+fr*10;
+          ctx.beginPath(); ctx.arc(CX,CY,GR/2-6,0,6.283); ctx.stroke(); ctx.restore();
+          if(temp<0&&Math.random()<0.3) parts.push({x:CX+(Math.random()*2-1)*130,y:CY+(Math.random()*2-1)*130,vx:(Math.random()*2-1)*14,vy:-8-Math.random()*14,gv:0,r:1.2+Math.random()*1.4,c:'#eaf6ff',life:0.8}); }
+        // 바스푼 (드래그 각도 따라 회전, 보울이 잔 안쪽)
+        const sp=ST.imgs.spoon;
+        if(sp){ ctx.save(); ctx.translate(CX,CY); ctx.rotate(spoonA);
+          const sw2=300, sh2=300; ctx.drawImage(sp,18-sw2*0.0,-sh2/2,sw2,sh2); ctx.restore(); }
+      }
+      for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
+        pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
+        ctx.globalAlpha=Math.min(1,pp2.life*2.2); ctx.fillStyle=pp2.c; ctx.fillRect(pp2.x-pp2.r/2,pp2.y-pp2.r/2,pp2.r,pp2.r); }
+      ctx.globalAlpha=1;
+      // 온도계 HUD
+      if(state==='play'||stampObj){
+        const cw=232,chh=62,cx0=200-cw/2,cy0=12;
+        ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(cx0,cy0,cw,chh);
+        ctx.strokeStyle=omega>0.6?'#6fcf8f':'#333'; ctx.lineWidth=3; ctx.strokeRect(cx0,cy0,cw,chh);
+        ctx.textAlign='center'; ctx.font='19px "Press Start 2P"';
+        const tTxt=(temp>=0?'+':'')+temp.toFixed(1)+'°C';
+        const tCol=temp<=0?'#8fd7ff':(temp<8?'#e8e6dd':'#ffd977');
+        ctx.fillStyle='#000'; ctx.fillText(tTxt,202,cy0+32); ctx.fillStyle=tCol; ctx.fillText(tTxt,200,cy0+30);
+        ctx.font='9px "Press Start 2P"'; ctx.fillStyle='#6fcf8f';
+        ctx.fillText('TARGET '+target.toFixed(1)+'°C',200,cy0+52);
+        if(state==='play'&&!stampObj){ const tl2=Math.max(0,1-(t-stT)/TOTAL);
+          ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,84,280,6);
+          ctx.fillStyle=tl2<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,84,280*tl2,6); } }
+      if(state==='play'&&!stampObj&&t-stT<2600){ ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('Drag in circles to stir!',201,451); ctx.fillStyle='#e8e6dd'; ctx.fillText('Drag in circles to stir!',200,450); }
+      if(state==='intro'){ ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,400,480);
+        const lgi=ST.imgs.logo; if(lgi){ const k=0.55+eob2(Math.min(1,el2/280))*0.45, lw=340*k, lh=lw*(lgi.height/lgi.width);
+          ctx.drawImage(lgi,200-lw/2,215-lh/2,lw,lh); } }
+      if(stampObj){ const st2=(t-stampT)/1000;
+        ctx.fillStyle='rgba(0,0,0,0.42)'; ctx.fillRect(0,0,400,480);
+        ctx.save(); ctx.translate(200,205); ctx.rotate(-0.06);
+        const k2=1+Math.max(0,1-st2*6)*1.4; ctx.scale(k2,k2);
+        ctx.font='22px "Press Start 2P"'; ctx.textAlign='center';
+        const col=stampObj.cls==='perfect'?'#6fcf8f':(stampObj.cls==='good'?'#e6b450':'#d9544d');
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.txt,3,3); ctx.fillStyle=col; ctx.fillText(stampObj.txt,0,0); ctx.restore();
+        ctx.font='12px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(temp.toFixed(1)+' / '+target.toFixed(1)+'°C',202,252);
+        ctx.fillStyle='#fff'; ctx.fillText(temp.toFixed(1)+' / '+target.toFixed(1)+'°C',200,250);
+        ctx.font='700 15px -apple-system,"Malgun Gothic",sans-serif';
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,283); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,282); }
+    }
+    raf=requestAnimationFrame(draw);
+  }
+
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
     // 타이밍
     { name:'JIGGER STOP', cat:'TIMING', run:d=>engTiming({title:'JIGGER STOP',hint:'Stop right in the green zone!',zone:0.20,speed:3.2},d) },
     { name:'FLAIR CATCH', cat:'TIMING', run:d=>engTiming({title:'FLAIR CATCH',hint:'Catch the flying bottle at the right moment!',zone:0.16,speed:4.2},d) },
     { name:'GARNISH LAND', cat:'TIMING', run:d=>engTiming({title:'GARNISH LAND',hint:'Land the garnish right on the glass!',zone:0.24,speed:2.6},d) },
-    { name:'STIR STOP', cat:'TIMING', run:d=>engTiming({title:'STIR STOP',hint:'Stop the stir at the perfect moment!',zone:0.19,speed:3.6},d) },
+    { name:'STIR STOP', cat:'TIMING', run:d=>engStirStop(d) },
     { name:'TORCH BRULEE', cat:'TIMING', run:d=>engTiming({title:'TORCH BRÛLÉE',hint:'Torch it just right (green zone)!',zone:0.18,speed:3.9},d) },
     { name:'STRAIN POUR', cat:'TIMING', run:d=>engTiming({title:'STRAIN POUR',hint:'Stop at the strainer timing!',zone:0.22,speed:3.0},d) },
     { name:'DROP IN', cat:'TIMING', run:d=>engTiming({title:'DROP IN',hint:'Drop it into the shaker mouth (green zone)!',zone:0.17,speed:4.0},d) },
@@ -1295,7 +1418,7 @@
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
-  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); // 실사 에셋 미리 키잉
+  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); // 실사 에셋 미리 키잉
   show('title');
 })();
 </script>
