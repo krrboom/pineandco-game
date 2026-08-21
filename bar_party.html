@@ -103,6 +103,8 @@
   .rkrow{ display:flex; justify-content:space-between; font-size:9px; color:var(--ink); padding:2.5px 0; }
   .rkrow .nm2{ color:#cde6d2; } .rkrow .sc2{ color:var(--amber); }
   .rkempty{ font-size:9px; color:var(--dim); }
+  .imgbtn{ image-rendering:pixelated; cursor:pointer; display:none; transition:transform .06s, filter .06s; }
+  .imgbtn:active{ transform:translateY(4px) scale(0.98); filter:brightness(1.15); }
 </style>
 </head>
 <body>
@@ -118,7 +120,9 @@
     <button class="btn amber" id="startBtn">START</button>
     <button class="btn" id="rankBtn">🏆 RANKING</button>
     <button class="btn ghost" id="setBtn">⚙ SETTINGS</button>
-    <button class="btn ghost hidden" id="sandboxBtn">🎮 SANDBOX</button>
+    <img id="startImg" class="imgbtn" alt="START" style="width:min(250px,66vw)">
+    <img id="rankImg" class="imgbtn" alt="RANKING" style="width:min(205px,54vw)">
+    <img id="setImg" class="imgbtn" alt="SETTINGS" style="width:min(205px,54vw)">
   </div>
 
   <div id="rank" class="screen hidden" style="justify-content:flex-start">
@@ -132,14 +136,16 @@
     <div class="mgtitle">⚙ SETTINGS</div>
     <div class="kr" style="font-size:11px;color:var(--dim)">PLAYER NAME (for rankings)</div>
     <input id="setName" maxlength="6" style="font-family:'Press Start 2P',monospace;font-size:14px;text-transform:uppercase;width:150px;text-align:center;padding:10px;background:#000;color:var(--amber);border:3px solid #333">
+    <div class="kr" style="font-size:11px;color:var(--dim)">BGM VOLUME</div>
+    <input type="range" id="setVol" min="0" max="100" style="width:200px">
     <button class="btn" id="setSound">SOUND: ON</button>
     <button class="btn ghost" id="setReset">RESET RANKINGS</button>
     <button class="btn ghost" id="setBack">← HOME</button>
   </div>
 
   <div id="sandbox" class="screen hidden">
-    <div class="mgtitle">🎮 SANDBOX</div>
-    <div class="mghint">Pick a minigame to try</div>
+    <div class="mgtitle">🍸 PICK A GAME!</div>
+    <div class="mghint">Every game keeps its own TOP 5 — go set some records!</div>
     <div class="sbwrap" id="sbwrap"></div>
     <button class="btn ghost" id="sbBack">← HOME</button>
   </div>
@@ -171,7 +177,27 @@
 (function(){
   const $=id=>document.getElementById(id);
   const stage=$('stage');
-  function show(id){ ['title','sandbox','turn','game','roundResult','final','rank','setting'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+  function show(id){ ['title','sandbox','turn','game','roundResult','final','rank','setting'].forEach(s=>$(s).classList.toggle('hidden', s!==id));
+    if(id==='title') playTitleBgm(); }
+  // ── BGM: 타이틀 1곡 루프 / 플레이 3곡 연속 루프 ──
+  const BGM={ cur:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6') };
+  function bgmVol(){ return window.__mute?0:BGM.vol; }
+  function stopBgm(){ if(BGM.cur){ try{ BGM.cur.pause(); }catch(e){} } BGM.cur=null; BGM.name=''; }
+  function playTitleBgm(){ if(BGM.name==='title') return; stopBgm();
+    const a=new Audio('assets/bgm_title.mp3'); a.loop=true; a.volume=bgmVol();
+    BGM.cur=a; BGM.name='title';
+    a.play().catch(()=>{ if(BGM.cur===a){ BGM.cur=null; BGM.name=''; } }); }
+  let ptIdx=Math.floor(Math.random()*3);
+  function playGameBgm(){ if(BGM.name==='play') return; stopBgm(); BGM.name='play';
+    const step=()=>{ if(BGM.name!=='play') return;
+      const a=new Audio('assets/bgm_play'+(ptIdx+1)+'.mp3'); a.volume=bgmVol();
+      a.onended=()=>{ ptIdx=(ptIdx+1)%3; step(); };
+      BGM.cur=a; a.play().catch(()=>{ if(BGM.cur===a){ BGM.cur=null; BGM.name=''; } }); };
+    step(); }
+  function bgmApplyVol(){ if(BGM.cur) BGM.cur.volume=bgmVol(); }
+  const bgmKick=()=>{ if(!$('title').classList.contains('hidden')) playTitleBgm();
+    document.removeEventListener('pointerdown',bgmKick); };
+  document.addEventListener('pointerdown',bgmKick);
   const rnd=n=>Math.floor(Math.random()*n);
   function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
   const sample=(arr,n)=>shuffle([...arr]).slice(0,n);
@@ -213,7 +239,7 @@
   let pn=1; // 솔로 플레이 (인원 선택 제거)
   window.__mute=localStorage.getItem('bp_mute')==='1';
 
-  $('startBtn').onclick=()=>{ ac(); beep(700,0.1); mode='party'; players=[]; for(let i=0;i<pn;i++) players.push({name:'PLAYER '+(i+1),score:0}); cur=0; startTurn(); };
+  $('startBtn').onclick=()=>{ ac(); beep(700,0.1); buildSandbox(); show('sandbox'); }; // START = 게임 리스트
   function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'Got the phone? Press!':'Press when ready'); show('turn'); $('hud').classList.add('hidden'); }
   $('turnBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp') fpNext(); else nextRound(); };
   function hud(){ const p=players[cur]; $('hudWho').textContent=p.name; $('hudRd').textContent='ROUND '+(round+1)+'/'+ROUNDS; $('hudSc').textContent=p.score; $('hud').classList.remove('hidden'); }
@@ -240,7 +266,7 @@
     $('htName').textContent=name; $('htDesc').textContent=HOWTO[name]||'Do the thing. Fast.';
     const bang=ht.querySelector('.ht-bang'); bang.style.animation='none'; void bang.offsetWidth; bang.style.animation='';
     ht.classList.remove('hidden'); beep(200,0.12,'sawtooth',0.14); setTimeout(()=>beep(700,0.1,'square',0.1),80);
-    const go=e=>{ if(e)e.preventDefault(); ht.classList.add('hidden'); ht.removeEventListener('pointerdown',go); beep(900,0.08); cb(); };
+    const go=e=>{ if(e)e.preventDefault(); ht.classList.add('hidden'); ht.removeEventListener('pointerdown',go); beep(900,0.08); playGameBgm(); cb(); };
     ht.addEventListener('pointerdown',go); }
   function nextRound(){ if(round>=ROUNDS){ endTurn(); return; } hud(); let g; do{ g=rnd(GAMES.length); }while(GAMES.length>1 && g===lastGame); lastGame=g;
     show('game'); stage.innerHTML='';
@@ -270,20 +296,17 @@
   // 설정 화면
   $('setBtn').onclick=()=>{ ac(); beep(600,0.08);
     $('setName').value=localStorage.getItem('bp_name')||'PINE';
+    $('setVol').value=Math.round(BGM.vol*100);
     $('setSound').textContent='SOUND: '+(window.__mute?'OFF':'ON'); show('setting'); };
+  $('setVol').addEventListener('input',()=>{ BGM.vol=$('setVol').value/100;
+    localStorage.setItem('bp_vol',String(BGM.vol)); bgmApplyVol(); });
   $('setBack').onclick=()=>{ beep(500,0.08); show('title'); };
   $('setName').addEventListener('input',()=>{ const v=$('setName').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
     $('setName').value=v; localStorage.setItem('bp_name',v||'PINE'); });
   $('setSound').onclick=()=>{ window.__mute=!window.__mute; localStorage.setItem('bp_mute',window.__mute?'1':'0');
-    $('setSound').textContent='SOUND: '+(window.__mute?'OFF':'ON'); if(!window.__mute) beep(700,0.08); };
+    $('setSound').textContent='SOUND: '+(window.__mute?'OFF':'ON'); bgmApplyVol(); if(!window.__mute) beep(700,0.08); };
   $('setReset').onclick=()=>{ if(confirm('Reset all rankings?')){ localStorage.removeItem('bp_ranks'); beep(300,0.1); } };
-  // 샌드박스 (비공개: ?sandbox=1 또는 타이틀 로고 5연타)
-  $('sandboxBtn').onclick=()=>{ ac(); beep(600,0.08); buildSandbox(); show('sandbox'); };
-  if(location.search.indexOf('sandbox')>=0) $('sandboxBtn').classList.remove('hidden');
-  let logoTaps=0, logoTapT=0;
-  function logoSecret(){ const n2=Date.now(); if(n2-logoTapT>1600) logoTaps=0; logoTapT=n2;
-    if(++logoTaps>=5){ $('sandboxBtn').classList.remove('hidden'); beep(1200,0.12,'square',0.12); } }
-  $('titleLogo').addEventListener('pointerdown',logoSecret); $('titleH1').addEventListener('pointerdown',logoSecret);
+  // (구 샌드박스 버튼은 제거 — START가 게임 리스트를 연다)
   $('sbBack').onclick=()=>{ beep(500,0.08); show('title'); };
   function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; GAMES.forEach((g,i)=>{ const b=document.createElement('button'); b.className='sbtn'; b.innerHTML='<span class="cat">'+g.cat+'</span>'+g.name;
     b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(i); }; w.appendChild(b); }); }
@@ -401,8 +424,8 @@
   const CL={ imgs:{}, loading:false };
   function clLoad(){ if(CL.loading) return; CL.loading=true;
     const srcs={ run1:['cl_run1',420], run2:['cl_run2',420], run3:['cl_run3',420], run4:['cl_run4',420], run5:['cl_run5',420],
-      skid:['cl_skid',440], cork:['cl_cork',200], logo:['cl_logo',560] };
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ CL.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+      skid:['cl_skid',440], cork:['cl_cork',200], logo:['cl_logo',560,224,1] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ CL.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engChampagne(done){
     fpLoad(); clLoad();
     stage.innerHTML='<div class="mgtitle">CHAMPAGNE LAUNCH</div>'
@@ -576,7 +599,7 @@
   /* ====================== FREE POUR MASTER ====================== */
   // 실사 픽셀아트 캔버스 프리푸어: 병을 완전히 뒤집고 ml 카운터를 보며 정확한 순간에 놓아라
   const FP={ imgs:{}, loading:false };
-  function fpKey(img,maxW,thr){ // 흰 배경을 테두리 플러드필로만 제거(내부 흰 하이라이트 보존) 후 프리스케일
+  function fpKey(img,maxW,thr,killAll){ // 흰 배경 플러드필 제거(+killAll: 갇힌 흰 구멍도 전역 제거 — 로고용)
     const w=img.naturalWidth,h=img.naturalHeight,c=document.createElement('canvas'); c.width=w; c.height=h;
     const x=c.getContext('2d'); x.drawImage(img,0,0); let d; try{ d=x.getImageData(0,0,w,h); }catch(e){ return c; }
     const p=d.data, seen=new Uint8Array(w*h), q=[];
@@ -586,6 +609,7 @@
     while(q.length){ const i=q.pop(); if(seen[i]) continue; seen[i]=1; if(!isW(i)) continue; p[i*4+3]=0;
       const cx=i%w; if(cx>0&&!seen[i-1]) q.push(i-1); if(cx<w-1&&!seen[i+1]) q.push(i+1);
       if(i>=w&&!seen[i-w]) q.push(i-w); if(i<w*(h-1)&&!seen[i+w]) q.push(i+w); }
+    if(killAll){ for(let i=0;i<p.length;i+=4){ if(p[i+3]>0&&p[i]>243&&p[i+1]>243&&p[i+2]>243) p[i+3]=0; } }
     x.putImageData(d,0,0);
     if(maxW&&w>maxW){ const c2=document.createElement('canvas'); c2.width=maxW; c2.height=Math.round(h*maxW/w);
       const x2=c2.getContext('2d'); x2.imageSmoothingQuality='high'; x2.drawImage(c,0,0,c2.width,c2.height); return c2; }
@@ -596,8 +620,8 @@
     ['freepour','stir','icecarving','champagne','shake','tipcatch','flyswat','orderup','whereshot','squeeze'].forEach(k=>{
       const im=new Image(); im.onload=()=>{ GB.imgs[k]=im; }; im.src='assets/bg_'+k+'.png'; }); }
   function fpLoad(){ if(FP.loading) return; FP.loading=true; gbLoad();
-    const srcs={ bg:['fp_bg',0], bottle:['fp_bottle',620], logo:['fp_logo',540], shot:['fp_shot',440], jigger:['fp_jigger',440], rocks:['fp_rocks',440] };
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FP.imgs[k]=srcs[k][1]?fpKey(im,srcs[k][1]):im; }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+    const srcs={ bg:['fp_bg',0], bottle:['fp_bottle',620], logo:['fp_logo',540,224,1], shot:['fp_shot',440], jigger:['fp_jigger',440], rocks:['fp_rocks',440] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FP.imgs[k]=srcs[k][1]?fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]):im; }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   // 잔 스펙: cap/target = ml (1oz=30ml). in = 잔 내부 영역(그린 크기 대비 비율)
   const FP_GLASS=[
     { key:'shot',   name:'SHOT GLASS / 1oz',  cap:45, target:30, h:146, in:{top:.225,bot:.665,hwT:.245,hwB:.155} },
@@ -824,9 +848,9 @@
   // 연타로 게이지를 올려 얼음을 구로 깎고(안 누르면 빠르게 감소) 완성 존에서 완성! — 15초 동안 최대 개수
   const IC={ imgs:{}, loading:false, stages:null };
   function icLoad(){ if(IC.loading) return; IC.loading=true;
-    const srcs={ ice:['ic_ice',900], pick:['ic_pick',520], broke:['ic_broke',420], logo:['ic_logo',560] };
+    const srcs={ ice:['ic_ice',900], pick:['ic_pick',520], broke:['ic_broke',420], logo:['ic_logo',560,224,1] };
     Object.keys(srcs).forEach(k=>{ const im=new Image();
-      im.onload=()=>{ IC.imgs[k]=fpKey(im,srcs[k][1]); if(k==='ice') icSegment(); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+      im.onload=()=>{ IC.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); if(k==='ice') icSegment(); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function icSegment(){ // 5단계 시트를 알파 열 스캔으로 자동 분리
     const c=IC.imgs.ice, w=c.width, h=c.height, d=c.getContext('2d').getImageData(0,0,w,h).data;
     const colHas=new Uint8Array(w);
@@ -972,7 +996,7 @@
   // 7개 지점에서 쏟아지는 팁을 병을 드래그해 받아라 — 15초 최대 개수, 팁 아닌 게 들어가면 -1
   const TC={ imgs:{}, loading:false };
   function tcLoad(){ if(TC.loading) return; TC.loading=true;
-    const keyed={ jar:['tc_jar',520], receipt:['tc_receipt',300], env:['tc_env',320], cap:['tc_cap',300], logo:['tc_logo',560] };
+    const keyed={ jar:['tc_jar',520], receipt:['tc_receipt',300], env:['tc_env',320], cap:['tc_cap',300], logo:['tc_logo',560,224,1] };
     Object.keys(keyed).forEach(k=>{ const im=new Image(); im.onload=()=>{ TC.imgs[k]=fpKey(im,keyed[k][1]); }; im.src='assets/'+keyed[k][0]+'.png'; });
     const raw={ bill10:'bill_10000', bill50:'bill_50000', coin:'coin_gold',
       bottle1:'bottle_whiskey', bottle2:'bottle_gin', bottle3:'bottle_rum' }; // 기존 스프라이트 재활용(이미 투명)
@@ -1083,9 +1107,9 @@
   // 손님이 내민 영수증의 달러 합계를 키패드로 빠르게 암산 입력 — 품목 4→10개, 손님 7명 전원 정산
   const QT={ imgs:{}, loading:false };
   function qtLoad(){ if(QT.loading) return; QT.loading=true;
-    const srcs={ receipt:['qt_receipt',420], register:['qt_register',520], logo:['qt_logo',560],
+    const srcs={ receipt:['qt_receipt',420], register:['qt_register',520], logo:['qt_logo',560,224,1],
       c1:['qt_cust1',420], c2:['qt_cust2',420], c3:['qt_cust3',420], c4:['qt_cust4',420], c5:['qt_cust5',420], c6:['qt_cust6',420], c7:['qt_cust7',420] };
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ QT.imgs[k]=fpKey(im,srcs[k][1]);
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ QT.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]);
       if(k==='receipt'){ const c=QT.imgs.receipt, w=c.width, h=c.height, d=c.getContext('2d').getImageData(0,0,w,h).data;
         let x0=w,x1=0,y0=h,y1=0; for(let cy=0;cy<h;cy+=2){ for(let cx=0;cx<w;cx+=2){ if(d[(cy*w+cx)*4+3]>30){ if(cx<x0)x0=cx; if(cx>x1)x1=cx; if(cy<y0)y0=cy; if(cy>y1)y1=cy; } } }
         QT.rb={fx0:x0/w,fx1:x1/w,fy0:y0/h,fy1:y1/h}; } }; im.src='assets/'+srcs[k][0]+'.png'; });
@@ -1223,8 +1247,8 @@
   const SM={ imgs:{}, loading:false };
   function smLoad(){ if(SM.loading) return; SM.loading=true;
     const srcs={ ice1:['sm_ice1',420], ice2:['sm_ice2',420], ice3:['sm_ice3',420],
-      cap1:['sm_cap1',420], cap2:['sm_cap2',420], closed:['sm_closed',420], logo:['sm_logo',600] };
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ SM.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+      cap1:['sm_cap1',420], cap2:['sm_cap2',420], closed:['sm_closed',420], logo:['sm_logo',600,224,1] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ SM.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engShakeMaster(done){
     fpLoad(); smLoad();
     stage.innerHTML='<div class="mgtitle">SHAKE MASTER</div>'
@@ -1336,8 +1360,8 @@
   const ST={ imgs:{}, loading:false };
   function stLoad(){ if(ST.loading) return; ST.loading=true;
     const srcs={ glass:['st_glass',420], ice1:['st_ice1',420], ice2:['st_ice2',420],
-      top:['st_top',560], spoon:['st_spoon',560], logo:['st_logo',560] };
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ ST.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+      top:['st_top',560], spoon:['st_spoon',560], logo:['st_logo',560,224,1] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ ST.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engStirStop(done){
     fpLoad(); stLoad();
     stage.innerHTML='<div class="mgtitle">STIR STOP</div>'
@@ -1465,9 +1489,9 @@
   // 과일 바구니에 꼬이는 파리들을 탭 사격으로 잡아라 — 인트로: 큰 파리가 윙윙 돌다 바구니에 앉는 순간 펑!
   const FS={ imgs:{}, loading:false };
   function fsLoad(){ if(FS.loading) return; FS.loading=true;
-    const srcs={ logo:['fs_logo',600], bigfly:['fs_bigfly',420], fly1:['fs_fly1',260], fly2:['fs_fly2',260],
+    const srcs={ logo:['fs_logo',600,224,1], bigfly:['fs_bigfly',420], fly1:['fs_fly1',260], fly2:['fs_fly2',260],
       basket:['fs_basket',520], basket2:['fs_basket2',520], basket3:['fs_basket3',520] };
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FS.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FS.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function fsBuzz(){ const a=ac(); if(!a) return null; try{
     const o=a.createOscillator(), g=a.createGain(); o.type='sawtooth'; o.frequency.value=170;
     g.gain.value=0.0001; o.connect(g); g.connect(a.destination); o.start();
@@ -1629,10 +1653,10 @@
   const OU={ imgs:{}, loading:false };
   const OU_MENU=['OLD FASHIONED','MARTINI','MARGARITA','MOJITO','HIGHBALL','NEGRONI','ESP. MARTINI','PINA COLADA','BLOODY MARY','WHISKY SOUR'];
   function ouLoad(){ if(OU.loading) return; OU.loading=true;
-    const srcs={ pos:['ou_pos',560], logo:['ou_logo',560] };
+    const srcs={ pos:['ou_pos',560], logo:['ou_logo',560,224,1] };
     for(let i=0;i<10;i++) srcs['ck'+i]=['ou_ck'+i,240];
     for(let i=1;i<=8;i++) srcs['cu'+i]=['ou_cu'+i,340,198]; // 손님은 임계값 낮춰 흰 배경 잔재 제거
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ OU.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ OU.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engOrderUp(done){
     fpLoad(); ouLoad();
     stage.innerHTML='<div class="mgtitle">ORDER UP!</div>'
@@ -1783,8 +1807,8 @@
   // 야바위: 샷잔이 뚜껑에 숨고 섞인다 — 맞히면 다음 라운드(뚜껑 2→5개, 점점 빠름), 틀리면 끝
   const WS={ imgs:{}, loading:false };
   function wsLoad(){ if(WS.loading) return; WS.loading=true;
-    const srcs={ cover:['ws_cover',420,185], shot:['ws_shot',260,185], logo:['ws_logo',560] };
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ WS.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+    const srcs={ cover:['ws_cover',420,185], shot:['ws_shot',260,185], logo:['ws_logo',560,224,1] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ WS.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2],srcs[k][3]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engWhereShot(done){
     fpLoad(); wsLoad();
     stage.innerHTML='<div class="mgtitle">WHERE IS MY SHOT?</div>'
@@ -1910,7 +1934,7 @@
   const SQ={ imgs:{}, loading:false };
   function sqLoad(){ if(SQ.loading) return; SQ.loading=true;
     const names=['basket','board','closed','cup','half','lime','logo','open','spent','trash'];
-    names.forEach(k=>{ const im=new Image(); im.onload=()=>{ SQ.imgs[k]=fpKey(im,k==='logo'?560:400,185); }; im.src='assets/sq_'+k+'.png'; }); }
+    names.forEach(k=>{ const im=new Image(); im.onload=()=>{ SQ.imgs[k]=fpKey(im,k==='logo'?560:400,185,k==='logo'); }; im.src='assets/sq_'+k+'.png'; }); }
   function engSqueeze(done){
     fpLoad(); sqLoad();
     stage.innerHTML='<div class="mgtitle">FRESH SQUEEZE</div>'
@@ -1919,7 +1943,7 @@
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const ARM=1300, TOTAL=30000;
     // 스테이션 좌표
-    const BK={x:62,y:150}, BD={x:146,y:284}, SZ={x:288,y:216}, CUP={x:314,y:356}, TR={x:60,y:410}; // 계량컵은 스퀴저 볼 바로 아래
+    const BK={x:58,y:300}, BD={x:175,y:398}, SZ={x:292,y:186}, CUP={x:319,y:306}, TR={x:330,y:516}; // 도마=하단 식탁 위, 바구니=도마 왼쪽, 휴지통=하단에 머리만
     let state='intro', stT=0, phase='grab', halves=0, ml=0, shownMl=0, pressT=-1e9, cutT=-1e9;
     let flyObj=null; // {img,from,to,t,cb}
     let t0=0, lastT=0, raf=0, shake=0, finished=false, ended=false, ptr=null;
@@ -1993,11 +2017,11 @@
       ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(0,0,400,480);
       if(state!=='intro'){
         // 스테이션
-        station('basket',BK,120,true);
-        station('board',BD,168,true);
-        station(phase==='pressing'&&now()-pressT<420?'closed':'open',SZ,204,true); // 스퀴저 크게
+        station('basket',BK,110,true);
+        station('board',BD,230,true); // 배경 아일랜드 식탁 위에 크게
+        station(phase==='pressing'&&now()-pressT<420?'closed':'open',SZ,204,true);
         station('cup',CUP,96,true);
-        station('trash',TR,92,true);
+        station('trash',TR,190,false); // 하단에 뚜껑 머리만 보이게
         // 계량컵 즙 채움 (내부 영역)
         const cim=SQ.imgs.cup;
         if(cim){ const cw3=96, chh3=cw3*(cim.height/cim.width);
@@ -2009,12 +2033,12 @@
           if(shownMl>2){ ctx.globalAlpha=0.7; ctx.fillStyle='#dcef8a';
             ctx.beginPath(); ctx.ellipse((ix0+ix1)/2,fy,(ix1-ix0)/2,2.5,0,0,6.283); ctx.fill(); ctx.globalAlpha=1; } }
         // 도마 위 라임/반쪽 (드래그 중인 것은 제외)
-        if(phase==='cut') station('lime',{x:BD.x,y:BD.y-26},58,false);
+        if(phase==='cut') station('lime',{x:BD.x,y:BD.y-56},58,false);
         let bh3=0;
         if(phase==='load') bh3=halves-((drag&&drag.kind==='half')?1:0);
         else if(phase==='press'||phase==='pressing'||phase==='trash') bh3=halves-1;
-        if(bh3>=1) station('half',{x:BD.x-22,y:BD.y-26},52,false);
-        if(bh3>=2) station('half',{x:BD.x+24,y:BD.y-22},52,false);
+        if(bh3>=1) station('half',{x:BD.x-24,y:BD.y-56},52,false);
+        if(bh3>=2) station('half',{x:BD.x+26,y:BD.y-52},52,false);
         // 스퀴저 볼 안의 반쪽/찌꺼기 (볼은 이미지 오른쪽)
         if(phase==='press') station('half',{x:SZ.x+27,y:SZ.y+14},58,false);
         if(phase==='trash'&&!(drag&&drag.kind==='spent')) station('spent',{x:SZ.x+27,y:SZ.y+14},58,false);
@@ -2024,7 +2048,7 @@
           if(Math.random()<0.8) parts.push({x:SZ.x+27+(Math.random()*8-4),y:SZ.y+58,vx:(Math.random()*2-1)*10,vy:120+Math.random()*60,gv:600,r:1.5+Math.random()*1.6,c:'#cbe36a',life:0.4}); }
         // 칼질 플래시
         if(now()-cutT<160){ ctx.strokeStyle='#fff'; ctx.lineWidth=3;
-          ctx.beginPath(); ctx.moveTo(BD.x-55,BD.y-46); ctx.lineTo(BD.x+55,BD.y-6); ctx.stroke(); }
+          ctx.beginPath(); ctx.moveTo(BD.x-70,BD.y-82); ctx.lineTo(BD.x+70,BD.y-34); ctx.stroke(); }
         // 드래그 중인 오브젝트
         if(drag) station(drag.kind,{x:drag.x,y:drag.y-10},58,false);
         // 힌트
@@ -2033,7 +2057,7 @@
           else if(phase==='cut') hintAt(BD,'SLIDE = SLICE!',t);
           else if(phase==='load') hintAt(BD,'DRAG TO SQUEEZER!',t);
           else if(phase==='press') hintAt(SZ,'SLIDE DOWN!',t);
-          else if(phase==='trash') hintAt(SZ,'DRAG TO TRASH!',t); }
+          else if(phase==='trash') hintAt({x:300,y:446},'DRAG TO TRASH!',t); }
       }
       for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
         pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
@@ -2092,6 +2116,13 @@
       g2.putImageData(dd,0,0);
       const el=$('titleLogo'); el.src=c.toDataURL(); el.style.display='block';
       const h=$('titleH1'); if(h) h.style.display='none'; }catch(e){} }; L.src='assets/bp_title_logo.png';
+    // 버튼 이미지 (키잉 후 텍스트 버튼과 교체)
+    [['bp_btn_start','startImg','startBtn'],['bp_btn_rank','rankImg','rankBtn'],['bp_btn_set','setImg','setBtn']].forEach(([src,imgId,btnId])=>{
+      const B=new Image(); B.onload=()=>{ try{ const c=fpKey(B,560,190);
+        const el=$(imgId); el.src=c.toDataURL(); el.style.display='block';
+        $(btnId).style.display='none';
+        el.addEventListener('pointerdown',e=>{ e.preventDefault(); $(btnId).onclick(); }); }catch(e){} };
+      B.src='assets/'+src+'.png'; });
     // 장식 스트립: 아이템별로 쪼개서 타이틀에서 통통 튀는 물리 데코
     const D=new Image(); D.onload=()=>{ try{
       const key=fpKey(D,900); const w=key.width,h=key.height;
