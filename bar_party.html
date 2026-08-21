@@ -14,7 +14,7 @@
   html,body{ height:100%; background:var(--bg); overflow:hidden; }
   body{ font-family:'Press Start 2P', monospace; color:var(--ink); display:flex; align-items:center; justify-content:center;
     touch-action:manipulation; -webkit-user-select:none; user-select:none; background:radial-gradient(120% 90% at 50% -10%, #1a2016 0%, #0d0f0c 60%); }
-  #wrap{ position:relative; width:100vw; height:100vh; max-width:560px; max-height:100vh; margin:0 auto; overflow:hidden; }
+  #wrap{ position:relative; width:100vw; height:100vh; height:100dvh; overflow:hidden; }
   .screen{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:56px 16px 22px; text-align:center; }
   .hidden{ display:none !important; }
   .kr{ font-family:-apple-system,"Segoe UI","Malgun Gothic",system-ui,sans-serif; }
@@ -80,8 +80,12 @@
   .sbtn{ font-family:'Press Start 2P',monospace; font-size:9px; line-height:1.3; color:var(--ink); background:var(--panel); border:2px solid #333; box-shadow:0 3px 0 #000; padding:12px 6px; cursor:pointer; text-align:center; }
   .sbtn:active{ transform:translateY(2px); box-shadow:0 1px 0 #000; } .sbtn .cat{ display:block; font-size:7px; color:var(--pine-light); margin-bottom:5px; letter-spacing:1px; }
   .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:9; }
-  /* 프리푸어 마스터 */
-  #fpcv{ height:min(56vh,555px); max-width:94vw; border:3px solid #000; box-shadow:0 6px 0 rgba(0,0,0,.45); background:#000; touch-action:none; image-rendering:pixelated; }
+  /* 게임 캔버스: 남는 화면을 최대한 채움 (5:6 비율 유지) */
+  #fpcv{ width:min(96vw, max(240px, calc((100vh - 230px) * 0.8333))); width:min(96vw, max(240px, calc((100dvh - 230px) * 0.8333)));
+    height:auto; border:3px solid #000; box-shadow:0 6px 0 rgba(0,0,0,.45); background:#000; touch-action:none; image-rendering:pixelated; }
+  #game{ padding:46px 8px 14px; gap:10px; }
+  #game .mghint{ font-size:11px; line-height:1.4; max-width:min(90vw,560px); }
+  #game #stage{ gap:10px; }
   /* 비시바시 타이틀 */
   #title{ background:#0d0f0c url('assets/bp_title_bg.png') center/cover no-repeat; position:relative; }
   #decoCv{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
@@ -109,8 +113,8 @@
     aspect-ratio:2.5/1; background:transparent center/100% 100% no-repeat; cursor:pointer; line-height:1.35;
     letter-spacing:.3px; image-rendering:pixelated; text-shadow:1px 1px 0 rgba(0,0,0,.5); transition:transform .06s; padding:0 12px; }
   .sbtn2:active{ transform:translateY(3px) scale(.98); }
-  #sandbox{ background:#0d0f0c url('assets/pick_bg.png') center/cover no-repeat; gap:6px; padding-top:44px; }
-  #sandbox .sbwrap{ width:min(500px,97vw); max-height:none; flex:1 1 auto; min-height:0; }
+  #sandbox{ background:#0d0f0c url('assets/pick_bg.png') center/cover no-repeat; gap:4px; padding:10px 10px 14px; }
+  #sandbox .sbwrap{ width:min(640px,97vw); max-height:none; flex:1 1 auto; min-height:0; gap:10px; }
   #backBtn{ position:absolute; top:10px; right:10px; z-index:30; width:42px; height:42px;
     font-family:'Press Start 2P',monospace; font-size:15px; color:#e8e6dd; background:rgba(0,0,0,0.6);
     border:3px solid #444; box-shadow:0 3px 0 #000; cursor:pointer; }
@@ -151,9 +155,9 @@
   <button id="backBtn" class="hidden">✕</button>
 
   <div id="sandbox" class="screen hidden">
-    <img id="pickTitle" alt="PICK A GAME!" style="width:min(430px,98vw);image-rendering:pixelated;display:none">
+    <img id="pickTitle" alt="PICK A GAME!" style="width:min(480px,95vw);image-rendering:pixelated;display:none">
     <div class="mgtitle" id="pickTitleTxt">🍸 PICK A GAME!</div>
-    <img id="pickSub" alt="SET YOUR RECORDS!" style="width:min(280px,72vw);image-rendering:pixelated;display:none;margin-top:-22px">
+    <img id="pickSub" alt="SET YOUR RECORDS!" style="width:min(290px,72vw);image-rendering:pixelated;display:none;margin-top:-4px">
     <div class="mghint" id="pickSubTxt">Every game keeps its own TOP 5 — go set some records!</div>
     <div class="sbwrap" id="sbwrap"></div>
   </div>
@@ -194,22 +198,33 @@
   const stage=$('stage');
   function show(id){ ['title','sandbox','turn','game','roundResult','final','rank','setting'].forEach(s=>$(s).classList.toggle('hidden', s!==id));
     const bb=$('backBtn'); if(bb) bb.classList.toggle('hidden', id==='title'||id==='roundResult');
-    if(id==='title') playTitleBgm(); }
+    if(id==='title') playTitleBgm(true); }
   let runToken=0;
   // ── BGM: 타이틀 1곡 루프 / 플레이 3곡 연속 루프 ──
   const BGM={ cur:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6') };
   function bgmVol(){ return window.__mute?0:BGM.vol; }
-  function stopBgm(){ if(BGM.cur){ try{ BGM.cur.pause(); }catch(e){} } BGM.cur=null; BGM.name=''; }
-  function playTitleBgm(){ if(BGM.name==='title') return; stopBgm();
-    const a=new Audio('assets/bgm_title.mp3'); a.loop=true; a.volume=bgmVol();
+  function bgmFade(a,to,ms,done){ if(!a){ if(done)done(); return; }
+    const from=a.volume, t0=performance.now();
+    (function st(){ const k=Math.min(1,(performance.now()-t0)/ms);
+      try{ a.volume=Math.max(0,Math.min(1,from+(to-from)*k)); }catch(e){}
+      if(k<1) setTimeout(st,50); else if(done) done(); })(); }
+  function stopBgm(fadeMs){ const old=BGM.cur; BGM.cur=null; BGM.name='';
+    if(!old) return;
+    if(fadeMs) bgmFade(old,0,fadeMs,()=>{ try{ old.pause(); }catch(e){} });
+    else { try{ old.pause(); }catch(e){} } }
+  function playTitleBgm(xf){ if(BGM.name==='title') return; stopBgm(xf?800:0);
+    const a=new Audio('assets/bgm_title.mp3'); a.loop=true; a.volume=xf?0:bgmVol();
     BGM.cur=a; BGM.name='title';
-    a.play().catch(()=>{ if(BGM.cur===a){ BGM.cur=null; BGM.name=''; } }); }
+    a.play().then(()=>{ if(xf&&BGM.cur===a) bgmFade(a,bgmVol(),800); })
+      .catch(()=>{ if(BGM.cur===a){ BGM.cur=null; BGM.name=''; } }); }
   let ptIdx=Math.floor(Math.random()*3);
-  function playGameBgm(){ if(BGM.name==='play') return; stopBgm(); BGM.name='play';
+  function playGameBgm(xf){ if(BGM.name==='play') return; stopBgm(xf?800:0); BGM.name='play';
+    let first=!!xf;
     const step=()=>{ if(BGM.name!=='play') return;
-      const a=new Audio('assets/bgm_play'+(ptIdx+1)+'.mp3'); a.volume=bgmVol();
+      const a=new Audio('assets/bgm_play'+(ptIdx+1)+'.mp3'); a.volume=first?0:bgmVol();
       a.onended=()=>{ ptIdx=(ptIdx+1)%3; step(); };
-      BGM.cur=a; a.play().catch(()=>{ if(BGM.cur===a){ BGM.cur=null; BGM.name=''; } }); };
+      BGM.cur=a; a.play().then(()=>{ if(first&&BGM.cur===a){ first=false; bgmFade(a,bgmVol(),800); } })
+        .catch(()=>{ if(BGM.cur===a){ BGM.cur=null; BGM.name=''; } }); };
     step(); }
   function bgmApplyVol(){ if(BGM.cur) BGM.cur.volume=bgmVol(); }
   const bgmKick=()=>{ if(!$('title').classList.contains('hidden')) playTitleBgm();
@@ -256,7 +271,7 @@
   let pn=1; // 솔로 플레이 (인원 선택 제거)
   window.__mute=localStorage.getItem('bp_mute')==='1';
 
-  $('startBtn').onclick=()=>{ ac(); beep(700,0.1); buildSandbox(); show('sandbox'); }; // START = 게임 리스트
+  $('startBtn').onclick=()=>{ ac(); beep(700,0.1); playGameBgm(true); buildSandbox(); show('sandbox'); }; // START = 게임 리스트, BGM 크로스페이드
   function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'Got the phone? Press!':'Press when ready'); show('turn'); $('hud').classList.add('hidden'); }
   $('turnBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp') fpNext(); else nextRound(); };
   function hud(){ const p=players[cur]; $('hudWho').textContent=p.name; $('hudRd').textContent='ROUND '+(round+1)+'/'+ROUNDS; $('hudSc').textContent=p.score; $('hud').classList.remove('hidden'); }
@@ -329,8 +344,9 @@
   // (리스트의 HOME 버튼 제거 — 전역 ✕ 버튼이 대체)
   const FR={ data:{}, loading:false };
   function frLoad(){ if(FR.loading) return; FR.loading=true;
+    // 프레임은 일러스트 재작업본(투명 배경) — 키잉 없이 원본 그대로
     ['amber','blue','green','red','purple'].forEach(k=>{ const im=new Image();
-      im.onload=()=>{ try{ FR.data[k]=fpKeyUI(im,700).toDataURL(); }catch(e){} }; im.src='assets/fr_'+k+'.png'; }); }
+      im.onload=()=>{ FR.data[k]='assets/fr_'+k+'.png'; }; im.src='assets/fr_'+k+'.png'; }); }
   const FR_ORDER=['amber','blue','green','red','purple'];
   const FR_COMP={ amber:'#1d3fa0', blue:'#f08a1d', green:'#b3125e', red:'#22d9c8', purple:'#ffd23e' }; // 프레임 보색 폰트
   function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; w.style.gridTemplateColumns='1fr 1fr'; // 2열
@@ -1183,7 +1199,7 @@
     fpLoad(); qtLoad();
     stage.innerHTML='<div class="mgtitle">QUICK TAB</div>'
       +'<div class="mghint">Add up all 7 tabs ($) in your head! Faster = more points, wrong answer = -20</div>'
-      +'<canvas id="fpcv" width="400" height="480" style="height:min(46vh,470px)"></canvas>'
+      +'<canvas id="fpcv" width="400" height="480" style="width:min(80vw, max(200px, calc((100dvh - 420px) * 0.8333)))"></canvas>'
       +'<div id="qtPad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(290px,78vw)"></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), pad=$('qtPad');
     const CUSTS=shuffle(['c1','c2','c3','c4','c5','c6']).concat(['c7']); // 마지막은 진상 손님
@@ -2179,11 +2195,12 @@
       g2.putImageData(dd,0,0);
       const el=$('titleLogo'); el.src=c.toDataURL(); el.style.display='block';
       const h=$('titleH1'); if(h) h.style.display='none'; }catch(e){} }; L.src='assets/bp_title_logo.png';
-    // 게임 선택 화면 타이틀/리본
-    [['pick_title','pickTitle','pickTitleTxt',330],['pick_sub','pickSub','pickSubTxt',290]].forEach(([src,imgId,txtId,mw])=>{
-      const P2=new Image(); P2.onload=()=>{ try{ const c=fpKeyUI(P2,640);
-        const el=$(imgId); el.src=c.toDataURL(); el.style.display='block';
-        $(txtId).style.display='none'; }catch(e){} }; P2.src='assets/'+src+'.png'; });
+    // 게임 선택 화면 타이틀(투명 재작업본 그대로) / 리본(흰 배경이라 키잉)
+    { const T=new Image(); T.onload=()=>{ const el=$('pickTitle'); el.src='assets/pick_title.png';
+        el.style.display='block'; $('pickTitleTxt').style.display='none'; }; T.src='assets/pick_title.png'; }
+    { const P2=new Image(); P2.onload=()=>{ try{ const c=fpKeyUI(P2,640);
+        const el=$('pickSub'); el.src=c.toDataURL(); el.style.display='block';
+        $('pickSubTxt').style.display='none'; }catch(e){} }; P2.src='assets/pick_sub.png'; }
     // 버튼 이미지 (키잉 후 텍스트 버튼과 교체)
     [['bp_btn_start','startImg','startBtn'],['bp_btn_rank','rankImg','rankBtn'],['bp_btn_set','setImg','setBtn']].forEach(([src,imgId,btnId])=>{
       const B=new Image(); B.onload=()=>{ try{ const c=fpKeyUI(B,560);
