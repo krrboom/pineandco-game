@@ -18,7 +18,7 @@
 | 스페셜 (1) | **CHAMPAGNE LAUNCH** ★ | ★ 실사 러너 리뉴얼: 연타로 달리며 흔들고 끝에 닿기 전 발사(버틸수록 각도↑, 벽=CRASH), 비거리 승부 |
 | 퀴즈 (7) | GUESS COCKTAIL · NAME SPIRIT · RECIPE MATCH · GARNISH MATCH · FIND INGREDIENT · ODD ONE OUT · **QUICK TAB** ★ | ★ 손님 7명 영수증 암산, 키패드 입력 |
 | 기억 (2) | ORDER MEMORY · TAB ORDER | |
-| 반응 (4) | **TIP CATCH** ★ · LAST CALL RUSH · SPILL WIPE · FLY SWAT | ★ 7지점 낙하+병 드래그, 빈병 -1 |
+| 반응 (4) | **TIP CATCH** ★ · **FLY SWAT** ★ · LAST CALL RUSH · SPILL WIPE | ★ 실사 리뉴얼 (팁캐치: 7지점 낙하+병 드래그 / 플라이스왓: 과일바구니 파리 탭 사격, 인트로 시네마틱) |
 
 - 타이틀 전용 모드: **🥃 POUR CHALLENGE** (30/45/60ml 오차 합 순위, 로컬 베스트 저장)
 
