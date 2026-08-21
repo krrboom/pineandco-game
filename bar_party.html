@@ -381,17 +381,12 @@
       // 스크롤 배경: 백바를 멀리(원근 축소) — 비행 중엔 배경이 2배 빠르게 지나가 속도감
       if(prevCam==null) prevCam=cam;
       bgOff+=(cam-prevCam)*((state==='fly'||state==='rest')?0.75:0.35); prevCam=cam;
-      const bgi=FP.imgs.bg;
-      const bgH=150, bgY=305-Math.round(bgH*0.66); // 작게(멀리) + 상판 라인은 허리 위(y≈305)
-      ctx.fillStyle='#0a0c09'; ctx.fillRect(0,0,400,bgY+4); // 천장 어둠
-      if(bgi){ const s=bgH/bgi.height, bw2=bgi.width*s;
+      const bgi=GB.imgs.champagne; // 아르데코 그랜드 홀 21:9 전용 배경
+      if(bgi){ const s=GY/bgi.height, bw2=bgi.width*s;
         const off=-(((bgOff)%bw2+bw2)%bw2);
-        ctx.drawImage(bgi,off,bgY,bw2,bgH); ctx.drawImage(bgi,off+bw2,bgY,bw2,bgH); }
-      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,bgY,400,bgH); }
-      ctx.fillStyle='rgba(0,0,0,0.32)'; ctx.fillRect(0,bgY,400,bgH);
-      // 배경 하단 ~ 바닥: 멀리 뻗은 어두운 바닥 (원근)
-      const mg3=ctx.createLinearGradient(0,bgY+bgH-2,0,GY); mg3.addColorStop(0,'#150e08'); mg3.addColorStop(1,'#2b1c10');
-      ctx.fillStyle=mg3; ctx.fillRect(0,bgY+bgH-2,400,GY-(bgY+bgH-2));
+        ctx.drawImage(bgi,off,0,bw2,GY); ctx.drawImage(bgi,off+bw2,0,bw2,GY);
+        ctx.fillStyle='rgba(0,0,0,0.16)'; ctx.fillRect(0,0,400,GY); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,GY); }
       // 바닥
       ctx.fillStyle='#2b1c10'; ctx.fillRect(0,GY,400,480-GY);
       ctx.fillStyle='#3a2817'; ctx.fillRect(0,GY,400,5);
@@ -489,11 +484,12 @@
   /* ====================== FREE POUR MASTER ====================== */
   // 실사 픽셀아트 캔버스 프리푸어: 병을 완전히 뒤집고 ml 카운터를 보며 정확한 순간에 놓아라
   const FP={ imgs:{}, loading:false };
-  function fpKey(img,maxW){ // 흰 배경을 테두리 플러드필로만 제거(내부 흰 하이라이트 보존) 후 프리스케일
+  function fpKey(img,maxW,thr){ // 흰 배경을 테두리 플러드필로만 제거(내부 흰 하이라이트 보존) 후 프리스케일
     const w=img.naturalWidth,h=img.naturalHeight,c=document.createElement('canvas'); c.width=w; c.height=h;
     const x=c.getContext('2d'); x.drawImage(img,0,0); let d; try{ d=x.getImageData(0,0,w,h); }catch(e){ return c; }
     const p=d.data, seen=new Uint8Array(w*h), q=[];
-    const isW=i=>p[i*4]>224&&p[i*4+1]>224&&p[i*4+2]>224;
+    const TH=thr||224;
+    const isW=i=>p[i*4]>TH&&p[i*4+1]>TH&&p[i*4+2]>TH;
     for(let i=0;i<w;i++){ q.push(i,(h-1)*w+i); } for(let j=1;j<h-1;j++){ q.push(j*w, j*w+w-1); }
     while(q.length){ const i=q.pop(); if(seen[i]) continue; seen[i]=1; if(!isW(i)) continue; p[i*4+3]=0;
       const cx=i%w; if(cx>0&&!seen[i-1]) q.push(i-1); if(cx<w-1&&!seen[i+1]) q.push(i+1);
@@ -502,7 +498,12 @@
     if(maxW&&w>maxW){ const c2=document.createElement('canvas'); c2.width=maxW; c2.height=Math.round(h*maxW/w);
       const x2=c2.getContext('2d'); x2.imageSmoothingQuality='high'; x2.drawImage(c,0,0,c2.width,c2.height); return c2; }
     return c; }
-  function fpLoad(){ if(FP.loading) return; FP.loading=true;
+  // 게임별 전용 배경 (50 베스트 바 스타일)
+  const GB={ imgs:{}, loading:false };
+  function gbLoad(){ if(GB.loading) return; GB.loading=true;
+    ['freepour','stir','icecarving','champagne','shake','tipcatch','flyswat','orderup','whereshot'].forEach(k=>{
+      const im=new Image(); im.onload=()=>{ GB.imgs[k]=im; }; im.src='assets/bg_'+k+'.png'; }); }
+  function fpLoad(){ if(FP.loading) return; FP.loading=true; gbLoad();
     const srcs={ bg:['fp_bg',0], bottle:['fp_bottle',620], logo:['fp_logo',540], shot:['fp_shot',440], jigger:['fp_jigger',440], rocks:['fp_rocks',440] };
     Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ FP.imgs[k]=srcs[k][1]?fpKey(im,srcs[k][1]):im; }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   // 잔 스펙: cap/target = ml (1oz=30ml). in = 잔 내부 영역(그린 크기 대비 비율)
@@ -604,7 +605,7 @@
       shake=Math.max(0,shake-dt*26);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
-      const bgi=FP.imgs.bg;
+      const bgi=GB.imgs.freepour||FP.imgs.bg;
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height), bw2=bgi.width*s, bh2=bgi.height*s;
         ctx.drawImage(bgi,(400-bw2)/2,(480-bh2)/2,bw2,bh2); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
@@ -787,7 +788,7 @@
       shake=Math.max(0,shake-dt*26);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
-      const bgi=FP.imgs.bg;
+      const bgi=GB.imgs.icecarving||FP.imgs.bg;
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(0,0,400,480);
@@ -936,7 +937,7 @@
       shake=Math.max(0,shake-dt*26);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
-      const bgi=FP.imgs.bg;
+      const bgi=GB.imgs.tipcatch||FP.imgs.bg;
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(0,0,400,480);
@@ -1184,7 +1185,7 @@
       wob=Math.max(0,wob-dt*3.2); shake=Math.max(0,shake-dt*26); sloshPh+=dt*(6+wob*30);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
-      const bgi=FP.imgs.bg;
+      const bgi=GB.imgs.shake||FP.imgs.bg;
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.38)'; ctx.fillRect(0,0,400,480);
@@ -1306,7 +1307,7 @@
       shake=Math.max(0,shake-dt*26);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
-      const bgi=FP.imgs.bg;
+      const bgi=GB.imgs.stir||FP.imgs.bg;
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(0,0,400,480);
@@ -1465,7 +1466,7 @@
       shake=Math.max(0,shake-dt*26);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
-      const bgi=FP.imgs.bg;
+      const bgi=GB.imgs.flyswat||FP.imgs.bg;
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.34)'; ctx.fillRect(0,0,400,480);
@@ -1534,8 +1535,8 @@
   function ouLoad(){ if(OU.loading) return; OU.loading=true;
     const srcs={ pos:['ou_pos',560], logo:['ou_logo',560] };
     for(let i=0;i<10;i++) srcs['ck'+i]=['ou_ck'+i,240];
-    for(let i=1;i<=8;i++) srcs['cu'+i]=['ou_cu'+i,340];
-    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ OU.imgs[k]=fpKey(im,srcs[k][1]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+    for(let i=1;i<=8;i++) srcs['cu'+i]=['ou_cu'+i,340,198]; // 손님은 임계값 낮춰 흰 배경 잔재 제거
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ OU.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
   function engOrderUp(done){
     fpLoad(); ouLoad();
     stage.innerHTML='<div class="mgtitle">ORDER UP!</div>'
@@ -1567,7 +1568,7 @@
           else { wrongCk=seq[input.length]; state='fail'; stT=lastT; finished=true; sBad(); flash('#d9544d'); shake=10;
             if(cleared>best){ best=cleared; localStorage.setItem('pine_orderup_best',String(best)); }
             const sc=Math.min(100,cleared*25), cls=cleared>=4?'perfect':(cleared>=2?'good':'miss');
-            setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,'ROUND '+round+' KO',cls); },2200); }
+            setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,'ROUND '+round+' KO',cls); },3400); }
           return; } } }
     cv.addEventListener('pointerdown',tap);
     function cleanup(){ cancelAnimationFrame(raf); }
@@ -1584,7 +1585,7 @@
       shake=Math.max(0,shake-dt*26);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
       ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
-      const bgi=FP.imgs.bg;
+      const bgi=GB.imgs.orderup||FP.imgs.bg;
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.36)'; ctx.fillRect(0,0,400,480);
@@ -1597,12 +1598,12 @@
         // 말풍선
         const bx=22, by=180, bw2=215, bh2=140;
         ctx.save(); ctx.globalAlpha=Math.min(1,p2*1.4);
-        ctx.fillStyle='#fafaf7'; ctx.strokeStyle='#000'; ctx.lineWidth=3;
+        ctx.fillStyle='#22262e'; ctx.strokeStyle='#000'; ctx.lineWidth=3;
         ctx.beginPath(); ctx.roundRect(bx,by,bw2,bh2,14); ctx.fill(); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(bx+bw2-4,by+70); ctx.lineTo(bx+bw2+22,by+82); ctx.lineTo(bx+bw2-4,by+96); ctx.closePath(); ctx.fill(); ctx.stroke();
         const ck=OU.imgs['ck'+seq[showIdx]];
         if(ck){ const cs=86; ctx.drawImage(ck,bx+bw2/2-cs/2,by+10,cs,cs); }
-        ctx.font='8px "Press Start 2P"'; ctx.textAlign='center'; ctx.fillStyle='#1a1a1a';
+        ctx.font='8px "Press Start 2P"'; ctx.textAlign='center'; ctx.fillStyle='#fff';
         ctx.fillText(OU_MENU[seq[showIdx]],bx+bw2/2,by+bh2-16); ctx.restore();
         ctx.font='11px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('ORDER '+(showIdx+1)+' / '+seq.length,202,142);
@@ -1654,12 +1655,22 @@
         const k2=1+Math.max(0,1-el2/180)*1.4; ctx.scale(k2,k2);
         ctx.font='19px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('WRONG ORDER!',3,3); ctx.fillStyle='#d9544d'; ctx.fillText('WRONG ORDER!',0,0); ctx.restore();
-        const ck=OU.imgs['ck'+wrongCk];
-        if(ck){ ctx.drawImage(ck,200-55,190,110,110);
-          ctx.font='9px "Press Start 2P"'; ctx.textAlign='center';
-          ctx.fillStyle='#000'; ctx.fillText('IT WAS: '+OU_MENU[wrongCk],202,322); ctx.fillStyle='#fff'; ctx.fillText('IT WAS: '+OU_MENU[wrongCk],200,320); }
+        // 전체 정답 시퀀스 공개: 맞춘 잔=초록, 틀린 지점=빨강, 나머지=회색
+        ctx.font='9px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('THE FULL ORDER WAS:',202,197); ctx.fillStyle='#fff'; ctx.fillText('THE FULL ORDER WAS:',200,195);
+        const nI=seq.length, cols=Math.min(5,nI), iS=46, gap=8;
+        for(let i=0;i<nI;i++){ const cx2=200-(cols*(iS+gap)-gap)/2+(i%5)*(iS+gap);
+          const cy2=208+Math.floor(i/5)*(iS+gap+6);
+          const okd=i<input.length, missIdx=i===input.length;
+          ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(cx2,cy2,iS,iS);
+          ctx.strokeStyle=okd?'#6fcf8f':(missIdx?'#d9544d':'#555');
+          ctx.lineWidth=missIdx?4:2; ctx.strokeRect(cx2,cy2,iS,iS);
+          const ck2=OU.imgs['ck'+seq[i]]; if(ck2) ctx.drawImage(ck2,cx2+3,cy2+3,iS-6,iS-6); }
+        const myY=208+Math.ceil(nI/5)*(iS+gap+6)+22;
+        ctx.font='9px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText('MISSED: '+OU_MENU[wrongCk],202,myY+2); ctx.fillStyle='#d9544d'; ctx.fillText('MISSED: '+OU_MENU[wrongCk],200,myY);
         ctx.font='12px "Press Start 2P"';
-        ctx.fillStyle='#000'; ctx.fillText('ROUNDS CLEARED: '+cleared,202,352); ctx.fillStyle='#ffd977'; ctx.fillText('ROUNDS CLEARED: '+cleared,200,350); }
+        ctx.fillStyle='#000'; ctx.fillText('ROUNDS CLEARED: '+cleared,202,myY+28); ctx.fillStyle='#ffd977'; ctx.fillText('ROUNDS CLEARED: '+cleared,200,myY+26); }
     }
     raf=requestAnimationFrame(draw);
   }
