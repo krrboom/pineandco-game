@@ -1457,7 +1457,7 @@
         if(stg!==hpStage){ hpStage=stg; beep(180,0.15,'sawtooth',0.12); shake=Math.max(shake,5);
           for(let j=0;j<12;j++) parts.push({x:BX+(Math.random()*160-80),y:280+Math.random()*60,
             vx:(Math.random()*2-1)*50,vy:-30-Math.random()*50,gv:0,r:2+Math.random()*2,c:'#7a9c3a',life:0.7}); }
-        if(fruitHP<=0){ finished=true; if(buzz) buzz.set(false,100); flash('#d9544d'); sBad(); shake=10;
+        if(fruitHP<=0&&left>600){ finished=true; if(buzz) buzz.set(false,100); flash('#d9544d'); sBad(); shake=10; // 시간 종료 직전엔 RUINED 대신 정상 종료
           const sc=Math.min(40,pts);
           setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,'FRUIT RUINED!','miss'); },1500); }
         else if(left<=0){ finished=true; if(buzz) buzz.set(false,100);
@@ -1689,6 +1689,276 @@
     raf=requestAnimationFrame(draw);
   }
 
+  /* ====================== WHERE IS MY SHOT? ====================== */
+  // 야바위: 샷잔이 뚜껑에 숨고 섞인다 — 맞히면 다음 라운드(뚜껑 2→5개, 점점 빠름), 틀리면 끝
+  const WS={ imgs:{}, loading:false };
+  function wsLoad(){ if(WS.loading) return; WS.loading=true;
+    const srcs={ cover:['ws_cover',420,185], shot:['ws_shot',260,185], logo:['ws_logo',560] };
+    Object.keys(srcs).forEach(k=>{ const im=new Image(); im.onload=()=>{ WS.imgs[k]=fpKey(im,srcs[k][1],srcs[k][2]); }; im.src='assets/'+srcs[k][0]+'.png'; }); }
+  function engWhereShot(done){
+    fpLoad(); wsLoad();
+    stage.innerHTML='<div class="mgtitle">WHERE IS MY SHOT?</div>'
+      +'<div class="mghint">Watch the shot get covered, follow the shuffle, then tap the right cover! More cups, faster shuffles — one wrong pick ends it.</div>'
+      +'<canvas id="fpcv" width="400" height="480"></canvas>';
+    const cv=$('fpcv'), ctx=cv.getContext('2d');
+    const CY=318, ARM=1300;
+    let state='intro', stT=0, round=1, nCups=2, shotAt=0, picked=-1, cleared=0;
+    let cups=[], swaps=[], swapI=0, swapT=0, swapDur=420, lift=0;
+    let t0=0, lastT=0, raf=0, shake=0, finished=false, ended=false;
+    let best=parseInt(localStorage.getItem('pine_wis_best')||'0')||0;
+    const parts=[];
+    function cupX(slot,n){ const sp=Math.min(96,340/Math.max(1,n-1)); return 200+(slot-(n-1)/2)*sp; }
+    function cupW(n){ return Math.min(96,340/Math.max(1,n-1))-6<74?68:88; }
+    function newRound(){ nCups=Math.min(5,1+round); shotAt=rnd(nCups); picked=-1;
+      cups=[]; for(let i=0;i<nCups;i++) cups.push({slot:i});
+      const nSw=2+round*2; swaps=[]; swapDur=Math.max(170,460-round*55);
+      for(let i=0;i<nSw;i++){ let a=rnd(nCups),b; do{ b=rnd(nCups); }while(b===a); swaps.push([a,b]); }
+      swapI=0; state='place'; stT=lastT; lift=1; beep(520,0.08,'square',0.1); }
+    function tap(e){ e.preventDefault(); ac(); if(state!=='pick'||finished) return;
+      const r=cv.getBoundingClientRect();
+      const x=(e.clientX-r.left)*(400/r.width), y=(e.clientY-r.top)*(480/r.height);
+      const cw2=cupW(nCups);
+      for(let s=0;s<nCups;s++){ const cx2=cupX(s,nCups);
+        if(Math.abs(x-cx2)<cw2/2+8&&y>CY-90&&y<CY+30){ picked=s; state='reveal'; stT=lastT;
+          if(s===shotAt){ cleared=round; sGood(); flash('#6fcf8f');
+            for(let j=0;j<16;j++) parts.push({x:cx2,y:CY-40,vx:(Math.random()*2-1)*130,vy:-70-Math.random()*130,gv:500,r:2+Math.random()*2.4,c:['#ffd977','#6fcf8f','#fff'][rnd(3)],life:0.5}); }
+          else { finished=true; sBad(); flash('#d9544d'); shake=9;
+            if(cleared>best){ best=cleared; localStorage.setItem('pine_wis_best',String(best)); }
+            const sc=Math.min(100,cleared*22), cls=cleared>=4?'perfect':(cleared>=2?'good':'miss');
+            setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,'ROUND '+round+' KO',cls); },2300); }
+          return; } } }
+    cv.addEventListener('pointerdown',tap);
+    function cleanup(){ cancelAnimationFrame(raf); }
+    function slotNow(i){ // 셔플 애니메이션 중 커버 i의 현재 x (슬롯 교환 보간)
+      return cupX(cups[i].slot,nCups); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; stT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      const el2=t-stT;
+      if(state==='intro'&&el2>=ARM) newRound();
+      if(state==='place'&&el2>=1000){ state='shuffle'; stT=t; swapT=t; }
+      if(state==='shuffle'){
+        if(t-swapT>=swapDur){ const [a,b]=swaps[swapI]; // 슬롯 교환 확정
+          for(const c of cups){ if(c.slot===a) c.slot=b; else if(c.slot===b) c.slot=a; }
+          if(shotAt===a) shotAt=b; else if(shotAt===b) shotAt=a;
+          swapI++; swapT=t; beep(280+rnd(60),0.04,'square',0.07);
+          if(swapI>=swaps.length){ state='pick'; stT=t; beep(900,0.1,'square',0.1); } } }
+      if(state==='reveal'&&picked===shotAt&&el2>=1400){ round++; newRound(); }
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      const bgi=GB.imgs.whereshot||FP.imgs.bg;
+      if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.34)'; ctx.fillRect(0,0,400,480);
+      // 카운터 상판
+      const ct3=ctx.createLinearGradient(0,CY+8,0,CY+30); ct3.addColorStop(0,'#7a5a34'); ct3.addColorStop(1,'#4e3620');
+      ctx.fillStyle=ct3; ctx.fillRect(0,CY+8,400,22);
+      ctx.fillStyle='#8a6a40'; ctx.fillRect(0,CY+8,400,3);
+      const cf4=ctx.createLinearGradient(0,CY+30,0,480); cf4.addColorStop(0,'#3a2817'); cf4.addColorStop(1,'#1a1005');
+      ctx.fillStyle=cf4; ctx.fillRect(0,CY+30,400,480-CY-30);
+      if(state!=='intro'){
+        const cw2=cupW(nCups), sh2=WS.imgs.shot, cvr=WS.imgs.cover;
+        // 샷잔 (배치/공개 때 보임)
+        const showShot=state==='place'||(state==='reveal');
+        if(sh2&&showShot){ const sx2=cupX(shotAt,nCups), ssz=cw2*0.62;
+          ctx.save(); ctx.globalAlpha=0.35; ctx.fillStyle='#000';
+          ctx.beginPath(); ctx.ellipse(sx2,CY+12,ssz*0.42,7,0,0,6.283); ctx.fill(); ctx.restore();
+          ctx.drawImage(sh2,sx2-ssz/2,CY-ssz+12,ssz,ssz*(sh2.height/sh2.width)); }
+        // 뚜껑들
+        if(cvr){ for(let i=0;i<cups.length;i++){ const c=cups[i]; let cx2=cupX(c.slot,nCups), lY=0, sc3=1;
+          // 셔플 이동 보간
+          if(state==='shuffle'&&swapI<swaps.length){ const [a,b]=swaps[swapI]; const p2=Math.min(1,(t-swapT)/swapDur);
+            const e2=0.5-0.5*Math.cos(p2*Math.PI);
+            if(c.slot===a){ cx2=cupX(a,nCups)+(cupX(b,nCups)-cupX(a,nCups))*e2; lY=-Math.sin(p2*Math.PI)*13; }
+            else if(c.slot===b){ cx2=cupX(b,nCups)+(cupX(a,nCups)-cupX(b,nCups))*e2; lY=Math.sin(p2*Math.PI)*10; } }
+          // 배치 단계: 뚜껑이 내려와 덮음 / 공개: 선택 뚜껑(+정답 뚜껑) 들림
+          if(state==='place'){ const p2=Math.min(1,el2/450); lY=-(1-eob2(p2))*120; }
+          if(state==='reveal'){ const p2=Math.min(1,el2/300);
+            if(c.slot===picked) lY=-eob2(p2)*95;
+            if(finished&&c.slot===shotAt) lY=-eob2(Math.max(0,Math.min(1,(el2-350)/300)))*95; }
+          if(state==='pick'){ lY=Math.sin(t/300+i)*2; }
+          const ch2=cw2*(cvr.height/cvr.width);
+          ctx.save(); ctx.globalAlpha=0.3; ctx.fillStyle='#000';
+          ctx.beginPath(); ctx.ellipse(cx2,CY+14,cw2*0.46,8,0,0,6.283); ctx.fill(); ctx.restore();
+          ctx.drawImage(cvr,cx2-cw2/2,CY-ch2+16+lY,cw2,ch2); } } }
+      for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
+        pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
+        ctx.globalAlpha=Math.min(1,pp2.life*2.5); ctx.fillStyle=pp2.c; ctx.fillRect(pp2.x-pp2.r/2,pp2.y-pp2.r/2,pp2.r,pp2.r); }
+      ctx.globalAlpha=1;
+      // HUD
+      if(state!=='intro'){ ctx.font='10px "Press Start 2P"'; ctx.textAlign='left';
+        ctx.fillStyle='#000'; ctx.fillText('ROUND '+round,14,30); ctx.fillStyle='#ffd977'; ctx.fillText('ROUND '+round,12,28);
+        ctx.textAlign='right';
+        ctx.fillStyle='#000'; ctx.fillText('BEST '+best,390,30); ctx.fillStyle='#8a8d82'; ctx.fillText('BEST '+best,388,28);
+        ctx.textAlign='center'; ctx.font='11px "Press Start 2P"';
+        const msg=state==='place'?'WATCH THE SHOT!':(state==='shuffle'?'FOLLOW IT!':(state==='pick'?'WHERE IS IT? TAP!':''));
+        if(msg){ ctx.fillStyle='#000'; ctx.fillText(msg,202,142); ctx.fillStyle='#ffd977'; ctx.fillText(msg,200,140); } }
+      if(state==='intro'){ ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,400,480);
+        const lg2=WS.imgs.logo; if(lg2){ const k=0.55+eob2(Math.min(1,el2/280))*0.45, lw=330*k, lh=lw*(lg2.height/lg2.width);
+          ctx.drawImage(lg2,200-lw/2,215-lh/2,lw,lh); } }
+      if(state==='reveal'){ ctx.font='18px "Press Start 2P"'; ctx.textAlign='center';
+        if(picked===shotAt){ ctx.save(); ctx.translate(200,180); ctx.rotate(-0.05);
+          const k2=1+Math.max(0,1-el2/160)*1.3; ctx.scale(k2,k2);
+          ctx.fillStyle='#000'; ctx.fillText('FOUND IT!',3,3); ctx.fillStyle='#6fcf8f'; ctx.fillText('FOUND IT!',0,0); ctx.restore(); }
+        else { ctx.save(); ctx.translate(200,180); ctx.rotate(-0.06);
+          const k2=1+Math.max(0,1-el2/180)*1.4; ctx.scale(k2,k2);
+          ctx.fillStyle='#000'; ctx.fillText('NOT THERE!',3,3); ctx.fillStyle='#d9544d'; ctx.fillText('NOT THERE!',0,0); ctx.restore();
+          ctx.font='12px "Press Start 2P"';
+          ctx.fillStyle='#000'; ctx.fillText('ROUNDS CLEARED: '+cleared,202,432); ctx.fillStyle='#ffd977'; ctx.fillText('ROUNDS CLEARED: '+cleared,200,430); } }
+    }
+    raf=requestAnimationFrame(draw);
+  }
+
+  /* ====================== FRESH SQUEEZE ====================== */
+  // 라임을 가져와 썰고, 반쪽을 스퀴저에 넣고 눌러 짜서 계량컵을 채워라 — 30초, 라임 1개=50ml
+  const SQ={ imgs:{}, loading:false };
+  function sqLoad(){ if(SQ.loading) return; SQ.loading=true;
+    const names=['basket','board','closed','cup','half','lime','logo','open','spent','trash'];
+    names.forEach(k=>{ const im=new Image(); im.onload=()=>{ SQ.imgs[k]=fpKey(im,k==='logo'?560:400,185); }; im.src='assets/sq_'+k+'.png'; }); }
+  function engSqueeze(done){
+    fpLoad(); sqLoad();
+    stage.innerHTML='<div class="mgtitle">FRESH SQUEEZE</div>'
+      +'<div class="mghint">TAP the lime, SLIDE to slice, TAP a half into the squeezer, SLIDE DOWN to press, TAP the spent half to the trash. 1 lime = 50ml. 30 seconds — fill that cup!</div>'
+      +'<canvas id="fpcv" width="400" height="480"></canvas>';
+    const cv=$('fpcv'), ctx=cv.getContext('2d');
+    const ARM=1300, TOTAL=30000;
+    // 스테이션 좌표
+    const BK={x:64,y:172}, BD={x:196,y:270}, SZ={x:308,y:238}, CUP={x:66,y:398}, TR={x:344,y:400};
+    let state='intro', stT=0, phase='grab', halves=0, ml=0, shownMl=0, pressT=-1e9, cutT=-1e9;
+    let flyObj=null; // {img,from,to,t,cb}
+    let t0=0, lastT=0, raf=0, shake=0, finished=false, ended=false, ptr=null;
+    const parts=[];
+    function fly(img,from,to,cb){ flyObj={img,fx:from.x,fy:from.y,tx:to.x,ty:to.y,t:now(),cb}; beep(500,0.05,'square',0.08); }
+    function dn(e){ e.preventDefault(); ac(); if(state!=='play'||finished||flyObj) return;
+      const r=cv.getBoundingClientRect(); ptr={x:(e.clientX-r.left)*(400/r.width),y:(e.clientY-r.top)*(480/r.height)}; }
+    function up(e){ if(e&&e.cancelable) e.preventDefault(); if(!ptr||state!=='play'||finished||flyObj){ ptr=null; return; }
+      const r=cv.getBoundingClientRect();
+      const ex=(e.clientX-r.left)*(400/r.width), ey=(e.clientY-r.top)*(480/r.height);
+      const dx=ex-ptr.x, dy=ey-ptr.y, dist=Math.hypot(dx,dy), sx=ptr.x, sy=ptr.y; ptr=null;
+      const near=(p,rad)=>Math.hypot(sx-p.x,sy-p.y)<rad||Math.hypot(ex-p.x,ey-p.y)<rad;
+      if(dist<18){ // 탭
+        if(phase==='grab'&&near(BK,70)){ fly('lime',BK,BD,()=>{ phase='cut'; }); }
+        else if(phase==='load'&&near(BD,80)){ fly('half',BD,SZ,()=>{ phase='press'; }); }
+        else if(phase==='trash'&&near(SZ,80)){ fly('spent',SZ,TR,()=>{ beep(220,0.06,'square',0.1);
+          for(let j=0;j<6;j++) parts.push({x:TR.x,y:TR.y-30,vx:(Math.random()*2-1)*60,vy:-40-Math.random()*60,gv:500,r:1.6+Math.random()*1.6,c:'#8a8d82',life:0.35});
+          halves--; phase=halves>0?'load':'grab'; }); } }
+      else { // 스와이프
+        if(phase==='cut'&&Math.abs(dx)>36&&near(BD,95)){ cutT=now(); halves=2; phase='load';
+          beep(1200,0.05,'square',0.1); setTimeout(()=>beep(700,0.05,'square',0.08),60); shake=Math.max(shake,2.5);
+          for(let j=0;j<8;j++) parts.push({x:BD.x,y:BD.y-20,vx:(Math.random()*2-1)*120,vy:-60-Math.random()*100,gv:600,r:1.5+Math.random()*1.8,c:['#cbe36a','#eef6d8'][rnd(2)],life:0.4}); }
+        else if(phase==='press'&&dy>36&&near(SZ,95)){ pressT=now(); phase='pressing';
+          beep(300,0.1,'sawtooth',0.1); shake=Math.max(shake,3);
+          setTimeout(()=>{ if(finished) return; ml+=25; phase='trash'; sGood();
+            for(let j=0;j<10;j++) parts.push({x:CUP.x+(Math.random()*30-15),y:CUP.y-60,vx:(Math.random()*2-1)*50,vy:-30-Math.random()*50,gv:400,r:1.5+Math.random()*1.5,c:'#cbe36a',life:0.4}); },420); } } }
+    cv.addEventListener('pointerdown',dn);
+    ['pointerup','pointercancel'].forEach(ev=>window.addEventListener(ev,up));
+    function cleanup(){ cancelAnimationFrame(raf);
+      ['pointerup','pointercancel'].forEach(ev=>window.removeEventListener(ev,up)); }
+    function station(img,p,w,shadow){ const im=SQ.imgs[img]; if(!im) return;
+      const h2=w*(im.height/im.width);
+      if(shadow){ ctx.save(); ctx.globalAlpha=0.3; ctx.fillStyle='#000';
+        ctx.beginPath(); ctx.ellipse(p.x,p.y+h2*0.42,w*0.42,7,0,0,6.283); ctx.fill(); ctx.restore(); }
+      ctx.drawImage(im,p.x-w/2,p.y-h2/2,w,h2); }
+    function hintAt(p,txt,t){ const bl=Math.floor(t/300)%2===0;
+      ctx.save(); ctx.strokeStyle=bl?'#ffd977':'rgba(255,217,119,0.4)'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(p.x,p.y-8,52+Math.sin(t/200)*4,0,6.283); ctx.stroke();
+      ctx.font='9px "Press Start 2P"'; ctx.textAlign='center';
+      ctx.fillStyle='#000'; ctx.fillText(txt,p.x+2,p.y-70); ctx.fillStyle='#ffd977'; ctx.fillText(txt,p.x,p.y-72); ctx.restore(); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; stT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      const el2=t-stT;
+      if(state==='intro'&&el2>=ARM){ state='play'; stT=t; }
+      const left=state==='play'?Math.max(0,TOTAL-(t-stT)):TOTAL;
+      if(state==='play'&&left<=0&&!finished){ finished=true;
+        const sc=Math.min(100,Math.round(ml/2)), cls=ml>=175?'perfect':(ml>=100?'good':'miss');
+        setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,ml+'ml!',cls); },1500); }
+      shownMl+=(ml-shownMl)*Math.min(1,dt*8);
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      const bgi=GB.imgs.tipcatch||FP.imgs.bg; // 펍(낮) 배경 재활용 — 전용 배경 나오면 교체
+      if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(0,0,400,480);
+      if(state!=='intro'){
+        // 스테이션
+        station('basket',BK,120,true);
+        station('board',BD,168,true);
+        station(phase==='pressing'&&now()-pressT<420?'closed':'open',SZ,158,true);
+        station('cup',CUP,108,true);
+        station('trash',TR,96,true);
+        // 계량컵 즙 채움 (내부 영역)
+        const cim=SQ.imgs.cup;
+        if(cim){ const cw3=108, chh3=cw3*(cim.height/cim.width);
+          const ix0=CUP.x-cw3/2+cw3*0.20, ix1=CUP.x-cw3/2+cw3*0.72;
+          const iy1=CUP.y-chh3/2+chh3*0.86, iy0=CUP.y-chh3/2+chh3*0.28;
+          const f=Math.min(1,shownMl/250), fy=iy1-(iy1-iy0)*f;
+          ctx.save(); ctx.globalCompositeOperation='multiply'; ctx.globalAlpha=0.85;
+          ctx.fillStyle='#b8d84e'; ctx.fillRect(ix0,fy,ix1-ix0,iy1-fy); ctx.restore();
+          if(shownMl>2){ ctx.globalAlpha=0.7; ctx.fillStyle='#dcef8a';
+            ctx.beginPath(); ctx.ellipse((ix0+ix1)/2,fy,(ix1-ix0)/2,2.5,0,0,6.283); ctx.fill(); ctx.globalAlpha=1; } }
+        // 도마 위 라임/반쪽
+        if(phase==='cut'&&!flyObj) station('lime',{x:BD.x,y:BD.y-26},58,false);
+        if((phase==='load'||phase==='press'||phase==='pressing'||phase==='trash')&&halves>0){
+          if(halves===2){ station('half',{x:BD.x-24,y:BD.y-26},52,false); if(phase==='load') station('half',{x:BD.x+24,y:BD.y-24},52,false); }
+          else if(phase==='load') station('half',{x:BD.x,y:BD.y-26},52,false); }
+        // 스퀴저 볼 안의 반쪽/찌꺼기
+        if(phase==='press') station('half',{x:SZ.x+6,y:SZ.y+6},46,false);
+        if(phase==='trash') station('spent',{x:SZ.x+6,y:SZ.y+6},46,false);
+        // 압착 즙 스트림
+        if(phase==='pressing'&&now()-pressT<420){ ctx.strokeStyle='#cbe36a'; ctx.lineWidth=4; ctx.lineCap='round';
+          ctx.beginPath(); ctx.moveTo(SZ.x+2,SZ.y+34); ctx.quadraticCurveTo(SZ.x-40,(SZ.y+CUP.y)/2,CUP.x+8,CUP.y-40); ctx.stroke();
+          if(Math.random()<0.7) parts.push({x:SZ.x+(Math.random()*10-5),y:SZ.y+40,vx:-60-Math.random()*40,vy:60+Math.random()*40,gv:500,r:1.5+Math.random()*1.5,c:'#cbe36a',life:0.4}); }
+        // 칼질 플래시
+        if(now()-cutT<160){ ctx.strokeStyle='#fff'; ctx.lineWidth=3;
+          ctx.beginPath(); ctx.moveTo(BD.x-55,BD.y-46); ctx.lineTo(BD.x+55,BD.y-6); ctx.stroke(); }
+        // 이동 애니
+        if(flyObj){ const p2=Math.min(1,(now()-flyObj.t)/280); const e2=eob2(p2);
+          const fx2=flyObj.fx+(flyObj.tx-flyObj.fx)*e2, fy2=flyObj.fy+(flyObj.ty-flyObj.fy)*e2-Math.sin(p2*Math.PI)*46;
+          station(flyObj.img,{x:fx2,y:fy2},52,false);
+          if(p2>=1){ const cb=flyObj.cb; flyObj=null; cb(); } }
+        // 힌트
+        if(state==='play'&&!finished&&!flyObj){
+          if(phase==='grab') hintAt(BK,'TAP!',t);
+          else if(phase==='cut') hintAt(BD,'SLIDE = SLICE!',t);
+          else if(phase==='load') hintAt(BD,'TAP A HALF!',t);
+          else if(phase==='press') hintAt(SZ,'SLIDE DOWN!',t);
+          else if(phase==='trash') hintAt(SZ,'TAP = TRASH!',t); }
+      }
+      for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
+        pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
+        ctx.globalAlpha=Math.min(1,pp2.life*2.5); ctx.fillStyle=pp2.c; ctx.fillRect(pp2.x-pp2.r/2,pp2.y-pp2.r/2,pp2.r,pp2.r); }
+      ctx.globalAlpha=1;
+      // HUD: ml 카운터 + 타이머
+      if(state==='play'||finished){
+        const cw4=200,chh4=54,cx4=200-cw4/2,cy4=10;
+        ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(cx4,cy4,cw4,chh4);
+        ctx.strokeStyle='#3a4150'; ctx.lineWidth=3; ctx.strokeRect(cx4,cy4,cw4,chh4);
+        ctx.textAlign='center'; ctx.font='18px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText(Math.round(shownMl)+'ml',202,cy4+30);
+        ctx.fillStyle='#cbe36a'; ctx.fillText(Math.round(shownMl)+'ml',200,cy4+28);
+        ctx.font='8px "Press Start 2P"'; ctx.fillStyle='#8a8d82'; ctx.fillText('FRESH LIME JUICE',200,cy4+44);
+        const secs=(left/1000).toFixed(1);
+        ctx.font='12px "Press Start 2P"'; ctx.textAlign='right';
+        ctx.fillStyle='#000'; ctx.fillText(secs+'s',392,32); ctx.fillStyle=left<6000?'#d9544d':'#e8e6dd'; ctx.fillText(secs+'s',390,30);
+        ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,72,280,6);
+        ctx.fillStyle=left<6000?'#d9544d':'#3a7d4f'; ctx.fillRect(60,72,280*(left/TOTAL),6); }
+      if(state==='intro'){ ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,400,480);
+        const lg2=SQ.imgs.logo; if(lg2){ const k=0.55+eob2(Math.min(1,el2/280))*0.45, lw=330*k, lh=lw*(lg2.height/lg2.width);
+          ctx.drawImage(lg2,200-lw/2,215-lh/2,lw,lh); } }
+      if(finished){ ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
+        ctx.font='20px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText('TIME UP!',203,203); ctx.fillStyle='#e6b450'; ctx.fillText('TIME UP!',200,200);
+        ctx.font='15px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText(ml+'ml SQUEEZED!',202,243); ctx.fillStyle='#cbe36a'; ctx.fillText(ml+'ml SQUEEZED!',200,240); }
+    }
+    raf=requestAnimationFrame(draw);
+  }
+
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
     { name:'FREE POUR MASTER', cat:'HOLD', run:d=>engFreePour({},d) },
@@ -1699,6 +1969,8 @@
     { name:'SHAKE MASTER', cat:'SPECIAL', run:d=>engShakeMaster(d) },
     { name:'QUICK TAB', cat:'QUIZ', run:d=>engQuickTab(d) },
     { name:'ORDER UP!', cat:'MEMORY', run:d=>engOrderUp(d) },
+    { name:'WHERE IS MY SHOT?', cat:'MEMORY', run:d=>engWhereShot(d) },
+    { name:'FRESH SQUEEZE', cat:'MASH', run:d=>engSqueeze(d) },
     { name:'TIP CATCH', cat:'REFLEX', run:d=>engTipCatch(d) },
     { name:'FLY SWAT', cat:'REFLEX', run:d=>engFlySwat(d) },
   ];
@@ -1706,7 +1978,7 @@
 
   // 프리로드
   ['proj_shaker'].concat(CK.map(k=>'cocktail_'+k)).concat(SP.map(k=>'cocktail_'+k)).concat(IK.map(k=>'ing_'+k)).forEach(k=>{ const i=new Image(); i.src='assets/'+k+'.png'; });
-  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); ouLoad(); // 실사 에셋 미리 키잉
+  fpLoad(); icLoad(); tcLoad(); qtLoad(); clLoad(); smLoad(); stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); // 실사 에셋 미리 키잉
   show('title');
 })();
 </script>
