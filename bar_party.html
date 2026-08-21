@@ -1887,7 +1887,8 @@
       ctx.save(); ctx.strokeStyle=bl?'#ffd977':'rgba(255,217,119,0.4)'; ctx.lineWidth=3;
       ctx.beginPath(); ctx.arc(p.x,p.y-8,52+Math.sin(t/200)*4,0,6.283); ctx.stroke();
       ctx.font='9px "Press Start 2P"'; ctx.textAlign='center';
-      ctx.fillStyle='#000'; ctx.fillText(txt,p.x+2,p.y-70); ctx.fillStyle='#ffd977'; ctx.fillText(txt,p.x,p.y-72); ctx.restore(); }
+      const tx3=Math.max(84,Math.min(316,p.x)); // 화면 밖 잘림 방지
+      ctx.fillStyle='#000'; ctx.fillText(txt,tx3+2,p.y-70); ctx.fillStyle='#ffd977'; ctx.fillText(txt,tx3,p.y-72); ctx.restore(); }
     function draw(t){
       raf=requestAnimationFrame(draw);
       if(!t0){ t0=t; lastT=t; stT=t; }
