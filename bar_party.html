@@ -1389,7 +1389,7 @@
       +'<div class="mghint">A HUGE swarm is after the fruit! Tap to shoot flies — ones SITTING on the fruit rot it away. Fruit HP at 0 = game over!</div>'
       +'<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const BX=200, BY=352, TOTAL=15000;
+    const BX=200, BY=352, TOTAL=25000;
     let state='cine', stT=0, pts=0, nextSpawn=0, finished=false, ended=false;
     let t0=0, lastT=0, raf=0, shake=0, crossT=-1e9, crossX=0, crossY=0, popped=false, fruitHP=100, hpStage=0;
     const flies=[], parts=[], pops=[]; const buzz=fsBuzz();
@@ -1452,7 +1452,7 @@
         if(buzz) buzz.set(flies.length>0,140+flies.length*12+Math.sin(t/90)*20);
         // 과일 HP: 앉아있는 파리가 갉아먹는다
         let sitters=0; for(const f of flies) if(f.sit>0) sitters++;
-        fruitHP=Math.max(0,fruitHP-sitters*2.6*dt);
+        fruitHP=Math.max(0,fruitHP-sitters*2.0*dt);
         const stg=fruitHP>60?0:(fruitHP>25?1:2);
         if(stg!==hpStage){ hpStage=stg; beep(180,0.15,'sawtooth',0.12); shake=Math.max(shake,5);
           for(let j=0;j<12;j++) parts.push({x:BX+(Math.random()*160-80),y:280+Math.random()*60,
@@ -1461,7 +1461,7 @@
           const sc=Math.min(40,pts);
           setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,'FRUIT RUINED!','miss'); },1500); }
         else if(left<=0){ finished=true; if(buzz) buzz.set(false,100);
-          const sc=Math.min(100,Math.round(pts*2.4)), cls=pts>=36?'perfect':(pts>=20?'good':'miss');
+          const sc=Math.min(100,Math.round(pts*1.5)), cls=pts>=55?'perfect':(pts>=32?'good':'miss'); // 25초 기준
           setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,pts+' FLIES!',cls); },1500); } }
       shake=Math.max(0,shake-dt*26);
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
@@ -1470,6 +1470,12 @@
       if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height); ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
       else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
       ctx.fillStyle='rgba(0,0,0,0.34)'; ctx.fillRect(0,0,400,480);
+      // 바 상판 (바구니가 올려진 카운터)
+      const ct2=ctx.createLinearGradient(0,376,0,396); ct2.addColorStop(0,'#7a5a34'); ct2.addColorStop(1,'#4e3620');
+      ctx.fillStyle=ct2; ctx.fillRect(0,376,400,20);
+      ctx.fillStyle='#8a6a40'; ctx.fillRect(0,376,400,3);
+      const cf3=ctx.createLinearGradient(0,396,0,480); cf3.addColorStop(0,'#3a2817'); cf3.addColorStop(1,'#1d1206');
+      ctx.fillStyle=cf3; ctx.fillRect(0,396,400,84);
       // 과일 바구니 (HP 단계에 따라 상해간다)
       const bk=hpStage===0?FS.imgs.basket:(hpStage===1?FS.imgs.basket2:FS.imgs.basket3)||FS.imgs.basket;
       if(bk){ const bw2=225, bh2=bw2*(bk.height/bk.width); ctx.drawImage(bk,BX-bw2/2,BY-bh2+40,bw2,bh2); }
@@ -1608,6 +1614,14 @@
         ctx.font='11px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('ORDER '+(showIdx+1)+' / '+seq.length,202,142);
         ctx.fillStyle='#ffd977'; ctx.fillText('ORDER '+(showIdx+1)+' / '+seq.length,200,140); }
+      if(state==='order'){ // 바 상판 — 손님이 카운터 뒤에 서서 주문하는 구도
+        const cg2=ctx.createLinearGradient(0,336,0,354); cg2.addColorStop(0,'#7a5a34'); cg2.addColorStop(1,'#4e3620');
+        ctx.fillStyle=cg2; ctx.fillRect(0,336,400,18);
+        ctx.fillStyle='#8a6a40'; ctx.fillRect(0,336,400,3);
+        const cf2=ctx.createLinearGradient(0,354,0,444); cf2.addColorStop(0,'#3a2817'); cf2.addColorStop(1,'#221507');
+        ctx.fillStyle=cf2; ctx.fillRect(0,354,400,90);
+        ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=2;
+        for(let px=22;px<400;px+=72){ ctx.beginPath(); ctx.moveTo(px,358); ctx.lineTo(px,440); ctx.stroke(); } }
       if(state==='order'&&showIdx>=seq.length){ ctx.font='13px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('GOT ALL THAT?',202,232); ctx.fillStyle='#ffd977'; ctx.fillText('GOT ALL THAT?',200,230); }
       // ── 입력 단계: 포스기 ──
