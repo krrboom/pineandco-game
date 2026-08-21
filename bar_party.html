@@ -80,14 +80,15 @@
   .sbtn{ font-family:'Press Start 2P',monospace; font-size:9px; line-height:1.3; color:var(--ink); background:var(--panel); border:2px solid #333; box-shadow:0 3px 0 #000; padding:12px 6px; cursor:pointer; text-align:center; }
   .sbtn:active{ transform:translateY(2px); box-shadow:0 1px 0 #000; } .sbtn .cat{ display:block; font-size:7px; color:var(--pine-light); margin-bottom:5px; letter-spacing:1px; }
   .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:9; }
-  /* 게임 캔버스: 남는 화면을 최대한 채움 (5:6 비율 유지) */
-  #fpcv{ width:min(100vw, max(240px, calc((100vh - 250px) * 0.8333))); width:min(100vw, max(240px, calc((100dvh - 250px) * 0.8333)));
-    height:auto; border:3px solid #000; box-shadow:0 6px 0 rgba(0,0,0,.45); background:#000; touch-action:none; image-rendering:pixelated; }
-  #game{ padding:46px 0 10px; gap:8px; }
-  #game #stage{ gap:8px; }
-  #gameLogo{ width:min(280px,64vw); image-rendering:pixelated; display:none; }
+  /* 게임 캔버스 = 플레이 화면 전체. 배경은 캔버스 안에서만 그림 (겹침 없음) */
+  #fpcv{ width:min(100vw,80vh); width:min(100vw,80dvh); flex:1 1 auto; min-height:0; align-self:center;
+    border:none; background:#000; touch-action:none; image-rendering:pixelated; }
+  #game{ padding:0 0 6px; gap:5px; justify-content:flex-start; }
+  #game #stage{ flex:1 1 auto; min-height:0; width:100%; gap:6px; }
+  #gameLogo{ max-height:60px; width:auto; max-width:80vw; margin-top:8px; image-rendering:pixelated; display:none; }
   /* 비시바시 타이틀 */
-  #title{ background:#0d0f0c url('assets/bp_title_bg.jpg') center/cover no-repeat; position:relative; }
+  #title{ background:#0d0f0c url('assets/bp_title_bg.jpg') center/cover no-repeat; position:relative;
+    justify-content:space-evenly; gap:8px; padding:34px 16px 26px; }
   #decoCv{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
   #title>*:not(#decoCv){ position:relative; z-index:1; }
   /* HOW TO PLAY 오버레이 */
@@ -128,7 +129,7 @@
 
   <div id="title" class="screen">
     <canvas id="decoCv"></canvas>
-    <img id="titleLogo" alt="PINE &amp; CO PARTY" style="width:min(330px,84vw);image-rendering:pixelated;display:none">
+    <img id="titleLogo" alt="PINE &amp; CO PARTY" style="width:min(360px,88vw);image-rendering:pixelated;display:none">
     <h1 id="titleH1">BAR<br>PARTY</h1>
     <div id="subCount" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#eef6d8;letter-spacing:1px;text-shadow:2px 2px 0 #000">BARTENDER'S MINIGAMES</div>
     <button class="btn amber" id="startBtn">START</button>
@@ -384,23 +385,19 @@
   const GLOGO={};
   const GLOGO_PFX={ 'FREE POUR MASTER':'fp','BLIND POUR':'fp','STIR STOP':'st','ICE CARVING':'ic','CHAMPAGNE LAUNCH':'cl',
     'SHAKE MASTER':'sm','QUICK TAB':'qt','ORDER UP!':'ou','WHERE IS MY SHOT?':'ws','FRESH SQUEEZE':'sq','TIP CATCH':'tc','FLY SWAT':'fs' };
+  function loadLogo(pfx,cb){ if(GLOGO[pfx]){ if(cb)cb(); return; }
+    const im=new Image(); im.onload=()=>{ try{ const c=fpKeyUI(im,520);
+      const g=c.getContext('2d'); const dd=g.getImageData(0,0,c.width,c.height); const p=dd.data;
+      for(let i=0;i<p.length;i+=4){ if(p[i+3]>0&&p[i]>243&&p[i+1]>243&&p[i+2]>243) p[i+3]=0; }
+      g.putImageData(dd,0,0); GLOGO[pfx]=c.toDataURL(); }catch(e){} if(cb)cb(); };
+    im.onerror=()=>{ if(cb)cb(); };
+    im.src='assets/'+pfx+'_logo.png'; }
   function showGameLogo(name){ const el=$('gameLogo'); const pfx=GLOGO_PFX[name];
     if(!el||!pfx){ if(el) el.style.display='none'; return; }
     if(GLOGO[pfx]){ el.src=GLOGO[pfx]; el.style.display='block'; return; }
     el.style.display='none';
-    const im=new Image(); im.onload=()=>{ try{ const c=fpKeyUI(im,520);
-      const g=c.getContext('2d'); const dd=g.getImageData(0,0,c.width,c.height); const p=dd.data;
-      for(let i=0;i<p.length;i+=4){ if(p[i+3]>0&&p[i]>243&&p[i+1]>243&&p[i+2]>243) p[i+3]=0; }
-      g.putImageData(dd,0,0); GLOGO[pfx]=c.toDataURL();
-      if(!$('game').classList.contains('hidden')){ el.src=GLOGO[pfx]; el.style.display='block'; } }catch(e){} };
-    im.src='assets/'+pfx+'_logo.png'; }
-  // 플레이 화면 배경: 캔버스 밖 영역까지 그 게임의 바 전경으로 채움 (폰에서 아래 빈 공간 제거)
-  const GAME_BG={ 'FREE POUR MASTER':'bg_freepour','BLIND POUR':'bg_freepour','STIR STOP':'bg_stir','ICE CARVING':'bg_icecarving',
-    'CHAMPAGNE LAUNCH':'bg_champagne','SHAKE MASTER':'bg_shake','QUICK TAB':'qt_bg','ORDER UP!':'bg_orderup',
-    'WHERE IS MY SHOT?':'bg_whereshot','FRESH SQUEEZE':'bg_squeeze','TIP CATCH':'bg_tipcatch','FLY SWAT':'bg_flyswat' };
+    loadLogo(pfx,()=>{ if(GLOGO[pfx]&&!$('game').classList.contains('hidden')){ el.src=GLOGO[pfx]; el.style.display='block'; } }); }
   function playSandbox(i){ $('hud').classList.add('hidden'); show('game'); stage.innerHTML='';
-    const bgf=GAME_BG[GAMES[i].name];
-    $('game').style.background=bgf?("linear-gradient(rgba(6,8,5,.62),rgba(6,8,5,.78)), url('assets/"+bgf+".jpg') center/cover no-repeat"):'';
     const my=++runToken;
     showHowto(GAMES[i].name,()=>{ if(my!==runToken) return; let done=false;
       showGameLogo(GAMES[i].name);
@@ -1216,7 +1213,7 @@
     ['DRAFT BEER',7,12],['IPA DRAFT',8,13],['HOUSE WINE',9,16],['CHAMPAGNE',14,25],['SODA WATER',3,6] ];
   function engQuickTab(done){
     fpLoad(); qtLoad();
-    stage.innerHTML='<canvas id="fpcv" width="400" height="480" style="width:min(88vw, max(200px, calc((100dvh - 400px) * 0.8333)))"></canvas>'
+    stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>'
       +'<div id="qtPad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(290px,78vw)"></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), pad=$('qtPad');
     const CUSTS=shuffle(['c1','c2','c3','c4','c5','c6']).concat(['c7']); // 마지막은 진상 손님
@@ -2187,8 +2184,12 @@
   ];
   document.getElementById('subCount').textContent="BARTENDER'S MINIGAMES × "+GAMES.length;
 
+  // 모바일 주소창 변동에도 화면이 항상 실제 보이는 높이에 꽉 차게
+  function fitVH(){ try{ $('wrap').style.height=window.innerHeight+'px'; }catch(e){} }
+  window.addEventListener('resize',fitVH); fitVH();
   // 프리로드: 타이틀/리스트 필수분만 즉시, 게임 에셋은 지연 워밍 (각 게임은 진입 시 자기 로더 호출)
   frLoad();
+  setTimeout(()=>{ [...new Set(Object.values(GLOGO_PFX))].forEach(p=>loadLogo(p)); },1800); // 게임 로고 선로딩 (start 탭 즉시 표시)
   setTimeout(()=>{ fpLoad(); icLoad(); tcLoad(); },2500);
   setTimeout(()=>{ qtLoad(); clLoad(); smLoad(); },6500);
   setTimeout(()=>{ stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); },11000);
