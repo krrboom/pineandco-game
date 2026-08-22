@@ -294,7 +294,7 @@
   const HOWTO={
     'FREE POUR MASTER':'Flip the bottle, watch the ml counter, and nail 30 → 45 → 60ml like a pro. Spill it and the boss sees EVERYTHING.',
     'BLIND POUR':'Same as Free Pour… but the counter is GONE. Count in your soul — 1oz = 3 seconds. Trust the wrist.',
-    'STIR STOP':'Stir in circles to chill the drink below zero. Hit the target temp FAST — stop and it warms, overdo it and you made meltwater.',
+    'STIR STOP':'Stir in circles and watch the drink turn icy blue. Match the TARGET color exactly, then SERVE! Stop and it warms back up.',
     'ICE CARVING':'Mash to carve a perfect ice ball! Let go and it refreezes. Hit DONE on the sphere — too early and it SHATTERS.',
     'CHAMPAGNE LAUNCH':'Sprint & shake the bottle! HOLD launch to raise the angle, release at 45°. Kiss the wall and you wear the foam.',
     'SHAKE MASTER':'Grab your phone with BOTH hands and shake it like the shift just ended. 13 seconds. Go feral.',
@@ -528,7 +528,7 @@
     let stampObj=null, stampT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
     const parts=[]; const armed=()=>t0&&now()-t0>=ARM;
     function tap(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return;
-      power+=1.6; vel=Math.min(460,vel+62); runPh+=0.3; sTap(); // 게이지 2.5배 어렵게
+      power+=2.24; vel=Math.min(460,vel+62); runPh+=0.3; sTap(); // 게이지 40% 완화
       parts.push({x:RX+22,y:GY-100,vx:-60-Math.random()*40,vy:-20-Math.random()*40,gv:300,r:1.5+Math.random()*1.5,c:'#eef6d8',life:0.35}); }
     function holdStart(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return; holdA=true; }
     function fire(){ if(state!=='run') return; holdA=false;
@@ -964,7 +964,7 @@
       +'<button class="btn amber" id="icTap" style="width:min(200px,46vw);height:70px;font-size:16px">TAP!</button>'
       +'<button class="btn" id="icDone" style="width:min(140px,32vw);height:70px;font-size:13px">DONE!</button></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const ICEX=185, ICEY=392, ZONE=88, TOTAL=15000, ARM=1200, DECAY=38, TAPUP=3; // 폰 연타 기준 3배 어렵게
+    const ICEX=185, ICEY=392, ZONE=88, TOTAL=15000, ARM=1200, DECAY=38, TAPUP=4.2; // 게이지 40% 완화
     let gauge=0, count=0, stunUntil=0, strikeT=-1e9, brokeT=-1e9, popT=0, finished=false, ended=false;
     let t0=0, lastT=0, raf=0, shake=0, contactX=ICEX+22, contactY=ICEY-120, prevStage=0;
     const parts=[], flyBalls=[], msgs=[];
@@ -1380,9 +1380,10 @@
       if(state==='ice'&&el2>=1200){ state='cap'; stT=t; beep(500,0.06,'square',0.1); }
       else if(state==='cap'&&el2>=900){ state='hold'; stT=t; beep(320,0.12,'square',0.12); shake=5; }
       else if(state==='hold'&&el2>=1700){ state='cnt'; stT=t; }
-      else if(state==='cnt'&&el2>=1800){ state='go'; stT=t; beep(980,0.25,'square',0.14); flash('#6fcf8f'); }
+      else if(state==='cnt'&&el2>=1800){ state='go'; stT=t; flash('#6fcf8f');
+        try{ const wh=new Audio('assets/sfx_whistle.mp3'); wh.volume=window.__mute?0:1; wh.play().catch(()=>{}); }catch(e){} }
       else if(state==='go'&&el2>=700){ state='play'; stT=t; playT0=t; }
-      if(state==='cnt'){ const n=Math.floor(el2/600); if(n!==Math.floor((el2-dt*1000)/600)&&n<3) beep(520,0.1,'square',0.12); }
+      if(state==='cnt'){ const n=Math.floor(el2/600); if(n!==Math.floor((el2-dt*1000)/600)&&n<3){ beep(880,0.16,'square',0.34); setTimeout(()=>beep(880,0.1,'square',0.2),90); } }
       const left=state==='play'?Math.max(0,TOTAL-(t-playT0)):TOTAL;
       if(state==='play'&&left<=0&&!finished){ finished=true;
         const sc=Math.min(100,Math.round(count*1.6));
@@ -1469,6 +1470,11 @@
     let state='intro', stT=0, temp=20.0, omega=0, spoonA=Math.random()*6.28, liquidA=0, lastPtrA=null, dragging=false;
     let stampObj=null, stampT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
     const parts=[]; const noise=fpNoise();
+    // 온도 → 음료 색: 상온 크림색 → 0도 근처 옅은 얼음색 → 영하로 갈수록 하늘색이 짙어짐
+    function tempColor(tp){ let r,g,b;
+      if(tp>=0){ const p=Math.min(1,(20-tp)/20); r=236-26*p; g=226+9*p; b=198+57*p; }
+      else { const p=Math.min(1,-tp/8); r=210-140*p; g=235-75*p; b=255; }
+      return 'rgb('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')'; }
     function ptrAngle(e){ const r=cv.getBoundingClientRect();
       const x=(e.clientX-r.left)*(400/r.width)-CX, y=(e.clientY-r.top)*(480/r.height)-CY;
       return Math.atan2(y,x); }
@@ -1527,6 +1533,9 @@
         const tp2=ST.imgs.top;
         if(tp2){ ctx.save(); ctx.translate(CX,CY); ctx.rotate(liquidA);
           ctx.drawImage(tp2,-GR/2,-GR/2,GR,GR); ctx.restore(); }
+        // 음료 색이 곧 온도계 — 차가워질수록 하늘색으로
+        ctx.save(); ctx.globalAlpha=0.48; ctx.fillStyle=tempColor(temp);
+        ctx.beginPath(); ctx.arc(CX,CY,GR/2-20,0,6.283); ctx.fill(); ctx.restore();
         // 성에: 영하로 갈수록 림에 하얗게
         if(temp<2){ const fr=Math.min(1,(2-temp)/9);
           ctx.save(); ctx.globalAlpha=fr*0.75; ctx.strokeStyle='#eaf6ff'; ctx.lineWidth=10+fr*10;
@@ -1541,17 +1550,20 @@
         pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
         ctx.globalAlpha=Math.min(1,pp2.life*2.2); ctx.fillStyle=pp2.c; ctx.fillRect(pp2.x-pp2.r/2,pp2.y-pp2.r/2,pp2.r,pp2.r); }
       ctx.globalAlpha=1;
-      // 온도계 HUD
+      // 색 비교 HUD — 숫자 없이 지금 색 vs 목표 색
       if(state==='play'||stampObj){
-        const cw=232,chh=62,cx0=200-cw/2,cy0=12;
+        const cw=248,chh=66,cx0=200-cw/2,cy0=12;
         ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(cx0,cy0,cw,chh);
         ctx.strokeStyle=omega>0.6?'#6fcf8f':'#333'; ctx.lineWidth=3; ctx.strokeRect(cx0,cy0,cw,chh);
-        ctx.textAlign='center'; ctx.font='19px "Press Start 2P"';
-        const tTxt=(temp>=0?'+':'')+temp.toFixed(1)+'°C';
-        const tCol=temp<=0?'#8fd7ff':(temp<8?'#e8e6dd':'#ffd977');
-        ctx.fillStyle='#000'; ctx.fillText(tTxt,202,cy0+32); ctx.fillStyle=tCol; ctx.fillText(tTxt,200,cy0+30);
-        ctx.font='9px "Press Start 2P"'; ctx.fillStyle='#6fcf8f';
-        ctx.fillText('TARGET '+target.toFixed(1)+'°C',200,cy0+52);
+        const near=Math.abs(temp-target)<=0.3;
+        ctx.fillStyle=tempColor(temp); ctx.fillRect(cx0+14,cy0+10,100,30);
+        ctx.strokeStyle=near?(Math.floor(t/140)%2?'#6fcf8f':'#eaffea'):'#000'; ctx.lineWidth=near?4:2;
+        ctx.strokeRect(cx0+14,cy0+10,100,30);
+        ctx.fillStyle=tempColor(target); ctx.fillRect(cx0+134,cy0+10,100,30);
+        ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.strokeRect(cx0+134,cy0+10,100,30);
+        ctx.textAlign='center'; ctx.font='8px "Press Start 2P"';
+        ctx.fillStyle='#e8e6dd'; ctx.fillText('NOW',cx0+64,cy0+56);
+        ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET',cx0+184,cy0+56);
         if(state==='play'&&!stampObj){ const tl2=Math.max(0,1-(t-stT)/TOTAL);
           ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,84,280,6);
           ctx.fillStyle=tl2<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,84,280*tl2,6);
@@ -1569,13 +1581,17 @@
         ctx.font='22px "Press Start 2P"'; ctx.textAlign='center';
         const col=stampObj.cls==='perfect'?'#6fcf8f':(stampObj.cls==='good'?'#e6b450':'#d9544d');
         ctx.fillStyle='#000'; ctx.fillText(stampObj.txt,3,3); ctx.fillStyle=col; ctx.fillText(stampObj.txt,0,0); ctx.restore();
-        ctx.font='12px "Press Start 2P"'; ctx.textAlign='center';
-        ctx.fillStyle='#000'; ctx.fillText(temp.toFixed(1)+' / '+target.toFixed(1)+'°C',202,252);
-        ctx.fillStyle='#fff'; ctx.fillText(temp.toFixed(1)+' / '+target.toFixed(1)+'°C',200,250);
-        ctx.fillStyle='#000'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',202,274);
-        ctx.fillStyle='#ffd977'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',200,272);
+        // 결과: 색 비교 칩 (숫자 대신)
+        ctx.fillStyle=tempColor(temp); ctx.fillRect(114,238,80,26);
+        ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.strokeRect(114,238,80,26);
+        ctx.fillStyle=tempColor(target); ctx.fillRect(206,238,80,26); ctx.strokeRect(206,238,80,26);
+        ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#e8e6dd'; ctx.fillText('YOURS',154,280); ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET',246,280);
+        ctx.font='12px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',202,304);
+        ctx.fillStyle='#ffd977'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',200,302);
         ctx.font='9px "Press Start 2P"';
-        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,301); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,300); }
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,327); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,326); }
     }
     raf=requestAnimationFrame(draw);
   }
@@ -1756,8 +1772,8 @@
     stage.innerHTML='<canvas id="fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const ARM=1400;
-    // 포스 화면 영역 (ou_pos 이미지 비율)
-    const PW=396, PX=2, PY=62, SFX0=0.118, SFX1=0.772, SFY0=0.262, SFY1=0.832;
+    // 포스 화면 영역 (ou_pos 이미지 비율) — 캔버스보다 크게 그려 스크린/버튼 확대
+    const PW=460, PX=-30, PY=22, SFX0=0.118, SFX1=0.772, SFY0=0.262, SFY1=0.832;
     let state='intro', stT=0, round=1, seq=[], showIdx=0, input=[], cleared=0;
     let stampObj=null, stampT=0, wrongCk=-1, t0=0, lastT=0, raf=0, shake=0, finished=false, ended=false;
     let best=parseInt(localStorage.getItem('pine_orderup_best')||'0')||0;
@@ -1837,20 +1853,21 @@
         const py2=PY+(1-rise)*440;
         if(ps) ctx.drawImage(ps,PX,py2,PW,PW);
         if(rise>=0.99){
-          // 진행 스트립 (입력한 잔들)
-          const sx0=PX+PW*SFX0+8, sy0=PY+PW*SFY0+6;
-          ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fillRect(sx0,sy0,PW*(SFX1-SFX0)-16,34);
-          for(let i=0;i<seq.length;i++){ const ix=sx0+4+i*26;
-            if(i<input.length){ const ck=OU.imgs['ck'+input[i]]; if(ck) ctx.drawImage(ck,ix,sy0+3,24,24); }
-            else { ctx.fillStyle='rgba(255,255,255,0.16)'; ctx.fillRect(ix+7,sy0+13,10,4); } }
-          // 칵테일 버튼 10개
+          // 진행 스트립 (입력한 잔들, 개수에 맞춰 간격 자동)
+          const sx0=PX+PW*SFX0+8, sy0=PY+PW*SFY0+6, stripW=PW*(SFX1-SFX0)-16;
+          ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fillRect(sx0,sy0,stripW,38);
+          const sp2=Math.min(34,(stripW-8)/Math.max(1,seq.length)), ics=Math.min(32,sp2-2);
+          for(let i=0;i<seq.length;i++){ const ix=sx0+4+i*sp2;
+            if(i<input.length){ const ck=OU.imgs['ck'+input[i]]; if(ck) ctx.drawImage(ck,ix,sy0+3,ics,ics); }
+            else { ctx.fillStyle='rgba(255,255,255,0.16)'; ctx.fillRect(ix+ics/2-5,sy0+3+ics/2,10,4); } }
+          // 칵테일 버튼 10개 (아이콘 최대 크기)
           for(let i=0;i<10;i++){ const b=btnRect(i);
             ctx.fillStyle='#20242b'; ctx.fillRect(b.x,b.y,b.w,b.h);
             ctx.strokeStyle='#3a4150'; ctx.lineWidth=2; ctx.strokeRect(b.x,b.y,b.w,b.h);
-            const ck=OU.imgs['ck'+i]; if(ck){ const cs=Math.min(b.w,b.h)-8;
+            const ck=OU.imgs['ck'+i]; if(ck){ const cs=Math.min(b.w,b.h)-3;
               ctx.drawImage(ck,b.x+b.w/2-cs/2,b.y+b.h/2-cs/2,cs,cs); } } }
         ctx.font='10px "Press Start 2P"'; ctx.textAlign='center';
-        ctx.fillStyle='#000'; ctx.fillText('PUNCH THE ORDER!',202,56); ctx.fillStyle='#e8e6dd'; ctx.fillText('PUNCH THE ORDER!',200,54); }
+        ctx.fillStyle='#000'; ctx.fillText('PUNCH THE ORDER!',202,16); ctx.fillStyle='#e8e6dd'; ctx.fillText('PUNCH THE ORDER!',200,14); }
       // 파티클
       for(let i=parts.length-1;i>=0;i--){ const pp2=parts[i]; pp2.life-=dt; if(pp2.life<=0){ parts.splice(i,1); continue; }
         pp2.vy+=pp2.gv*dt; pp2.x+=pp2.vx*dt; pp2.y+=pp2.vy*dt;
