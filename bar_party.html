@@ -360,11 +360,13 @@
   const FR_ORDER=['amber','blue','green','red','purple'];
   const FR_COMP={ amber:'#1d3fa0', blue:'#f08a1d', green:'#b3125e', red:'#22d9c8', purple:'#ffd23e' }; // 프레임 보색 폰트
   function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; w.style.gridTemplateColumns='1fr 1fr'; // 2열
-    GAMES.forEach((g,i)=>{ const b=document.createElement('button'); const key=FR_ORDER[i%5];
+    // 새로고침마다 버튼 순서 랜덤 (첫 게임 쏠림 방지) — 세션 내에서는 고정
+    if(!window.__sbOrder||window.__sbOrder.length!==GAMES.length) window.__sbOrder=shuffle(GAMES.map((_,i)=>i));
+    window.__sbOrder.forEach((gi,pos)=>{ const g=GAMES[gi]; const b=document.createElement('button'); const key=FR_ORDER[pos%5];
       if(FR.data[key]){ b.className='sbtn2'; b.style.backgroundImage="url('"+FR.data[key]+"')"; b.style.color=FR_COMP[key]; }
       else b.className='sbtn';
       b.textContent=g.name;
-      b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(i); }; w.appendChild(b); }); }
+      b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(gi); }; w.appendChild(b); }); }
   const BOARD_URL='https://barparty-board.showjojo100.workers.dev';
   let rrCtx=null;
   function showResult(game,score,txt,cls){
@@ -1860,12 +1862,18 @@
           for(let i=0;i<seq.length;i++){ const ix=sx0+4+i*sp2;
             if(i<input.length){ const ck=OU.imgs['ck'+input[i]]; if(ck) ctx.drawImage(ck,ix,sy0+3,ics,ics); }
             else { ctx.fillStyle='rgba(255,255,255,0.16)'; ctx.fillRect(ix+ics/2-5,sy0+3+ics/2,10,4); } }
-          // 칵테일 버튼 10개 (아이콘 최대 크기)
+          // 칵테일 버튼 10개 (아이콘 + 이름, 프레임 안에 수납)
+          ctx.textAlign='center';
           for(let i=0;i<10;i++){ const b=btnRect(i);
             ctx.fillStyle='#20242b'; ctx.fillRect(b.x,b.y,b.w,b.h);
             ctx.strokeStyle='#3a4150'; ctx.lineWidth=2; ctx.strokeRect(b.x,b.y,b.w,b.h);
-            const ck=OU.imgs['ck'+i]; if(ck){ const cs=Math.min(b.w,b.h)-3;
-              ctx.drawImage(ck,b.x+b.w/2-cs/2,b.y+b.h/2-cs/2,cs,cs); } } }
+            const ck=OU.imgs['ck'+i]; if(ck){ const cs=Math.min(b.w-6,b.h-26);
+              ctx.drawImage(ck,b.x+b.w/2-cs/2,b.y+4,cs,cs); }
+            const words=OU_MENU[i].split(' ');
+            ctx.font='5px "Press Start 2P"'; ctx.fillStyle='#cfd6e4';
+            if(words.length>1){ ctx.fillText(words[0],b.x+b.w/2,b.y+b.h-13);
+              ctx.fillText(words.slice(1).join(' '),b.x+b.w/2,b.y+b.h-5); }
+            else ctx.fillText(OU_MENU[i],b.x+b.w/2,b.y+b.h-8); } }
         ctx.font='10px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#000'; ctx.fillText('PUNCH THE ORDER!',202,16); ctx.fillStyle='#e8e6dd'; ctx.fillText('PUNCH THE ORDER!',200,14); }
       // 파티클
@@ -2196,8 +2204,7 @@
 
   /* ====================== 미니게임 목록 ====================== */
   const GAMES=[
-    { name:'FREE POUR MASTER', cat:'HOLD', run:d=>engFreePour({},d) },
-    { name:'BLIND POUR', cat:'HOLD', run:d=>engFreePour({blind:true},d) },
+    { name:'BLIND POUR', cat:'HOLD', run:d=>engFreePour({blind:true},d) }, // FREE POUR MASTER는 제외 (블라인드만)
     { name:'STIR STOP', cat:'TIMING', run:d=>engStirStop(d) },
     { name:'ICE CARVING', cat:'MASH', run:d=>engIceCarve(d) },
     { name:'CHAMPAGNE LAUNCH', cat:'SPECIAL', run:d=>engChampagne(d) },
