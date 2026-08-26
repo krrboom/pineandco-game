@@ -7,10 +7,24 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>PINE BAR PARTY</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="assets/bp_t1_main.webp" type="image/webp">
+<link rel="preload" as="image" href="assets/bp_t2_handle.webp" type="image/webp">
+<link rel="preload" as="image" href="assets/bp_t3_best.webp" type="image/webp">
+<link rel="stylesheet" media="print" onload="this.media='all'"
+  href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+<script>/* 일본어·중국어 픽셀폰트(DotGothic16, 약 30KB CSS)는 그 언어를 쓸 때만 받는다 */
+(function(){ try{ var L=localStorage.getItem("bp_lang")||"en";
+  window.__loadCJKFont=function(){ if(document.getElementById("cjkFont")) return;
+    var l=document.createElement("link"); l.id="cjkFont"; l.rel="stylesheet";
+    l.href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"; document.head.appendChild(l); };
+  if(L==="ja"||L==="zh") window.__loadCJKFont();
+}catch(e){} })();
+</script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap');
+  /* ★폰트는 비동기 로드(아래 <link>) — @import는 CSS 파싱을 막아 첫 화면을 크게 늦춘다 */
   @font-face{ font-family:'NeoDunggeunmo'; font-display:swap;
-    src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/NeoDunggeunmoPro-Regular.woff') format('woff'); }
+    src:url('assets/neodgm.woff2') format('woff2'); }   /* ★자체 호스팅: 기존 jsDelivr 주소는 404였음 */
   :root{ --pixfont:'Press Start 2P','NeoDunggeunmo','DotGothic16',monospace; }
   :root{ --bg:#0d0f0c; --panel:#161a14; --pine:#3a7d4f; --pine-light:#6fcf8f; --amber:#e6b450; --red:#d9544d; --ink:#e8e6dd; --dim:#8a8d82; }
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -91,8 +105,10 @@
   /* 비시바시 타이틀 */
   /* 주의: position:relative를 주면 .screen의 absolute inset:0이 무효화되어 화면이 안 차게 됨 */
   /* 배경은 폰 비율(720x1560) 전용 제작본 — cover로 항상 꽉 참 */
-  #title{ background:#1a0a06 url('assets/bp_title_bg.jpg') center top/cover no-repeat; background-attachment:local;
-    justify-content:flex-start; gap:0; padding:20px 10px 96px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #title{ background:#1a0a06;   /* ★배경 사진은 인트로 뒤에 (.bgon) — 첫 화면을 막지 않게 */ background-attachment:local;
+    justify-content:flex-start; gap:0; padding:20px 10px 96px; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background-position:center top; background-size:cover; background-repeat:no-repeat; }
+  #title.bgon{ background-image:image-set(url('assets/bp_title_bg.webp') type('image/webp'), url('assets/bp_title_bg.jpg') type('image/jpeg')); }
   #tMain{ margin-bottom:0; }
   #tHandle{ margin-top:6px; }      /* 메인-부제 간격 30% 축소 */
   #tBest{ margin-top:4px; }
@@ -186,7 +202,7 @@
 (function(){ var OK=false;
   try{ OK=document.createElement("canvas").toDataURL("image/webp").indexOf("data:image/webp")===0; }catch(e){}
   window.__WEBP_OK=OK; if(!OK) return;
-  var SET=new Set(["apple_happy","apple_shivering","apple_sleeping","apple_wink","bg_gangnam","boss_nobook_stand","bp_title_bg","bp_title_logo","campari_menu","cd_title","char_joe","char_minguk","char_pat","cl_cork","cl_run1","cl_run2","cl_run3","cl_run4","cl_run5","cl_skid","fg_gangnam","fp_bg","fp_bottle","fp_jigger","fp_logo","fp_rocks","fp_shot","fs_basket","fs_basket2","fs_basket3","fs_bigfly","fs_fly1","fs_fly2","hub_bar","hub_door1","hub_door2","ic_broke","ic_ice","ic_pick","minguk_head","ou_ck0","ou_ck1","ou_ck2","ou_ck3","ou_ck4","ou_ck5","ou_ck6","ou_ck7","ou_ck8","ou_ck9","ou_cu1","ou_cu2","ou_cu3","ou_cu4","ou_cu5","ou_cu6","ou_cu7","ou_cu8","ou_pos","paco_keyring","pick_sub","qt_cust1","qt_cust2","qt_cust3","qt_cust4","qt_cust5","qt_cust6","qt_cust7","qt_register","select_frame","sm_cap1","sm_cap2","sm_closed","sm_ice1","sm_ice2","sm_ice3","sm_logo","sq_basket","sq_board","sq_closed","sq_cup","sq_half","sq_lime","sq_open","sq_spent","sq_trash","st_glass","st_ice1","st_ice2","st_spoon","st_top","tc_cap","tc_env","tc_jar","tc_receipt","title_logo","world_map","ws_cover","ws_logo","ws_shot"]);
+  var SET=new Set(["apple_happy","apple_shivering","apple_sleeping","apple_wink","back_btn","bg_gangnam","bg_logo","book_btn","book_line1","boss_nobook_stand","bp_btn_rank","bp_btn_set","bp_t1_main","bp_t2_handle","bp_t3_best","bp_title_bg","bp_title_deco","bp_title_logo","btn_happyhour","btn_menu","btn_menu2","btn_pineco","btn_start","campari_menu","cd_title","char_joe","char_minguk","char_pat","cl_cork","cl_run1","cl_run2","cl_run3","cl_run4","cl_run5","cl_skid","fg_gangnam","finger_point","fp_bg","fp_bottle","fp_jigger","fp_logo","fp_rocks","fp_shot","fr_amber","fr_blue","fr_green","fr_purple","fr_red","fs_basket","fs_basket2","fs_basket3","fs_bigfly","fs_fly1","fs_fly2","gf_amber","gf_blue","gf_green","gf_purple","gf_red","home_always","home_welcome","hp_how","hp_play","hp_to","hub_bar","hub_door1","hub_door2","ic_broke","ic_ice","ic_pick","minguk_head","more_games","ou_ck0","ou_ck1","ou_ck2","ou_ck3","ou_ck4","ou_ck5","ou_ck6","ou_ck7","ou_ck8","ou_ck9","ou_cu1","ou_cu2","ou_cu3","ou_cu4","ou_cu5","ou_cu6","ou_cu7","ou_cu8","ou_pos","paco_keyring","pick_sub","qt_cust1","qt_cust2","qt_cust3","qt_cust4","qt_cust5","qt_cust6","qt_cust7","qt_register","records_ribbon","select_frame","sm_cap1","sm_cap2","sm_closed","sm_ice1","sm_ice2","sm_ice3","sm_logo","sq_basket","sq_board","sq_closed","sq_cup","sq_half","sq_lime","sq_open","sq_spent","sq_trash","st_glass","st_ice1","st_ice2","st_spoon","st_top","subtitle_cd","tc_cap","tc_env","tc_jar","tc_receipt","title_duo","title_logo","txt_press_start","world_map","ws_cover","ws_logo","ws_shot"]);
   var P=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src");
   function swap(u){
     u=String(u);
@@ -217,9 +233,9 @@
 
   <div id="title" class="screen">
     <canvas id="decoCv"></canvas>
-    <img class="tdrop" id="tMain" src="assets/bp_t1_main.png" alt="BARTENDER'S HAPPY HOUR" style="width:min(340px,86vw)">
-    <img class="tdrop" id="tHandle" src="assets/bp_t2_handle.png" alt="CAN YOU HANDLE THE BAR?" style="width:min(300px,78vw)">
-    <img class="tdrop" id="tBest" src="assets/bp_t3_best.png" alt="BE THE BEST BARTENDER" style="width:min(250px,64vw)">
+    <img class="tdrop" id="tMain" src="assets/bp_t1_main.webp" onerror="this.onerror=null;this.src='assets/bp_t1_main.png'" alt="BARTENDER'S HAPPY HOUR" style="width:min(340px,86vw)">
+    <img class="tdrop" id="tHandle" src="assets/bp_t2_handle.webp" onerror="this.onerror=null;this.src='assets/bp_t2_handle.png'" alt="CAN YOU HANDLE THE BAR?" style="width:min(300px,78vw)">
+    <img class="tdrop" id="tBest" src="assets/bp_t3_best.webp" onerror="this.onerror=null;this.src='assets/bp_t3_best.png'" alt="BE THE BEST BARTENDER" style="width:min(250px,64vw)">
     <div id="titleBtns">
       <button class="btn" id="rankBtn">🏆 RANKING</button>
       <button class="btn ghost" id="setBtn">⚙ SETTINGS</button>
@@ -227,9 +243,9 @@
       <img id="setImg" class="imgbtn" alt="SETTINGS" style="width:min(168px,44vw)">
     </div>
     <div id="titleGames">
-      <img id="pickSub2" src="assets/records_ribbon.png" alt="SET YOUR RECORDS!">
+      <img id="pickSub2" src="assets/records_ribbon.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/records_ribbon.png'" alt="SET YOUR RECORDS!">
       <div class="sbwrap" id="sbwrap2"></div>
-      <img id="moreTitle" src="assets/more_games.png" alt="MORE GAMES">
+      <img id="moreTitle" src="assets/more_games.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/more_games.png'" alt="MORE GAMES">
       <div class="sbwrap" id="sbwrap3"></div>
     </div>
   </div>
@@ -255,8 +271,8 @@
     <button class="btn ghost" id="setBack"><span id="setBackTxt">← HOME</span></button>
   </div>
   <div id="siteRow">
-    <button class="sitebtn" id="btnSite"><img src="assets/btn_pineco.png" alt="PINE&amp;CO"></button>
-    <button class="sitebtn" id="btnMenu2"><img src="assets/btn_menu2.png" alt="MENU"></button>
+    <button class="sitebtn" id="btnSite"><img src="assets/btn_pineco.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/btn_pineco.png'" alt="PINE&amp;CO"></button>
+    <button class="sitebtn" id="btnMenu2"><img src="assets/btn_menu2.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/btn_menu2.png'" alt="MENU"></button>
   </div>
   <button id="backBtn" class="hidden">✕</button>
 
@@ -271,9 +287,9 @@
 
   <div id="howto" class="hidden">
     <div id="htWords">
-      <img class="htw" id="htHow" src="assets/hp_how.png" alt="HOW">
-      <img class="htw" id="htTo" src="assets/hp_to.png" alt="TO">
-      <img class="htw" id="htPlay" src="assets/hp_play.png" alt="PLAY">
+      <img class="htw" id="htHow" src="assets/hp_how.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/hp_how.png'" alt="HOW">
+      <img class="htw" id="htTo" src="assets/hp_to.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/hp_to.png'" alt="TO">
+      <img class="htw" id="htPlay" src="assets/hp_play.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/hp_play.png'" alt="PLAY">
     </div>
     <div class="ht-panel"><div class="ht-name" id="htName"></div><div class="ht-desc" id="htDesc"></div><div class="ht-tap" id="htTapTxt">TAP TO START!</div></div>
   </div>
@@ -374,12 +390,12 @@
     if(a && PONG.buf && PONG.segs){
       try{ const sg=PONG.segs[Math.min(n, PONG.segs.length-1)];
         const src=a.createBufferSource(); src.buffer=PONG.buf;
-        const g=a.createGain(); g.gain.value=1; src.connect(g); g.connect(a.destination);
+        const g=a.createGain(); g.gain.value=0.35; src.connect(g); g.connect(a.destination);
         src.start(0, sg[0], Math.max(0.05, sg[1]-sg[0]+0.05)); return;
       }catch(e){}
     }
     // 폴백: 디코딩 전이면 파일 전체를 짧게 (드물게 첫 타이틀에서만)
-    try{ const el=new Audio('assets/sfx_pong.mp3'); el.volume=1;
+    try{ const el=new Audio('assets/sfx_pong.mp3'); el.volume=0.35;
       const p=el.play(); if(p&&p.catch) p.catch(()=>{ introMuted=true; });
       setTimeout(()=>{ try{ el.pause(); }catch(e){} }, 700);
     }catch(err){ introMuted=true; } }
@@ -408,6 +424,7 @@
         gunShot(); flash('#fff2c8'); el.classList.add('hit');
         setTimeout(()=>el.classList.remove('hit'),240); },420);
     },delay); });
+    setTimeout(()=>{ try{ $('title').classList.add('bgon'); }catch(e){} },1500);   // 배경 사진은 타이틀이 다 뜬 뒤
     setTimeout(()=>{ titleIntroDone=true;
       if(!$('title').classList.contains('hidden')) playTitleBgm(true);
       showTitleGames(); },2050);
@@ -562,7 +579,7 @@
   window.__mute=localStorage.getItem('bp_mute')==='1';
 
   // START 버튼 제거 — 게임 목록이 타이틀 화면에 바로 노출됨
-  function showTitleGames(){ const g=$('titleGames'); buildSandbox(); buildMore(); wireSiteBtns();
+  function showTitleGames(){ const g=$('titleGames'); window.__cardsReady=true; frLoad(); buildSandbox(); buildMore(); wireSiteBtns();
     g.classList.add('on'); requestAnimationFrame(()=>g.classList.add('show')); }
   function backToTitle(){ show('title'); showTitleGames(); }
   function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'Got the phone? Press!':'Press when ready'); show('turn'); $('hud').classList.add('hidden'); }
@@ -643,11 +660,14 @@
     set('rrSubmitTxt','🏆 '+T('submit')); set('rrDoneTxt',T('ok'));
     set('rankBackTxt',T('back')); set('setBackTxt',T('back'));
     const ps=$('pickSub2'); if(ps) ps.alt=T('records');
-    if($('sbwrap2')) buildSandbox(); if($('sbwrap3')) buildMore(); wireSiteBtns();
+    if(window.__cardsReady){ if($('sbwrap2')) buildSandbox(); if($('sbwrap3')) buildMore(); }
+    wireSiteBtns();
   }
   document.querySelectorAll('.lgbtn').forEach(b=>{
     b.addEventListener('pointerdown',e=>{ e.preventDefault(); ac(); beep(700,0.06);
-      LANG=b.dataset.l; try{ localStorage.setItem('bp_lang',LANG); }catch(err){} applyLang(); }); });
+      LANG=b.dataset.l; try{ localStorage.setItem('bp_lang',LANG); }catch(err){}
+      if((LANG==='ja'||LANG==='zh') && window.__loadCJKFont) window.__loadCJKFont();
+      applyLang(); }); });
   // 설정 화면
   $('setBtn').onclick=()=>{ ac(); beep(600,0.08);
     $('setVol').value=Math.round(BGM.vol*100); show('setting'); };
@@ -2565,7 +2585,7 @@
   window.addEventListener('resize',fitVH); window.addEventListener('orientationchange',fitVH);
   fitVH(); setTimeout(fitVH,400); setTimeout(fitVH,1500);
   // 프리로드: 타이틀/리스트 필수분만 즉시, 게임 에셋은 지연 워밍 (각 게임은 진입 시 자기 로더 호출)
-  frLoad();
+  // frLoad()는 인트로가 끝난 뒤(showTitleGames)로 미룸 — 타이틀 표시를 막지 않게
   // ★로딩 최적화: 시작 화면에서 11개 게임 에셋(약 31MB)을 전부 받던 것을 중단.
   //   휴대폰/저속 회선에서는 선워밍을 아예 하지 않고, 게임을 고른 순간(HOW TO PLAY 표시 중) 그 게임 것만 받는다.
   // 게임 이름 → 접두어(GLOGO_PFX) → 그 게임 전용 로더. 이름을 새로 적지 않으므로 오타로 빠질 일이 없다.
@@ -2611,7 +2631,7 @@
         for(let cy=0;cy<h;cy++){ for(let cx=rr[0];cx<rr[1];cx++){ if(d[(cy*w+cx)*4+3]>30){ if(cy<top)top=cy; if(cy>bot)bot=cy; break; } } }
         const c2=document.createElement('canvas'); c2.width=rr[1]-rr[0]; c2.height=Math.max(1,bot-top+1);
         c2.getContext('2d').drawImage(key,rr[0],top,c2.width,c2.height,0,0,c2.width,c2.height); return c2; });
-      startDeco(sprites); }catch(e){} }; D.src='assets/bp_title_deco.png'; })();
+      startDeco(sprites); }catch(e){} }; setTimeout(()=>{ D.src='assets/bp_title_deco.png'; },2200); })();   // 인트로 끝난 뒤 로드
   function startDeco(sprites){ const dcv=$('decoCv'); if(!dcv||!sprites.length) return;
     const ctx2=dcv.getContext('2d');
     function fit(){ dcv.width=dcv.clientWidth||360; dcv.height=dcv.clientHeight||600; } fit();
