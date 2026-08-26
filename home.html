@@ -425,11 +425,11 @@
   #knob{ position:absolute; width:50px; height:50px; border-radius:50%; left:35px; top:35px;
     background:rgba(111,207,143,.6); border:2px solid var(--pine-light); box-shadow:0 2px 6px rgba(0,0,0,.5); }
   /* 설정 버튼(왼쪽) + 음량조절 패널 */
-  #bookRow{ display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:6px; padding-bottom:6px; }
-  #bookLine{ width:clamp(210px,54vw,360px); height:auto; image-rendering:pixelated; }
+  #bookRow{ display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:2px; padding-bottom:4px; }
+  #bookLine{ width:clamp(240px,62vw,400px); height:auto; image-rendering:pixelated; }
   #bookBtn{ background:none; border:0; padding:0; cursor:pointer; transition:transform .06s; }
   #bookBtn:active{ transform:translateY(3px); }
-  #bookBtn img{ width:clamp(125px,32vw,190px); height:auto; image-rendering:pixelated; display:block;
+  #bookBtn img{ width:clamp(140px,37vw,205px); height:auto; image-rendering:pixelated; display:block;
     filter:brightness(1.11) saturate(1.12) drop-shadow(0 0 6px rgba(150,235,190,.35)); }
   #gearBtn{ position:absolute; left:10px; bottom:10px; z-index:20;
     width:40px; height:40px; font-size:21px; line-height:1; background:rgba(0,0,0,.55); color:var(--pine-light);
@@ -553,7 +553,7 @@
   @keyframes flicker{ 0%,100%{opacity:.92} 47%{opacity:.84} 50%{opacity:1} 53%{opacity:.86} }
 
   /* 타이틀: 제목로고 + 부제 + 태그라인 + 이미지버튼 (전부 직접 만든 PNG) */
-  #titleScreen{ gap:11px; background-color:#0d0f0c;
+  #titleScreen{ gap:13px; background-color:#0d0f0c;
     background-image:linear-gradient(rgba(13,15,12,.9), rgba(11,13,10,.93)), url('assets/bg_logo.png');
     background-size:cover, 76px auto; background-repeat:no-repeat, repeat; image-rendering:pixelated; }
   .title-logo{ width:clamp(280px,80vw,500px); height:auto; image-rendering:pixelated; z-index:2;
@@ -567,18 +567,18 @@
   /* ★손가락 + ABOUT US: 오른쪽 위 구석. 손이 pine&co를 가리키고, ABOUT US 노란글씨는 손 뒤 */
   /* 손가락(검지) 작게 → Pine&Co 가리킴. 화면 안(로고 오른쪽 안쪽). ABOUT US는 배경 없이 노란 글씨로 검지 위에 정렬 */
   /* ★Joe 얼굴 옆. 검지 방향(→&C)은 JS가 화면마다 실시간 계산해 --fdeg로 조준. 비클릭(장식). ABOUT US는 손가락 아래 한 줄 정렬. */
-  .about-cue{ position:absolute; right:2%; top:0%; z-index:6; display:block; width:clamp(34px,8.5vw,52px);
-    pointer-events:none; --fdeg:37deg; --bx:-5.6px; --by:-4.2px;   /* ★고정 조준 각도(모바일37.6°·데스크톱36.6° 사실상 동일) → JS 재조준 없이 처음부터 &C 방향 고정 */
-    animation:cueBobDir 1s ease-in-out infinite; }   /* ★ABOUT US+손가락 통째로 검지방향으로 함께 이동 */
+  .about-cue{ position:absolute; left:97%; top:55%; z-index:6; display:block; width:clamp(28px,7.5vw,44px);
+    pointer-events:none; --fdeg:0deg; --bx:-4px; --by:0px;   /* ★로고 바로 오른쪽에서 수평으로 "Co"를 가리킴 */
+    animation:cueBobDir 1s ease-in-out infinite; }
   @keyframes cueBobDir{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(var(--bx),var(--by)); } }
   .about-cue .about-finger{ display:block; width:100% !important; height:auto; aspect-ratio:425/210; image-rendering:pixelated;   /* ★aspect-ratio=이미지 로드 전에도 높이 확보 → 로딩 후 위치 안 바뀜. .title-art img(82vw) 오버라이드 방지 */
     transform-origin:50% 50%; transform:rotate(var(--fdeg)); filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5)); }   /* 조준(회전)만, 이동은 컨테이너가 */
-  .about-cue .about-text{ display:block; text-align:center; margin-bottom:4px; font-family:'Press Start 2P',monospace; font-size:clamp(6px,1.4vw,8px); letter-spacing:.3px;
+  .about-cue .about-text{ display:block; line-height:1.25; text-align:center; margin-bottom:4px; font-family:'Press Start 2P',monospace; font-size:clamp(6px,1.4vw,8px); letter-spacing:.3px;
     transform-origin:50% 100%; transform:rotate(var(--fdeg));   /* ★검지 방향과 같게 기울여 나란히 */
     color:#ffd24a; white-space:nowrap; text-shadow:1px 1px 0 #000, -1px -1px 0 #000, 0 0 5px rgba(0,0,0,.9); }
   .title-sub-img{ width:clamp(190px,48vw,320px); height:auto; image-rendering:pixelated; z-index:2;
     margin-top:-6px; filter:drop-shadow(2px 2px 0 #000); }
-  .tagline{ width:clamp(290px,76vw,500px); height:auto; image-rendering:pixelated; z-index:2;
+  .tagline{ width:clamp(190px,48vw,330px); height:auto; image-rendering:pixelated; z-index:2;
     animation:tagglow 1.8s ease-in-out infinite; }
   @keyframes tagglow{
     0%,100%{ filter:brightness(1.4) drop-shadow(0 0 7px rgba(255,180,120,.9)) drop-shadow(0 0 16px rgba(230,110,60,.7)); }
@@ -588,9 +588,9 @@
   .imgbtn{ background:none; border:0; padding:0; cursor:pointer; display:flex; flex-direction:column;
     align-items:center; gap:5px; transition:transform .05s; -webkit-tap-highlight-color:transparent; }
   .imgbtn:active{ transform:translateY(3px); }
-  .imgbtn .cap{ width:clamp(105px,29vw,170px); height:auto; image-rendering:pixelated;
+  .imgbtn .cap{ width:clamp(110px,31vw,170px); height:auto; image-rendering:pixelated;
     filter:drop-shadow(1px 1px 0 #000); }
-  .imgbtn .btnimg{ width:clamp(132px,35vw,205px); height:auto; image-rendering:pixelated;
+  .imgbtn .btnimg{ width:clamp(140px,39vw,205px); height:auto; image-rendering:pixelated;
     filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55)); }
   .imgbtn:hover .btnimg{ filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55)) drop-shadow(0 0 13px rgba(111,207,143,.6)); }
   .cap.blink{ animation:blink 1s steps(1) infinite; }
@@ -637,9 +637,19 @@
   /* 타이틀 듀오 아트 (여백 트리밍됨 → 크게) */
   .title-art{ position:relative; display:flex; flex-direction:column; align-items:center;
     z-index:2; margin:2px 0 0; }
-  .title-art img{ width:clamp(230px,58vw,400px); height:auto; image-rendering:pixelated; display:block;
+  .title-art img{ width:clamp(320px,97vw,560px); height:auto; image-rendering:pixelated; display:block;
     filter:drop-shadow(4px 6px 0 rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(111,207,143,.35)); }
   .joe-wrap{ position:relative; display:inline-block; line-height:0; animation:bob 3.4s ease-in-out infinite; }
+  /* 데스크톱: 예약줄까지 한 화면에 들어오게 듀오 아트를 화면 높이에 맞춰 캡 (모바일은 영향 없음) */
+  /* 모바일: 좌우 여백 최소화 → 듀오 아트가 화면을 꽉 채우되 가로 스크롤은 없게 */
+  @media (max-width:699px){
+    #titleScreen{ padding-left:8px; padding-right:8px; }
+    .title-art img{ max-width:100%; }
+  }
+  @media (min-width:700px){
+    #titleScreen{ gap:8px; }
+    .title-art img{ width:min(clamp(320px,97vw,560px), 47vh); }
+  }
   /* 히든게임: Joe 입 핫스팟(평소 안 보임) */
   #joeMouth{ position:absolute; left:58%; top:22%; width:16%; height:18%; cursor:pointer; border-radius:50%; z-index:3; }
   @keyframes bob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
@@ -932,18 +942,19 @@
     <div class="title-logo-wrap">
       <img class="title-logo" src="assets/title_logo.png" alt="Welcome to Pine & Co">
       <a class="pineco-hotspot" href="about.html" target="_blank" rel="noopener" onclick="return openAboutPage()" aria-label="About Pine &amp; Co — open the brochure"></a>
-        <div id="joeMouth" onclick="openDentist()" aria-label="?"></div>
+      <!-- ★ABOUT US + 손가락: 로고 오른쪽에 붙어 Pine&Co의 "Co"를 정확히 가리킴(장식, 비클릭) -->
+      <span class="about-cue" aria-hidden="true">
+        <span class="about-text">ABOUT US</span>
+        <img class="about-finger" src="assets/finger_point.png" alt="">
+      </span>
     </div>
     <img class="title-sub-img" src="assets/home_welcome.png" alt="WELCOME HOME,">
     <div class="title-art">
       <div class="joe-wrap">
         <img src="assets/title_duo.png" alt="PINE & CO BARTENDERS">
+        <div id="joeMouth" onclick="openDentist()" aria-label="?"></div>
       </div>
       <div class="spotlight"></div>
-      <span class="about-cue" aria-hidden="true">
-        <span class="about-text">ABOUT US</span>
-        <img class="about-finger" src="assets/finger_point.png" alt="">
-      </span>
     </div>
     <img class="tagline" src="assets/home_always.png" alt="WE ARE ALWAYS HERE FOR YOU!">
     <div class="row btn-row">
@@ -957,7 +968,7 @@
       </button>
     </div>
     <div id="bookRow">
-      <img id="bookLine" src="assets/book_line.png" alt="IF YOU WANT TO BOOK A TABLE, PRESS BOOKING BUTTON!">
+      <img id="bookLine" src="assets/book_line1.png" alt="IF YOU WANT TO BOOK A TABLE,">
       <button id="bookBtn" onclick="goReserve()" aria-label="reservation">
         <img src="assets/book_btn.png" alt="RESERVATION">
       </button>

@@ -588,6 +588,15 @@
   .imgbtn:hover .btnimg{ filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55)) drop-shadow(0 0 13px rgba(111,207,143,.6)); }
   .cap.blink{ animation:blink 1s steps(1) infinite; }
   .backbtn .btnimg{ width:clamp(120px,32vw,185px); }
+  /* ── 시작화면3 개편: CD 타이틀 아트 + 버튼 배치 ── */
+  #cdTitleArt{ width:min(100%,clamp(300px,92vw,760px)); max-width:100%; height:auto; image-rendering:pixelated; display:block;
+    margin:0 auto 6px; filter:drop-shadow(0 6px 0 rgba(0,0,0,.55)); animation:bob 3.4s ease-in-out infinite; }
+  #hhBackBtn{ position:fixed; top:12px; left:12px; z-index:70; font-family:'Press Start 2P',monospace;
+    font-size:clamp(8px,2.3vw,11px); color:#e8e6dd; background:rgba(0,0,0,.62); border:3px solid #4a3a24;
+    box-shadow:0 3px 0 #000; padding:9px 11px; cursor:pointer; letter-spacing:1px; }
+  #hhBackBtn:active{ transform:translateY(3px); box-shadow:none; }
+  #cdMainBtns{ display:flex; gap:clamp(10px,3vw,22px); justify-content:center; align-items:flex-end; flex-wrap:wrap; }
+  #cdMainBtns .btnimg{ width:clamp(130px,34vw,210px); height:auto; }
   .selBtnRow{ display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap; }
   .selBtnRow .backbtn{ margin:0; }
   /* 시작화면 하단 작은 부제목 버튼 (HIGHSCORE / BOTTOMS UP / MONSTER INDEX) */
@@ -924,34 +933,17 @@
   </div>
 
   <div class="screen crt" id="titleScreen">
-    <div class="title-logo-wrap">
-      <img class="title-logo" src="assets/title_logo.png" alt="Welcome to Pine & Co">
-      <a class="pineco-hotspot" href="about.html" target="_blank" rel="noopener" onclick="return openAboutPage()" aria-label="About Pine & Co — open the brochure"></a>
-    </div>
-    <img class="title-sub-img" src="assets/subtitle_cd.png" alt="COCKTAIL DEFENSE">
-    <div class="title-art">
-      <div class="joe-wrap">
-        <img src="assets/title_duo.png" alt="PINE & CO BARTENDERS">
-        <div id="joeMouth" onclick="openDentist()" aria-label="?"></div>
-      </div>
-      <div class="spotlight"></div>
-      <!-- ★손가락 + ABOUT US: Joe 얼굴 옆, 로고의 '&'와 'C' 사이를 가리킴. 장식(비클릭) — 클릭/터치는 Pine&Co 글자에만. -->
-      <span class="about-cue" aria-hidden="true">
-        <span class="about-text">ABOUT US</span>
-        <img class="about-finger" src="assets/finger_point.png" alt="">
-      </span>
-    </div>
+    <img id="cdTitleArt" src="assets/cd_title.png" alt="COCKTAIL DEFENSE">
     <img class="tagline" src="assets/txt_last_orders.png" alt="THE LAST ORDERS ARE ROLLING IN...">
-    <div class="row btn-row">
+    <button id="hhBackBtn" onclick="fadeOutMusicAndGo('bar_party.html')">◀ HAPPY HOUR</button>
+    <div class="row btn-row" id="cdMainBtns">
       <button class="imgbtn" onclick="goSelect()">
         <img class="cap blink" src="assets/txt_press_start.png" alt="PRESS START">
         <img class="btnimg" src="assets/btn_start.png" alt="START">
       </button>
-    </div>
-    <div class="row sub-btn-row">
-      <button class="imgbtn subbtn" id="hhBackBtn" onclick="fadeOutMusicAndGo('bar_party.html')" style="font-family:'Press Start 2P',monospace;font-size:11px;color:#e8e6dd;background:rgba(0,0,0,.6);border:3px solid #4a3a24;box-shadow:0 3px 0 #000;padding:10px 12px;letter-spacing:1px">◀ HAPPY HOUR</button>
-      <button class="imgbtn subbtn" onclick="openHighscore()"><img src="assets/btn_highscore.png" alt="HIGHSCORE"></button>
-      <!-- PINE&CO INDEX 버튼 제거: 인덱스는 게임 중 📖(RECIPE BOOK) 안 탭으로 통합됨 -->
+      <button class="imgbtn" onclick="openHighscore()">
+        <img class="btnimg" src="assets/btn_highscore.png" alt="HIGH SCORE">
+      </button>
     </div>
     <div class="row" id="plazaRow" style="display:none"><button class="plaza-btn" onclick="openPlaza()">🌲 THE PLAZA · 광장</button></div>
     <div class="hint">PC: WASD / ARROWS · MOBILE: DRAG SCREEN</div>
@@ -1008,10 +1000,7 @@
         </div>
       </div>
     </div>
-    <div class="selBtnRow">
-      <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
-      <button class="imgbtn backbtn" id="selHiBtn" onclick="openHighscore('select')"><img class="btnimg" src="assets/btn_highscore.png" alt="HIGHSCORE"></button>
-    </div>
+    <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
 
   <!-- 세계 바텐더 선택(준비중): 세계지도 픽셀 이미지 위에 해외 바텐더들이 올라갈 예정 -->
@@ -1830,7 +1819,8 @@ function pauseViewMenu(){   // 일시정지 상태에서 손님 메뉴(칵테일
   const mi=document.getElementById('menuIntro'); if(mi) mi.classList.add('hidden');   // 편지 인트로 스킵, 바로 메뉴
   curMenuTab='cocktails'; renderMenu(); show('menuScreen'); try{ playSelect(); }catch(e){}
 }
-function menuBack(){ if(menuFromPause){ menuFromPause=false; hide('menuScreen'); show('pausePanel'); try{ playSelect(); }catch(e){} return; } backToTitle(); }
+function menuBack(){ try{ if(new URLSearchParams(location.search).get('menu')==='1'){ fadeOutMusicAndGo('index.html'); return; } }catch(e){}
+  if(menuFromPause){ menuFromPause=false; hide('menuScreen'); show('pausePanel'); try{ playSelect(); }catch(e){} return; } backToTitle(); }
 function setMusicVol(v){ musicVol=Math.max(0,Math.min(1,v/100)); document.getElementById('musicVal').textContent=Math.round(musicVol*100);
   if(musicBus){ try{ musicBus.gain.value=musicVol; }catch(e){} }   // iOS 포함 실제 음량 반영
   if(typeof bottomsBgm!=='undefined' && bottomsBgm){ try{ bottomsBgm.volume=Math.max(0,Math.min(1,musicVol*0.5)); }catch(e){} }   // Bottoms Up 음악도 설정 슬라이더로 실시간 반영

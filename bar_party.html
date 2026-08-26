@@ -20,10 +20,10 @@
   #wrap{ position:relative; width:100vw; height:100vh; height:100dvh; overflow:hidden; }
   .screen{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:56px 16px 22px; text-align:center; }
   .hidden{ display:none !important; }
-  .kr{ font-family:-apple-system,"Segoe UI","Malgun Gothic",system-ui,sans-serif; }
+  .kr{ font-family:var(--pixfont); }
   h1{ font-size:clamp(20px,6.6vw,32px); color:var(--amber); line-height:1.3; text-shadow:3px 3px 0 #000; letter-spacing:1px; }
   h1 .sub{ display:block; font-size:.4em; color:var(--pine-light); margin-top:8px; letter-spacing:2px; }
-  p.desc{ font-family:-apple-system,"Segoe UI","Malgun Gothic",system-ui,sans-serif; font-size:clamp(12px,3.4vw,15px); color:var(--dim); line-height:1.6; max-width:420px; }
+  p.desc{ font-family:var(--pixfont); font-size:clamp(12px,3.4vw,15px); color:var(--dim); line-height:1.6; max-width:420px; }
   .btn{ font-family:var(--pixfont); font-size:clamp(11px,3vw,15px); color:#0d140a; background:var(--pine-light);
     border:3px solid #000; box-shadow:0 5px 0 #000; padding:14px 26px; cursor:pointer; letter-spacing:1px; transition:transform .06s,box-shadow .06s; }
   .btn:active{ transform:translateY(4px); box-shadow:0 1px 0 #000; }
@@ -73,7 +73,7 @@
   .rtarget{ position:absolute; width:56px; height:56px; object-fit:contain; image-rendering:pixelated; cursor:pointer; animation:pop .12s; } @keyframes pop{ from{ transform:scale(.4); } to{ transform:scale(1); } }
   .rate{ font-size:clamp(20px,6.4vw,36px); text-shadow:3px 3px 0 #000; } .rate.perfect{ color:var(--pine-light); } .rate.good{ color:var(--amber); } .rate.miss{ color:var(--red); }
   .addscore{ font-size:16px; color:var(--amber); }
-  .rank{ font-family:-apple-system,"Segoe UI","Malgun Gothic",system-ui,sans-serif; width:min(400px,92vw); }
+  .rank{ font-family:var(--pixfont); width:min(400px,92vw); }
   .rrow{ display:flex; justify-content:space-between; align-items:center; padding:10px 12px; margin:6px 0; border:2px solid #2a3a2a; background:var(--panel); }
   .rrow.win{ border-color:var(--amber); background:rgba(230,180,80,.14); box-shadow:0 0 12px rgba(230,180,80,.4); }
   .rrow .nm{ font-weight:700; } .rrow .pt{ color:var(--amber); font-variant-numeric:tabular-nums; font-weight:800; } .crown{ font-size:20px; }
@@ -352,7 +352,7 @@
   // ── 다국어 ──
   let LANG = localStorage.getItem('bp_lang') || 'en';
   const L10N = {
-    ko:{ ui:{ records:'기록을 세워보자!', menuBtn:'메뉴', more:'더 많은 게임', cdDesc:'몰려오는 손님을 막아라! 바 디펜스', buDesc:'운을 시험하는 술자리 복불복 게임', ranking:'랭킹', settings:'설정', tapStart:'탭해서 시작!',
+    ko:{ ui:{ records:'기록을 세워보자!', menuBtn:'메뉴', more:'더 많은 게임', cdDesc:'몰려오는 손님을 막아라! 칵테일 서바이버', buDesc:'운을 시험하는 술자리 복불복 게임', ranking:'랭킹', settings:'설정', tapStart:'탭해서 시작!',
         yourName:'이름', submit:'기록 등록', ok:'확인', sending:'전송 중...', offline:'오프라인 (기기에 저장됨)',
         rankNo:'위', saved:'저장됨', noRec:'아직 기록 없음', lang:'언어', bgm:'배경음 볼륨', back:'← 뒤로', top5:'게임별 TOP 5' },
       desc:{
@@ -367,7 +367,7 @@
         'FRESH SQUEEZE':'라임은 그날 짠 게 최고다. 30초 안에 끝내자',
         'TIP CATCH':'떨어지는 건 다 받아라. 쓰레기만 빼고',
         'FLY SWAT':'벌레는 바의 최대의 적! 다 잡아라!' } },
-    en:{ ui:{ records:'SET YOUR RECORDS!', menuBtn:'MENU', more:'MORE GAMES', cdDesc:'Hold the bar against the rush! Tower defense', buDesc:'Party games of pure luck. Who pays tonight?', ranking:'RANKING', settings:'SETTINGS', tapStart:'TAP TO START!',
+    en:{ ui:{ records:'SET YOUR RECORDS!', menuBtn:'MENU', more:'MORE GAMES', cdDesc:'Hold the bar against the rush! Cocktail survivor', buDesc:'Party games of pure luck. Who pays tonight?', ranking:'RANKING', settings:'SETTINGS', tapStart:'TAP TO START!',
         yourName:'YOUR NAME', submit:'SUBMIT RANK', ok:'OK', sending:'SENDING...', offline:'OFFLINE - SAVED LOCALLY',
         rankNo:'RANK #', saved:'SAVED', noRec:'NO RECORDS YET', lang:'LANGUAGE', bgm:'BGM VOLUME', back:'← BACK', top5:'TOP 5 PER GAME' },
       desc:{
@@ -382,7 +382,7 @@
         'FRESH SQUEEZE':'Lime is best the day you cut it. Thirty seconds, go',
         'TIP CATCH':'Catch everything that falls. Skip the trash',
         'FLY SWAT':"Bugs are a bar's worst enemy. Swat them all!" } },
-    ja:{ ui:{ records:'記録を作ろう！', menuBtn:'メニュー', more:'もっと遊ぶ', cdDesc:'押し寄せる客を止めろ！バー・ディフェンス', buDesc:'運を試す飲み会ゲーム。今夜おごるのは誰？', ranking:'ランキング', settings:'設定', tapStart:'タップでスタート！',
+    ja:{ ui:{ records:'記録を作ろう！', menuBtn:'メニュー', more:'もっと遊ぶ', cdDesc:'押し寄せる客を止めろ！カクテル・サバイバー', buDesc:'運を試す飲み会ゲーム。今夜おごるのは誰？', ranking:'ランキング', settings:'設定', tapStart:'タップでスタート！',
         yourName:'なまえ', submit:'記録を登録', ok:'OK', sending:'送信中...', offline:'オフライン（端末に保存）',
         rankNo:'位', saved:'保存しました', noRec:'記録なし', lang:'言語', bgm:'BGM 音量', back:'← もどる', top5:'ゲーム別 TOP 5' },
       desc:{
@@ -397,7 +397,7 @@
         'FRESH SQUEEZE':'ライムはその日に搾ったのが一番。30秒で終わらせよう',
         'TIP CATCH':'落ちてくる物は全部取れ。ゴミ以外は',
         'FLY SWAT':'虫はバーの最大の敵！全部やっつけろ！' } },
-    zh:{ ui:{ records:'来刷新纪录吧！', menuBtn:'菜单', more:'更多游戏', cdDesc:'挡住涌来的客人！酒吧防守战', buDesc:'考验运气的酒桌游戏。今晚谁买单？', ranking:'排行榜', settings:'设置', tapStart:'点击开始！',
+    zh:{ ui:{ records:'来刷新纪录吧！', menuBtn:'菜单', more:'更多游戏', cdDesc:'挡住涌来的客人！鸡尾酒生存战', buDesc:'考验运气的酒桌游戏。今晚谁买单？', ranking:'排行榜', settings:'设置', tapStart:'点击开始！',
         yourName:'名字', submit:'上传成绩', ok:'确定', sending:'上传中...', offline:'离线（已存在本机）',
         rankNo:'名', saved:'已保存', noRec:'暂无纪录', lang:'语言', bgm:'背景音乐音量', back:'← 返回', top5:'各游戏 TOP 5' },
       desc:{
