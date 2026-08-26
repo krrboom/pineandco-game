@@ -1730,9 +1730,9 @@ function playBossAlarm(){ const s=SFX.boss; if(!audioCtx||!s) return;
 /* ===== 배경 음악 — 효과음과 동일하게 Web Audio 버퍼로 재생.
    iOS는 <audio>.volume과 페이드를 무시하므로, 디코드한 AudioBuffer를 BufferSource로 틀고
    src.stop()으로 확실히 끊는다(겹침 원천 차단). 음량은 게인으로 제어(iOS도 적용됨). ===== */
-const MUSIC_SRC={ title:'assets/music_title.mp3', select:'assets/music_select.mp3', menu:'assets/music_menu.mp3',
-  epilogue:'assets/music_epilogue.mp3',   // ★인트로 크롤(에필로그) 전용 곡
-  play1:'assets/music_play1.mp3', play2:'assets/music_play2.mp3', play3:'assets/music_play3.mp3' };
+const MUSIC_SRC={ title:'assets/music_title.mp3?v2', select:'assets/music_select.mp3?v2', menu:'assets/music_menu.mp3?v2',
+  epilogue:'assets/music_epilogue.mp3?v2',   // ★인트로 크롤(에필로그) 전용 곡
+  play1:'assets/music_play1.mp3?v2', play2:'assets/music_play2.mp3?v2', play3:'assets/music_play3.mp3?v2' };
 const MUSICBUF={};            // name -> AudioBuffer
 const MVOL=0.3, MXF=0.3;      // 음악 기준 음량 + 전환 페이드(초)
 let musicUnlocked=false, musicMode=null, curPlay=null, musicVoice=null;  // musicVoice = 현재 한 곡만
@@ -6788,7 +6788,7 @@ addEventListener('keydown', function(e){
    Bottoms Up을 나가면(close) 딱 멈춘다. */
 let bottomsBgm=null, bottomsMuted=false;
 function playBottomsBgm(){ try{
-  if(!bottomsBgm){ bottomsBgm=new Audio('assets/music_bottomsup.mp3'); bottomsBgm.loop=true; }
+  if(!bottomsBgm){ bottomsBgm=new Audio('assets/music_bottomsup.mp3?v2'); bottomsBgm.loop=true; }
   bottomsBgm.muted=bottomsMuted;
   bottomsBgm.volume=Math.max(0,Math.min(1, musicVol*0.5)); bottomsBgm.currentTime=0;
   bottomsBgm.play().catch(function(){});

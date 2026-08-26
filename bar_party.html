@@ -545,7 +545,7 @@
     if(fadeMs) bgmFade(old,0,fadeMs,()=>{ try{ old.a.pause(); }catch(e){} });
     else { try{ old.a.pause(); }catch(e){} } }
   function playTitleBgm(xf){ if(BGM.name==='title') return; stopBgm(xf?800:0);
-    const t=mkTrack('assets/bgm_title.mp3',true); trkSet(t,xf?0:bgmVol());
+    const t=mkTrack('assets/bgm_title.mp3?v2',true); trkSet(t,xf?0:bgmVol());
     BGM.cur=t; BGM.name='title';
     t.a.play().then(()=>{ if(xf&&BGM.cur===t) bgmFade(t,bgmVol(),800); })
       .catch(()=>{ if(BGM.cur===t){ BGM.cur=null; BGM.name=''; } }); }
@@ -553,7 +553,7 @@
   function playGameBgm(xf){ if(BGM.name==='play') return; stopBgm(xf?800:0); BGM.name='play';
     let first=!!xf;
     const step=()=>{ if(BGM.name!=='play') return;
-      const t=mkTrack('assets/bgm_play'+(ptIdx+1)+'.mp3',false); trkSet(t,first?0:bgmVol());
+      const t=mkTrack('assets/bgm_play'+(ptIdx+1)+'.mp3'+'?v2',false); trkSet(t,first?0:bgmVol());
       t.a.onended=()=>{ ptIdx=(ptIdx+1)%3; step(); };
       BGM.cur=t; t.a.play().then(()=>{ if(first&&BGM.cur===t){ first=false; bgmFade(t,bgmVol(),800); } })
         .catch(()=>{ if(BGM.cur===t){ BGM.cur=null; BGM.name=''; } }); };
