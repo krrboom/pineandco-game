@@ -1,0 +1,62 @@
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PINE 로딩 진단</title>
+<style>
+ body{background:#0d0f0c;color:#e8e6dd;font:13px/1.6 -apple-system,"Malgun Gothic",sans-serif;margin:0;padding:14px}
+ h1{font-size:15px;color:#6fcf8f;margin:0 0 10px}
+ .box{background:#161a14;border:1px solid #2b3327;border-radius:8px;padding:10px;margin-bottom:10px}
+ .k{color:#8a8d82} .v{color:#e6b450} b{color:#fff}
+ table{width:100%;border-collapse:collapse;font-size:12px}
+ td{padding:3px 4px;border-bottom:1px solid #222} td:last-child{text-align:right;color:#e6b450;white-space:nowrap}
+ .ok{color:#6fcf8f} .bad{color:#d9544d}
+ button{font:inherit;background:#3a7d4f;color:#fff;border:0;border-radius:6px;padding:10px 14px;margin-top:6px}
+</style>
+<h1>🌲 PINE 로딩 진단</h1>
+<div class="box" id="env">측정 중…</div>
+<div class="box"><b>1) 시작화면2 실제 로딩</b><div id="bp">…</div></div>
+<div class="box"><b>2) 시작화면1 실제 로딩</b><div id="ix">…</div></div>
+<div class="box"><b>3) 파일별 시간</b><table id="tbl"></table></div>
+<button onclick="location.reload()">다시 측정</button>
+<script>
+var LOG=[];
+function esc(s){return String(s).replace(/[<>&]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c];});}
+function row(k,v,cls){ return '<div><span class="k">'+esc(k)+'</span> · <span class="v '+(cls||'')+'">'+esc(v)+'</span></div>'; }
+(function(){
+  var c=navigator.connection||navigator.mozConnection||navigator.webkitConnection||{};
+  var webp=false; try{ webp=document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp')===0; }catch(e){}
+  document.getElementById('env').innerHTML=
+    row('브라우저', navigator.userAgent.slice(0,110))
+   +row('회선', (c.effectiveType||'모름')+'  내림 '+(c.downlink!=null?c.downlink+'Mbps':'모름')+'  지연 '+(c.rtt!=null?c.rtt+'ms':'모름')+(c.saveData?'  데이터절약 ON':''))
+   +row('WebP 지원', webp?'예':'아니오', webp?'ok':'bad')
+   +row('화면', innerWidth+'×'+innerHeight+' @'+(devicePixelRatio||1)+'x');
+})();
+function timed(url){ var t0=Date.now();
+  return fetch(url,{cache:'no-store'}).then(function(r){ return r.arrayBuffer().then(function(b){
+    return {url:url, ms:Date.now()-t0, kb:Math.round(b.byteLength/1024), status:r.status}; }); })
+   .catch(function(){ return {url:url, ms:Date.now()-t0, kb:0, status:'실패'}; }); }
+function run(list, elId, label){
+  var t0=Date.now();
+  return Promise.all(list.map(timed)).then(function(rs){
+    var kb=0, worst=0, fail=0;
+    rs.forEach(function(r){ kb+=r.kb; if(r.ms>worst) worst=r.ms; if(r.status!==200) fail++; LOG.push(r); });
+    var total=Date.now()-t0;
+    var speed = total>0 ? (kb/1024)/(total/1000) : 0;
+    document.getElementById(elId).innerHTML =
+      row('파일 수', list.length+'개')
+     +row('받은 용량', kb+' KB')
+     +row('전체 걸린 시간', total+' ms')
+     +row('가장 느린 파일', worst+' ms')
+     +row('실측 속도', speed.toFixed(2)+' MB/s')
+     +row('실패', fail+'건', fail?'bad':'ok');
+    return null;
+  });
+}
+var BP=['bar_party','assets/bp_t1_main.webp','assets/bp_t2_handle.webp','assets/bp_t3_best.webp',
+        'assets/sfx_pong.mp3','assets/bp_btn_rank.webp','assets/bp_btn_set.webp','assets/bp_title_bg.webp','assets/bgm_title.mp3'];
+var IX=['/','assets/title_logo.webp','assets/title_duo.webp','assets/home_welcome.webp','assets/home_always.webp',
+        'assets/btn_start.webp','assets/btn_menu.webp','assets/music_title.mp3'];
+run(BP,'bp').then(function(){ return run(IX,'ix'); }).then(function(){
+  var h=''; LOG.sort(function(a,b){return b.ms-a.ms;}).forEach(function(r){
+    h+='<tr><td>'+esc(r.url.split('/').pop())+'</td><td>'+r.kb+'KB · '+r.ms+'ms'+(r.status!==200?' <span class="bad">'+r.status+'</span>':'')+'</td></tr>'; });
+  document.getElementById('tbl').innerHTML=h;
+});
+</script>

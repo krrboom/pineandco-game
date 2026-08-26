@@ -105,10 +105,12 @@
   /* 비시바시 타이틀 */
   /* 주의: position:relative를 주면 .screen의 absolute inset:0이 무효화되어 화면이 안 차게 됨 */
   /* 배경은 폰 비율(720x1560) 전용 제작본 — cover로 항상 꽉 참 */
-  #title{ background:#1a0a06;   /* ★배경 사진은 인트로 뒤에 (.bgon) — 첫 화면을 막지 않게 */ background-attachment:local;
-    justify-content:flex-start; gap:0; padding:20px 10px 96px; overflow-y:auto; -webkit-overflow-scrolling:touch;
-    background-position:center top; background-size:cover; background-repeat:no-repeat; }
-  #title.bgon{ background-image:image-set(url('assets/bp_title_bg.webp') type('image/webp'), url('assets/bp_title_bg.jpg') type('image/jpeg')); }
+  #title{ background:#000;
+    justify-content:flex-start; gap:0; padding:20px 10px 96px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  /* ★배경 사진은 첫 화면 높이(100vh)에만 깔고 그 아래는 검정. 스크롤 높이에 따라 확대되지 않게 별도 레이어로 분리. */
+  #title::before{ content:''; position:absolute; left:0; right:0; top:0; height:100vh; z-index:0;
+    pointer-events:none; background:#1a0a06 center top/cover no-repeat; }
+  #title.bgon::before{ background-image:image-set(url('assets/bp_title_bg.webp') type('image/webp'), url('assets/bp_title_bg.jpg') type('image/jpeg')); }
   #tMain{ margin-bottom:0; }
   #tHandle{ margin-top:6px; }      /* 메인-부제 간격 30% 축소 */
   #tBest{ margin-top:4px; }
@@ -368,8 +370,10 @@
   const PONG={ buf:null, segs:null, loading:false, fallback:[] };
   try{ window.__PONG=PONG; }catch(e){}   // 검수용: 분할 구간 확인
   let gunIdx=0;
+  // 바이트는 페이지 열자마자 받아둔다(오디오 잠금과 무관). 디코딩만 첫 탭 이후에.
+  PONG.bytes = fetch('assets/sfx_pong.mp3').then(r=>r.arrayBuffer()).catch(()=>null);
   function loadPong(){ const a=ac(); if(!a||PONG.buf||PONG.loading) return; PONG.loading=true;
-    fetch('assets/sfx_pong.mp3').then(r=>r.arrayBuffer()).then(b=>a.decodeAudioData(b)).then(buf=>{
+    PONG.bytes.then(b=>{ if(!b) throw 0; return a.decodeAudioData(b.slice(0)); }).then(buf=>{
       PONG.buf=buf;
       const d=buf.getChannelData(0), sr=buf.sampleRate, win=Math.floor(sr*0.01);
       const loud=[]; for(let i=0;i+win<d.length;i+=win){ let sum=0,n=0;
@@ -384,18 +388,29 @@
       PONG.segs = merged.length>=3 ? merged.slice(0,3) : [[0,buf.duration]];
     }).catch(()=>{ PONG.loading=false; });
   }
+  // n번째(0,1,2) 소리를 실제로 재생. 성공하면 true.
+  function pongPlay(n){
+    const a=AC; if(!a || !PONG.buf || !PONG.segs) return false;
+    try{ if(a.state==='suspended') a.resume(); }catch(e){}
+    try{ const sg=PONG.segs[Math.min(n, PONG.segs.length-1)];
+      const src=a.createBufferSource(); src.buffer=PONG.buf;
+      const g=a.createGain(); g.gain.value=0.35; src.connect(g); g.connect(a.destination);
+      src.start(0, sg[0], Math.max(0.05, sg[1]-sg[0]+0.05)); return true;
+    }catch(e){ return false; }
+  }
   // n번째 타이틀(0,1,2)에 해당하는 소리
   function gunShot(){ if(window.__mute) return;
     const n=gunIdx++;
-    try{ window.__gunLog.push([Math.round(performance.now()), (AC&&AC.state)||'no-ac']); }catch(e){}
-    const a=ac();
-    if(a && PONG.buf && PONG.segs){
-      try{ const sg=PONG.segs[Math.min(n, PONG.segs.length-1)];
-        const src=a.createBufferSource(); src.buffer=PONG.buf;
-        const g=a.createGain(); g.gain.value=0.35; src.connect(g); g.connect(a.destination);
-        src.start(0, sg[0], Math.max(0.05, sg[1]-sg[0]+0.05)); return;
-      }catch(e){}
-    }
+    try{ if(AC && AC.state==='suspended') AC.resume(); }catch(e){}
+    // 아직 디코딩 전이면 준비되는 대로 그 순번 소리를 낸다 (최대 1.2초 대기)
+    const _ok=pongPlay(n); if(!_ok) introMuted=true; else introMuted=false;
+    try{ window.__gunLog.push([Math.round(performance.now()), (AC&&AC.state)||'no-ac', 'n='+n, _ok?'재생':'실패', 'buf='+(!!PONG.buf), 'segs='+(PONG.segs?PONG.segs.length:0)]); }catch(e){}
+    if(_ok) return;
+    // 아직 디코딩 전이면 준비되는 대로 그 순번 소리를 낸다 (최대 1.2초). 중복 재생 방지를 위해 여기서 끝낸다.
+    if(!PONG.__fail){ try{ loadPong(); }catch(e){}
+      let tries=0; const wait=setInterval(()=>{ tries++;
+        if(pongPlay(n)){ introMuted=false; clearInterval(wait); } else if(tries>12) clearInterval(wait); },100);
+      return; }
     // 폴백: 디코딩 전이면 파일 전체를 짧게 (드물게 첫 타이틀에서만)
     try{ const el=new Audio('assets/sfx_pong.mp3'); el.volume=0.35;
       const p=el.play(); if(p&&p.catch) p.catch(()=>{ introMuted=true; });
@@ -538,7 +553,14 @@
     step(); }
   function bgmApplyVol(){ if(BGM.cur) trkSet(BGM.cur,bgmVol()); }
   const bgmKick=()=>{ ac();
-    if(introMuted){ introMuted=false; gunIdx=0; gunShot(); flash('#fff2c8'); }   // 자동재생 차단됐던 경우 첫 탭에 총성
+    if(introMuted){ introMuted=false; gunIdx=0;   // 소리 없이 지나갔던 경우: 첫 탭에 타이틀을 다시 떨어뜨리며 소리
+      try{ loadPong(); }catch(e){}
+      if(!$('title').classList.contains('hidden')){
+        ['tMain','tHandle','tBest'].forEach(id=>{ const el=$(id); if(el){ el.classList.remove('land','hit'); void el.offsetWidth; } });
+        [['tMain',60],['tHandle',520],['tBest',980]].forEach(([id,dl])=>{ setTimeout(()=>{ const el=$(id); if(!el) return;
+          el.classList.add('land');
+          setTimeout(()=>{ gunShot(); flash('#fff2c8'); el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),240); },420); },dl); });
+      } else { gunShot(); flash('#fff2c8'); } }
     if(titleIntroDone && !$('title').classList.contains('hidden')) playTitleBgm(true);
     if(titleIntroDone) document.removeEventListener('pointerdown',bgmKick); };
   document.addEventListener('pointerdown',bgmKick);
