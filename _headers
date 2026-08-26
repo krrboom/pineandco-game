@@ -1,0 +1,8 @@
+# 에셋(그림·소리·폰트)은 하루 캐시 + 그 뒤 30일간은 캐시본을 먼저 보여주고 뒤에서 갱신.
+# 매번 파일마다 서버에 확인 요청을 보내던 것(max-age=0, must-revalidate)이 모바일에서 큰 지연 원인이었다.
+/assets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+
+# HTML은 즉시 반영되어야 하므로 기존대로 매번 확인
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
