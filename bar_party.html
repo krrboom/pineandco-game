@@ -8,11 +8,14 @@
 <meta http-equiv="Expires" content="0">
 <title>PINE BAR PARTY</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap');
+  @font-face{ font-family:'NeoDunggeunmo'; font-display:swap;
+    src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/NeoDunggeunmoPro-Regular.woff') format('woff'); }
+  :root{ --pixfont:'Press Start 2P','NeoDunggeunmo','DotGothic16',monospace; }
   :root{ --bg:#0d0f0c; --panel:#161a14; --pine:#3a7d4f; --pine-light:#6fcf8f; --amber:#e6b450; --red:#d9544d; --ink:#e8e6dd; --dim:#8a8d82; }
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   html,body{ height:100%; background:var(--bg); overflow:hidden; }
-  body{ font-family:'Press Start 2P', monospace; color:var(--ink); display:flex; align-items:center; justify-content:center;
+  body{ font-family:var(--pixfont); color:var(--ink); display:flex; align-items:center; justify-content:center;
     touch-action:manipulation; -webkit-user-select:none; user-select:none; background:radial-gradient(120% 90% at 50% -10%, #1a2016 0%, #0d0f0c 60%); }
   #wrap{ position:relative; width:100vw; height:100vh; height:100dvh; overflow:hidden; }
   .screen{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:56px 16px 22px; text-align:center; }
@@ -21,18 +24,18 @@
   h1{ font-size:clamp(20px,6.6vw,32px); color:var(--amber); line-height:1.3; text-shadow:3px 3px 0 #000; letter-spacing:1px; }
   h1 .sub{ display:block; font-size:.4em; color:var(--pine-light); margin-top:8px; letter-spacing:2px; }
   p.desc{ font-family:-apple-system,"Segoe UI","Malgun Gothic",system-ui,sans-serif; font-size:clamp(12px,3.4vw,15px); color:var(--dim); line-height:1.6; max-width:420px; }
-  .btn{ font-family:'Press Start 2P',monospace; font-size:clamp(11px,3vw,15px); color:#0d140a; background:var(--pine-light);
+  .btn{ font-family:var(--pixfont); font-size:clamp(11px,3vw,15px); color:#0d140a; background:var(--pine-light);
     border:3px solid #000; box-shadow:0 5px 0 #000; padding:14px 26px; cursor:pointer; letter-spacing:1px; transition:transform .06s,box-shadow .06s; }
   .btn:active{ transform:translateY(4px); box-shadow:0 1px 0 #000; }
   .btn.amber{ background:var(--amber); } .btn.ghost{ background:var(--panel); color:var(--ink); border-color:var(--pine); }
   .pcount{ display:flex; gap:10px; }
-  .pbtn{ font-family:'Press Start 2P',monospace; width:56px; height:56px; font-size:18px; color:var(--ink); background:var(--panel); border:3px solid #333; box-shadow:0 4px 0 #000; cursor:pointer; }
+  .pbtn{ font-family:var(--pixfont); width:56px; height:56px; font-size:18px; color:var(--ink); background:var(--panel); border:3px solid #333; box-shadow:0 4px 0 #000; cursor:pointer; }
   .pbtn.sel{ color:#0d140a; background:var(--amber); border-color:#000; }
   .best{ font-size:11px; color:var(--dim); } .brand{ font-size:9px; letter-spacing:2px; color:var(--dim); }
   #hud{ position:absolute; top:0; left:0; right:0; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; z-index:5; pointer-events:none; }
   #hud .who{ color:var(--pine-light); font-size:12px; } #hud .rd{ color:var(--dim); font-size:10px; } #hud .sc{ color:var(--amber); font-size:15px; text-shadow:2px 2px 0 #000; }
   .mgtitle{ font-size:clamp(15px,4.6vw,22px); color:var(--amber); text-shadow:2px 2px 0 #000; }
-  .mghint{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--dim); max-width:min(92vw,480px); line-height:1.8; }
+  .mghint{ font-family:var(--pixfont); font-size:9px; color:var(--dim); max-width:min(92vw,480px); line-height:1.8; }
   #stage{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; width:100%; }
   .bigbtn{ width:min(330px,86vw); height:74px; font-size:15px; }
   .bignum{ font-size:22px; color:var(--amber); text-shadow:2px 2px 0 #000; }
@@ -57,7 +60,7 @@
   .qwrap{ width:150px; height:150px; display:flex; align-items:center; justify-content:center; background:var(--panel); border:3px solid #2a3a2a; box-shadow:0 5px 0 #000; } .qwrap img{ width:78%; height:78%; object-fit:contain; image-rendering:pixelated; }
   .qicons{ display:flex; gap:10px; } .qicons img{ width:clamp(44px,13vw,58px); height:clamp(44px,13vw,58px); object-fit:contain; image-rendering:pixelated; background:var(--panel); border:2px solid #2a3a2a; padding:4px; }
   .opts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; width:min(400px,92vw); }
-  .opt{ font-family:'Press Start 2P',monospace; font-size:clamp(8px,2.4vw,11px); color:var(--ink); background:var(--panel); border:3px solid #333; box-shadow:0 4px 0 #000; padding:14px 6px; cursor:pointer; min-height:52px; line-height:1.35; }
+  .opt{ font-family:var(--pixfont); font-size:clamp(8px,2.4vw,11px); color:var(--ink); background:var(--panel); border:3px solid #333; box-shadow:0 4px 0 #000; padding:14px 6px; cursor:pointer; min-height:52px; line-height:1.35; }
   .opt:active{ transform:translateY(3px); box-shadow:0 1px 0 #000; } .opt.right{ background:var(--pine-light); color:#0d140a; border-color:#000; } .opt.wrong{ background:var(--red); color:#fff; border-color:#000; }
   .igrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:min(360px,90vw); }
   .icell{ background:var(--panel); border:3px solid #333; box-shadow:0 4px 0 #000; padding:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; aspect-ratio:1; }
@@ -75,9 +78,8 @@
   .rrow.win{ border-color:var(--amber); background:rgba(230,180,80,.14); box-shadow:0 0 12px rgba(230,180,80,.4); }
   .rrow .nm{ font-weight:700; } .rrow .pt{ color:var(--amber); font-variant-numeric:tabular-nums; font-weight:800; } .crown{ font-size:20px; }
   /* 샌드박스 */
-  #sandbox{ justify-content:flex-start; }
   .sbwrap{ width:min(440px,94vw); max-height:72vh; overflow-y:auto; -webkit-overflow-scrolling:touch; display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:4px; }
-  .sbtn{ font-family:'Press Start 2P',monospace; font-size:9px; line-height:1.3; color:var(--ink); background:var(--panel); border:2px solid #333; box-shadow:0 3px 0 #000; padding:12px 6px; cursor:pointer; text-align:center; }
+  .sbtn{ font-family:var(--pixfont); font-size:9px; line-height:1.3; color:var(--ink); background:var(--panel); border:2px solid #333; box-shadow:0 3px 0 #000; padding:12px 6px; cursor:pointer; text-align:center; }
   .sbtn:active{ transform:translateY(2px); box-shadow:0 1px 0 #000; } .sbtn .cat{ display:block; font-size:7px; color:var(--pine-light); margin-bottom:5px; letter-spacing:1px; }
   .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:9; }
   /* 게임 캔버스 = 플레이 화면 전체. 배경은 캔버스 안에서만 그림 (겹침 없음) */
@@ -89,20 +91,52 @@
   /* 비시바시 타이틀 */
   /* 주의: position:relative를 주면 .screen의 absolute inset:0이 무효화되어 화면이 안 차게 됨 */
   /* 배경은 폰 비율(720x1560) 전용 제작본 — cover로 항상 꽉 참 */
-  #title{ background:#1a0a06 url('assets/bp_title_bg.jpg') center/cover no-repeat;
-    justify-content:space-evenly; gap:8px; padding:34px 16px 26px; }
+  #title{ background:#1a0a06 url('assets/bp_title_bg.jpg') center top/cover no-repeat; background-attachment:local;
+    justify-content:flex-start; gap:0; padding:20px 10px 96px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #tMain{ margin-bottom:0; }
+  #tHandle{ margin-top:6px; }      /* 메인-부제 간격 30% 축소 */
+  #tBest{ margin-top:4px; }
+  #titleBtns{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  #titleGames{ width:100%; display:none; flex-direction:column; align-items:center; gap:6px; margin-top:12px;
+    opacity:0; transform:translateY(18px); transition:opacity .5s ease, transform .5s cubic-bezier(.3,1.1,.4,1); }
+  #titleGames.on{ display:flex; }
+  #titleGames.show{ opacity:1; transform:translateY(0); }
+  #pickSub2{ width:min(260px,66vw); image-rendering:pixelated; }
+  #sbwrap2, #sbwrap3{ width:min(560px,97vw); max-height:none; }
+  #siteRow{ position:fixed; left:0; right:0; bottom:0; z-index:35;
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0;
+    padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, rgba(10,7,5,0) 0%, rgba(10,7,5,.88) 42%, rgba(10,7,5,.96) 100%); }
+  .sitebtn{ font-family:var(--pixfont); font-size:clamp(9px,2.6vw,12px); color:#1d1206;
+    background:linear-gradient(180deg,#e6b450,#b9832c); border:3px solid #000; box-shadow:0 4px 0 #000;
+    padding:12px 16px; cursor:pointer; letter-spacing:.5px; }
+  .sitebtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #000; }
+  #moreTitle{ width:min(230px,58vw); image-rendering:pixelated; margin:20px 0 4px; }
   #decoCv{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  .tdrop{ image-rendering:pixelated; opacity:0; transform:translateY(-130vh);
+    filter:drop-shadow(0 4px 0 rgba(0,0,0,.55)); }
+  .tdrop.land{ opacity:1; transform:translateY(0);
+    transition:transform .42s cubic-bezier(.34,1.4,.5,1), opacity .12s linear; }
+  .tdrop.hit{ animation:tHit .22s ease-out; }
+  @keyframes tHit{ 0%{ transform:translateY(0) scale(1.14,.86); } 55%{ transform:translateY(0) scale(.96,1.06); } 100%{ transform:translateY(0) scale(1,1); } }
   #title>*:not(#decoCv){ position:relative; z-index:1; }
   /* HOW TO PLAY 오버레이 */
   #howto{ position:absolute; inset:0; z-index:8; background:rgba(0,0,0,0.68); display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:20px; padding:24px; text-align:center; }
-  .ht-bang{ font-family:'Press Start 2P',monospace; font-size:clamp(20px,6.4vw,30px); color:#ffd977;
-    text-shadow:4px 4px 0 #000; transform:rotate(-4deg); animation:htpop .32s cubic-bezier(.2,2.2,.4,1); }
-  @keyframes htpop{ from{ transform:scale(3.2) rotate(-12deg); opacity:0; } to{ transform:scale(1) rotate(-4deg); opacity:1; } }
+  #htWords{ width:min(330px,86vw); }
+  .htw{ display:block; width:100%; image-rendering:pixelated;
+    opacity:0; transform:translateY(-70vh); filter:drop-shadow(0 4px 0 rgba(0,0,0,.5)); }
+  .htw#htTo, .htw#htPlay{ margin-top:-6.9%; }   /* 합친 이미지와 동일한 간격 */
+  .htw.land{ opacity:1; transform:translateY(0);
+    transition:transform .24s cubic-bezier(.34,1.45,.5,1), opacity .08s linear; }
+  .htw.hit{ animation:htwHit .2s ease-out; }
+  @keyframes htwHit{ 0%{ transform:translateY(0) scale(1.12,.88); } 55%{ transform:translateY(0) scale(.97,1.05); } 100%{ transform:translateY(0) scale(1,1); } }
   .ht-panel{ background:rgba(0,0,0,0.74); border:3px solid rgba(255,255,255,0.18); border-radius:10px; padding:18px 16px; max-width:340px; }
-  .ht-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:#e6b450; margin-bottom:12px; letter-spacing:1px; }
-  .ht-desc{ font-family:'Press Start 2P',monospace; font-size:10px; color:#fff; line-height:1.9; }
-  .ht-tap{ font-family:'Press Start 2P',monospace; font-size:10px; color:#6fcf8f; margin-top:14px; animation:htblink 1s step-end infinite; }
+  .ht-name{ font-family:var(--pixfont); font-size:12px; color:#e6b450; margin-bottom:12px; letter-spacing:1px; }
+  .ht-li{ text-align:left; margin:0 0 7px; line-height:1.65; }
+  .ht-taunt{ margin-top:15px; font-size:1.4em; color:#ffd977; text-shadow:2px 2px 0 #000; line-height:1.5; }
+  .ht-desc{ font-family:var(--pixfont); font-size:10px; color:#fff; line-height:1.9; }
+  .ht-tap{ font-family:var(--pixfont); font-size:10px; color:#6fcf8f; margin-top:14px; animation:htblink 1s step-end infinite; }
   @keyframes htblink{ 50%{ opacity:0.25; } }
   /* 랭킹 */
   .rkgame{ background:var(--panel); border:2px solid #2a3a2a; padding:10px 12px; text-align:left; }
@@ -112,14 +146,31 @@
   .rkempty{ font-size:9px; color:var(--dim); }
   .imgbtn{ image-rendering:pixelated; cursor:pointer; display:none; transition:transform .06s, filter .06s; }
   .imgbtn:active{ transform:translateY(4px) scale(0.98); filter:brightness(1.15); }
-  .sbtn2{ font-family:'Press Start 2P',monospace; font-size:clamp(9px,3.2vw,13px); border:none; width:100%;
+  #langRow{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:min(300px,80vw); }
+  .lgbtn{ font-family:var(--pixfont); font-size:11px; color:#e8e6dd; background:#241a10;
+    border:3px solid #4a3a24; box-shadow:0 3px 0 #000; padding:11px 6px; cursor:pointer; }
+  .lgbtn:active{ transform:translateY(3px); box-shadow:none; }
+  .lgbtn.sel{ color:#1d1206; background:linear-gradient(180deg,#e6b450,#b9832c); border-color:#000; }
+  /* ── 게임 카드 (프레임 + 스크린샷 + 이름/설명) ── */
+  .gcard{ position:relative; width:100%; aspect-ratio:643/211; cursor:pointer; border:none; padding:0;
+    background:transparent; transition:transform .08s, filter .08s; }
+  .gcard:active{ transform:translateY(3px) scale(.985); filter:brightness(1.15); }
+  .gcard .shot{ position:absolute; left:8.09%; top:17.54%; width:21.93%; height:67.77%;
+    object-fit:contain; image-rendering:pixelated; background:#0a0806; }
+  .gcard .frame{ position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; }
+  .gcard .txt{ position:absolute; left:34.68%; top:19.43%; width:57.39%; height:65.4%;
+    display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+    padding:0 3% 0 4%; text-align:left; gap:6%; }
+  .gcard .gname{ font-family:var(--pixfont); font-size:clamp(9px,3.1vw,15px); color:#ffd977;
+    text-shadow:2px 2px 0 #000; letter-spacing:.5px; line-height:1.1; }
+  .gcard .gdesc{ font-family:var(--pixfont); font-size:clamp(6.5px,2.05vw,10px); color:#e7e2d2;
+    line-height:1.5; opacity:.92; }
+  .sbtn2{ font-family:var(--pixfont); font-size:clamp(9px,3.2vw,13px); border:none; width:100%;
     aspect-ratio:2.5/1; background:transparent center/100% 100% no-repeat; cursor:pointer; line-height:1.35;
     letter-spacing:.3px; image-rendering:pixelated; text-shadow:1px 1px 0 rgba(0,0,0,.5); transition:transform .06s; padding:0 12px; }
   .sbtn2:active{ transform:translateY(3px) scale(.98); }
-  #sandbox{ background:#0d0f0c url('assets/pick_bg.jpg') center/cover no-repeat; gap:4px; padding:10px 10px 14px; }
-  #sandbox .sbwrap{ width:min(640px,97vw); max-height:none; flex:1 1 auto; min-height:0; gap:10px; }
   #backBtn{ position:absolute; top:10px; right:10px; z-index:30; width:42px; height:42px;
-    font-family:'Press Start 2P',monospace; font-size:15px; color:#e8e6dd; background:rgba(0,0,0,0.6);
+    font-family:var(--pixfont); font-size:15px; color:#e8e6dd; background:rgba(0,0,0,0.6);
     border:3px solid #444; box-shadow:0 3px 0 #000; cursor:pointer; }
   #backBtn:active{ transform:translateY(3px); box-shadow:none; }
 </style>
@@ -131,39 +182,49 @@
 
   <div id="title" class="screen">
     <canvas id="decoCv"></canvas>
-    <img id="titleLogo" alt="PINE &amp; CO PARTY" style="width:min(360px,88vw);image-rendering:pixelated;display:none">
-    <h1 id="titleH1">BAR<br>PARTY</h1>
-    <div id="subCount" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#eef6d8;letter-spacing:1px;text-shadow:2px 2px 0 #000">BARTENDER'S MINIGAMES</div>
-    <button class="btn amber" id="startBtn">START</button>
-    <button class="btn" id="rankBtn">🏆 RANKING</button>
-    <button class="btn ghost" id="setBtn">⚙ SETTINGS</button>
-    <img id="startImg" class="imgbtn" alt="START" style="width:min(250px,66vw)">
-    <img id="rankImg" class="imgbtn" alt="RANKING" style="width:min(205px,54vw)">
-    <img id="setImg" class="imgbtn" alt="SETTINGS" style="width:min(205px,54vw)">
+    <img class="tdrop" id="tMain" src="assets/bp_t1_main.png" alt="BARTENDER'S HAPPY HOUR" style="width:min(340px,86vw)">
+    <img class="tdrop" id="tHandle" src="assets/bp_t2_handle.png" alt="CAN YOU HANDLE THE BAR?" style="width:min(300px,78vw)">
+    <img class="tdrop" id="tBest" src="assets/bp_t3_best.png" alt="BE THE BEST BARTENDER" style="width:min(250px,64vw)">
+    <div id="titleBtns">
+      <button class="btn" id="rankBtn">🏆 RANKING</button>
+      <button class="btn ghost" id="setBtn">⚙ SETTINGS</button>
+      <img id="rankImg" class="imgbtn" alt="RANKING" style="width:min(168px,44vw)">
+      <img id="setImg" class="imgbtn" alt="SETTINGS" style="width:min(168px,44vw)">
+    </div>
+    <div id="titleGames">
+      <img id="pickSub2" src="assets/records_ribbon.png" alt="SET YOUR RECORDS!">
+      <div class="sbwrap" id="sbwrap2"></div>
+      <img id="moreTitle" src="assets/more_games.png" alt="MORE GAMES">
+      <div class="sbwrap" id="sbwrap3"></div>
+    </div>
   </div>
 
   <div id="rank" class="screen hidden" style="justify-content:flex-start">
-    <div class="mgtitle">🏆 RANKING</div>
-    <div class="mghint">Top 5 per game</div>
+    <div class="mgtitle" id="rankTitleTxt">🏆 RANKING</div>
+    <div class="mghint" id="rankHintTxt">Top 5 per game</div>
     <div class="sbwrap" id="rankWrap" style="grid-template-columns:1fr"></div>
-    <button class="btn ghost" id="rankBack">← HOME</button>
+    <button class="btn ghost" id="rankBack"><span id="rankBackTxt">← HOME</span></button>
   </div>
 
   <div id="setting" class="screen hidden">
-    <div class="mgtitle">⚙ SETTINGS</div>
-    <div class="kr" style="font-size:11px;color:var(--dim)">BGM VOLUME</div>
+    <div class="mgtitle" id="setTitleTxt">⚙ SETTINGS</div>
+    <div class="kr" id="setLangLbl" style="font-size:11px;color:var(--dim)">LANGUAGE</div>
+    <div id="langRow">
+      <button class="lgbtn" data-l="ko">한국어</button>
+      <button class="lgbtn" data-l="en">ENGLISH</button>
+      <button class="lgbtn" data-l="ja">日本語</button>
+      <button class="lgbtn" data-l="zh">中文</button>
+    </div>
+    <div class="kr" id="setVolLbl" style="font-size:11px;color:var(--dim)">BGM VOLUME</div>
     <input type="range" id="setVol" min="0" max="100" style="width:220px">
-    <button class="btn ghost" id="setBack">← HOME</button>
+    <button class="btn ghost" id="setBack"><span id="setBackTxt">← HOME</span></button>
+  </div>
+  <div id="siteRow">
+    <button class="sitebtn" id="btnSite">🌲 PINE&amp;CO</button>
+    <button class="sitebtn" id="btnMenu2">📖 MENU</button>
   </div>
   <button id="backBtn" class="hidden">✕</button>
 
-  <div id="sandbox" class="screen hidden">
-    <img id="pickTitle" alt="PICK A GAME!" style="width:min(480px,95vw);image-rendering:pixelated;display:none">
-    <div class="mgtitle" id="pickTitleTxt">🍸 PICK A GAME!</div>
-    <img id="pickSub" alt="SET YOUR RECORDS!" style="width:min(290px,72vw);image-rendering:pixelated;display:none;margin-top:-4px">
-    <div class="mghint" id="pickSubTxt">Every game keeps its own TOP 5 — go set some records!</div>
-    <div class="sbwrap" id="sbwrap"></div>
-  </div>
 
   <div id="turn" class="screen hidden">
     <div class="mgtitle" id="turnWho">PLAYER 1</div>
@@ -174,17 +235,21 @@
   <div id="game" class="screen hidden"><img id="gameLogo" alt=""><div id="stage"></div></div>
 
   <div id="howto" class="hidden">
-    <div class="ht-bang">HOW TO PLAY!!</div>
-    <div class="ht-panel"><div class="ht-name" id="htName"></div><div class="ht-desc" id="htDesc"></div><div class="ht-tap">TAP TO START!</div></div>
+    <div id="htWords">
+      <img class="htw" id="htHow" src="assets/hp_how.png" alt="HOW">
+      <img class="htw" id="htTo" src="assets/hp_to.png" alt="TO">
+      <img class="htw" id="htPlay" src="assets/hp_play.png" alt="PLAY">
+    </div>
+    <div class="ht-panel"><div class="ht-name" id="htName"></div><div class="ht-desc" id="htDesc"></div><div class="ht-tap" id="htTapTxt">TAP TO START!</div></div>
   </div>
 
   <div id="roundResult" class="screen hidden">
     <div class="rate" id="rrRate">GOOD</div><div class="addscore" id="rrAdd">+72</div>
-    <div style="font-size:9px;color:var(--dim)">YOUR NAME</div>
-    <input id="rrName" maxlength="8" style="font-family:'Press Start 2P',monospace;font-size:14px;text-transform:uppercase;width:170px;text-align:center;padding:10px;background:#000;color:var(--amber);border:3px solid #333">
-    <button class="btn amber" id="rrSubmit">🏆 SUBMIT RANK</button>
-    <div id="rrStatus" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#6fcf8f;min-height:14px"></div>
-    <button class="btn ghost" id="rrDone">OK</button>
+    <div id="rrNameLbl" style="font-size:9px;color:var(--dim)">YOUR NAME</div>
+    <input id="rrName" maxlength="8" style="font-family:var(--pixfont);font-size:14px;text-transform:uppercase;width:170px;text-align:center;padding:10px;background:#000;color:var(--amber);border:3px solid #333">
+    <button class="btn amber" id="rrSubmit"><span id="rrSubmitTxt">🏆 SUBMIT RANK</span></button>
+    <div id="rrStatus" style="font-family:var(--pixfont);font-size:9px;color:#6fcf8f;min-height:14px"></div>
+    <button class="btn ghost" id="rrDone"><span id="rrDoneTxt">OK</span></button>
   </div>
 
   <div id="final" class="screen hidden">
@@ -199,11 +264,160 @@
 (function(){
   const $=id=>document.getElementById(id);
   const stage=$('stage');
-  function show(id){ ['title','sandbox','turn','game','roundResult','final','rank','setting'].forEach(s=>$(s).classList.toggle('hidden', s!==id));
+  function syncSiteRow(id){ const r=$('siteRow'); if(r) r.style.display=(id==='title')?'flex':'none'; }
+  function show(id){ ['title','turn','game','roundResult','final','rank','setting'].forEach(s=>$(s).classList.toggle('hidden', s!==id));
     const bb=$('backBtn'); if(bb) bb.classList.toggle('hidden', id==='title'||id==='roundResult');
+    syncSiteRow(id);
     if(id!=='game'){ const gl=$('gameLogo'); if(gl) gl.style.display='none'; }
-    if(id==='title') playTitleBgm(true); }
+    if(id==='title'&&titleIntroDone) playTitleBgm(true); }
   let runToken=0;
+
+  // ── 얼음 사운드 (다운로드 폴더 mp3 사용) ──
+  const SFX={ glass:null, shakerBuf:null, shakerSegs:null };
+  function playFile(src,vol){ if(window.__mute) return;
+    try{ const a=new Audio(src); a.volume=vol==null?1:vol; a.play().catch(()=>{}); }catch(e){} }
+  // shaker ice: 파일 안의 서로 다른 3개 소리를 구간으로 나눠 랜덤 재생
+  function loadShaker(){ const a=ac(); if(!a||SFX.shakerBuf||SFX.__loading) return; SFX.__loading=true;
+    fetch('assets/sfx_shaker_ice.mp3').then(r=>r.arrayBuffer()).then(b=>a.decodeAudioData(b)).then(buf=>{
+      SFX.shakerBuf=buf;
+      // 무음 구간으로 3개 소리 분리 (RMS 임계)
+      const d=buf.getChannelData(0), sr=buf.sampleRate, win=Math.floor(sr*0.02);
+      const loud=[]; for(let i=0;i+win<d.length;i+=win){ let sum=0;
+        for(let k=0;k<win;k+=4){ const v=d[i+k]; sum+=v*v; }
+        loud.push(Math.sqrt(sum/(win/4))); }
+      const peak=Math.max.apply(null,loud), thr=peak*0.12;
+      const segs=[]; let st=-1;
+      for(let i=0;i<loud.length;i++){
+        if(loud[i]>thr){ if(st<0) st=i; }
+        else if(st>=0){ if((i-st)*win/sr>0.05) segs.push([st*win/sr, Math.min(buf.duration,(i+3)*win/sr)]); st=-1; } }
+      if(st>=0) segs.push([st*win/sr, buf.duration]);
+      // 0.2초 이내로 붙은 조각은 하나의 소리로 합침 (파일에 서로 다른 3개 소리)
+      const merged=[]; segs.forEach(sg=>{ const last=merged[merged.length-1];
+        if(last && sg[0]-last[1] < 0.2) last[1]=sg[1]; else merged.push([sg[0],sg[1]]); });
+      segs.length=0; merged.forEach(x=>segs.push(x));
+      SFX.shakerSegs = segs.length ? segs : [[0,buf.duration]];
+    }).catch(()=>{}).finally(()=>{ SFX.__loading=false; });
+  }
+  function playShakerIce(){ if(window.__mute) return;
+    const a=ac(); if(!a||!SFX.shakerBuf||!SFX.shakerSegs){ return; }
+    try{ const seg=SFX.shakerSegs[Math.floor(Math.random()*SFX.shakerSegs.length)];
+      const src=a.createBufferSource(); src.buffer=SFX.shakerBuf;
+      const g=a.createGain(); g.gain.value=0.9;
+      src.connect(g); g.connect(a.destination);
+      src.start(0, seg[0], Math.max(0.08, seg[1]-seg[0]));
+    }catch(e){} }
+  function playWhistle(){ playFile('assets/sfx_whistle.mp3',1); }
+  // ── 타이틀 인트로: 3장이 위에서 떨어지고, 착지 순간마다 총성 → 끝나면 BGM ──
+  let titleIntroDone=false, introMuted=false;
+  window.__gunLog=[]; window.__landLog=[];
+  // 총성: 다운로드 폴더의 gun fire sound.mp3 사용 (동시 재생용 풀)
+  const GUNPOOL=[]; let gunIdx=0;
+  function gunShot(){ if(window.__mute) return;
+    window.__gunLog.push([Math.round(performance.now()), (AC&&AC.state)||'no-ac']);
+    try{ if(!GUNPOOL.length){ for(let i=0;i<3;i++){ const a=new Audio('assets/sfx_gunfire.mp3'); a.preload='auto'; GUNPOOL.push(a); } }
+      const a=GUNPOOL[gunIdx++%GUNPOOL.length];
+      a.currentTime=0; a.volume=1;
+      const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{ introMuted=true; });
+    }catch(err){ introMuted=true; } }
+  function titleIntro(){
+    const A=ac();
+    // 오디오가 아직 잠겨 있으면(자동재생 차단) 첫 입력까지 기다렸다가 총성과 함께 시작
+    if(!A || A.state!=='running'){
+      if(!window.__introWait){ window.__introWait=true;
+        const kick=()=>{ document.removeEventListener('pointerdown',kick);
+          document.removeEventListener('touchstart',kick); document.removeEventListener('keydown',kick);
+          window.__introWait=false; try{ ac(); }catch(e){}
+          ['tMain','tHandle','tBest'].forEach(id=>{ const el=$(id); if(el){ el.classList.remove('land','hit'); void el.offsetWidth; } });
+          setTimeout(titleIntro,60); };
+        document.addEventListener('pointerdown',kick); document.addEventListener('touchstart',kick,{passive:true});
+        document.addEventListener('keydown',kick);
+        // 소리 없이 오래 기다리지 않도록: 2.4초 뒤에는 그냥 진행
+        setTimeout(()=>{ if(window.__introWait){ window.__introWait=false;
+          document.removeEventListener('pointerdown',kick); document.removeEventListener('touchstart',kick);
+          document.removeEventListener('keydown',kick); titleIntro(); } },2400);
+        return; }
+    }
+    const seq=[['tMain',300],['tHandle',760],['tBest',1220]];
+    seq.forEach(([id,delay])=>{ setTimeout(()=>{ const el=$(id); if(!el) return;
+      el.classList.add('land');
+      setTimeout(()=>{ window.__landLog.push([id,Math.round(performance.now())]);
+        gunShot(); flash('#fff2c8'); el.classList.add('hit');
+        setTimeout(()=>el.classList.remove('hit'),240); },420);
+    },delay); });
+    setTimeout(()=>{ titleIntroDone=true;
+      if(!$('title').classList.contains('hidden')) playTitleBgm(true);
+      showTitleGames(); },2050);
+  }
+
+  // ── 다국어 ──
+  let LANG = localStorage.getItem('bp_lang') || 'en';
+  const L10N = {
+    ko:{ ui:{ records:'기록을 세워보자!', menuBtn:'메뉴', more:'더 많은 게임', cdDesc:'몰려오는 손님을 막아라! 바 디펜스', buDesc:'운을 시험하는 술자리 복불복 게임', ranking:'랭킹', settings:'설정', tapStart:'탭해서 시작!',
+        yourName:'이름', submit:'기록 등록', ok:'확인', sending:'전송 중...', offline:'오프라인 (기기에 저장됨)',
+        rankNo:'위', saved:'저장됨', noRec:'아직 기록 없음', lang:'언어', bgm:'배경음 볼륨', back:'← 뒤로', top5:'게임별 TOP 5' },
+      desc:{
+        'BLIND POUR':'지거 없이 가보자! 3초에 1온스, 그게 기본이다',
+        'STIR STOP':'멈추는 타이밍이 전부다. 온도가 생명이다!',
+        'ICE CARVING':'손목 힘 빼고 찍어라. 녹기 전에 완성하자!',
+        'CHAMPAGNE LAUNCH':'코르크 날리기 자신 있는 사람!',
+        'SHAKE MASTER':'13초다. 손님 앞이라 생각하고 제대로 흔들어라',
+        'QUICK TAB':'계산기 찾을 시간 없다. 머리로 때리자',
+        'ORDER UP!':'바텐더가 주문 외우는 건 기본 아님?',
+        'WHERE IS MY SHOT?':'한눈 판 사이에 잔이 사라진다. 끝까지 쫓아라',
+        'FRESH SQUEEZE':'라임은 그날 짠 게 최고다. 30초 안에 끝내자',
+        'TIP CATCH':'떨어지는 건 다 받아라. 쓰레기만 빼고',
+        'FLY SWAT':'벌레는 바의 최대의 적! 다 잡아라!' } },
+    en:{ ui:{ records:'SET YOUR RECORDS!', menuBtn:'MENU', more:'MORE GAMES', cdDesc:'Hold the bar against the rush! Tower defense', buDesc:'Party games of pure luck. Who pays tonight?', ranking:'RANKING', settings:'SETTINGS', tapStart:'TAP TO START!',
+        yourName:'YOUR NAME', submit:'SUBMIT RANK', ok:'OK', sending:'SENDING...', offline:'OFFLINE - SAVED LOCALLY',
+        rankNo:'RANK #', saved:'SAVED', noRec:'NO RECORDS YET', lang:'LANGUAGE', bgm:'BGM VOLUME', back:'← BACK', top5:'TOP 5 PER GAME' },
+      desc:{
+        'BLIND POUR':'Ditch the jigger. Three seconds is an ounce, more or less',
+        'STIR STOP':'Stopping is the whole job. Temperature is everything!',
+        'ICE CARVING':'Loose wrist, steady taps. Finish it before it melts!',
+        'CHAMPAGNE LAUNCH':'Think you can send that cork flying?',
+        'SHAKE MASTER':'Thirteen seconds. Shake like a guest is watching',
+        'QUICK TAB':'No calculator. Run the numbers in your head',
+        'ORDER UP!':'Remembering every order is the job, right?',
+        'WHERE IS MY SHOT?':'Look away and the drink walks off. Keep your eyes on it',
+        'FRESH SQUEEZE':'Lime is best the day you cut it. Thirty seconds, go',
+        'TIP CATCH':'Catch everything that falls. Skip the trash',
+        'FLY SWAT':"Bugs are a bar's worst enemy. Swat them all!" } },
+    ja:{ ui:{ records:'記録を作ろう！', menuBtn:'メニュー', more:'もっと遊ぶ', cdDesc:'押し寄せる客を止めろ！バー・ディフェンス', buDesc:'運を試す飲み会ゲーム。今夜おごるのは誰？', ranking:'ランキング', settings:'設定', tapStart:'タップでスタート！',
+        yourName:'なまえ', submit:'記録を登録', ok:'OK', sending:'送信中...', offline:'オフライン（端末に保存）',
+        rankNo:'位', saved:'保存しました', noRec:'記録なし', lang:'言語', bgm:'BGM 音量', back:'← もどる', top5:'ゲーム別 TOP 5' },
+      desc:{
+        'BLIND POUR':'ジガーなしでいこう！3秒で1オンス、それが基本だ',
+        'STIR STOP':'止めるタイミングが全て。温度が命だ！',
+        'ICE CARVING':'手首の力を抜いて叩け。溶ける前に仕上げよう！',
+        'CHAMPAGNE LAUNCH':'コルクを飛ばす自信ある人！',
+        'SHAKE MASTER':'13秒だ。客の前だと思ってしっかり振れ',
+        'QUICK TAB':'電卓を探す暇はない。頭で計算しよう',
+        'ORDER UP!':'バーテンダーが注文を覚えるのは基本では？',
+        'WHERE IS MY SHOT?':'目を離した隙にグラスが消える。最後まで追え',
+        'FRESH SQUEEZE':'ライムはその日に搾ったのが一番。30秒で終わらせよう',
+        'TIP CATCH':'落ちてくる物は全部取れ。ゴミ以外は',
+        'FLY SWAT':'虫はバーの最大の敵！全部やっつけろ！' } },
+    zh:{ ui:{ records:'来刷新纪录吧！', menuBtn:'菜单', more:'更多游戏', cdDesc:'挡住涌来的客人！酒吧防守战', buDesc:'考验运气的酒桌游戏。今晚谁买单？', ranking:'排行榜', settings:'设置', tapStart:'点击开始！',
+        yourName:'名字', submit:'上传成绩', ok:'确定', sending:'上传中...', offline:'离线（已存在本机）',
+        rankNo:'名', saved:'已保存', noRec:'暂无纪录', lang:'语言', bgm:'背景音乐音量', back:'← 返回', top5:'各游戏 TOP 5' },
+      desc:{
+        'BLIND POUR':'不用量酒器！三秒一盎司，这是基本功',
+        'STIR STOP':'停手的时机就是一切。温度是命脉！',
+        'ICE CARVING':'手腕放松地敲。趁没化完成它！',
+        'CHAMPAGNE LAUNCH':'有信心把软木塞打飞吗？',
+        'SHAKE MASTER':'十三秒。当着客人的面好好摇',
+        'QUICK TAB':'没空找计算器。用脑子算吧',
+        'ORDER UP!':'调酒师记住点单不是基本功吗？',
+        'WHERE IS MY SHOT?':'一转眼酒就没了。盯紧了',
+        'FRESH SQUEEZE':'青柠当天榨的最好。三十秒内搞定',
+        'TIP CATCH':'掉下来的都接住。垃圾除外',
+        'FLY SWAT':'虫子是酒吧最大的敌人！全部消灭！' } } };
+  const MANUAL = {"ko":{"BLIND POUR":["버튼을 누르고 있으면 병이 기울어진다","30ml, 45ml, 60ml 세 번의 도전","카운터는 안 보인다. 3초에 1온스를 기억해라","오차가 적을수록 고득점"],"STIR STOP":["잔 위를 손가락으로 빙빙 돌려 저어라","저을수록 음료가 하늘색으로 차가워진다","목표 색과 같아지면 SERVE!","빨리 맞출수록 점수가 높다"],"ICE CARVING":["TAP 버튼을 연타해 얼음을 깎아라","손을 멈추면 다시 얼어붙는다","볼 아이스가 되면 DONE!","15초 안에 몇 개나 만들 수 있나"],"CHAMPAGNE LAUNCH":["RUN을 연타해 달리며 병을 흔들어라","연타를 멈추면 파워가 떨어진다","LAUNCH를 누르고 있으면 각도가 올라간다","45도에서 떼면 가장 멀리 날아간다"],"SHAKE MASTER":["START를 눌러 모션 센서를 허용한다","3, 2, 1 카운트 후 시작","폰을 두 손으로 잡고 흔들어라","13초 동안 많이 흔든 사람이 이긴다"],"QUICK TAB":["손님이 영수증을 내민다","품목 가격을 암산해 합계를 입력하라","총 7명, 빠를수록 점수가 오른다","틀리면 20점 감점"],"ORDER UP!":["손님들이 순서대로 칵테일을 외친다","다 듣고 나면 포스기가 올라온다","같은 순서로 눌러라","하나만 틀려도 그 판은 끝"],"WHERE IS MY SHOT?":["샷 잔에 뚜껑이 덮이고 자리가 섞인다","눈으로 끝까지 쫓아라","술이 있는 뚜껑을 탭하라","맞히면 잔이 늘고 속도도 빨라진다"],"FRESH SQUEEZE":["라임을 도마로 끌어와 좌우로 밀어 자른다","반쪽을 스퀴저에 넣고 아래로 밀어 짜라","다 쓴 껍질은 쓰레기통으로","30초 동안 얼마나 채우나"],"TIP CATCH":["팁 자를 좌우로 움직여 받아라","동전 +1, 만원 +2, 오만원 +3","쓰레기가 들어가면 감점","15초 승부"],"FLY SWAT":["파리를 탭해서 쏴 떨어뜨려라","과일에 앉은 파리는 과일을 갉아먹는다","과일 체력이 0이 되면 끝","끝까지 지켜내라"]},"en":{"BLIND POUR":["Hold the button to tip the bottle","Three pours: 30ml, 45ml, 60ml","No counter. Three seconds is an ounce","The smaller the error, the higher the score"],"STIR STOP":["Drag in circles over the glass to stir","The drink turns icy blue as it chills","Hit SERVE when it matches the target color","Faster is better"],"ICE CARVING":["Mash TAP to carve the ice","Stop and it freezes back over","Hit DONE when the ball is round","How many can you make in 15 seconds?"],"CHAMPAGNE LAUNCH":["Mash RUN to sprint and shake the bottle","Stop tapping and the power drains","Hold LAUNCH to raise the angle","Release at 45 degrees for max distance"],"SHAKE MASTER":["Press START to allow the motion sensor","Countdown 3, 2, 1","Grab the phone with both hands and shake","Most shakes in 13 seconds wins"],"QUICK TAB":["A guest hands you the tab","Add up the prices and punch in the total","Seven guests. Faster means more points","A wrong answer costs 20 points"],"ORDER UP!":["Guests call their drinks in order","The POS rises once they finish","Punch them in the same order","One slip ends the round"],"WHERE IS MY SHOT?":["A cover drops over the shot and they shuffle","Follow it with your eyes","Tap the cover hiding the drink","Get it right and more covers join, faster"],"FRESH SQUEEZE":["Drag a lime to the board and slide to slice","Put a half in the squeezer and press down","Drag the spent peel to the trash","How much can you fill in 30 seconds?"],"TIP CATCH":["Slide the jar to catch the tips","Coin +1, 10k bill +2, 50k bill +3","Trash costs you points","15 seconds"],"FLY SWAT":["Tap to shoot the flies down","Flies on the fruit eat it away","Fruit HP at zero ends the game","Hold the line"]},"ja":{"BLIND POUR":["ボタンを押している間ボトルが傾く","30ml, 45ml, 60ml の3回勝負","カウンターは見えない。3秒で1オンス","誤差が小さいほど高得点"],"STIR STOP":["グラスの上を指で回してステア","混ぜるほど水色に冷えていく","目標の色になったら SERVE!","早いほど高得点"],"ICE CARVING":["TAPを連打して氷を削れ","手を止めると再び凍る","ボール状になったら DONE!","15秒で何個作れるか"],"CHAMPAGNE LAUNCH":["RUNを連打して走りながら瓶を振る","連打を止めるとパワーが落ちる","LAUNCHを長押しで角度が上がる","45度で離すと一番飛ぶ"],"SHAKE MASTER":["STARTでモーションセンサーを許可","3, 2, 1のカウント後スタート","両手でスマホを持って振れ","13秒で多く振った人が勝ち"],"QUICK TAB":["客が伝票を差し出す","品目を暗算して合計を入力しろ","全7人。早いほど高得点","間違えると20点減点"],"ORDER UP!":["客が順番にカクテルを頼む","聞き終わるとPOSが上がってくる","同じ順番で押せ","ひとつ間違えたら終わり"],"WHERE IS MY SHOT?":["ショットに蓋がかぶさりシャッフル","目で最後まで追え","酒が入っている蓋をタップ","当たると数も速さも増える"],"FRESH SQUEEZE":["ライムをまな板へ運びスライドで切る","半分をスクイーザーに入れて押し下げる","使った皮はゴミ箱へ","30秒でどれだけ搾れるか"],"TIP CATCH":["チップジャーを左右に動かして受けろ","コイン+1, 1万+2, 5万+3","ゴミが入ると減点","15秒勝負"],"FLY SWAT":["ハエをタップで撃ち落とせ","フルーツに止まったハエが食い荒らす","フルーツのHPが0で終了","最後まで守り抜け"]},"zh":{"BLIND POUR":["按住按钮酒瓶就会倾斜","30ml, 45ml, 60ml 三次挑战","看不到计数器。三秒一盎司","误差越小分数越高"],"STIR STOP":["在杯口画圈搅拌","越搅越冷，颜色转为浅蓝","和目标颜色一致就按 SERVE!","越快分越高"],"ICE CARVING":["连打 TAP 削冰","手一停就重新结冰","削成圆球就按 DONE!","15秒内能做几个"],"CHAMPAGNE LAUNCH":["连打 RUN 边跑边摇瓶","停手能量就下降","长按 LAUNCH 抬高角度","45度松手飞得最远"],"SHAKE MASTER":["按 START 允许使用体感","3, 2, 1 倒数后开始","双手握住手机用力摇","13秒内摇得多的人赢"],"QUICK TAB":["客人递上账单","心算商品价格并输入总额","共7位客人，越快分越高","答错扣20分"],"ORDER UP!":["客人依次报出鸡尾酒","听完后收银机升起","按相同顺序点击","错一个这局就结束"],"WHERE IS MY SHOT?":["盖子罩住酒杯并开始洗牌","用眼睛紧紧追踪","点击藏着酒的那个盖子","答对后数量增加速度加快"],"FRESH SQUEEZE":["把青柠拖到砧板上横向滑动切开","半个放进压榨器向下压","用完的皮丢进垃圾桶","30秒能榨多少"],"TIP CATCH":["左右移动小费罐接住","硬币+1，一万+2，五万+3","接到垃圾要扣分","15秒定胜负"],"FLY SWAT":["点击射下苍蝇","停在水果上的苍蝇会啃食水果","水果血量归零就结束","守到最后"]}};
+  const TAUNTS = {"ko":{"BLIND POUR":"지거 없이도 정확한 손, 너한테 있을까?","STIR STOP":"잔이 몇 도인지 손끝으로 아는 바텐더, 될 수 있겠어?","ICE CARVING":"얼음 하나에 5분을 쓰는 인내, 견딜 수 있겠어?","CHAMPAGNE LAUNCH":"손님 시선을 다 뺏는 한 방, 자신 있어?","SHAKE MASTER":"하루 300잔 흔드는 팔, 버틸 수 있겠어?","QUICK TAB":"계산기보다 빠른 머리, 따라올 수 있겠어?","ORDER UP!":"주문 열 개를 한 번에 외우는 바텐더, 될 수 있겠어?","WHERE IS MY SHOT?":"바 안에서 벌어지는 걸 다 보는 눈, 가졌을까?","FRESH SQUEEZE":"러시 타임에 라임 스무 개, 감당할 수 있겠어?","TIP CATCH":"받을 것과 버릴 것을 0.1초에 가르는 눈, 있을까?","FLY SWAT":"바를 지키는 마지막 방어선, 네가 될 수 있을까?"},"en":{"BLIND POUR":"A hand that pours true without a jigger. Got one?","STIR STOP":"Know the exact chill by touch alone. Can you?","ICE CARVING":"Five minutes on a single cube. Think you would last?","CHAMPAGNE LAUNCH":"One move that steals the whole room. Got it in you?","SHAKE MASTER":"Three hundred drinks a night. Would your arms hold?","QUICK TAB":"Faster than the calculator. Can you keep up?","ORDER UP!":"Ten orders in one go, no notes. Could you?","WHERE IS MY SHOT?":"Eyes that catch everything behind the bar. Yours?","FRESH SQUEEZE":"Twenty limes in the rush. Think you can handle it?","TIP CATCH":"Keep or toss, decided in a blink. Can you call it?","FLY SWAT":"The last line of defense for the bar. Could that be you?"},"ja":{"BLIND POUR":"ジガーなしで正確に注ぐ手、君にある？","STIR STOP":"指先で温度がわかるバーテンダー、なれる？","ICE CARVING":"氷ひとつに5分かける忍耐、耐えられる？","CHAMPAGNE LAUNCH":"客の視線を全部奪う一撃、自信ある？","SHAKE MASTER":"1日300杯振る腕、持ちこたえられる？","QUICK TAB":"電卓より速い頭、ついてこられる？","ORDER UP!":"注文10個を一度に覚えるバーテンダー、なれる？","WHERE IS MY SHOT?":"バーの全部を見ている目、持ってる？","FRESH SQUEEZE":"ラッシュ時にライム20個、さばける？","TIP CATCH":"取るか捨てるか0.1秒で決める目、ある？","FLY SWAT":"バーを守る最後の砦、君になれる？"},"zh":{"BLIND POUR":"不用量酒器也精准的手，你有吗？","STIR STOP":"靠指尖就知道温度的调酒师，你能吗？","ICE CARVING":"为一块冰花五分钟的耐心，撑得住吗？","CHAMPAGNE LAUNCH":"一招夺走全场目光，有把握吗？","SHAKE MASTER":"一天摇三百杯的手臂，扛得住吗？","QUICK TAB":"比计算器还快的脑子，跟得上吗？","ORDER UP!":"一次记住十个点单的调酒师，做得到吗？","WHERE IS MY SHOT?":"看清吧台里一切的眼睛，你有吗？","FRESH SQUEEZE":"高峰期二十个青柠，应付得来吗？","TIP CATCH":"零点一秒决定接或不接，判断得了吗？","FLY SWAT":"守护酒吧的最后防线，会是你吗？"}};
+  const MAN_OF = n => (MANUAL[LANG]&&MANUAL[LANG][n]) || MANUAL.en[n] || [];
+  const TAUNT_OF = n => (TAUNTS[LANG]&&TAUNTS[LANG][n]) || TAUNTS.en[n] || "";
+  const T = k => (L10N[LANG]&&L10N[LANG].ui[k]) || L10N.en.ui[k] || k;
+  const DESC = n => (L10N[LANG]&&L10N[LANG].desc[n]) || L10N.en.desc[n] || '';
   // ── BGM: 타이틀 1곡 루프 / 플레이 3곡 연속 루프 ──
   // iOS는 Audio.volume이 무시되므로 WebAudio GainNode로 볼륨을 제어 (설정 슬라이더 실동작)
   const BGM={ cur:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6') };
@@ -237,8 +451,10 @@
         .catch(()=>{ if(BGM.cur===t){ BGM.cur=null; BGM.name=''; } }); };
     step(); }
   function bgmApplyVol(){ if(BGM.cur) trkSet(BGM.cur,bgmVol()); }
-  const bgmKick=()=>{ if(!$('title').classList.contains('hidden')) playTitleBgm();
-    document.removeEventListener('pointerdown',bgmKick); };
+  const bgmKick=()=>{ ac();
+    if(introMuted){ introMuted=false; gunShot(); flash('#fff2c8'); }   // 자동재생 차단됐던 경우 첫 탭에 총성
+    if(titleIntroDone && !$('title').classList.contains('hidden')) playTitleBgm(true);
+    if(titleIntroDone) document.removeEventListener('pointerdown',bgmKick); };
   document.addEventListener('pointerdown',bgmKick);
   const rnd=n=>Math.floor(Math.random()*n);
   function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
@@ -281,7 +497,10 @@
   let pn=1; // 솔로 플레이 (인원 선택 제거)
   window.__mute=localStorage.getItem('bp_mute')==='1';
 
-  $('startBtn').onclick=()=>{ ac(); beep(700,0.1); playGameBgm(true); buildSandbox(); show('sandbox'); }; // START = 게임 리스트, BGM 크로스페이드
+  // START 버튼 제거 — 게임 목록이 타이틀 화면에 바로 노출됨
+  function showTitleGames(){ const g=$('titleGames'); buildSandbox(); buildMore(); wireSiteBtns();
+    g.classList.add('on'); requestAnimationFrame(()=>g.classList.add('show')); }
+  function backToTitle(){ show('title'); showTitleGames(); }
   function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'Got the phone? Press!':'Press when ready'); show('turn'); $('hud').classList.add('hidden'); }
   $('turnBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp') fpNext(); else nextRound(); };
   function hud(){ const p=players[cur]; $('hudWho').textContent=p.name; $('hudRd').textContent='ROUND '+(round+1)+'/'+ROUNDS; $('hudSc').textContent=p.score; $('hud').classList.remove('hidden'); }
@@ -304,10 +523,22 @@
     'TIP CATCH':'Catch the raining tips in your jar! Coins +1, ₩10k +2, ₩50k +3. Receipts and bills? Those are BAD tips.',
     'FLY SWAT':'A fly army wants your fruit. Tap-shoot them down and guard the basket — if it rots, YOU explain it to the boss.',
     'FRESH SQUEEZE':'Drag, slice, squeeze, trash, repeat! 1 lime = 50ml. 30 seconds of pure citrus cardio.' };
+  let htpVoice=null;
   function showHowto(name,cb){ const ht=$('howto');
-    $('htName').textContent=name; $('htDesc').textContent=HOWTO[name]||'Do the thing. Fast.';
-    const bang=ht.querySelector('.ht-bang'); bang.style.animation='none'; void bang.offsetWidth; bang.style.animation='';
-    ht.classList.remove('hidden'); beep(200,0.12,'sawtooth',0.14); setTimeout(()=>beep(700,0.1,'square',0.1),80);
+    $('htName').textContent=name;
+    const _lines=MAN_OF(name);
+    $('htDesc').innerHTML = _lines.length
+      ? _lines.map(t=>'<div class="ht-li">- '+t+'</div>').join('')+'<div class="ht-taunt">'+TAUNT_OF(name)+'</div>'
+      : (DESC(name)||'');
+    // HOW / TO / PLAY 한 장씩 위에서 떨어짐 + 음성
+    const words=['htHow','htTo','htPlay'];
+    words.forEach(id=>{ const el=$(id); el.classList.remove('land','hit'); void el.offsetWidth; });
+    ht.classList.remove('hidden');
+    try{ if(!htpVoice) htpVoice=new Audio('assets/how_to_play.mp3');
+      htpVoice.currentTime=0; htpVoice.volume=window.__mute?0:1; htpVoice.play().catch(()=>{}); }catch(e){}
+    words.forEach((id,i)=>{ setTimeout(()=>{ const el=$(id); el.classList.add('land');
+      setTimeout(()=>{ el.classList.add('hit'); beep(760-i*90,0.07,'square',0.12);
+        setTimeout(()=>el.classList.remove('hit'),200); },238); },56+i*266); });
     const go=e=>{ if(e)e.preventDefault(); ht.classList.add('hidden'); ht.removeEventListener('pointerdown',go); beep(900,0.08); playGameBgm(); cb(); };
     ht.addEventListener('pointerdown',go); }
   function nextRound(){ if(round>=ROUNDS){ endTurn(); return; } hud(); let g; do{ g=rnd(GAMES.length); }while(GAMES.length>1 && g===lastGame); lastGame=g;
@@ -338,6 +569,21 @@
       if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
       else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span><span class="sc2">'+r2.s+'</span> · '+r2.t+'</span></div>'; });
       d.innerHTML=html; w.appendChild(d); }); }
+  // ── 언어 적용 ──
+  function applyLang(){
+    document.querySelectorAll('.lgbtn').forEach(b=>b.classList.toggle('sel', b.dataset.l===LANG));
+    const set=(id,txt)=>{ const e=$(id); if(e) e.textContent=txt; };
+    set('setTitleTxt','⚙ '+T('settings')); set('setLangLbl',T('lang')); set('setVolLbl',T('bgm'));
+    set('rankTitleTxt','🏆 '+T('ranking')); set('rankHintTxt',T('top5'));
+    set('htTapTxt',T('tapStart')); set('rrNameLbl',T('yourName'));
+    set('rrSubmitTxt','🏆 '+T('submit')); set('rrDoneTxt',T('ok'));
+    set('rankBackTxt',T('back')); set('setBackTxt',T('back'));
+    const ps=$('pickSub2'); if(ps) ps.alt=T('records');
+    if($('sbwrap2')) buildSandbox(); if($('sbwrap3')) buildMore(); wireSiteBtns();
+  }
+  document.querySelectorAll('.lgbtn').forEach(b=>{
+    b.addEventListener('pointerdown',e=>{ e.preventDefault(); ac(); beep(700,0.06);
+      LANG=b.dataset.l; try{ localStorage.setItem('bp_lang',LANG); }catch(err){} applyLang(); }); });
   // 설정 화면
   $('setBtn').onclick=()=>{ ac(); beep(600,0.08);
     $('setVol').value=Math.round(BGM.vol*100); show('setting'); };
@@ -346,9 +592,9 @@
   $('setBack').onclick=()=>{ beep(500,0.08); show('title'); };
   // 전역 BACK 버튼 (타이틀 외 어디서나, 게임 중이면 즉시 중단하고 리스트로)
   $('backBtn').onclick=()=>{ ac(); beep(400,0.06);
-    const cur=['title','sandbox','turn','game','roundResult','final','rank','setting'].find(s=>!$(s).classList.contains('hidden'));
+    const cur=['title','turn','game','roundResult','final','rank','setting'].find(s=>!$(s).classList.contains('hidden'));
     if(cur==='game'){ runToken++; (window.__noises||[]).forEach(n=>{ try{ n.kill(); }catch(e){} }); window.__noises=[];
-      $('howto').classList.add('hidden'); stage.innerHTML=''; buildSandbox(); show('sandbox'); }
+      $('howto').classList.add('hidden'); stage.innerHTML=''; backToTitle(); }
     else show('title'); };
   // (구 샌드박스 버튼은 제거 — START가 게임 리스트를 연다)
   // (리스트의 HOME 버튼 제거 — 전역 ✕ 버튼이 대체)
@@ -359,14 +605,43 @@
       im.onload=()=>{ FR.data[k]='assets/fr_'+k+'.png'; }; im.src='assets/fr_'+k+'.png'; }); }
   const FR_ORDER=['amber','blue','green','red','purple'];
   const FR_COMP={ amber:'#1d3fa0', blue:'#f08a1d', green:'#b3125e', red:'#22d9c8', purple:'#ffd23e' }; // 프레임 보색 폰트
-  function buildSandbox(){ const w=$('sbwrap'); w.innerHTML=''; w.style.gridTemplateColumns='1fr 1fr'; // 2열
-    // 새로고침마다 버튼 순서 랜덤 (첫 게임 쏠림 방지) — 세션 내에서는 고정
+  function buildSandbox(){ const w=$('sbwrap2'); w.innerHTML=''; w.style.gridTemplateColumns='1fr';
     if(!window.__sbOrder||window.__sbOrder.length!==GAMES.length) window.__sbOrder=shuffle(GAMES.map((_,i)=>i));
-    window.__sbOrder.forEach((gi,pos)=>{ const g=GAMES[gi]; const b=document.createElement('button'); const key=FR_ORDER[pos%5];
-      if(FR.data[key]){ b.className='sbtn2'; b.style.backgroundImage="url('"+FR.data[key]+"')"; b.style.color=FR_COMP[key]; }
-      else b.className='sbtn';
-      b.textContent=g.name;
+    window.__sbOrder.forEach((gi,pos)=>{ const g=GAMES[gi]; const key=FR_ORDER[pos%5];
+      const b=document.createElement('button'); b.className='gcard';
+      const slug=g.name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+      b.innerHTML='<img class="shot" src="assets/thumb_'+slug+'.jpg" alt="">'
+        +'<img class="frame" src="assets/gf_'+key+'.png" alt="">'
+        +'<div class="txt"><div class="gname"></div><div class="gdesc"></div></div>';
+      b.querySelector('.gname').textContent=g.name;
+      b.querySelector('.gdesc').textContent=DESC(g.name);
       b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(gi); }; w.appendChild(b); }); }
+  // ── 더 많은 게임: Cocktail Defense / Bottoms Up ── 
+  const MORE=[
+    { name:'COCKTAIL DEFENSE', thumb:'assets/thumb_cd.jpg', url:'defense.html', key:'cdDesc' },
+    { name:'BOTTOMS UP', thumb:'assets/thumb_bu.jpg', url:'bottomsup/index.html', key:'buDesc' } ];
+  // 하단: 파인앤코 사이트 / 메뉴 바로가기
+  function wireSiteBtns(){
+    const go=(url)=>{ ac(); beep(700,0.08); try{ stopBgm(500); }catch(e){}
+      setTimeout(()=>{ location.href=url; },260); };
+    const a=$('btnSite'), b=$('btnMenu2');
+    if(a) a.onclick=()=>go('home.html');
+    if(b) b.onclick=()=>go('defense.html?menu=1');
+    if(a) a.textContent='🌲 PINE&CO';
+    if(b) b.textContent='📖 '+T('menuBtn');
+  }
+  function buildMore(){ const w=$('sbwrap3'); if(!w) return; w.innerHTML=''; w.style.gridTemplateColumns='1fr';
+    // MORE GAMES 는 이미지 사용
+    MORE.forEach((g,i)=>{ const b=document.createElement('button'); b.className='gcard';
+      const key=['red','purple'][i%2];
+      b.innerHTML='<img class="shot" src="'+g.thumb+'" alt="">'
+        +'<img class="frame" src="assets/gf_'+key+'.png" alt="">'
+        +'<div class="txt"><div class="gname"></div><div class="gdesc"></div></div>';
+      b.querySelector('.gname').textContent=g.name;
+      b.querySelector('.gdesc').textContent=T(g.key);
+      b.onclick=()=>{ ac(); beep(660,0.08); try{ stopBgm(500); }catch(e){}
+        setTimeout(()=>{ location.href=g.url; },260); };
+      w.appendChild(b); }); }
   const BOARD_URL='https://barparty-board.showjojo100.workers.dev';
   let rrCtx=null;
   function showResult(game,score,txt,cls){
@@ -384,7 +659,7 @@
       $('rrStatus').textContent=(j&&j.ok)?(j.rank<=5?('🏆 RANK #'+j.rank+'!'):'SAVED! (RANK #'+j.rank+')'):'FAILED';
       if(j&&j.ok&&j.rank<=5){ flash('#e6b450'); sGood(); } }
     catch(e){ $('rrStatus').textContent='OFFLINE — SAVED LOCALLY'; } };
-  $('rrDone').onclick=()=>{ beep(500,0.08); buildSandbox(); show('sandbox'); };
+  $('rrDone').onclick=()=>{ beep(500,0.08); backToTitle(); };
   // 게임 상단 로고: 플레이 시작(HOW TO 탭) 후에만 표시, 흰 배경 키잉 후 캐시
   const GLOGO={};
   const GLOGO_PFX={ 'FREE POUR MASTER':'fp','BLIND POUR':'fp','STIR STOP':'st','ICE CARVING':'ic','CHAMPAGNE LAUNCH':'cl',
@@ -407,16 +682,7 @@
         showResult(GAMES[i].name,Math.round(s),t,c); }); }); }
 
   /* ====================== 엔진 ====================== */
-  function engTiming(cfg, done){
-    stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">'+cfg.hint+'</div><div class="tbar" id="tbar"><div class="tzone" id="tz"></div><div class="tmark" id="tm"></div></div><button class="btn amber bigbtn" id="tstop">STOP!</button>';
-    const bar=$('tbar'); const W=bar.clientWidth||330; const zw=Math.round(W*cfg.zone); const zx=Math.round(16+Math.random()*Math.max(1,(W-32-zw)));
-    $('tz').style.left=zx+'px'; $('tz').style.width=zw+'px'; const tm=$('tm'); let x=0,dir=1,raf,settled=false; const spd=cfg.speed*(W/300);
-    function loop(){ if(settled) return; x+=dir*spd; if(x<=0){x=0;dir=1;} if(x>=W-5){x=W-5;dir=-1;} tm.style.left=x+'px'; raf=requestAnimationFrame(loop); }
-    function stop(e){ if(e)e.preventDefault(); if(settled) return; settled=true; cancelAnimationFrame(raf); const c=x+2.5, center=zx+zw/2, d=Math.abs(c-center);
-      let sc,txt,cls; if(c>=zx && c<=zx+zw){ sc=Math.round(100-(d/(zw/2))*22); if(sc>=96){txt='PERFECT!';cls='perfect';flash('#6fcf8f');}else{txt='NICE';cls='good';} }
-      else { sc=Math.max(0,Math.round(50-(d-zw/2)*0.5)); txt='MISS'; cls='miss'; } done(sc,txt,cls); }
-    $('tstop').addEventListener('click',stop); loop();
-  }
+
   function engHold(cfg, done){
     stage.innerHTML='<div class="mgtitle">'+cfg.title+'</div><div class="mghint">'+cfg.hint+'</div><div class="glass"><div class="gband" id="gb"></div><div class="gfill" id="gf"></div><div class="gline" id="gl"><span class="lbl">'+(cfg.showLine?'HERE':'')+'</span></div></div><button class="btn amber bigbtn" id="hb">'+cfg.label+'</button>';
     const target=cfg.target(), band=6; const gl=$('gl'); if(cfg.showLine){ gl.style.bottom=target+'%'; const gb=$('gb'); gb.style.bottom=(target-band)+'%'; gb.style.height=(band*2)+'%'; } else { gl.style.display='none'; }
@@ -1352,7 +1618,7 @@
     let t0=0, lastT=0, raf=0, shake=0, sloshPh=0;
     const parts=[];
     function addShake(){ if(state!=='play'||finished) return;
-      count++; wob=1; lastShakeT=now(); sTap(); if(count%10===0) beep(880,0.06,'square',0.1);
+      count++; wob=1; lastShakeT=now(); playShakerIce();
       for(let j=0;j<3;j++) parts.push({x:200+(Math.random()*80-40),y:250+(Math.random()*100-50),
         vx:(Math.random()*2-1)*160,vy:(Math.random()*2-1)*160,gv:500,r:1.6+Math.random()*1.8,c:['#bfe6ff','#fff','#dff1ff'][rnd(3)],life:0.35}); }
     let gotMotion=false, permMsg='';
@@ -1361,7 +1627,8 @@
       if(a&&a.x!=null) mag=Math.hypot(a.x||0,a.y||0,a.z||0);
       else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null) mag=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81); }
       if(mag!=null&&mag>11&&now()-lastShakeT>130) addShake(); }
-    function begin(){ btn.style.display='none'; permMsg=''; ac(); state='ice'; stT=now();
+    function begin(){ btn.style.display='none'; permMsg=''; ac(); loadShaker(); state='ice'; stT=now();
+      playFile('assets/sfx_glass_ice.mp3',1);
       try{ window.addEventListener('devicemotion',onMotion); }catch(e){} }
     // iOS는 사용자 제스처(click) 안에서 requestPermission을 불러야 수락 팝업이 뜸
     btn.addEventListener('click',e=>{ e.preventDefault(); if(state!=='title') return; ac();
@@ -1387,7 +1654,7 @@
       else if(state==='go'&&el2>=700){ state='play'; stT=t; playT0=t; }
       if(state==='cnt'){ const n=Math.floor(el2/600); if(n!==Math.floor((el2-dt*1000)/600)&&n<3){ beep(880,0.16,'square',0.34); setTimeout(()=>beep(880,0.1,'square',0.2),90); } }
       const left=state==='play'?Math.max(0,TOTAL-(t-playT0)):TOTAL;
-      if(state==='play'&&left<=0&&!finished){ finished=true;
+      if(state==='play'&&left<=0&&!finished){ finished=true; playWhistle();
         const sc=Math.min(100,Math.round(count*1.6));
         const cls=count>=60?'perfect':(count>=35?'good':'miss');
         setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,count+' SHAKES!',cls); },1600); }
@@ -1508,7 +1775,7 @@
       if(!t0){ t0=t; lastT=t; stT=t; }
       const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
       const el2=t-stT;
-      if(state==='intro'&&el2>=ARM){ state='ice'; stT=t; beep(500,0.06,'square',0.1); }
+      if(state==='intro'&&el2>=ARM){ state='ice'; stT=t; playFile('assets/sfx_glass_ice.mp3',1); }
       else if(state==='ice'&&el2>=1100){ state='play'; stT=t; beep(700,0.08,'square',0.1); }
       if(state==='play'&&!stampObj){
         const fr2=dragging?5:11; // 손을 떼면 소용돌이가 빨리 죽는다
@@ -1566,6 +1833,11 @@
         ctx.textAlign='center'; ctx.font='8px "Press Start 2P"';
         ctx.fillStyle='#e8e6dd'; ctx.fillText('NOW',cx0+64,cy0+56);
         ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET',cx0+184,cy0+56);
+        // 온도 숫자: 처음에만 보이고 +5도 아래로 내려가면 사라진다
+        if(temp>5){ ctx.font='13px "Press Start 2P"'; ctx.textAlign='center';
+          const tt=temp.toFixed(1)+'\u00B0C';
+          ctx.fillStyle='#000'; ctx.fillText(tt,cx0+66,cy0+32);
+          ctx.fillStyle='#1a1208'; ctx.fillText(tt,cx0+64,cy0+30); }
         if(state==='play'&&!stampObj){ const tl2=Math.max(0,1-(t-stT)/TOTAL);
           ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(60,84,280,6);
           ctx.fillStyle=tl2<0.25?'#d9544d':'#3a7d4f'; ctx.fillRect(60,84,280*tl2,6);
@@ -1589,11 +1861,17 @@
         ctx.fillStyle=tempColor(target); ctx.fillRect(206,238,80,26); ctx.strokeRect(206,238,80,26);
         ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#e8e6dd'; ctx.fillText('YOURS',154,280); ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET',246,280);
-        ctx.font='12px "Press Start 2P"';
-        ctx.fillStyle='#000'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',202,304);
-        ctx.fillStyle='#ffd977'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',200,302);
+        // 목표와의 차이
+        const _d=temp-target, _ds=(_d>0?'+':'')+_d.toFixed(1)+'\u00B0C';
+        const _dc=Math.abs(_d)<=0.3?'#6fcf8f':(Math.abs(_d)<=0.8?'#e6b450':'#d9544d');
+        ctx.font='14px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(_ds,202,306); ctx.fillStyle=_dc; ctx.fillText(_ds,200,304);
+        ctx.font='8px "Press Start 2P"'; ctx.fillStyle='#8a8d82'; ctx.fillText('DIFF FROM TARGET',200,322);
+        ctx.font='11px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',202,344);
+        ctx.fillStyle='#ffd977'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',200,342);
         ctx.font='9px "Press Start 2P"';
-        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,327); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,326); }
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,367); ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,366); }
     }
     raf=requestAnimationFrame(draw);
   }
@@ -2216,7 +2494,7 @@
     { name:'TIP CATCH', cat:'REFLEX', run:d=>engTipCatch(d) },
     { name:'FLY SWAT', cat:'REFLEX', run:d=>engFlySwat(d) },
   ];
-  document.getElementById('subCount').textContent="BARTENDER'S MINIGAMES × "+GAMES.length;
+  // (구 subCount 텍스트 제거 — 타이틀 이미지로 대체)
 
   // 모바일 주소창 변동에도 화면이 항상 실제 보이는 높이에 꽉 차게 (인앱 브라우저는 늦게 안정화되므로 재측정)
   function fitVH(){ try{ $('wrap').style.height=window.innerHeight+'px'; }catch(e){} }
@@ -2228,21 +2506,13 @@
   setTimeout(()=>{ fpLoad(); icLoad(); tcLoad(); },2500);
   setTimeout(()=>{ qtLoad(); clLoad(); smLoad(); },6500);
   setTimeout(()=>{ stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); },11000);
-  // 타이틀 로고: 키잉 + 글자 안 갇힌 흰 구멍(C 내부, R-T 사이 등)까지 전역 제거
-  (function(){ const L=new Image(); L.onload=()=>{ try{ const c=fpKeyUI(L,720);
-      const g2=c.getContext('2d'); const dd=g2.getImageData(0,0,c.width,c.height); const p2=dd.data;
-      for(let i=0;i<p2.length;i+=4){ if(p2[i+3]>0&&p2[i]>243&&p2[i+1]>243&&p2[i+2]>243) p2[i+3]=0; }
-      g2.putImageData(dd,0,0);
-      const el=$('titleLogo'); el.src=c.toDataURL(); el.style.display='block';
-      const h=$('titleH1'); if(h) h.style.display='none'; }catch(e){} }; L.src='assets/bp_title_logo.png';
+  // 타이틀 3종은 투명 원본 그대로 사용 (드롭 인 연출은 titleIntro)
+  (function(){
     // 게임 선택 화면 타이틀(투명 재작업본 그대로) / 리본(흰 배경이라 키잉)
-    { const T=new Image(); T.onload=()=>{ const el=$('pickTitle'); el.src='assets/pick_title.png';
-        el.style.display='block'; $('pickTitleTxt').style.display='none'; }; T.src='assets/pick_title.png'; }
-    { const P2=new Image(); P2.onload=()=>{ try{ const c=fpKeyUI(P2,640);
-        const el=$('pickSub'); el.src=c.toDataURL(); el.style.display='block';
-        $('pickSubTxt').style.display='none'; }catch(e){} }; P2.src='assets/pick_sub.png'; }
+    // (PICK A GAME 화면 삭제 — 타이틀 목록으로 통합)
+    // SET YOUR RECORDS 리본은 새 이미지(records_ribbon.png)를 그대로 사용
     // 버튼 이미지 (키잉 후 텍스트 버튼과 교체)
-    [['bp_btn_start','startImg','startBtn'],['bp_btn_rank','rankImg','rankBtn'],['bp_btn_set','setImg','setBtn']].forEach(([src,imgId,btnId])=>{
+    [['bp_btn_rank','rankImg','rankBtn'],['bp_btn_set','setImg','setBtn']].forEach(([src,imgId,btnId])=>{
       const B=new Image(); B.onload=()=>{ try{ const c=fpKeyUI(B,560);
         const el=$(imgId); el.src=c.toDataURL(); el.style.display='block';
         $(btnId).style.display='none';
@@ -2279,7 +2549,8 @@
         if(o.x<hw){ o.x=hw; o.vx=Math.abs(o.vx); } if(o.x>W-hw){ o.x=W-hw; o.vx=-Math.abs(o.vx); }
         ctx2.save(); ctx2.translate(o.x,o.y); ctx2.rotate(o.rot);
         ctx2.drawImage(o.sp,-hw,-hh,hw*2,46); ctx2.restore(); } })(performance.now()); }
-  show('title');
+  applyLang();
+  show('title'); wireSiteBtns(); titleIntro();
 })();
 </script>
 </body>

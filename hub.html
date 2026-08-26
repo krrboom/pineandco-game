@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>PINE &amp; CO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; background:#080604; overflow:hidden; }
+  body{ font-family:'Press Start 2P',monospace; color:#e8e6dd; touch-action:manipulation;
+    -webkit-user-select:none; user-select:none; }
+  #wrap{ position:relative; width:100vw; height:100vh; height:100dvh; overflow:hidden; background:#080604; }
+  .screen{ position:absolute; inset:0; }
+  .hidden{ display:none !important; }
+
+  /* ── 입구 (실사 에셋: hub_gate.jpg 720x1279) ── */
+  #gate{ background:#05070a; overflow:hidden; }
+  #gate *{ position:absolute; }
+  #gateBg{ image-rendering:pixelated; }
+  #doorView{ overflow:hidden; display:none; background:#040302; }
+  #doorView img.interior{ position:absolute; image-rendering:pixelated;
+    filter:brightness(0.12); transform-origin:50% 50%; transform:scale(0.88); }
+  .doorFr{ image-rendering:pixelated; display:none; }
+  .doorSign{ image-rendering:pixelated; animation:signGlow 2.2s ease-in-out infinite; }
+  @keyframes signGlow{ 50%{ filter:drop-shadow(0 0 14px rgba(255,214,140,.85)) brightness(1.1); } }
+  #arrowImg{ image-rendering:pixelated; pointer-events:none; z-index:4;
+    animation:arrowBob 1s ease-in-out infinite; }
+  @keyframes arrowBob{ 50%{ transform:translateY(-7px); } }
+  #ringImg{ image-rendering:pixelated; pointer-events:none; z-index:4;
+    transform:rotate(-20deg); animation:ringBob 1s ease-in-out infinite; }
+  @keyframes ringBob{ 0%,100%{ transform:rotate(-20deg) translateY(0); } 50%{ transform:rotate(-20deg) translateY(-6px); } }
+  #bellHot{ cursor:pointer; z-index:5; border-radius:12px; }
+  #bellHot.pulse{ box-shadow:0 0 0 3px rgba(255,214,140,.0); animation:bellRing 1.6s ease-in-out infinite; }
+  @keyframes bellRing{ 50%{ box-shadow:0 0 26px 6px rgba(255,205,120,.45); } }
+
+  /* ── 바 내부 ── */
+  #bar{ overflow:hidden; background:#080604; }
+  #bar{ background:#0a0705; }
+  #world{ position:absolute; left:0;
+    transition:transform 1.15s cubic-bezier(.55,.05,.3,1); will-change:transform; }
+  /* 위아래 남는 부분: 같은 배경을 흐리게 깔아 이음새 없이 채움 */
+  #bgFill{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    filter:blur(26px) brightness(0.42) saturate(0.9); transform:scale(1.12); z-index:0; pointer-events:none; }
+  #world{ z-index:1; }
+  #skyFill,#floorFill{ display:none; }
+  #world img.bg{ position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; }
+  /* Vestaboard 은은한 조명 */
+  #vestaGlow{ position:absolute; pointer-events:none; mix-blend-mode:screen;
+    background:radial-gradient(ellipse 50% 42% at 50% 38%, rgba(255,214,150,0.34) 0%, rgba(255,190,110,0.14) 45%, rgba(0,0,0,0) 72%); }
+  /* ── 비주얼노벨 UI ── */
+  #vnDim{ position:absolute; inset:0; background:rgba(3,2,1,0.70); z-index:3; }
+  /* 인사 대기 화면: 두 캐릭터 + 말풍선 (월드 안에 있어 좌우 슬라이드로 함께 이동) */
+  .idleChar{ position:absolute; image-rendering:pixelated; cursor:pointer;
+    transform:translateX(-50%); transform-origin:50% 100%;
+    transition:opacity .28s ease; }
+  /* 공용 말풍선 (꼬리 2개 — 양쪽 캐릭터를 함께 가리킴) */
+  .idleBub{ position:absolute; transform:translateX(-50%); background:#fff; color:#1a1208;
+    border:4px solid #000; border-radius:14px; padding:14px 18px; white-space:nowrap; text-align:center;
+    font-size:clamp(11px,3.4vw,17px); box-shadow:0 5px 0 rgba(0,0,0,.55); pointer-events:none;
+    animation:bubBob 1.5s ease-in-out infinite;
+    font-family:'Press Start 2P','Apple SD Gothic Neo','Malgun Gothic','Hiragino Kaku Gothic ProN','Microsoft YaHei',sans-serif; }
+  .idleBub .tail{ position:absolute; bottom:-16px; width:0; height:0;
+    border:9px solid transparent; border-top-color:#000; }
+  .idleBub .tail::after{ content:''; position:absolute; left:-9px; top:-13px; width:0; height:0;
+    border:9px solid transparent; border-top-color:#fff; }
+  .idleBub .tail.l{ left:20%; } .idleBub .tail.r{ right:20%; }
+  @keyframes bubBob{ 50%{ transform:translateX(-50%) translateY(-7px); } }
+  /* SKIP 버튼 + 스킵 메뉴 */
+  #skipBtn{ position:absolute; top:10px; right:10px; z-index:40; width:min(120px,30vw);
+    image-rendering:pixelated; cursor:pointer; display:none; filter:drop-shadow(0 3px 0 rgba(0,0,0,.6)); }
+  #skipBtn:active{ transform:translateY(3px); }
+  #skipOv{ position:absolute; inset:0; z-index:45; background:rgba(0,0,0,0.88);
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; }
+  #skipOv img{ width:min(300px,74vw); image-rendering:pixelated; cursor:pointer;
+    filter:drop-shadow(0 4px 0 rgba(0,0,0,.6)); }
+  #skipOv img:active{ transform:translateY(3px) scale(.98); }
+  /* 월드 안 버튼 (좌: MENU/ABOUT US, 우: COCKTAIL DEFENSE/BOTTOMS UP) */
+  .wbtn{ position:absolute; image-rendering:pixelated; cursor:pointer; display:none;
+    transform:translateX(-50%); filter:drop-shadow(0 4px 0 rgba(0,0,0,.55));
+    animation:wglow 2.4s ease-in-out infinite; }
+  .wbtn:active{ transform:translateX(-50%) translateY(3px) scale(.98); }
+  @keyframes wglow{ 50%{ filter:drop-shadow(0 4px 0 rgba(0,0,0,.55)) brightness(1.18); } }
+  #idleHint{ position:absolute; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom));
+    text-align:center; z-index:6; font-size:9px; color:#ffd977; text-shadow:2px 2px 0 #000;
+    animation:vnb 1.2s step-end infinite; pointer-events:none;
+    font-family:'Press Start 2P','Apple SD Gothic Neo','Malgun Gothic','Hiragino Kaku Gothic ProN','Microsoft YaHei',sans-serif; }
+  #vnChar{ position:absolute; z-index:4; image-rendering:pixelated; left:50%;
+    transform:translateX(-50%); width:min(76vw,410px); height:auto;
+    transition:opacity .28s ease, transform .45s cubic-bezier(.25,.9,.3,1); }
+  #vnChar.rise{ transform:translateX(-50%) translateY(46px); opacity:0; }
+  #vnDlgWrap{ position:absolute; z-index:5; left:50%; transform:translateX(-50%);
+    bottom:calc(10px + env(safe-area-inset-bottom)); width:min(96vw,760px); cursor:pointer; }
+  #vnDlg{ width:100%; display:block; image-rendering:pixelated;
+    filter:drop-shadow(0 6px 14px rgba(0,0,0,.6)); }
+  #vnName{ position:absolute; left:5.5%; top:1%; width:22%; height:23%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:clamp(9px,2.6vw,13px); color:#ffd977; text-shadow:2px 2px 0 #000; }
+  #vnText{ position:absolute; left:7%; right:5.5%; top:34%; bottom:10%;
+    font-size:clamp(9px,2.7vw,13px); line-height:1.9; color:#f2ead6; text-align:left; overflow:hidden;
+    font-family:'Press Start 2P','Apple SD Gothic Neo','Malgun Gothic','Hiragino Kaku Gothic ProN','Microsoft YaHei',sans-serif; }
+  #vnNext{ position:absolute; right:4.5%; bottom:8%; color:#ffd977; font-size:15px;
+    animation:vnb 0.9s step-end infinite; display:none; }
+  @keyframes vnb{ 50%{ opacity:0.2; } }
+  #vnChoiceWrap{ position:absolute; z-index:6; right:2vw; width:min(62vw,330px); display:none; }
+  #vnChoiceImg{ width:100%; display:block; image-rendering:pixelated;
+    filter:drop-shadow(0 8px 18px rgba(0,0,0,.65)); }
+  .vnOpt{ position:absolute; left:8%; width:84%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:0 6%; line-height:1.3; box-sizing:border-box;
+    font-size:clamp(8px,2.45vw,12px); color:#f2ead6; text-shadow:2px 2px 0 #000; letter-spacing:.5px;
+    font-family:'Press Start 2P','Apple SD Gothic Neo','Malgun Gothic','Hiragino Kaku Gothic ProN','Microsoft YaHei',sans-serif; }
+  .vnOpt:active{ transform:scale(0.97); filter:brightness(1.35); }
+  /* ── 언어 선택 ── */
+  #langGrid{ position:absolute; display:grid; grid-template-columns:1fr 1fr; gap:7px 9px; z-index:3; }
+  #langGrid .langBtn{ position:static; } /* #gate * 의 absolute 강제를 해제 (겹침 방지) */
+  .langBtn{ width:100%; image-rendering:pixelated; cursor:pointer; opacity:0.5; transition:opacity .15s, transform .1s; }
+  .langBtn:active{ transform:scale(0.95); }
+  .langBtn.sel{ opacity:1; filter:drop-shadow(0 0 9px rgba(255,205,120,.95)); }
+  #setBtn{ position:absolute; top:10px; left:10px; z-index:40; width:42px; height:42px; font-size:17px;
+    color:#e8e6dd; background:rgba(0,0,0,0.55); border:3px solid #444; box-shadow:0 3px 0 #000; cursor:pointer;
+    font-family:'Press Start 2P',monospace; }
+  #setBtn:active{ transform:translateY(3px); box-shadow:none; }
+  #setOv{ position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.78);
+    display:flex; align-items:center; justify-content:center; }
+  #setPanel{ width:min(80vw,350px); background:#14100c; border:3px solid #6b4e2e; box-shadow:0 8px 0 #000;
+    padding:20px 16px; display:flex; flex-direction:column; gap:14px; align-items:center; }
+  #setTitle{ font-size:12px; color:#ffd977; letter-spacing:2px; }
+  #setGrid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; width:100%; }
+  #setClose{ font-family:'Press Start 2P',monospace; font-size:11px; color:#e8e6dd; background:#241a10;
+    border:3px solid #444; box-shadow:0 3px 0 #000; padding:10px 20px; cursor:pointer; }
+  #setClose:active{ transform:translateY(3px); box-shadow:none; }
+  #flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:9; }
+  #fadeOut{ position:absolute; inset:0; background:#000; opacity:0; pointer-events:none; z-index:10;
+    transition:opacity .55s ease; }
+</style>
+</head>
+<body>
+<div id="wrap">
+
+  <div id="gate" class="screen">
+    <img id="gateBg" src="assets/hub_gate.jpg" alt="">
+    <div id="doorView"><img class="interior" src="assets/hub_bar.jpg" alt=""></div>
+    <img class="doorFr" id="doorFr1" src="assets/hub_door1.png" alt="">
+    <img class="doorFr" id="doorFr2" src="assets/hub_door2.png" alt="">
+    <img class="doorFr" id="doorFr3" src="assets/hub_door3.png" alt="">
+    <img class="doorSign" id="leafSign" src="assets/hub_leaf.png" alt="">
+    <img class="doorSign" id="pinecoSign" src="assets/hub_pineco.png" alt="Pine&amp;Co">
+    <img class="doorSign" id="whSign" src="assets/hub_wh.png" alt="WELCOME HOME">
+    <img id="arrowImg" src="assets/hub_arrow.png" alt="">
+    <img id="ringImg" src="assets/hub_ring.png" alt="RING THE BELL!">
+    <div id="langGrid">
+      <img class="langBtn" data-l="ko" src="assets/hub_lang_ko.png" alt="한국어">
+      <img class="langBtn" data-l="en" src="assets/hub_lang_en.png" alt="English">
+      <img class="langBtn" data-l="zh" src="assets/hub_lang_zh.png" alt="中文">
+      <img class="langBtn" data-l="ja" src="assets/hub_lang_ja.png" alt="日本語">
+    </div>
+    <div id="bellHot" class="pulse"></div>
+  </div>
+
+  <div id="bar" class="screen hidden">
+    <img id="bgFill" src="assets/hub_bar.jpg" alt="">
+    <div id="world">
+      <img class="bg" src="assets/hub_bar.jpg" alt="">
+      <div id="vestaGlow"></div>
+      <img class="idleChar" id="idleJoe" src="assets/hub_joe_full.png" alt="JOE">
+      <img class="idleChar" id="idlePat" src="assets/hub_pat_full.png" alt="PAT">
+      <div class="idleBub" id="bubBoth">Welcome to Pine&amp;Co<span class="tail l"></span><span class="tail r"></span></div>
+      <img class="wbtn" id="wMenu" src="assets/hub_b_menu.png" alt="MENU">
+      <img class="wbtn" id="wAbout" src="assets/hub_b_about.png" alt="ABOUT US">
+      <img class="wbtn" id="wCd" src="assets/hub_b_cd.png" alt="COCKTAIL DEFENSE">
+      <img class="wbtn" id="wBottoms" src="assets/hub_b_bottoms.png" alt="BOTTOMS UP">
+      <img class="wbtn" id="wParty" src="assets/hub_b_party.png" alt="BARTENDER'S PARTY">
+    </div>
+    <div id="skyFill"></div>
+    <div id="floorFill"></div>
+    <div id="idleHint"></div>
+    <div id="vnDim" class="hidden"></div>
+    <img id="vnChar" class="hidden" src="assets/hub_joe.png" alt="">
+    <div id="vnDlgWrap" class="hidden">
+      <img id="vnDlg" src="assets/hub_dlg.png" alt="">
+      <div id="vnName">JOE</div>
+      <div id="vnText"></div>
+      <div id="vnNext">▼</div>
+    </div>
+    <div id="vnChoiceWrap">
+      <img id="vnChoiceImg" src="assets/hub_choice.png" alt="">
+      <div class="vnOpt" data-i="0" style="top:8.91%;height:17.44%"></div>
+      <div class="vnOpt" data-i="1" style="top:31.40%;height:16.47%"></div>
+      <div class="vnOpt" data-i="2" style="top:52.91%;height:16.28%"></div>
+      <div class="vnOpt" data-i="3" style="top:74.22%;height:16.28%"></div>
+    </div>
+  </div>
+
+  <img id="skipBtn" src="assets/hub_b_skip.png" alt="SKIP">
+  <div id="skipOv">
+    <img data-go="menu" src="assets/hub_b_menu.png" alt="MENU">
+    <img data-go="about" src="assets/hub_b_about.png" alt="ABOUT US">
+    <img data-go="cd" src="assets/hub_b_cd.png" alt="COCKTAIL DEFENSE">
+    <img data-go="bottoms" src="assets/hub_b_bottoms.png" alt="BOTTOMS UP">
+  </div>
+  <button id="setBtn">⚙</button>
+  <div id="setOv" class="hidden">
+    <div id="setPanel">
+      <div id="setTitle">BGM VOLUME</div>
+      <input type="range" id="setVol" min="0" max="100" style="width:88%">
+      <div id="setTitle">LANGUAGE</div>
+      <div id="setGrid">
+        <img class="langBtn setLang" data-l="ko" src="assets/hub_lang_ko.png" alt="한국어">
+        <img class="langBtn setLang" data-l="en" src="assets/hub_lang_en.png" alt="English">
+        <img class="langBtn setLang" data-l="zh" src="assets/hub_lang_zh.png" alt="中文">
+        <img class="langBtn setLang" data-l="ja" src="assets/hub_lang_ja.png" alt="日本語">
+      </div>
+      <button id="setClose">CLOSE</button>
+    </div>
+  </div>
+  <div id="flash"></div>
+  <div id="fadeOut"></div>
+</div>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  // 모바일 실측 높이
+  function fitVH(){ try{ $('wrap').style.height=window.innerHeight+'px'; layout(); gateLayout();
+    if(!$('bar').classList.contains('hidden')) vnLayout(); }catch(e){} }
+  window.addEventListener('resize',fitVH); window.addEventListener('orientationchange',fitVH);
+
+  let AC=null; function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+    if(AC&&AC.state==='suspended') AC.resume(); return AC; }
+  function beep(f,d,t,v){ const a=ac(); if(!a) return; try{ const o=a.createOscillator(),g=a.createGain();
+    o.type=t||'square'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,a.currentTime); g.gain.exponentialRampToValueAtTime(v||0.15,a.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+(d||0.2));
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+(d||0.2)+0.05); }catch(e){} }
+
+  // ── 월드: 베스타보드 중앙 고정 (VN 배경) ──
+  const AR=1914/822;
+  let worldW=0, vw=0, vh=0;
+  let camX=0;
+  function clampCam(x){ return Math.max(0,Math.min(Math.max(0,worldW-vw),x)); }
+  function setCam(x,anim){ camX=clampCam(x); const w=$('world');
+    w.style.transition=anim?'transform .5s ease':'none';
+    w.style.transform='translateX('+(-camX)+'px)'; }
+  const ZOOM=0.72;  // 배경 축소 (1=화면 높이 꽉, 작을수록 바가 더 넓게 보임)
+  let worldH=0, worldTop=0;
+  function layout(){ vw=window.innerWidth; vh=window.innerHeight;
+    worldH=Math.round(vh*ZOOM); worldW=Math.round(worldH*AR);
+    if(worldW<vw){ worldW=vw; worldH=Math.round(vw/AR); }  // 가로는 최소 화면 폭
+    worldTop=Math.round((vh-worldH)*0.62);                  // 살짝 아래쪽에 배치
+    const w=$('world'); w.style.width=worldW+'px'; w.style.height=worldH+'px'; w.style.top=worldTop+'px';
+    $('skyFill').style.height=Math.max(0,worldTop+1)+'px';
+    $('floorFill').style.height=Math.max(0,vh-(worldTop+worldH)+1)+'px';
+    const vg=$('vestaGlow'); vg.style.width=(0.34*worldW)+'px'; vg.style.height=(0.62*worldH)+'px';
+    vg.style.left=(0.538*worldW-0.17*worldW)+'px'; vg.style.top='0px';
+    // 두 캐릭터: 화면 안에 겹치지 않게 최대 크기로, 바닥(0.885h)에 발이 닿게
+    const cx=0.538*worldW, footY=1.005*worldH, gap=Math.max(8,vw*0.025);
+    // 크게: 화면 밖으로 나가는 손은 잘려도 되지만 두 사람 손끼리는 안 겹치게
+    const cw=Math.min((vw-3*gap)/2*1.305, worldH*0.45);
+    const jEl=$('idleJoe'), pEl=$('idlePat');
+    const jr=(jEl.naturalWidth&&jEl.naturalHeight)?jEl.naturalWidth/jEl.naturalHeight:0.694;
+    const pr=(pEl.naturalWidth&&pEl.naturalHeight)?pEl.naturalWidth/pEl.naturalHeight:0.732;
+    const jH=Math.min(cw/jr, worldH*0.85), pH=Math.min(cw/pr, worldH*0.85);
+    const half=cw/2+gap/2;   // 스프라이트 박스가 안 겹치므로 손도 안 겹침
+    jEl.style.width=(jH*jr)+'px'; jEl.style.height=jH+'px';
+    jEl.style.left=(cx-half)+'px'; jEl.style.top=(footY-jH)+'px';
+    pEl.style.width=(pH*pr)+'px'; pEl.style.height=pH+'px';
+    pEl.style.left=(cx+half)+'px'; pEl.style.top=(footY-pH)+'px';
+    const b=$('bubBoth'); b.style.left=cx+'px';
+    b.style.top=(footY-Math.max(jH,pH)-72)+'px';
+    // 월드 버튼: 왼쪽(MENU/ABOUT US) · 오른쪽(COCKTAIL DEFENSE/BOTTOMS UP) 가로 배치 · 오락기 위(PARTY)
+    const bw=Math.min(0.171*worldW, vw*0.378), bx1=0.145*worldW, bx2=0.285*worldW;
+    const rx1=0.795*worldW, rx2=0.935*worldW, byY=0.52*worldH;
+    [['wMenu',bx1,byY],['wAbout',bx2,byY],['wCd',rx1,byY],['wBottoms',rx2,byY]].forEach(([id,x,y])=>{
+      const el=$(id); el.style.width=bw+'px'; el.style.left=x+'px'; el.style.top=y+'px'; });
+    const wp=$('wParty'); const pw3=Math.min(0.14*worldW, vw*0.36);
+    wp.style.width=pw3+'px'; wp.style.left=(0.932*worldW)+'px'; wp.style.top=(0.245*worldH)+'px';
+    setCam(0.538*worldW-vw/2,false); }
+
+  // ── 입구 레이아웃 (hub_gate.jpg 720x1279 기준 좌표) ──
+  const GW=720, GH=1279;
+  let opened=false;
+  function gateLayout(){ const vw2=window.innerWidth, vh2=window.innerHeight;
+    const s=Math.max(vw2/GW, vh2/GH); const iw=GW*s, ih=GH*s;
+    const ox=(vw2-iw)/2, oy=(vh2-ih)/2;
+    const bg=$('gateBg'); bg.style.left=ox+'px'; bg.style.top=oy+'px'; bg.style.width=iw+'px'; bg.style.height=ih+'px';
+    const X=f=>ox+f*iw, Y=f=>oy+f*ih;
+    const bh=$('bellHot'); bh.style.left=X(0.13)+'px'; bh.style.top=Y(0.215)+'px';
+    bh.style.width=(0.18*iw)+'px'; bh.style.height=(0.19*ih)+'px';
+    // 화살표: 좌우 반전(scaleX(-1))이라 끝(원본 좌상단)이 우상단 → 초인종(0.235,0.36)을 향함
+    // 화살표 끝(반전 후 우상단, 우측에서 6% 안쪽)이 초인종 버튼(0.215,0.40) 바로 아래를 정확히 가리키게
+    const ar=$('arrowImg'); const aw=0.075*iw; ar.style.width=aw+'px';
+    ar.style.left=(X(0.228)-0.06*aw)+'px'; ar.style.top=Y(0.385)+'px';
+    // RING THE BELL!: 화살표 꼬리 바로 밑에 딱 붙게 (화살표 높이 = 폭 * 596/368)
+    const ri=$('ringImg'); const rw=0.21*iw; ri.style.width=rw+'px';
+    ri.style.left=(X(0.196)-rw/2)+'px'; ri.style.top=Y(0.448)+'px';
+    // 문 위: 잎+솔방울 로고 크게, 그 아래 Pine&Co / 하단 전체 폭 WELCOME HOME
+    const lf=$('leafSign'); const lw=0.24*iw; lf.style.width=lw+'px';
+    lf.style.left=(X(0.735)-lw/2)+'px'; lf.style.top=Y(0.135)+'px';
+    const pcTop=Y(0.135)+(0.24*iw)*(481/250)+8;
+    const pc=$('pinecoSign'); const pw2=0.30*iw; pc.style.width=pw2+'px';
+    pc.style.left=(X(0.735)-pw2/2)+'px'; pc.style.top=pcTop+'px';
+    const wh=$('whSign'); const ww=0.658*iw; wh.style.width=ww+'px';
+    const whTop=Y(0.635);
+    wh.style.left=(X(0.5)-ww/2)+'px'; wh.style.top=whTop+'px';
+    // 언어 버튼 2x2: Pine&Co 글씨와 WELCOME HOME 사이 정중앙, 공간에 맞춰 자동 축소
+    const lg2=$('langGrid'); const pcBottom=pcTop+(0.30*iw)*(116/520);
+    const avail=Math.max(40,(whTop-pcBottom)-16); // 위아래 여백 8px씩
+    const GAPX=9, GAPY=7, RATIO=147/420;
+    // 문 안쪽 가용 폭 (화면 밖으로도 안 나가게)
+    const dL=X(0.482), dR=Math.min(vw2-10, X(0.995));
+    const maxW=Math.max(120, dR-dL);
+    let gw=Math.min(0.42*iw, maxW);
+    let gh=(gw-GAPX)*RATIO+GAPY;      // 2행 총 높이 = 버튼높이*2+GAPY, 버튼폭=(gw-GAPX)/2
+    if(gh>avail){ gw=Math.min(gw,(avail-GAPY)/RATIO+GAPX); gh=(gw-GAPX)*RATIO+GAPY; }
+    lg2.style.width=gw+'px';
+    lg2.style.left=Math.max(dL, Math.min(dR-gw, (dL+dR)/2-gw/2))+'px';
+    lg2.style.top=(pcBottom+((whTop-pcBottom)-gh)/2)+'px';
+    const dl=X(0.468);
+    ['doorFr1','doorFr2','doorFr3'].forEach(id=>{ const d=$(id);
+      d.style.left=dl+'px'; d.style.top=oy+'px'; d.style.height=ih+'px'; d.style.width='auto'; });
+    const dv=$('doorView'); const rW=Math.max(60,vw2-dl), rH=ih*0.976;
+    dv.style.left=(dl+0.006*iw)+'px'; dv.style.top=(oy+0.012*ih)+'px';
+    dv.style.width=rW+'px'; dv.style.height=rH+'px';
+    const inn=dv.querySelector('.interior');
+    // 원근감: 문틈 너머 방이 멀리 작게 보이도록 축소 (베스타보드가 통째로 보이는 크기)
+    const s2=Math.max(rW/1914, rH/822)*0.52; const iw2=1914*s2, ih2=822*s2;
+    inn.style.width=iw2+'px'; inn.style.height=ih2+'px';
+    inn.style.left=(rW/2-0.538*iw2)+'px'; inn.style.top=((rH-ih2)/2)+'px';
+    if(!opened){ inn.style.transform='scale(0.88)'; } }
+
+  // ── BGM: 창이 뜨자마자 시도, 브라우저가 자동재생을 막으면 첫 터치 즉시 시작 ──
+  let BGM=null;
+  let BGMVOL=parseFloat(localStorage.getItem('hub_vol')||'0.65');
+  function startBgm(){ if(BGM) return;
+    try{ const a=new Audio('assets/hub_bgm.mp3'); a.loop=true; a.volume=0; BGM=a;
+      a.play().then(()=>{ const t0=performance.now();
+        (function st(){ if(BGM!==a) return; const k=Math.min(1,(performance.now()-t0)/1400);
+          try{ a.volume=BGMVOL*k; }catch(e){} if(k<1) setTimeout(st,60); })(); })
+      .catch(()=>{ if(BGM===a) BGM=null; }); }catch(e){} }
+  function fadeBgm(ms){ const a=BGM; if(!a) return; BGM=null; const v0=a.volume, t0=performance.now();
+    (function st(){ const k=Math.min(1,(performance.now()-t0)/ms);
+      try{ a.volume=v0*(1-k); }catch(e){} if(k<1) setTimeout(st,50); else { try{ a.pause(); }catch(e){} } })(); }
+
+  // ── 초인종 → 딩동 → 문 열림 3프레임 (원근: 안쪽 바 배경이 다가옴) → 내부 ──
+  $('bellHot').addEventListener('pointerdown',e=>{ e.preventDefault(); if(opened) return; opened=true; ac();
+    try{ const db=new Audio('assets/hub_doorbell.mp3'); db.volume=1; db.play().catch(()=>{}); }catch(err){} // 초인종
+    startBgm(); // (이미 재생 중이면 무시)
+    $('arrowImg').style.display='none'; $('ringImg').style.display='none'; $('bellHot').classList.remove('pulse');
+    const inn=document.querySelector('#doorView .interior');
+    setTimeout(()=>{ beep(150,0.5,'sawtooth',0.06); // 철문 끼익
+      ['leafSign','pinecoSign','whSign','langGrid'].forEach(id=>{ $(id).style.display='none'; });
+      $('doorView').style.display='block';
+      inn.style.transition='transform 1.35s ease-out, filter 1.35s ease-out';
+      inn.style.transform='scale(1.0)'; inn.style.filter='brightness(0.22)';
+      $('doorFr1').style.display='block'; },650);
+    setTimeout(()=>{ $('doorFr1').style.display='none'; $('doorFr2').style.display='block'; },980);
+    setTimeout(()=>{ $('doorFr2').style.display='none'; $('doorFr3').style.display='block';
+      beep(220,0.15,'square',0.08); },1300);
+    setTimeout(()=>{ const g2=$('gate');
+      const dl=parseFloat($('doorFr3').style.left)||window.innerWidth*0.55;
+      g2.style.transition='transform 1s cubic-bezier(.6,.05,.4,1)';
+      g2.style.transformOrigin=(dl+(window.innerWidth-dl)*0.55)+'px 46%'; // 철문 중심으로 빨려들어감
+      g2.style.transform='scale(2.6)';
+      // 원근감: 문틀은 커지지만 방은 멀리 있어 천천히 다가옴 (역스케일)
+      inn.style.transition='transform 1s cubic-bezier(.6,.05,.4,1), filter 1s ease';
+      inn.style.transform='scale(0.70)'; inn.style.filter='brightness(0.3)'; },1650);
+    setTimeout(()=>{ $('fadeOut').style.opacity='1'; },2200);
+    setTimeout(()=>{ $('gate').classList.add('hidden'); $('bar').classList.remove('hidden');
+      layout(); setTimeout(layout,300); setTimeout(layout,1200); // 늦게 로드된 이미지 대비 재배치
+      $('fadeOut').style.opacity='0';
+      beep(660,0.09); setTimeout(()=>beep(990,0.14),90);
+      idleRefresh(); },2800); });
+
+  // ── 언어 ──
+  let LANGSEL=localStorage.getItem('hub_lang')||'ko';
+  const CHMETA=[ {url:'defense.html?menu=1'}, {back:true}, {url:'defense.html'}, {url:'bar_party.html'} ];
+  const NAV={ menu:'defense.html?menu=1', about:'about.html', cd:'defense.html', bottoms:'bottomsup/index.html', party:'bar_party.html' };
+  const PACK={
+  en:{ intro:[
+    {who:'@', text:"Welcome to Pine&Co! I'm {ME}, co-founder of this bar."},
+    {who:'@', text:"Is there something you're looking for tonight? What can I do for you?"} ],
+   choices:[
+    { label:'MENU, PLEASE.', lines:[
+      {who:'JOE', text:"Good call. Our list runs from proper classics to a few strange things Pat cooks up with that rotary evaporator behind him."},
+      {who:'PAT', text:"If it has pineapple in it, trust it. House rule. Follow me, the menu is this way."} ] },
+    { label:'WHAT IS PINE&CO?', lines:[
+      {who:'PAT', text:"We opened Pine&Co in 2020, right here in this basement in Gangnam. No sign, no window. Just a heavy old gate and a pineapple."},
+      {who:'PAT', text:"The pineapple has meant hospitality for three hundred years. Hang one on your door and it says: a warm welcome, a good drink, and time well spent."},
+      {who:'JOE', text:"That steel door you rang? We saved it from a demolition site. Every sticker on it is older than the bar. Felt wrong to peel off someone else's history."},
+      {who:'PAT', text:"We pour classics done properly, plus a little lab work. The rotary evaporator is not decoration. That is tomorrow's menu being born."},
+      {who:'JOE', text:"And the wall of names outside? Bartenders we look up to. Jerry Thomas, Ada Coleman, Ueno, Gokan... Someday, maybe us. Anything else you want to know?"} ] },
+    { label:'I HEARD THERE IS A GAME?', lines:[
+      {who:'PAT', text:"A challenger, huh? Then get behind the bar with me. The Friday rush is coming, and customers do NOT wait quietly."},
+      {who:'JOE', text:"Cocktail Defense, we call it. Shake fast, pour faster, and whatever you do... don't let the bar go down!"} ] },
+    { label:"I HEARD THERE IS A PARTY?", lines:[
+      {who:'JOE', text:"Shhh, keep it down... See that arcade cabinet in the corner? Eleven minigames. One leaderboard. Zero mercy."},
+      {who:'PAT', text:"Top score drinks free. ...Kidding. Bragging rights only. Those last forever."} ] } ] },
+  ko:{ intro:[
+    {who:'@', text:"파인앤코에 오신 걸 환영합니다! 저는 이 바의 공동 창업자 {ME}예요."},
+    {who:'@', text:"파인앤코에서 찾으시는 게 있으신가요? 무엇을 도와드릴까요?"} ],
+   choices:[
+    { label:'메뉴 주세요.', lines:[
+      {who:'JOE', text:"좋은 선택. 우리 리스트는 정석 클래식부터 팻이 저 로터리 증발기로 만들어낸 괴상한 실험작까지 다양하거든요."},
+      {who:'PAT', text:"파인애플이 들어갔다면 믿고 마셔요. 하우스 룰이니까. 따라와요, 메뉴는 이쪽."} ] },
+    { label:'파인앤코가 뭐죠?', lines:[
+      {who:'PAT', text:"파인앤코는 2020년, 바로 이 강남 지하에서 문을 열었어요. 간판도 창문도 없이. 무거운 옛날 대문과 파인애플 하나로."},
+      {who:'PAT', text:"파인애플은 300년 동안 환대의 상징이었죠. 문에 걸어두면 이런 뜻이에요. 따뜻한 환영, 좋은 술, 그리고 잘 보낸 시간."},
+      {who:'JOE', text:"당신이 초인종을 누른 그 철문? 철거 현장에서 구해온 거예요. 붙어 있는 스티커 전부가 이 바보다 나이가 많죠. 남의 역사를 떼어내는 건 예의가 아니니까."},
+      {who:'PAT', text:"우리는 클래식을 제대로 만들고, 실험도 조금 하죠. 로터리 증발기는 장식이 아니에요. 내일의 메뉴가 태어나는 중이랍니다."},
+      {who:'JOE', text:"바깥 낙서 벽의 이름들? 우리가 존경하는 바텐더들이에요. 제리 토마스, 에이다 콜먼, 우에노, 고칸... 언젠가 우리 이름도. 더 궁금한 거 있어요?"} ] },
+    { label:'게임이 있다던데?', lines:[
+      {who:'PAT', text:"도전자 등장이군요? 그럼 나랑 바 뒤로 갑시다. 금요일 러시가 몰려오는데, 손님들은 얌전히 기다려주지 않거든요."},
+      {who:'JOE', text:"칵테일 디펜스라고 불러요. 빠르게 흔들고, 더 빠르게 따르고... 무슨 일이 있어도 바를 지켜요!"} ] },
+    { label:'파티가 있다던데?', lines:[
+      {who:'JOE', text:"쉿, 목소리 낮춰요... 구석의 오락기 보이죠? 미니게임 열한 개. 리더보드 하나. 자비는 없음."},
+      {who:'PAT', text:"1등은 술이 공짜. ...농담이에요. 자랑할 권리뿐이죠. 그건 평생 가지만."} ] } ] },
+  zh:{ intro:[
+    {who:'@', text:"欢迎来到 Pine&Co！我是这家酒吧的共同创办人{ME}。"},
+    {who:'@', text:"今晚在 Pine&Co 有什么想找的吗？需要我帮您什么？"} ],
+   choices:[
+    { label:'请给我菜单。', lines:[
+      {who:'JOE', text:"好选择。我们的酒单从正统经典，到Pat用那台旋转蒸发仪捣鼓出来的怪东西，应有尽有。"},
+      {who:'PAT', text:"只要里面有菠萝，放心喝。这是本店规矩。跟我来，菜单在这边。"} ] },
+    { label:'Pine&Co 是什么？', lines:[
+      {who:'PAT', text:"Pine&Co 于2020年在江南的这间地下室开业。没有招牌，没有窗户。只有一扇沉重的旧大门和一颗菠萝。"},
+      {who:'PAT', text:"三百年来，菠萝一直是待客之道的象征。把它挂在门上，意思是：温暖的欢迎、一杯好酒、和一段好时光。"},
+      {who:'JOE', text:"你按门铃的那扇铁门？是我们从拆迁现场救回来的。上面每张贴纸都比这家店年纪大。撕掉别人的历史可不礼貌。"},
+      {who:'PAT', text:"我们认真做经典，也做点实验。旋转蒸发仪不是摆设，那是明天的菜单正在诞生。"},
+      {who:'JOE', text:"外面墙上的名字？都是我们敬仰的调酒师。Jerry Thomas、Ada Coleman、上野、后闲……说不定哪天也会有我们。还想知道什么吗？"} ] },
+    { label:'听说有游戏？', lines:[
+      {who:'PAT', text:"来挑战的？那就跟我到吧台后面来。周五的高峰要来了，客人们可不会安静等着。"},
+      {who:'JOE', text:"我们管它叫 Cocktail Defense。快摇、更快地倒……无论如何，守住吧台！"} ] },
+    { label:'听说有派对？', lines:[
+      {who:'JOE', text:"嘘，小声点……看到角落里那台街机了吗？十一个小游戏，一个排行榜，毫不留情。"},
+      {who:'PAT', text:"第一名喝酒免费。……开玩笑的。只有炫耀的权利，不过那可是永久的。"} ] } ] },
+  ja:{ intro:[
+    {who:'@', text:"Pine&Coへようこそ！俺はこのバーの共同創業者、{ME}だ。"},
+    {who:'@', text:"今夜Pine&Coで何かお探しですか？何かお手伝いできることは？"} ],
+   choices:[
+    { label:'メニューをください。', lines:[
+      {who:'JOE', text:"いい選択だ。うちのリストは王道クラシックから、Patがあのロータリーエバポレーターで生み出す怪しい実験作まで揃ってる。"},
+      {who:'PAT', text:"パイナップルが入ってたら信じて飲め。それがハウスルールだ。ついてきな、メニューはこっちだ。"} ] },
+    { label:'Pine&Coって何？', lines:[
+      {who:'PAT', text:"Pine&Coは2020年、この江南の地下でオープンした。看板も窓もない。重い古い門とパイナップルひとつだけだ。"},
+      {who:'PAT', text:"パイナップルは300年間、もてなしの象徴だった。扉に掲げれば、温かい歓迎といい酒、いい時間という意味になる。"},
+      {who:'JOE', text:"君がベルを鳴らしたあの鉄の扉？解体現場から救ってきたんだ。貼ってあるステッカーは全部この店より年上さ。他人の歴史を剥がすのは無礼だろ。"},
+      {who:'PAT', text:"クラシックをきっちり作って、少しだけ実験もする。ロータリーエバポレーターは飾りじゃない。明日のメニューが生まれてる最中だ。"},
+      {who:'JOE', text:"外の壁の名前？俺たちが尊敬するバーテンダーたちだ。ジェリー・トーマス、エイダ・コールマン、上野、後閑…いつか俺たちの名前もな。他に聞きたいことは？"} ] },
+    { label:'ゲームがあるとか？', lines:[
+      {who:'PAT', text:"挑戦者か？ならバーの中へ来い。金曜のラッシュが来るんだ。客は大人しく待っちゃくれない。"},
+      {who:'JOE', text:"Cocktail Defenseって呼んでる。速く振って、もっと速く注げ…何があってもバーを守れ！"} ] },
+    { label:'パーティーがあるとか？', lines:[
+      {who:'JOE', text:"しっ、声が大きい…隅のアーケード筐体が見えるか？ミニゲーム11個、リーダーボード1つ、容赦ゼロ。"},
+      {who:'PAT', text:"トップは酒がタダ。…冗談だ。自慢する権利だけ。まあ、それは一生モノだがな。"} ] } ] } };
+
+  // ── 비주얼노벨 엔진: 시퀀스 기반 (언어 전환 시 현재 대사부터 새 언어로) ──
+  const CHAR={ JOE:'assets/hub_joe.png', PAT:'assets/hub_pat.png' };
+  let curSeq=null, curIdx=0, curDone=null, typing=false, typeTimer=null, curText='', curWho='';
+  function seqLines(){ const P=PACK[LANGSEL];
+    return curSeq==='intro'?P.intro:P.choices[curSeq].lines; }
+  function setChar(who){ if(curWho===who) return; curWho=who;
+    const c=$('vnChar'); c.style.opacity='0';
+    setTimeout(()=>{ c.src=CHAR[who]; c.style.opacity='1'; },160); }
+  function playSeq(key,done){ curSeq=key; curIdx=0; curDone=done||null; advance(); }
+  function advance(){ const ls=seqLines();
+    if(curIdx>=ls.length){ curSeq=null; const d=curDone; curDone=null; if(d) d(); return; }
+    const l=ls[curIdx]; curIdx++;
+    const who=(l.who==='@')?GREETER:l.who;
+    const me=(who==='JOE')?'Joe':'Pat', other=(who==='JOE')?'Pat':'Joe';
+    const txt=l.text.replace(/\{ME\}/g,me).replace(/\{OTHER\}/g,other);
+    $('vnName').textContent=who; setChar(who); vnType(txt); }
+  function vnType(t){ curText=t; typing=true; $('vnNext').style.display='none';
+    const el=$('vnText'); el.textContent=''; let i=0; clearInterval(typeTimer);
+    typeTimer=setInterval(()=>{ i++; el.textContent=t.slice(0,i);
+      if(i%3===1) beep(1450+(i%5)*70,0.012,'square',0.018); // 말하는 듯한 블립
+      if(i>=t.length){ clearInterval(typeTimer); typing=false; $('vnNext').style.display='block'; } },24); }
+  // ── 인사 대기: 좌우 슬라이드로 바 구경, 캐릭터 탭하면 대화 시작 ──
+  let GREETER='JOE', idle=true, dragX=null, dragCam=0, moved=0;
+  const IDLE_HINT={ ko:'좌우로 밀어 둘러보세요 · 바텐더를 탭하면 대화',
+    en:'SWIPE TO LOOK AROUND · TAP A BARTENDER TO TALK',
+    zh:'左右滑动参观 · 点击调酒师开始对话', ja:'左右にスワイプ · バーテンダーをタップで会話' };
+  const DONE_HINT={ ko:'좌우로 밀어 메뉴와 게임을 골라보세요',
+    en:'SWIPE LEFT / RIGHT TO PICK MENU OR GAMES',
+    zh:'左右滑动选择菜单或游戏', ja:'左右にスワイプしてメニューやゲームを選ぼう' };
+  let talked=false;
+  function idleRefresh(){ const T=talked?DONE_HINT:IDLE_HINT; $('idleHint').textContent=T[LANGSEL]||T.en; }
+  function startTalk(who){ if(!idle) return; idle=false; ac(); beep(760,0.07);
+    // 선택한 캐릭터가 확대되며 다가오고, 상대는 사라짐
+    // 두 캐릭터는 부드럽게 사라지고, 선택한 인물의 상반신이 대화창 위로 자연스럽게 올라옴
+    $('bubBoth').style.display='none'; $('idleHint').style.display='none';
+    $('idleJoe').style.opacity='0'; $('idlePat').style.opacity='0';
+    $('vnDim').classList.remove('hidden'); $('vnDim').style.opacity='0';
+    $('vnDim').style.transition='opacity .4s ease';
+    requestAnimationFrame(()=>{ $('vnDim').style.opacity='1'; });
+    setTimeout(()=>{ ['idleJoe','idlePat'].forEach(id=>{ $(id).style.display='none'; });
+      GREETER=who; curWho=''; $('vnChar').src=CHAR[who];
+      const c=$('vnChar'); c.classList.add('rise'); c.classList.remove('hidden');
+      $('vnDlgWrap').classList.remove('hidden'); vnLayout();
+      $('skipBtn').style.display='block';
+      requestAnimationFrame(()=>{ requestAnimationFrame(()=>c.classList.remove('rise')); });
+      playSeq('intro', showChoices); },300); }
+  $('idleJoe').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); startTalk('JOE'); });
+  $('idlePat').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); startTalk('PAT'); });
+  // capture 단계: 버튼이 전파를 막아도 드래그 거리(moved)는 항상 초기화되게
+  $('bar').addEventListener('pointerdown',e=>{ if(!idle) return;
+    if(e.target.closest('#setBtn')||e.target.closest('#setOv')) return;
+    dragX=e.clientX; dragCam=camX; moved=0; },true);
+  $('bar').addEventListener('pointermove',e=>{ if(dragX==null) return;
+    const d=e.clientX-dragX; moved=Math.max(moved,Math.abs(d)); setCam(dragCam-d,false); });
+  window.addEventListener('pointerup',()=>{ dragX=null; });
+
+  // 대화 중: 화면 아무 곳이나 탭해도 진행 (선택창/설정 제외)
+  $('bar').addEventListener('pointerdown',e=>{
+    if(idle) return;
+    if(e.target.closest('#vnChoiceWrap')||e.target.closest('#setBtn')||e.target.closest('#setOv')) return;
+    e.preventDefault(); ac();
+    if($('vnChoiceWrap').style.display==='block') return;
+    if(typing){ clearInterval(typeTimer); typing=false; $('vnText').textContent=curText; $('vnNext').style.display='block'; }
+    else if(curSeq!=null) advance(); });
+  function showChoices(){ $('vnNext').style.display='none';
+    const w2=$('vnChoiceWrap'); w2.style.display='block'; renderChoiceLabels();
+    w2.querySelectorAll('.vnOpt').forEach((o,i)=>{
+      o.onclick=e=>{ e.stopPropagation(); ac(); beep(760,0.07); w2.style.display='none';
+        playSeq(i, ()=>{ const m=CHMETA[i]; if(m.url) fadeNav(m.url); else endTalk(); }); }; }); }
+  function renderChoiceLabels(){ const w2=$('vnChoiceWrap');
+    w2.querySelectorAll('.vnOpt').forEach((o,i)=>{ o.textContent=PACK[LANGSEL].choices[i].label; }); }
+  let leaving=false;
+  function fadeNav(url){ if(leaving) return; leaving=true; beep(880,0.1,'square',0.1);
+    fadeBgm(650); $('fadeOut').style.opacity='1'; setTimeout(()=>{ location.href=url; },780); }
+
+  // ── SKIP: 대화 건너뛰고 바로 4개 버튼 ──
+  function showWorldBtns(){ ['wMenu','wAbout','wCd','wBottoms','wParty'].forEach(id=>{ $(id).style.display='block'; }); }
+  function endTalk(){ // 대화 종료 → 월드 탐색 모드 (좌: 메뉴/소개, 우: 게임)
+    clearInterval(typeTimer); typing=false; curSeq=null; curDone=null;
+    $('vnChoiceWrap').style.display='none'; $('vnDlgWrap').classList.add('hidden');
+    $('vnChar').classList.add('hidden'); $('vnDim').classList.add('hidden');
+    $('skipBtn').style.display='none'; $('skipOv').style.display='none';
+    idle=true; talked=true; showWorldBtns(); $('idleHint').style.display='block'; idleRefresh(); }
+  $('skipBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); ac(); beep(620,0.07);
+    $('skipOv').style.display='flex'; });
+  $('skipOv').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
+    const t=e.target.closest('img[data-go]');
+    if(!t){ $('skipOv').style.display='none'; endTalk(); return; }
+    ac(); beep(820,0.08); fadeNav(NAV[t.dataset.go]); });
+  ['wMenu','wAbout','wCd','wBottoms','wParty'].forEach(id=>{
+    const key={wMenu:'menu',wAbout:'about',wCd:'cd',wBottoms:'bottoms',wParty:'party'}[id];
+    const el=$(id);
+    el.addEventListener('pointerup',e=>{ if(moved>10) return;   // 슬라이드가 아니라 탭일 때만
+      e.preventDefault(); e.stopPropagation(); ac(); beep(800,0.08); fadeNav(NAV[key]); });
+    el.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); }); });
+  // 캐릭터/선택창을 대화창 바로 위에 배치
+  function vnLayout(){ const r=$('vnDlgWrap').getBoundingClientRect();
+    if(r.height<4){ setTimeout(vnLayout,200); return; }
+    // 캐릭터 잘린 밑단이 대화창 뒤로 숨도록 살짝 겹치게
+    $('vnChar').style.bottom=(window.innerHeight-r.top-Math.max(18,r.height*0.22))+'px';
+    $('vnChoiceWrap').style.bottom=(window.innerHeight-r.top+6)+'px'; }
+  $('vnDlg').addEventListener('load',()=>{ if(!$('bar').classList.contains('hidden')&&!idle) vnLayout(); });
+  ['idleJoe','idlePat'].forEach(id=>{ $(id).addEventListener('load',()=>{ if(idle) layout(); }); });
+
+  // ── 언어 선택 UI ──
+  function applyLangSel(){ document.querySelectorAll('.langBtn').forEach(b=>{
+      b.classList.toggle('sel', b.dataset.l===LANGSEL); }); }
+  function setLang(l){ LANGSEL=l; localStorage.setItem('hub_lang',l); applyLangSel();
+    ac(); beep(700,0.06); idleRefresh();
+    if(!$('bar').classList.contains('hidden')){
+      if($('vnChoiceWrap').style.display==='block') renderChoiceLabels();
+      else if(curSeq!=null){ curIdx=Math.max(0,curIdx-1); clearInterval(typeTimer); advance(); } } }
+  document.querySelectorAll('.langBtn').forEach(b=>{
+    b.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); setLang(b.dataset.l); }); });
+  $('setVol').value=Math.round(BGMVOL*100);
+  $('setVol').addEventListener('input',()=>{ BGMVOL=$('setVol').value/100;
+    localStorage.setItem('hub_vol',String(BGMVOL));
+    if(BGM){ try{ BGM.volume=BGMVOL; }catch(e){} } });
+  $('setBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); ac(); beep(600,0.06);
+    applyLangSel(); $('setVol').value=Math.round(BGMVOL*100); $('setOv').classList.remove('hidden'); });
+  $('setClose').addEventListener('pointerdown',e=>{ e.preventDefault(); beep(500,0.06);
+    $('setOv').classList.add('hidden'); });
+  applyLangSel();
+
+  fitVH();
+  // BGM 즉시 시작 시도 (수 초간 재시도) + 브라우저가 막으면 첫 터치에서 즉시 시작
+  startBgm();
+  let bgmTries=0; const bgmIv=setInterval(()=>{ if(BGM||++bgmTries>8){ clearInterval(bgmIv); return; } startBgm(); },600);
+  const bgmKick=()=>{ startBgm(); }; // startBgm은 이미 재생 중이면 즉시 반환
+  document.addEventListener('pointerdown',bgmKick);
+  document.addEventListener('touchstart',bgmKick,{passive:true});
+})();
+</script>
+</body>
+</html>

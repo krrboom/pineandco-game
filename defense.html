@@ -832,7 +832,7 @@
 
   <!-- 설정 버튼(왼쪽) + 음량조절 패널 -->
   <button id="gearBtn" onclick="openSettings()" aria-label="settings">⚙</button>
-  <button id="recipeBtn" onclick="openRecipe()" aria-label="recipes">📖</button>
+  <button id="recipeBtn" style="display:none" onclick="openRecipe()" aria-label="recipes">📖</button>
   <button id="pauseBtn" class="hidden" onclick="pauseGame()" aria-label="pause">⏸</button>
   <!-- 일시정지: 게임을 멈추고 손님 메뉴를 보거나 주문을 받는 시간 -->
   <div id="pausePanel" class="hidden">
@@ -945,14 +945,10 @@
         <img class="cap blink" src="assets/txt_press_start.png" alt="PRESS START">
         <img class="btnimg" src="assets/btn_start.png" alt="START">
       </button>
-      <button class="imgbtn" onclick="showMenu()">
-        <img class="cap" src="assets/txt_see_menu.png" alt="SEE THE MENU">
-        <img class="btnimg" src="assets/btn_menu.png" alt="MENU">
-      </button>
     </div>
     <div class="row sub-btn-row">
+      <button class="imgbtn subbtn" id="hhBackBtn" onclick="fadeOutMusicAndGo('bar_party.html')" style="font-family:'Press Start 2P',monospace;font-size:11px;color:#e8e6dd;background:rgba(0,0,0,.6);border:3px solid #4a3a24;box-shadow:0 3px 0 #000;padding:10px 12px;letter-spacing:1px">◀ HAPPY HOUR</button>
       <button class="imgbtn subbtn" onclick="openHighscore()"><img src="assets/btn_highscore.png" alt="HIGHSCORE"></button>
-      <button class="imgbtn subbtn" onclick="openBottomsUp()"><img src="assets/btn_bottomsup.png" alt="BOTTOMS UP"></button>
       <!-- PINE&CO INDEX 버튼 제거: 인덱스는 게임 중 📖(RECIPE BOOK) 안 탭으로 통합됨 -->
     </div>
     <div class="row" id="plazaRow" style="display:none"><button class="plaza-btn" onclick="openPlaza()">🌲 THE PLAZA · 광장</button></div>
@@ -2431,6 +2427,14 @@ function backToTitle(){ state='title'; setMusic('title'); hideAllScreens(); hide
   { const h=document.getElementById('hiTitle'); if(h) h.textContent=fmtTime(HI_SCORE); } cloudFetch('time'); show('titleScreen'); }
 function goSelect(){ initAudio(); playSelect(); setMusic('select'); state='select'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('stick'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn'); show('selectScreen'); selIndex=0; updateSelectHighlight(); }
 // ★About(브랜드 소개서) 열기 — 모바일 확실히(새 탭 실패 시 같은 탭). 버튼 onclick 방식이라 터치 확실.
+function fadeOutMusicAndGo(url){
+  try{ if(typeof musicBus!=="undefined" && musicBus && typeof audioCtx!=="undefined" && audioCtx){
+    const t=audioCtx.currentTime; musicBus.gain.cancelScheduledValues(t);
+    musicBus.gain.setValueAtTime(musicBus.gain.value||musicVol,t);
+    musicBus.gain.linearRampToValueAtTime(0.0001,t+0.55); } }catch(e){}
+  try{ if(typeof bottomsBgm!=="undefined" && bottomsBgm){ bottomsBgm.pause(); } }catch(e){}
+  setTimeout(function(){ location.href=url; },600);
+}
 function openAboutPage(){ try{ playSelect&&playSelect(); }catch(e){} try{ var w=window.open('about.html','_blank'); if(!w||w.closed||typeof w.closed==='undefined') location.href='about.html'; }catch(e){ location.href='about.html'; } return false; }
 // ★손가락 조준: 화면마다 손끝→로고의 '&·C 사이'를 향해 회전 + 바브를 그 방향으로. 어느 기기에서도 정확히 가리킴.
 /* ★손가락 각도는 CSS 고정값(--fdeg:37deg)으로만 처리 → JS 재조준 제거(로딩 후 각도/위치 바뀜 원천 차단). */
@@ -2679,6 +2683,20 @@ function showMenu(){ initAudio(); playSelect(); setMusic('menu'); state='menu'; 
   document.getElementById('menuIntro').classList.remove('hidden');
   show('menuScreen'); }
 function menuSkipIntro(){ try{ playSelect(); }catch(e){} document.getElementById('menuIntro').classList.add('hidden'); }
+// 허브에서 "메뉴"로 들어오면 타이틀 없이 곧바로 메뉴 화면
+// 저장된 BGM을 부드럽게 페이드인 (허브에서 넘어와도 자연스럽게)
+try{ const hubFadeIn=()=>{ try{ initAudio(); unlockMusic();
+    if(typeof musicBus!=='undefined' && musicBus){ const t=audioCtx.currentTime;
+      musicBus.gain.cancelScheduledValues(t); musicBus.gain.setValueAtTime(0.0001,t);
+      musicBus.gain.linearRampToValueAtTime(Math.max(0.0001,musicVol), t+1.2); } }catch(e){} };
+  window.addEventListener('load',()=>setTimeout(hubFadeIn,120));
+  document.addEventListener('pointerdown',hubFadeIn,{once:true});
+  document.addEventListener('touchstart',hubFadeIn,{once:true,passive:true}); }catch(e){}
+try{ if(/[?&]menu=1/.test(location.search)){
+  // 타이틀만 건너뛰고, 메뉴 앞의 편지(인트로) 화면은 원래대로 보여줌
+  const goMenu=()=>{ try{ const t=document.getElementById('titleScreen'); if(t) t.classList.add('hidden'); showMenu(); }catch(e){} };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',goMenu); else goMenu();
+  window.addEventListener('load',()=>setTimeout(goMenu,60)); } }catch(e){}
 function menuWifi(){ const n=document.getElementById('wifiNote'); if(n) n.classList.toggle('hidden'); }
 function langBarHTML(){ return MENU_LANGS.map(([k,l])=>`<button class="${menuLang===k?'active':''}" onclick="setMenuLang('${k}')">${l}</button>`).join(''); }
 function updateLangBars(){ document.querySelectorAll('.js-langbar').forEach(el=>el.innerHTML=langBarHTML());
@@ -6756,5 +6774,12 @@ addEventListener('keydown', function(e){
   <button id="bottomsClose" onclick="closeBottomsUp()" aria-label="Close">&#10005;</button>
   <iframe id="bottomsFrame" title="Bottoms Up" src="about:blank"></iframe>
 </div>
+
+<script>/* __recipeOnlyInGame */
+(function(){ var IN=["playing","intro","craft","levelup","tip","tipreward","notice"];
+  function sync(){ try{ var b=document.getElementById("recipeBtn"); if(!b) return;
+    b.style.display=(typeof state!=="undefined" && IN.indexOf(state)>=0)?"":"none"; }catch(e){} }
+  setInterval(sync,300); document.addEventListener("DOMContentLoaded",sync); })();
+</script>
 </body>
 </html>
