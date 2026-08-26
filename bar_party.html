@@ -96,6 +96,13 @@
   #tMain{ margin-bottom:0; }
   #tHandle{ margin-top:6px; }      /* 메인-부제 간격 30% 축소 */
   #tBest{ margin-top:4px; }
+  /* ★부제 2종: 글자색(크림+골드)에 맞춘 발광 — 어두운 배경에 묻히지 않게 (시작화면1 WELCOME HOME과 같은 방식) */
+  @keyframes titglow{
+    0%,100%{ filter:brightness(1.25) drop-shadow(0 4px 0 rgba(0,0,0,.55))
+      drop-shadow(0 0 7px rgba(255,231,170,.85)) drop-shadow(0 0 17px rgba(232,178,74,.6)); }
+    50%{ filter:brightness(1.5) drop-shadow(0 4px 0 rgba(0,0,0,.55))
+      drop-shadow(0 0 14px rgba(255,240,200,1)) drop-shadow(0 0 30px rgba(240,186,80,.95)); } }
+  #tHandle.land, #tBest.land{ animation:titglow 1.8s ease-in-out infinite; }
   #titleBtns{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; flex-wrap:wrap; }
   #titleGames{ width:100%; display:none; flex-direction:column; align-items:center; gap:6px; margin-top:12px;
     opacity:0; transform:translateY(18px); transition:opacity .5s ease, transform .5s cubic-bezier(.3,1.1,.4,1); }
@@ -107,10 +114,11 @@
     display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:0;
     padding:9px 10px calc(9px + env(safe-area-inset-bottom));
     background:linear-gradient(180deg, rgba(10,7,5,0) 0%, rgba(10,7,5,.88) 42%, rgba(10,7,5,.96) 100%); }
-  .sitebtn{ font-family:var(--pixfont); font-size:clamp(9px,2.6vw,12px); color:#1d1206;
-    background:linear-gradient(180deg,#e6b450,#b9832c); border:3px solid #000; box-shadow:0 4px 0 #000;
-    padding:12px 16px; cursor:pointer; letter-spacing:.5px; }
-  .sitebtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #000; }
+  .sitebtn{ background:none; border:0; padding:0; cursor:pointer; line-height:0;
+    -webkit-tap-highlight-color:transparent; transition:transform .05s; }
+  .sitebtn img{ width:clamp(104px,29vw,150px); height:auto; image-rendering:pixelated; display:block;
+    filter:drop-shadow(0 3px 0 rgba(0,0,0,.55)); }
+  .sitebtn:active{ transform:translateY(3px); }
   #moreTitle{ width:min(230px,58vw); image-rendering:pixelated; margin:20px 0 4px; }
   #decoCv{ position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
   .tdrop{ image-rendering:pixelated; opacity:0; transform:translateY(-130vh);
@@ -174,6 +182,33 @@
     border:3px solid #444; box-shadow:0 3px 0 #000; cursor:pointer; }
   #backBtn:active{ transform:translateY(3px); box-shadow:none; }
 </style>
+<script>/* __WEBP_SWAP: 큰 이미지는 WebP로 자동 대체 (미지원/실패 시 원본으로 폴백) */
+(function(){ var OK=false;
+  try{ OK=document.createElement("canvas").toDataURL("image/webp").indexOf("data:image/webp")===0; }catch(e){}
+  window.__WEBP_OK=OK; if(!OK) return;
+  var SET=new Set(["apple_happy","apple_shivering","apple_sleeping","apple_wink","bg_gangnam","boss_nobook_stand","bp_title_bg","bp_title_logo","campari_menu","cd_title","char_joe","char_minguk","char_pat","cl_cork","cl_run1","cl_run2","cl_run3","cl_run4","cl_run5","cl_skid","fg_gangnam","fp_bg","fp_bottle","fp_jigger","fp_logo","fp_rocks","fp_shot","fs_basket","fs_basket2","fs_basket3","fs_bigfly","fs_fly1","fs_fly2","hub_bar","hub_door1","hub_door2","ic_broke","ic_ice","ic_pick","minguk_head","ou_ck0","ou_ck1","ou_ck2","ou_ck3","ou_ck4","ou_ck5","ou_ck6","ou_ck7","ou_ck8","ou_ck9","ou_cu1","ou_cu2","ou_cu3","ou_cu4","ou_cu5","ou_cu6","ou_cu7","ou_cu8","ou_pos","paco_keyring","pick_sub","qt_cust1","qt_cust2","qt_cust3","qt_cust4","qt_cust5","qt_cust6","qt_cust7","qt_register","select_frame","sm_cap1","sm_cap2","sm_closed","sm_ice1","sm_ice2","sm_ice3","sm_logo","sq_basket","sq_board","sq_closed","sq_cup","sq_half","sq_lime","sq_open","sq_spent","sq_trash","st_glass","st_ice1","st_ice2","st_spoon","st_top","tc_cap","tc_env","tc_jar","tc_receipt","title_logo","world_map","ws_cover","ws_logo","ws_shot"]);
+  var P=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src");
+  function swap(u){
+    u=String(u);
+    var q=u.indexOf("?"); if(q>=0) return null;
+    var i=u.lastIndexOf("assets/"); if(i<0) return null;
+    var name=u.slice(i+7); if(name.indexOf("/")>=0) return null;
+    var d=name.lastIndexOf("."); if(d<0) return null;
+    var ext=name.slice(d+1).toLowerCase();
+    if(ext!=="png"&&ext!=="jpg"&&ext!=="jpeg") return null;
+    var base=name.slice(0,d); if(!SET.has(base)) return null;
+    return u.slice(0,i+7)+base+".webp";
+  }
+  Object.defineProperty(HTMLImageElement.prototype,"src",{ configurable:true, enumerable:P.enumerable,
+    get:function(){ return P.get.call(this); },
+    set:function(v){
+      var alt=null; try{ alt=this.__wpTried?null:swap(v); }catch(e){}
+      if(alt){ this.__wpTried=1; var self=this, orig=String(v);
+        this.addEventListener("error",function h(){ self.removeEventListener("error",h); P.set.call(self,orig); });
+        return P.set.call(this,alt); }
+      return P.set.call(this,v); } });
+})();
+</script>
 </head>
 <body>
 <div id="wrap">
@@ -220,8 +255,8 @@
     <button class="btn ghost" id="setBack"><span id="setBackTxt">← HOME</span></button>
   </div>
   <div id="siteRow">
-    <button class="sitebtn" id="btnSite">🌲 PINE&amp;CO</button>
-    <button class="sitebtn" id="btnMenu2">📖 MENU</button>
+    <button class="sitebtn" id="btnSite"><img src="assets/btn_pineco.png" alt="PINE&amp;CO"></button>
+    <button class="sitebtn" id="btnMenu2"><img src="assets/btn_menu2.png" alt="MENU"></button>
   </div>
   <button id="backBtn" class="hidden">✕</button>
 
@@ -311,15 +346,44 @@
   let titleIntroDone=false, introMuted=false;
   window.__gunLog=[]; window.__landLog=[];
   // 총성: 다운로드 폴더의 gun fire sound.mp3 사용 (동시 재생용 풀)
-  const GUNPOOL=[]; let gunIdx=0;
+  // ── 타이틀 낙하음: pong.mp3 안의 서로 다른 3개 소리를 순서대로 (1번째 타이틀→1번, 2번째→2번, 3번째→3번) ──
+  const PONG={ buf:null, segs:null, loading:false, fallback:[] };
+  try{ window.__PONG=PONG; }catch(e){}   // 검수용: 분할 구간 확인
+  let gunIdx=0;
+  function loadPong(){ const a=ac(); if(!a||PONG.buf||PONG.loading) return; PONG.loading=true;
+    fetch('assets/sfx_pong.mp3').then(r=>r.arrayBuffer()).then(b=>a.decodeAudioData(b)).then(buf=>{
+      PONG.buf=buf;
+      const d=buf.getChannelData(0), sr=buf.sampleRate, win=Math.floor(sr*0.01);
+      const loud=[]; for(let i=0;i+win<d.length;i+=win){ let sum=0,n=0;
+        for(let k=0;k<win;k+=4){ const v=d[i+k]; sum+=v*v; n++; } loud.push(Math.sqrt(sum/n)); }
+      const peak=Math.max.apply(null,loud), thr=peak*0.06;
+      const segs=[]; let st=-1;
+      for(let i=0;i<loud.length;i++){ if(loud[i]>thr){ if(st<0) st=i; }
+        else if(st>=0){ segs.push([st*win/sr, Math.min(buf.duration,(i+2)*win/sr)]); st=-1; } }
+      if(st>=0) segs.push([st*win/sr, buf.duration]);
+      const merged=[]; segs.forEach(sg=>{ const last=merged[merged.length-1];
+        if(last && sg[0]-last[1] < 0.12) last[1]=sg[1]; else merged.push([sg[0],sg[1]]); });
+      PONG.segs = merged.length>=3 ? merged.slice(0,3) : [[0,buf.duration]];
+    }).catch(()=>{ PONG.loading=false; });
+  }
+  // n번째 타이틀(0,1,2)에 해당하는 소리
   function gunShot(){ if(window.__mute) return;
-    window.__gunLog.push([Math.round(performance.now()), (AC&&AC.state)||'no-ac']);
-    try{ if(!GUNPOOL.length){ for(let i=0;i<3;i++){ const a=new Audio('assets/sfx_gunfire.mp3'); a.preload='auto'; GUNPOOL.push(a); } }
-      const a=GUNPOOL[gunIdx++%GUNPOOL.length];
-      a.currentTime=0; a.volume=1;
-      const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{ introMuted=true; });
+    const n=gunIdx++;
+    try{ window.__gunLog.push([Math.round(performance.now()), (AC&&AC.state)||'no-ac']); }catch(e){}
+    const a=ac();
+    if(a && PONG.buf && PONG.segs){
+      try{ const sg=PONG.segs[Math.min(n, PONG.segs.length-1)];
+        const src=a.createBufferSource(); src.buffer=PONG.buf;
+        const g=a.createGain(); g.gain.value=1; src.connect(g); g.connect(a.destination);
+        src.start(0, sg[0], Math.max(0.05, sg[1]-sg[0]+0.05)); return;
+      }catch(e){}
+    }
+    // 폴백: 디코딩 전이면 파일 전체를 짧게 (드물게 첫 타이틀에서만)
+    try{ const el=new Audio('assets/sfx_pong.mp3'); el.volume=1;
+      const p=el.play(); if(p&&p.catch) p.catch(()=>{ introMuted=true; });
+      setTimeout(()=>{ try{ el.pause(); }catch(e){} }, 700);
     }catch(err){ introMuted=true; } }
-  function titleIntro(){
+  function titleIntro(){ gunIdx=0; try{ loadPong(); }catch(e){}
     const A=ac();
     // 오디오가 아직 잠겨 있으면(자동재생 차단) 첫 입력까지 기다렸다가 총성과 함께 시작
     if(!A || A.state!=='running'){
@@ -422,7 +486,7 @@
   // iOS는 Audio.volume이 무시되므로 WebAudio GainNode로 볼륨을 제어 (설정 슬라이더 실동작)
   const BGM={ cur:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6') };
   function bgmVol(){ return window.__mute?0:BGM.vol; }
-  function mkTrack(url,loop){ const a=new Audio(url); a.loop=!!loop; let g=null;
+  function mkTrack(url,loop){ const a=new Audio(); a.preload='auto'; a.loop=!!loop; a.src=url; let g=null;
     const c=ac(); if(c){ try{ const s=c.createMediaElementSource(a); g=c.createGain(); s.connect(g); g.connect(c.destination); }catch(e){ g=null; } }
     if(g){ a.volume=1; } return {a,g}; }
   function trkGet(t){ return t.g?t.g.gain.value:t.a.volume; }
@@ -452,7 +516,7 @@
     step(); }
   function bgmApplyVol(){ if(BGM.cur) trkSet(BGM.cur,bgmVol()); }
   const bgmKick=()=>{ ac();
-    if(introMuted){ introMuted=false; gunShot(); flash('#fff2c8'); }   // 자동재생 차단됐던 경우 첫 탭에 총성
+    if(introMuted){ introMuted=false; gunIdx=0; gunShot(); flash('#fff2c8'); }   // 자동재생 차단됐던 경우 첫 탭에 총성
     if(titleIntroDone && !$('title').classList.contains('hidden')) playTitleBgm(true);
     if(titleIntroDone) document.removeEventListener('pointerdown',bgmKick); };
   document.addEventListener('pointerdown',bgmKick);
@@ -610,7 +674,7 @@
     window.__sbOrder.forEach((gi,pos)=>{ const g=GAMES[gi]; const key=FR_ORDER[pos%5];
       const b=document.createElement('button'); b.className='gcard';
       const slug=g.name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-      b.innerHTML='<img class="shot" src="assets/thumb_'+slug+'.jpg" alt="">'
+      b.innerHTML='<img class="shot" loading="lazy" decoding="async" src="assets/thumb_'+slug+'.jpg" alt="">'
         +'<img class="frame" src="assets/gf_'+key+'.png" alt="">'
         +'<div class="txt"><div class="gname"></div><div class="gdesc"></div></div>';
       b.querySelector('.gname').textContent=g.name;
@@ -627,8 +691,7 @@
     const a=$('btnSite'), b=$('btnMenu2');
     if(a) a.onclick=()=>go('index.html');
     if(b) b.onclick=()=>go('defense.html?menu=1');
-    if(a) a.textContent='🌲 PINE&CO';
-    if(b) b.textContent='📖 '+T('menuBtn');
+    const bi=b&&b.querySelector('img'); if(bi) bi.alt=T('menuBtn');
   }
   function buildMore(){ const w=$('sbwrap3'); if(!w) return; w.innerHTML=''; w.style.gridTemplateColumns='1fr';
     // MORE GAMES 는 이미지 사용
@@ -675,6 +738,7 @@
     el.style.display='none';
     loadLogo(pfx,()=>{ if(GLOGO[pfx]&&!$('game').classList.contains('hidden')){ el.src=GLOGO[pfx]; el.style.display='block'; } }); }
   function playSandbox(i){ $('hud').classList.add('hidden'); show('game'); stage.innerHTML='';
+    warmGame(GAMES[i].name);   // ★HOW TO PLAY 보는 동안 이 게임 에셋만 미리 받는다
     const my=++runToken;
     showHowto(GAMES[i].name,()=>{ if(my!==runToken) return; let done=false;
       showGameLogo(GAMES[i].name);
@@ -2502,10 +2566,27 @@
   fitVH(); setTimeout(fitVH,400); setTimeout(fitVH,1500);
   // 프리로드: 타이틀/리스트 필수분만 즉시, 게임 에셋은 지연 워밍 (각 게임은 진입 시 자기 로더 호출)
   frLoad();
-  setTimeout(()=>{ [...new Set(Object.values(GLOGO_PFX))].forEach(p=>loadLogo(p)); },1800); // 게임 로고 선로딩 (start 탭 즉시 표시)
-  setTimeout(()=>{ fpLoad(); icLoad(); tcLoad(); },2500);
-  setTimeout(()=>{ qtLoad(); clLoad(); smLoad(); },6500);
-  setTimeout(()=>{ stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); },11000);
+  // ★로딩 최적화: 시작 화면에서 11개 게임 에셋(약 31MB)을 전부 받던 것을 중단.
+  //   휴대폰/저속 회선에서는 선워밍을 아예 하지 않고, 게임을 고른 순간(HOW TO PLAY 표시 중) 그 게임 것만 받는다.
+  // 게임 이름 → 접두어(GLOGO_PFX) → 그 게임 전용 로더. 이름을 새로 적지 않으므로 오타로 빠질 일이 없다.
+  const PFX_LOADER={ fp:()=>fpLoad(), st:()=>stLoad(), ic:()=>icLoad(), cl:()=>clLoad(), sm:()=>smLoad(),
+    qt:()=>qtLoad(), ou:()=>ouLoad(), ws:()=>wsLoad(), sq:()=>sqLoad(), tc:()=>tcLoad(), fs:()=>fsLoad() };
+  function warmGame(name){
+    try{ fpLoad(); }catch(e){}                       // 잔/배경 등 모든 게임 공용
+    const p=GLOGO_PFX[name];
+    if(p){ try{ loadLogo(p); }catch(e){} const f=PFX_LOADER[p]; if(f){ try{ f(); }catch(e){} } } }
+  const SLOW=(()=>{ try{
+      const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+      if(c&&(c.saveData||/2g|3g/.test(c.effectiveType||''))) return true;
+      return matchMedia('(pointer:coarse)').matches || innerWidth<820;   // 휴대폰/태블릿
+    }catch(e){ return true; } })();
+  if(!SLOW){   // 데스크톱만 여유 있게 선워밍 (첫 화면 표시를 방해하지 않도록 늦춤)
+    const idle=window.requestIdleCallback||(f=>setTimeout(f,1));
+    setTimeout(()=>idle(()=>{ [...new Set(Object.values(GLOGO_PFX))].forEach(p=>loadLogo(p)); }),4000);
+    setTimeout(()=>idle(()=>{ fpLoad(); icLoad(); tcLoad(); }),9000);
+    setTimeout(()=>idle(()=>{ qtLoad(); clLoad(); smLoad(); }),18000);
+    setTimeout(()=>idle(()=>{ stLoad(); fsLoad(); ouLoad(); wsLoad(); sqLoad(); }),28000);
+  }
   // 타이틀 3종은 투명 원본 그대로 사용 (드롭 인 연출은 titleIntro)
   (function(){
     // 게임 선택 화면 타이틀(투명 재작업본 그대로) / 리본(흰 배경이라 키잉)

@@ -813,6 +813,33 @@
   .char.pat .pips i.on{ background:var(--red); box-shadow:0 0 0 1px #000, 0 0 4px var(--red); }
   .char.joe .pips i.on{ background:var(--amber); box-shadow:0 0 0 1px #000, 0 0 4px var(--amber); }
 </style>
+<script>/* __WEBP_SWAP: 큰 이미지는 WebP로 자동 대체 (미지원/실패 시 원본으로 폴백) */
+(function(){ var OK=false;
+  try{ OK=document.createElement("canvas").toDataURL("image/webp").indexOf("data:image/webp")===0; }catch(e){}
+  window.__WEBP_OK=OK; if(!OK) return;
+  var SET=new Set(["apple_happy","apple_shivering","apple_sleeping","apple_wink","bg_gangnam","boss_nobook_stand","bp_title_bg","bp_title_logo","campari_menu","cd_title","char_joe","char_minguk","char_pat","cl_cork","cl_run1","cl_run2","cl_run3","cl_run4","cl_run5","cl_skid","fg_gangnam","fp_bg","fp_bottle","fp_jigger","fp_logo","fp_rocks","fp_shot","fs_basket","fs_basket2","fs_basket3","fs_bigfly","fs_fly1","fs_fly2","hub_bar","hub_door1","hub_door2","ic_broke","ic_ice","ic_pick","minguk_head","ou_ck0","ou_ck1","ou_ck2","ou_ck3","ou_ck4","ou_ck5","ou_ck6","ou_ck7","ou_ck8","ou_ck9","ou_cu1","ou_cu2","ou_cu3","ou_cu4","ou_cu5","ou_cu6","ou_cu7","ou_cu8","ou_pos","paco_keyring","pick_sub","qt_cust1","qt_cust2","qt_cust3","qt_cust4","qt_cust5","qt_cust6","qt_cust7","qt_register","select_frame","sm_cap1","sm_cap2","sm_closed","sm_ice1","sm_ice2","sm_ice3","sm_logo","sq_basket","sq_board","sq_closed","sq_cup","sq_half","sq_lime","sq_open","sq_spent","sq_trash","st_glass","st_ice1","st_ice2","st_spoon","st_top","tc_cap","tc_env","tc_jar","tc_receipt","title_logo","world_map","ws_cover","ws_logo","ws_shot"]);
+  var P=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src");
+  function swap(u){
+    u=String(u);
+    var q=u.indexOf("?"); if(q>=0) return null;
+    var i=u.lastIndexOf("assets/"); if(i<0) return null;
+    var name=u.slice(i+7); if(name.indexOf("/")>=0) return null;
+    var d=name.lastIndexOf("."); if(d<0) return null;
+    var ext=name.slice(d+1).toLowerCase();
+    if(ext!=="png"&&ext!=="jpg"&&ext!=="jpeg") return null;
+    var base=name.slice(0,d); if(!SET.has(base)) return null;
+    return u.slice(0,i+7)+base+".webp";
+  }
+  Object.defineProperty(HTMLImageElement.prototype,"src",{ configurable:true, enumerable:P.enumerable,
+    get:function(){ return P.get.call(this); },
+    set:function(v){
+      var alt=null; try{ alt=this.__wpTried?null:swap(v); }catch(e){}
+      if(alt){ this.__wpTried=1; var self=this, orig=String(v);
+        this.addEventListener("error",function h(){ self.removeEventListener("error",h); P.set.call(self,orig); });
+        return P.set.call(this,alt); }
+      return P.set.call(this,v); } });
+})();
+</script>
 </head>
 <body>
 <div id="wrap">
