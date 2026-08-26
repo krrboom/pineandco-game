@@ -2492,13 +2492,13 @@ function fadeOutMusicAndGo(url){
     const t=audioCtx.currentTime; musicBus.gain.cancelScheduledValues(t);
     musicBus.gain.setValueAtTime(musicBus.gain.value||musicVol,t);
     musicBus.gain.linearRampToValueAtTime(0.0001,t+0.55); } }catch(e){}
-  setTimeout(function(){ location.href=url; },600);
+  setTimeout(function(){ location.href=url; },180);
 }
 function goReserve(){ try{ playSelect&&playSelect(); }catch(e){}
   var url="https://pineandco-reserve.onrender.com";
   try{ var w=window.open(url,"_blank"); if(!w||w.closed) location.href=url; }catch(e){ location.href=url; }
   return false; }
-function goHappyHour(){ try{ playSelect&&playSelect(); }catch(e){} fadeOutMusicAndGo("bar_party.html"); return false; }
+function goHappyHour(){ try{ playSelect&&playSelect(); }catch(e){} fadeOutMusicAndGo("bar_party.html?go=1"); return false; }
 function openAboutPage(){ try{ playSelect&&playSelect(); }catch(e){} try{ var w=window.open('about.html','_blank'); if(!w||w.closed||typeof w.closed==='undefined') location.href='about.html'; }catch(e){ location.href='about.html'; } return false; }
 // ★손가락 조준: 화면마다 손끝→로고의 '&·C 사이'를 향해 회전 + 바브를 그 방향으로. 어느 기기에서도 정확히 가리킴.
 /* ★손가락 각도는 CSS 고정값(--fdeg:37deg)으로만 처리 → JS 재조준 제거(로딩 후 각도/위치 바뀜 원천 차단). */
@@ -6831,6 +6831,15 @@ addEventListener('keydown', function(e){
   var playing = (typeof state!=="undefined") && (state==="play"||state==="playing"||state==="game");
   b.style.display = playing ? "" : "none"; }catch(e){} }
   setInterval(sync,300); document.addEventListener("DOMContentLoaded",sync); })();
+</script>
+
+<script>/* __PREFETCH_HH: 시작화면2를 미리 받아두어 START가 즉시 뜨게 */
+(function(){ function pf(){ ["bar_party.html?go=1","assets/bp_t1_main.webp","assets/bp_t2_handle.webp",
+   "assets/bp_t3_best.webp","assets/sfx_pong.mp3","assets/bp_btn_rank.webp","assets/bp_btn_set.webp"].forEach(function(u){
+     var l=document.createElement("link"); l.rel="prefetch"; l.href=u; document.head.appendChild(l); }); }
+  var go=function(){ (window.requestIdleCallback||function(f){setTimeout(f,1200);})(pf); };
+  if(document.readyState==="complete") go(); else addEventListener("load",go);
+})();
 </script>
 </body>
 </html>

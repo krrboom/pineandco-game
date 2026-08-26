@@ -417,6 +417,8 @@
       setTimeout(()=>{ try{ el.pause(); }catch(e){} }, 700);
     }catch(err){ introMuted=true; } }
   function titleIntro(){ gunIdx=0;
+    // 시작화면1에서 START를 눌러 넘어온 경우엔 기다리지 않고 바로 시작한다 (?go=1)
+    try{ if(!window.__introGo && location.search.indexOf('go=1')>=0) window.__introGo=true; }catch(e){}
     const A=AC;   // ★이미 만들어진 것만 확인. 여기서 새로 만들면 iOS에서 suspended로 굳어 인트로가 영원히 안 시작된다.
     // 오디오가 아직 잠겨 있으면(자동재생 차단) 첫 입력까지 기다렸다가 총성과 함께 시작
     if(!window.__introGo && (!A || A.state!=='running')){
@@ -432,7 +434,7 @@
         // 소리 없이 오래 기다리지 않도록: 2.4초 뒤에는 그냥 진행
         setTimeout(()=>{ if(window.__introWait){ window.__introWait=false; window.__introGo=true;   // 2.4초 뒤엔 소리 없이라도 진행
           document.removeEventListener('pointerdown',kick); document.removeEventListener('touchstart',kick);
-          document.removeEventListener('keydown',kick); titleIntro(); } },2400);
+          document.removeEventListener('keydown',kick); titleIntro(); } },900);
         return; }
       return;   // 이미 대기 중이면 중복 등록하지 않고 종료
     }
