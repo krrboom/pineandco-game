@@ -588,6 +588,8 @@
   .imgbtn:hover .btnimg{ filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55)) drop-shadow(0 0 13px rgba(111,207,143,.6)); }
   .cap.blink{ animation:blink 1s steps(1) infinite; }
   .backbtn .btnimg{ width:clamp(120px,32vw,185px); }
+  .selBtnRow{ display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap; }
+  .selBtnRow .backbtn{ margin:0; }
   /* 시작화면 하단 작은 부제목 버튼 (HIGHSCORE / BOTTOMS UP / MONSTER INDEX) */
   .sub-btn-row{ gap:clamp(8px,3vw,20px); margin-top:0; }
   /* 두 버튼 동일 캔버스(260x94)로 슬라이스됨 → 같은 width면 크기 동일. START/MENU(132~205)보다 작게. */
@@ -964,7 +966,7 @@
       <button class="bt-tab" id="hellToggleBtn" onclick="toggleHellBoard()" style="border-color:#a33;color:#e88">🔥 HELL</button>
     </div>
     <div class="board board-out" id="boardListHi"></div>
-    <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
+    <button class="imgbtn backbtn" onclick="hiBack()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
   </div>
 
   <!-- PINE&CO INDEX 화면 제거: 내용은 게임 중 📖(RECIPE BOOK)의 탭으로 통합됨(#mindexList는 recipePanel 안으로 이동) -->
@@ -1006,7 +1008,10 @@
         </div>
       </div>
     </div>
-    <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
+    <div class="selBtnRow">
+      <button class="imgbtn backbtn" onclick="backToTitle()"><img class="btnimg" src="assets/back_btn.png" alt="BACK"></button>
+      <button class="imgbtn backbtn" id="selHiBtn" onclick="openHighscore('select')"><img class="btnimg" src="assets/btn_highscore.png" alt="HIGHSCORE"></button>
+    </div>
   </div>
 
   <!-- 세계 바텐더 선택(준비중): 세계지도 픽셀 이미지 위에 해외 바텐더들이 올라갈 예정 -->
@@ -2322,7 +2327,8 @@ document.querySelectorAll('.ava').forEach(av=> drawSprite(av.getContext('2d'), a
 function show(id){ const e=document.getElementById(id); if(e) e.classList.remove('hidden'); if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }   // ★null 안전 + 코너 갱신
 function hide(id){ const e=document.getElementById(id); if(e) e.classList.add('hidden'); if(typeof refreshAppleCorner==='function') refreshAppleCorner(); }      // ★null 안전 + 코너 갱신
 function hideAllScreens(){ ['titleScreen','selectScreen','worldScreen','introScreen','menuScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen'].forEach(hide); }   // indexScreen 제거(📖로 통합됨)
-function openHighscore(){ initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
+function hiBack(){ if(window.__hiFrom==='select'){ window.__hiFrom=null; goSelect(); } else backToTitle(); }
+function openHighscore(from){ window.__hiFrom=(from==='select')?'select':'title'; initAudio(); playSelect(); state='highscore'; hideAllScreens(); hide('hud'); hide('pauseBtn'); hide('hudChips'); hide('statPanel'); hide('ultBtn'); hide('dashBtn');
   boardHell=false;   // ★기본은 일반 모드 방명록(순위 없음)이 먼저 보임
   applyBoardMode(); show('highscoreScreen'); }
 function openIndex(){ openRecipe(); showRecTab('monsters'); }   // INDEX는 이제 📖(RECIPE BOOK) 안 탭으로 통합됨(안전 별칭)

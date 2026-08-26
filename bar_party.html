@@ -625,7 +625,7 @@
     const go=(url)=>{ ac(); beep(700,0.08); try{ stopBgm(500); }catch(e){}
       setTimeout(()=>{ location.href=url; },260); };
     const a=$('btnSite'), b=$('btnMenu2');
-    if(a) a.onclick=()=>go('home.html');
+    if(a) a.onclick=()=>go('index.html');
     if(b) b.onclick=()=>go('defense.html?menu=1');
     if(a) a.textContent='🌲 PINE&CO';
     if(b) b.textContent='📖 '+T('menuBtn');
