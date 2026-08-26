@@ -199,11 +199,12 @@
   #backBtn:active{ transform:translateY(3px); box-shadow:none; }
 </style>
 <script>/* __WEBP_SWAP: 큰 이미지는 WebP로 자동 대체 (미지원/실패 시 원본으로 폴백) */
-(function(){ var OK=false;
+(function(){ try{ var OK=false;
   try{ OK=document.createElement("canvas").toDataURL("image/webp").indexOf("data:image/webp")===0; }catch(e){}
   window.__WEBP_OK=OK; if(!OK) return;
   var SET=new Set(["apple_angry","apple_confused","apple_determined","apple_happy","apple_happygrin","apple_neutral","apple_sad","apple_scared","apple_shivering","apple_sleeping","apple_surprised","apple_wink","apple_wink2","back_btn","bg_freepour","bg_gangnam","bg_icecarving","bg_logo","bg_map","bg_orderup","bg_shake","book_btn","book_line1","boss_nobook_icon","boss_nobook_stand","bp_btn_rank","bp_btn_set","bp_btn_start","bp_t1_main","bp_t2_handle","bp_t3_best","bp_title_bg","bp_title_deco","bp_title_logo","btn_happyhour","btn_menu","btn_menu2","btn_pineco","btn_start","campari_menu","cd_title","cframe_big","char_joe","char_minguk","char_pat","cinfo_big","cl_cork","cl_logo","cl_run1","cl_run2","cl_run3","cl_run4","cl_run5","cl_skid","drunk_0","drunk_1","drunk_2","drunk_3","fg_gangnam","finger_point","fp_bg","fp_bottle","fp_jigger","fp_logo","fp_rocks","fp_shot","fr_amber","fr_blue","fr_green","fr_purple","fr_red","fs_basket","fs_basket2","fs_basket3","fs_bigfly","fs_fly1","fs_fly2","gf_amber","gf_blue","gf_green","gf_purple","gf_red","home_always","home_welcome","hp_how","hp_play","hp_to","hub_bar","hub_choice","hub_door1","hub_door2","hub_door3","hub_gate","hub_ring","hub_title","hub_wh","ic_broke","ic_ice","ic_logo","ic_pick","levelup_banner","logo_cricket","minguk_head","more_games","ou_ck0","ou_ck1","ou_ck2","ou_ck3","ou_ck4","ou_ck5","ou_ck6","ou_ck7","ou_ck8","ou_ck9","ou_cu1","ou_cu2","ou_cu3","ou_cu4","ou_cu5","ou_cu6","ou_cu7","ou_cu8","ou_pos","paco_gacha","paco_keyring","paco_voucher","photo_olive","pick_sub","pick_title","promo_hennessy","qt_bg","qt_cust1","qt_cust2","qt_cust3","qt_cust4","qt_cust5","qt_cust6","qt_cust7","qt_logo","qt_receipt","qt_register","records_ribbon","select_frame","selfie","sm_cap1","sm_cap2","sm_closed","sm_ice1","sm_ice2","sm_ice3","sm_logo","sq_basket","sq_board","sq_closed","sq_cup","sq_half","sq_lime","sq_logo","sq_open","sq_spent","sq_trash","st_glass","st_ice1","st_ice2","st_logo","st_spoon","st_top","subtitle_cd","tc_cap","tc_env","tc_jar","tc_logo","tc_receipt","title_duo","title_logo","top_record","txt_press_start","world_map","ws_cover","ws_logo","ws_shot"]);
   var P=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src");
+  if(!P || typeof P.set!=="function" || typeof P.get!=="function") return;   // 구형/특이 브라우저 방어
   function swap(u){
     u=String(u);
     var q=u.indexOf("?"); if(q>=0) return null;
@@ -223,6 +224,7 @@
         this.addEventListener("error",function h(){ self.removeEventListener("error",h); P.set.call(self,orig); });
         return P.set.call(this,alt); }
       return P.set.call(this,v); } });
+  }catch(e){ /* 스왑 실패해도 원본 이미지로 정상 동작 */ }
 })();
 </script>
 </head>
@@ -399,24 +401,27 @@
       const p=el.play(); if(p&&p.catch) p.catch(()=>{ introMuted=true; });
       setTimeout(()=>{ try{ el.pause(); }catch(e){} }, 700);
     }catch(err){ introMuted=true; } }
-  function titleIntro(){ gunIdx=0; try{ loadPong(); }catch(e){}
-    const A=ac();
+  function titleIntro(){ gunIdx=0;
+    const A=AC;   // ★이미 만들어진 것만 확인. 여기서 새로 만들면 iOS에서 suspended로 굳어 인트로가 영원히 안 시작된다.
     // 오디오가 아직 잠겨 있으면(자동재생 차단) 첫 입력까지 기다렸다가 총성과 함께 시작
-    if(!A || A.state!=='running'){
+    if(!window.__introGo && (!A || A.state!=='running')){
       if(!window.__introWait){ window.__introWait=true;
         const kick=()=>{ document.removeEventListener('pointerdown',kick);
           document.removeEventListener('touchstart',kick); document.removeEventListener('keydown',kick);
-          window.__introWait=false; try{ ac(); }catch(e){}
+          window.__introWait=false; window.__introGo=true;   // 한 번 만졌으면 그 뒤로는 무조건 진행
+          try{ ac(); }catch(e){} try{ loadPong(); }catch(e){}
           ['tMain','tHandle','tBest'].forEach(id=>{ const el=$(id); if(el){ el.classList.remove('land','hit'); void el.offsetWidth; } });
           setTimeout(titleIntro,60); };
         document.addEventListener('pointerdown',kick); document.addEventListener('touchstart',kick,{passive:true});
         document.addEventListener('keydown',kick);
         // 소리 없이 오래 기다리지 않도록: 2.4초 뒤에는 그냥 진행
-        setTimeout(()=>{ if(window.__introWait){ window.__introWait=false;
+        setTimeout(()=>{ if(window.__introWait){ window.__introWait=false; window.__introGo=true;   // 2.4초 뒤엔 소리 없이라도 진행
           document.removeEventListener('pointerdown',kick); document.removeEventListener('touchstart',kick);
           document.removeEventListener('keydown',kick); titleIntro(); } },2400);
         return; }
+      return;   // 이미 대기 중이면 중복 등록하지 않고 종료
     }
+    try{ loadPong(); }catch(e){}   // 소리는 여기서 준비 (제스처 이후)
     const seq=[['tMain',300],['tHandle',760],['tBest',1220]];
     seq.forEach(([id,delay])=>{ setTimeout(()=>{ const el=$(id); if(!el) return;
       el.classList.add('land');
