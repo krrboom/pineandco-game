@@ -1,0 +1,83 @@
+<div id="hh_wrap">
+  <div id="hh_hud" class="hidden"><div><div class="who" id="hh_hudWho">PLAYER 1</div><div class="rd" id="hh_hudRd">ROUND 1/5</div></div><div class="sc" id="hh_hudSc">0</div></div>
+  <div class="flash" id="hh_flash"></div>
+
+  <div id="hh_title" class="screen">
+    <canvas id="hh_decoCv"></canvas>
+    <img class="tdrop" id="hh_tMain" src="assets/bp_t1_main.webp" onerror="this.onerror=null;this.src='assets/bp_t1_main.png'" alt="BARTENDER'S HAPPY HOUR" style="width:min(340px,86vw)">
+    <img class="tdrop" id="hh_tHandle" src="assets/bp_t2_handle.webp" onerror="this.onerror=null;this.src='assets/bp_t2_handle.png'" alt="CAN YOU HANDLE THE BAR?" style="width:min(300px,78vw)">
+    <img class="tdrop" id="hh_tBest" src="assets/bp_t3_best.webp" onerror="this.onerror=null;this.src='assets/bp_t3_best.png'" alt="BE THE BEST BARTENDER" style="width:min(250px,64vw)">
+    <div id="hh_titleBtns">
+      <button class="btn" id="hh_rankBtn">🏆 RANKING</button>
+      <button class="btn ghost" id="hh_setBtn">⚙ SETTINGS</button>
+      <img id="hh_rankImg" class="imgbtn" alt="RANKING" style="width:min(168px,44vw)">
+      <img id="hh_setImg" class="imgbtn" alt="SETTINGS" style="width:min(168px,44vw)">
+    </div>
+    <div id="hh_titleGames">
+      <img id="hh_pickSub2" src="assets/records_ribbon.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/records_ribbon.png'" alt="SET YOUR RECORDS!">
+      <div class="sbwrap" id="hh_sbwrap2"></div>
+      <img id="hh_moreTitle" src="assets/more_games.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/more_games.png'" alt="MORE GAMES">
+      <div class="sbwrap" id="hh_sbwrap3"></div>
+    </div>
+  </div>
+
+  <div id="hh_rank" class="screen hidden" style="justify-content:flex-start">
+    <div class="mgtitle" id="hh_rankTitleTxt">🏆 RANKING</div>
+    <div class="mghint" id="hh_rankHintTxt">Top 5 per game</div>
+    <div class="sbwrap" id="hh_rankWrap" style="grid-template-columns:1fr"></div>
+    <button class="btn ghost" id="hh_rankBack"><span id="hh_rankBackTxt">← HOME</span></button>
+  </div>
+
+  <div id="hh_setting" class="screen hidden">
+    <div class="mgtitle" id="hh_setTitleTxt">⚙ SETTINGS</div>
+    <div class="kr" id="hh_setLangLbl" style="font-size:11px;color:var(--dim)">LANGUAGE</div>
+    <div id="hh_langRow">
+      <button class="lgbtn" data-l="ko">한국어</button>
+      <button class="lgbtn" data-l="en">ENGLISH</button>
+      <button class="lgbtn" data-l="ja">日本語</button>
+      <button class="lgbtn" data-l="zh">中文</button>
+    </div>
+    <div class="kr" id="hh_setVolLbl" style="font-size:11px;color:var(--dim)">BGM VOLUME</div>
+    <input type="range" id="hh_setVol" min="0" max="100" style="width:220px">
+    <button class="btn ghost" id="hh_setBack"><span id="hh_setBackTxt">← HOME</span></button>
+  </div>
+  <div id="hh_siteRow">
+    <button class="sitebtn" id="hh_btnSite"><img src="assets/btn_pineco.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/btn_pineco.png'" alt="PINE&amp;CO"></button>
+    <button class="sitebtn" id="hh_btnMenu2"><img src="assets/btn_menu2.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/btn_menu2.png'" alt="MENU"></button>
+  </div>
+  <button id="hh_backBtn" class="hidden">✕</button>
+
+
+  <div id="hh_turn" class="screen hidden">
+    <div class="mgtitle" id="hh_turnWho">PLAYER 1</div>
+    <p class="desc" id="hh_turnMsg">Press when ready</p>
+    <button class="btn" id="hh_turnBtn">READY!</button>
+  </div>
+
+  <div id="hh_game" class="screen hidden"><img id="hh_gameLogo" alt=""><div id="hh_stage"></div></div>
+
+  <div id="hh_howto" class="hidden">
+    <div id="hh_htWords">
+      <img class="htw" id="hh_htHow" src="assets/hp_how.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/hp_how.png'" alt="HOW">
+      <img class="htw" id="hh_htTo" src="assets/hp_to.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/hp_to.png'" alt="TO">
+      <img class="htw" id="hh_htPlay" src="assets/hp_play.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/hp_play.png'" alt="PLAY">
+    </div>
+    <div class="ht-panel"><div class="ht-name" id="hh_htName"></div><div class="ht-desc" id="hh_htDesc"></div><div class="ht-tap" id="hh_htTapTxt">TAP TO START!</div></div>
+  </div>
+
+  <div id="hh_roundResult" class="screen hidden">
+    <div class="rate" id="hh_rrRate">GOOD</div><div class="addscore" id="hh_rrAdd">+72</div>
+    <div id="hh_rrNameLbl" style="font-size:9px;color:var(--dim)">YOUR NAME</div>
+    <input id="hh_rrName" maxlength="8" style="font-family:var(--pixfont);font-size:14px;text-transform:uppercase;width:170px;text-align:center;padding:10px;background:#000;color:var(--amber);border:3px solid #333">
+    <button class="btn amber" id="hh_rrSubmit"><span id="hh_rrSubmitTxt">🏆 SUBMIT RANK</span></button>
+    <div id="hh_rrStatus" style="font-family:var(--pixfont);font-size:9px;color:#6fcf8f;min-height:14px"></div>
+    <button class="btn ghost" id="hh_rrDone"><span id="hh_rrDoneTxt">OK</span></button>
+  </div>
+
+  <div id="hh_final" class="screen hidden">
+    <h1 style="font-size:clamp(16px,5vw,26px)">RESULTS</h1>
+    <div class="rank" id="hh_rankList"></div>
+    <button class="btn amber" id="hh_againBtn">PLAY AGAIN</button>
+    <button class="btn ghost" id="hh_homeBtn">HOME</button>
+  </div>
+</div>
