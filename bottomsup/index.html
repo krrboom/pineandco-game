@@ -108,6 +108,7 @@
   function applySoundIcon(){ var b=document.getElementById('soundBtn'); if(!b) return;
     var m=buMuted(); b.textContent=m?'🔇':'🔊'; b.classList.toggle('off',m); }
   function applyMuteToChild(){ try{ var w=frame.contentWindow, doc=frame.contentDocument, m=buMuted();
+    if(typeof buBgm!=='undefined' && buBgm) buBgm.muted=m;
     if(doc) doc.querySelectorAll('audio,video').forEach(function(a){ a.muted=m; });
     if(w && typeof w.__buApplyMute==='function') w.__buApplyMute(m);   // 게임이 제공한 훅(있으면)
   }catch(e){} }
@@ -117,6 +118,23 @@
     try{ window.parent.postMessage({type:'buMute', muted:m}, '*'); }catch(e){}   // 메인게임 Bottoms Up 음악도 음소거
   }
   applySoundIcon();
+  // ===== 배경음 (예전엔 부모 페이지가 틀어주던 곡. 해피아워에서 바로 들어와도 나오게 자체 재생) =====
+  var buBgm=null;
+  function buStartBgm(){
+    if(buBgm) { if(buBgm.paused && !buMuted()) { try{ buBgm.play(); }catch(e){} } return; }
+    try{
+      buBgm=new Audio('../assets/music_bottomsup.mp3?v2');
+      buBgm.loop=true; buBgm.volume=0; buBgm.muted=buMuted();
+      var p=buBgm.play();
+      var fadeIn=function(){ var v=0; var id=setInterval(function(){ v+=0.05;
+        try{ buBgm.volume=Math.min(0.45,v); }catch(e){}
+        if(v>=0.45) clearInterval(id); },60); };
+      if(p&&p.then) p.then(fadeIn).catch(function(){ buBgm=null; }); else fadeIn();
+    }catch(e){ buBgm=null; }
+  }
+  ['pointerdown','touchstart','click','keydown'].forEach(function(ev){
+    document.addEventListener(ev, buStartBgm, {capture:true, passive:true}); });
+  buStartBgm();   // 자동재생이 허용되면 바로, 막히면 첫 터치에
   frame.addEventListener('load', applyMuteToChild);   // 미니게임 로드될 때마다 현재 설정 반영
   function openGame(src){
     frame.setAttribute('src', src);

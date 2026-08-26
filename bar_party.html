@@ -324,7 +324,7 @@
     const bb=$('backBtn'); if(bb) bb.classList.toggle('hidden', id==='title'||id==='roundResult');
     syncSiteRow(id);
     if(id!=='game'){ const gl=$('gameLogo'); if(gl) gl.style.display='none'; }
-    if(id==='title'&&titleIntroDone) playTitleBgm(true); }
+    if(id==='title'&&titleIntroDone) playTitleBgm(); }
   let runToken=0;
 
   // ── 얼음 사운드 (다운로드 폴더 mp3 사용) ──
@@ -376,7 +376,18 @@
   PONG.bytes = (function(){ try{ const bin=atob(PONG_B64); const u=new Uint8Array(bin.length);
     for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return Promise.resolve(u.buffer);
   }catch(e){ return fetch('assets/sfx_pong3.mp3').then(r=>r.arrayBuffer()).catch(()=>null); } })();
-  function loadPong(){ const a=ac(); if(!a||PONG.buf||PONG.loading) return; PONG.loading=true;
+  PONG.pre={};
+  (function(){ try{
+    const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext; if(!OAC) return;
+    PONG.bytes.then(b=>{ if(!b) return;
+      [48000,44100].forEach(sr=>{ try{ const oc=new OAC(1,1,sr);
+        oc.decodeAudioData(b.slice(0)).then(buf=>{ PONG.pre[sr]=buf; }).catch(()=>{});
+      }catch(e){} }); });
+  }catch(e){} })();
+  function loadPong(){ const a=ac(); if(!a||PONG.buf||PONG.loading) return;
+    const pre=PONG.pre&&PONG.pre[a.sampleRate];
+    if(pre){ PONG.buf=pre; PONG.segs=PONG.fixedSegs; return; }   // 미리 디코딩해 둔 것 즉시 사용
+    PONG.loading=true;
     PONG.bytes.then(b=>{ if(!b) throw 0; return a.decodeAudioData(b.slice(0)); }).then(buf=>{
       PONG.buf=buf; PONG.segs=PONG.fixedSegs; return;
       /* eslint-disable */
@@ -414,7 +425,7 @@
     // 아직 디코딩 전이면 준비되는 대로 그 순번 소리를 낸다 (최대 1.2초). 중복 재생 방지를 위해 여기서 끝낸다.
     if(!PONG.__fail){ try{ loadPong(); }catch(e){}
       let tries=0; const wait=setInterval(()=>{ tries++;
-        if(pongPlay(n)){ introMuted=false; clearInterval(wait); } else if(tries>12) clearInterval(wait); },100);
+        if(pongPlay(n)){ introMuted=false; clearInterval(wait); } else if(tries>40) clearInterval(wait); },25);
       return; }
     // 폴백: 디코딩 전이면 파일 전체를 짧게 (드물게 첫 타이틀에서만)
     try{ const el=new Audio('assets/sfx_pong3.mp3'); el.volume=0.35;
@@ -443,7 +454,7 @@
         return; }
       return;   // 이미 대기 중이면 중복 등록하지 않고 종료
     }
-    try{ loadPong(); }catch(e){}   // 소리는 여기서 준비 (제스처 이후)
+    // 소리 준비는 첫 터치(unlockAudio)에서만 — 여기서 만들면 iOS가 잠긴 채로 굳는다
     const seq=[['tMain',300],['tHandle',760],['tBest',1220]];
     seq.forEach(([id,delay])=>{ setTimeout(()=>{ const el=$(id); if(!el) return;
       el.classList.add('land');
@@ -453,7 +464,7 @@
     },delay); });
     setTimeout(()=>{ try{ $('title').classList.add('bgon'); }catch(e){} },1500);   // 배경 사진은 타이틀이 다 뜬 뒤
     setTimeout(()=>{ titleIntroDone=true;
-      if(!$('title').classList.contains('hidden')) playTitleBgm(true);
+      if(!$('title').classList.contains('hidden')) playTitleBgm();
       showTitleGames(); },2050);
   }
 
@@ -528,7 +539,8 @@
   const DESC = n => (L10N[LANG]&&L10N[LANG].desc[n]) || L10N.en.desc[n] || '';
   // ── BGM: 타이틀 1곡 루프 / 플레이 3곡 연속 루프 ──
   // iOS는 Audio.volume이 무시되므로 WebAudio GainNode로 볼륨을 제어 (설정 슬라이더 실동작)
-  const BGM={ cur:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6') };
+  const BGM={ cur:null, name:'', want:'', pending:null, vol:parseFloat(localStorage.getItem('bp_vol')||'0.6') };
+  try{ window.__BGM=BGM; }catch(e){}   // 검수용
   function bgmVol(){ return window.__mute?0:BGM.vol; }
   function mkTrack(url,loop){ const a=new Audio(); a.preload='auto'; a.loop=!!loop; a.src=url; let g=null;
     const c=ac(); if(c){ try{ const s=c.createMediaElementSource(a); g=c.createGain(); s.connect(g); g.connect(c.destination); }catch(e){ g=null; } }
@@ -540,25 +552,48 @@
     (function st(){ const k=Math.min(1,(performance.now()-t0)/ms);
       trkSet(t,from+(to-from)*k);
       if(k<1) setTimeout(st,50); else if(done) done(); })(); }
-  function stopBgm(fadeMs){ const old=BGM.cur; BGM.cur=null; BGM.name='';
+  function stopBgm(fadeMs){ const old=BGM.cur; BGM.cur=null; BGM.name=''; BGM.want=''; BGM.pending=null;
     if(!old) return;
     if(fadeMs) bgmFade(old,0,fadeMs,()=>{ try{ old.a.pause(); }catch(e){} });
     else { try{ old.a.pause(); }catch(e){} } }
-  function playTitleBgm(xf){ if(BGM.name==='title') return; stopBgm(xf?800:0);
-    const t=mkTrack('assets/bgm_title.mp3?v2',true); trkSet(t,xf?0:bgmVol());
-    BGM.cur=t; BGM.name='title';
-    t.a.play().then(()=>{ if(xf&&BGM.cur===t) bgmFade(t,bgmVol(),800); })
-      .catch(()=>{ if(BGM.cur===t){ BGM.cur=null; BGM.name=''; } }); }
+  // ★새 곡을 먼저 재생 가능 상태로 만든 뒤에 이전 곡과 겹쳐 페이드 → 끊김·충돌 없음
+  function crossTo(name, url, loop, onEnd){
+    if(BGM.name===name) return;
+    BGM.name=name; BGM.want=name;
+    const old=BGM.cur; const t=mkTrack(url,loop); trkSet(t,0);
+    if(onEnd) t.a.onended=onEnd;
+    const begin=()=>{ if(BGM.want!==name){ try{ t.a.pause(); }catch(e){} return; }
+      BGM.cur=t;
+      if(old) bgmFade(old,0,700,()=>{ try{ old.a.pause(); }catch(e){} });
+      bgmFade(t,bgmVol(),700); };
+    const p=t.a.play();
+    if(p&&p.then) p.then(()=>{ if(t.a.readyState>=3) begin();
+        else { let done=false; const ok=()=>{ if(done)return; done=true; begin(); };
+          t.a.addEventListener('canplay',ok,{once:true}); setTimeout(ok,900); } })
+      .catch(()=>{ BGM.pending={name,url,loop,onEnd}; if(BGM.name===name){ BGM.name=''; } });
+    else begin(); }
+  function playTitleBgm(){ crossTo('title','assets/bgm_title.mp3?v2',true); }
   let ptIdx=Math.floor(Math.random()*3);
-  function playGameBgm(xf){ if(BGM.name==='play') return; stopBgm(xf?800:0); BGM.name='play';
-    let first=!!xf;
-    const step=()=>{ if(BGM.name!=='play') return;
-      const t=mkTrack('assets/bgm_play'+(ptIdx+1)+'.mp3'+'?v2',false); trkSet(t,first?0:bgmVol());
-      t.a.onended=()=>{ ptIdx=(ptIdx+1)%3; step(); };
-      BGM.cur=t; t.a.play().then(()=>{ if(first&&BGM.cur===t){ first=false; bgmFade(t,bgmVol(),800); } })
-        .catch(()=>{ if(BGM.cur===t){ BGM.cur=null; BGM.name=''; } }); };
-    step(); }
+  function playGameBgm(){
+    const nextTrack=()=>{ if(BGM.want!=='play') return; ptIdx=(ptIdx+1)%3; BGM.name='';
+      crossTo('play','assets/bgm_play'+(ptIdx+1)+'.mp3?v2',false,nextTrack); };
+    crossTo('play','assets/bgm_play'+(ptIdx+1)+'.mp3?v2',false,nextTrack); }
   function bgmApplyVol(){ if(BGM.cur) trkSet(BGM.cur,bgmVol()); }
+  // ★첫 터치 한 번에: 오디오 잠금 해제 → pong 준비 → 못 틀었던 BGM 재시도 → 조용히 지나간 인트로 다시
+  let audioUnlocked=false;
+  function unlockAudio(){
+    if(audioUnlocked) return; audioUnlocked=true;
+    let a=null; try{ a=ac(); }catch(e){}
+    try{ if(a && a.state==='suspended') a.resume(); }catch(e){}
+    try{ loadPong(); }catch(e){}
+    try{ beep(1,0.01,'sine',0.0001); }catch(e){}   // iOS: 컨텍스트를 확실히 깨우는 무음 한 방
+    setTimeout(()=>{
+      if(BGM.pending){ const q=BGM.pending; BGM.pending=null; BGM.name=''; crossTo(q.name,q.url,q.loop,q.onEnd); }
+      else if(titleIntroDone && !$('title').classList.contains('hidden')) playTitleBgm();
+    },60);
+  }
+  ['pointerdown','touchstart','keydown','click'].forEach(ev=>
+    document.addEventListener(ev, unlockAudio, {capture:true, passive:true}));
   const bgmKick=()=>{ ac();
     if(introMuted){ introMuted=false; gunIdx=0;   // 소리 없이 지나갔던 경우: 첫 탭에 타이틀을 다시 떨어뜨리며 소리
       try{ loadPong(); }catch(e){}
@@ -568,7 +603,7 @@
           el.classList.add('land');
           setTimeout(()=>{ gunShot(); flash('#fff2c8'); el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),240); },420); },dl); });
       } else { gunShot(); flash('#fff2c8'); } }
-    if(titleIntroDone && !$('title').classList.contains('hidden')) playTitleBgm(true);
+    if(titleIntroDone && !$('title').classList.contains('hidden')) playTitleBgm();
     if(titleIntroDone) document.removeEventListener('pointerdown',bgmKick); };
   document.addEventListener('pointerdown',bgmKick);
   const rnd=n=>Math.floor(Math.random()*n);
