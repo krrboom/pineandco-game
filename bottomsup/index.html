@@ -123,7 +123,7 @@
   function buStartBgm(){
     if(buBgm) { if(buBgm.paused && !buMuted()) { try{ buBgm.play(); }catch(e){} } return; }
     try{
-      buBgm=new Audio('../assets/music_bottomsup.mp3?v2');
+      buBgm=new Audio('../assets/music_bottomsup.mp3?v3');
       buBgm.loop=true; buBgm.volume=0; buBgm.muted=buMuted();
       var p=buBgm.play();
       var fadeIn=function(){ var v=0; var id=setInterval(function(){ v+=0.05;
