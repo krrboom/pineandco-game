@@ -1004,6 +1004,18 @@
 #titleScreen{ overflow:hidden !important; overscroll-behavior:contain; touch-action:none; }
 /* 볼륨 슬라이더는 손가락으로 끌 수 있어야 하므로 예외 */
 #happyHour input[type=range], input[type=range]{ touch-action:auto !important; }
+
+/* 슬라이더 터치 영역 — 얇으면 손가락으로 잡기 어렵다 */
+#happyHour input[type=range]{ height:34px !important; touch-action:none !important;
+  -webkit-appearance:none; appearance:none; background:transparent; }
+#happyHour input[type=range]::-webkit-slider-runnable-track{ height:10px; border-radius:5px;
+  background:linear-gradient(90deg,#6fcf8f,#3a7d4f); border:2px solid #000; }
+#happyHour input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:26px; height:26px;
+  margin-top:-10px; border-radius:4px; background:#e6b450; border:3px solid #000; }
+#happyHour input[type=range]::-moz-range-track{ height:10px; border-radius:5px;
+  background:linear-gradient(90deg,#6fcf8f,#3a7d4f); border:2px solid #000; }
+#happyHour input[type=range]::-moz-range-thumb{ width:26px; height:26px; border-radius:4px;
+  background:#e6b450; border:3px solid #000; }
 </style>
 <script>/* __WEBP_SWAP: 큰 이미지는 WebP로 자동 대체 (미지원/실패 시 원본으로 폴백) */
 (function(){ try{ var OK=false;
@@ -1997,7 +2009,9 @@ function musicTick(){
 }
 function applyMusic(){ reconcileMusic(); }
 function setMusic(mode){ if(mode===musicMode) return; musicMode=mode; if(mode!=='play') curPlay=null; reconcileMusic(); }
-function unlockMusic(){ if(musicUnlocked) return; musicUnlocked=true; initAudio(); reconcileMusic(); }
+function unlockMusic(){ if(musicUnlocked) return; musicUnlocked=true; initAudio();
+  try{ var b=document.getElementById('happyHour'); if(b && b.classList.contains('on')) return; }catch(e){}
+  reconcileMusic(); }
 
 /* ===== 설정(음량) + 일시정지 ===== */
 let paused=false, musicVol=1, sfxVol=1;
@@ -6970,6 +6984,8 @@ function __musicKick(){
     try{
       if(typeof audioCtx==='undefined' || !audioCtx){ if(n>40) { clearInterval(__mkTimer); __mkTimer=null; } return; }
       if(!MUSICBUF.title && typeof PREMUSIC!=='undefined' && PREMUSIC[audioCtx.sampleRate]) MUSICBUF.title=PREMUSIC[audioCtx.sampleRate];
+      var hhOn=(document.getElementById('happyHour')||{classList:{contains:function(){return false;}}}).classList.contains('on');
+      if(hhOn){ return; }   // 해피아워가 열려 있으면 시작화면1 음악은 건드리지 않는다
       if(!MUSICBUF.title) loadMusicBuffers(desiredName());
       reconcileMusic();
       if(musicVoice || n>40){ clearInterval(__mkTimer); __mkTimer=null; }
@@ -7268,6 +7284,7 @@ function hhClose(){
     try{ window.__gunLog.push([Math.round(performance.now()), 'el', 'n='+n, ok?'재생':'실패']); }catch(e){}
   }
   function loadPong(){ pongInit(); }
+  let introToken=0;
   function titleIntro(){ gunIdx=0;
     // 시작화면1에서 START를 눌러 넘어온 경우엔 기다리지 않고 바로 시작한다 (?go=1)
     try{ if(!window.__introGo && location.search.indexOf('go=1')>=0) window.__introGo=true; }catch(e){}
@@ -7291,10 +7308,13 @@ function hhClose(){
       return;   // 이미 대기 중이면 중복 등록하지 않고 종료
     }
     // 소리 준비는 첫 터치(unlockAudio)에서만 — 여기서 만들면 iOS가 잠긴 채로 굳는다
+    const myIntro = ++introToken;   // 이 회차 번호. 다시 열리면 번호가 바뀌어 옛 타이머는 무시된다.
     const seq=[['tMain',300],['tHandle',760],['tBest',1220]];
-    seq.forEach(([id,delay])=>{ setTimeout(()=>{ const el=$(id); if(!el) return;
+    seq.forEach(([id,delay])=>{ setTimeout(()=>{ if(myIntro!==introToken) return;
+      const el=$(id); if(!el) return;
       el.classList.add('land');
-      setTimeout(()=>{ window.__landLog.push([id,Math.round(performance.now())]);
+      setTimeout(()=>{ if(myIntro!==introToken) return;
+        window.__landLog.push([id,Math.round(performance.now())]);
         gunShot(); flash('#fff2c8'); el.classList.add('hit');
         setTimeout(()=>el.classList.remove('hit'),240); },420);
     },delay); });
@@ -7422,7 +7442,10 @@ function hhClose(){
       bgmSet('play','assets/bgm_play'+(ptIdx+1)+'.mp3?v2',false,next); };
     bgmSet('play','assets/bgm_play'+(ptIdx+1)+'.mp3?v2',false,next);
   }
-  function bgmApplyVol(){ if(BGM.el && !BGM.el.paused) bgmFadeTo(bgmVol(),200); }
+  function bgmApplyVol(){ if(!BGM.el) return;
+    if(BGM.fadeId){ clearInterval(BGM.fadeId); BGM.fadeId=null; }
+    try{ BGM.el.volume=bgmVol(); }catch(e){}   // 재생 중이 아니어도 값은 즉시 반영
+  }
   /* 첫 터치(그리고 그 뒤 모든 터치)에 막혔던 소리를 되살린다 */
   // 시작화면1 안에 들어가 있을 때, 해피아워가 열려 있지 않으면 소리를 내지 않는다
   function hhVisible(){ const box=document.getElementById('happyHour');
@@ -7569,8 +7592,31 @@ function hhClose(){
   // 설정 화면
   $('setBtn').onclick=()=>{ ac(); beep(600,0.08);
     $('setVol').value=Math.round(BGM.vol*100); show('setting'); };
-  $('setVol').addEventListener('input',()=>{ BGM.vol=$('setVol').value/100;
-    localStorage.setItem('bp_vol',String(BGM.vol)); bgmApplyVol(); });
+  const _sv=$('setVol');
+  function svApply(v){ v=Math.max(0,Math.min(100,Math.round(v)));
+    _sv.value=v; BGM.vol=v/100;
+    try{ localStorage.setItem('bp_vol',String(BGM.vol)); }catch(e){}
+    bgmApplyVol(); }
+  ['input','change'].forEach(ev=> _sv.addEventListener(ev,()=>svApply(_sv.value)));
+  // ★터치로 직접 조작 (body의 touch-action:none이 기본 드래그를 막기 때문)
+  (function(){
+    let dragging=false;
+    const fromX=x=>{ const r=_sv.getBoundingClientRect();
+      return r.width?((x-r.left)/r.width)*100:0; };
+    const dn=e=>{ dragging=true; try{ _sv.setPointerCapture(e.pointerId); }catch(err){}
+      svApply(fromX(e.clientX)); e.preventDefault(); e.stopPropagation(); };
+    const mv=e=>{ if(!dragging) return; svApply(fromX(e.clientX)); e.preventDefault(); };
+    const up=e=>{ if(!dragging) return; dragging=false;
+      try{ _sv.releasePointerCapture(e.pointerId); }catch(err){} };
+    _sv.addEventListener('pointerdown',dn);
+    _sv.addEventListener('pointermove',mv);
+    _sv.addEventListener('pointerup',up);
+    _sv.addEventListener('pointercancel',up);
+    // 포인터 이벤트가 없는 옛 기기 대비
+    _sv.addEventListener('touchstart',e=>{ const t=e.touches[0]; if(t){ dragging=true; svApply(fromX(t.clientX)); e.preventDefault(); } },{passive:false});
+    _sv.addEventListener('touchmove',e=>{ const t=e.touches[0]; if(dragging&&t){ svApply(fromX(t.clientX)); e.preventDefault(); } },{passive:false});
+    _sv.addEventListener('touchend',()=>{ dragging=false; });
+  })();
   $('setBack').onclick=()=>{ beep(500,0.08); show('title'); };
   // 전역 BACK 버튼 (타이틀 외 어디서나, 게임 중이면 즉시 중단하고 리스트로)
   $('backBtn').onclick=()=>{ ac(); beep(400,0.06);
@@ -9563,7 +9609,8 @@ function hhClose(){
       playTitleBgm();
       titleIntro();
     },
-    leave:function(){ try{ stopBgm(0); }catch(e){}
+    leave:function(){ introToken++;   // 진행 중이던 인트로 타이머 전부 무효화
+      try{ stopBgm(0); }catch(e){}
       try{ PONG_EL.forEach(function(a){ a.pause(); a.currentTime=0; }); }catch(e){}
       try{ if(BGM.el){ BGM.el.pause(); BGM.el.volume=0; } }catch(e){} }
   }; }catch(e){}
