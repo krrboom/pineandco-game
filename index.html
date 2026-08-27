@@ -6518,6 +6518,9 @@ function drawPickupInner(g){
 let _lastTs=0, _acc=0; const _STEP=1000/60;
 function loop(ts){
   requestAnimationFrame(loop);
+  // 해피아워가 열려 있는 동안에는 이 게임 루프를 쉬게 한다 (소리 끊김의 원인)
+  try{ var _hh=document.getElementById("happyHour");
+    if(_hh && _hh.classList.contains("on")){ _lastTs=ts; _acc=0; return; } }catch(e){}
   if(!_lastTs){ _lastTs=ts; }
   let dt=ts-_lastTs; _lastTs=ts;
   if(dt>250) dt=250;                 // 백그라운드 복귀 등 큰 점프 방지
@@ -7277,7 +7280,26 @@ function hhClose(){
   pongInit();
   // 첫 터치에 무음으로 한 번 재생해 잠금을 풀어둔다 (그 뒤로는 언제든 즉시 재생)
   let pongPrimed=false;
+  const PONG_G=[];
+  function pongWire(){        // 터치 안에서 불려야 오디오가 살아난다
+    if(PONG_G.length || !PONG_EL.length) return;
+    if(typeof volWorks==='function' && volWorks(PONG_EL[0])) return;   // volume이 먹는 기기는 그대로 둔다
+    try{
+      const ctx=ac(); if(!ctx || ctx.state!=='running') return;
+      PONG_EL.forEach(a=>{ const src=ctx.createMediaElementSource(a);
+        const g=ctx.createGain(); g.gain.value=0.34;
+        src.connect(g); g.connect(master()||ctx.destination);
+        try{ a.volume=1; }catch(e){}
+        PONG_G.push(g); });
+      try{ window.__PONG_G=PONG_G; }catch(e){}
+    }catch(e){ PONG_G.length=0; }
+  }
+  function pongSetVol(i,v){
+    if(PONG_G[i]){ try{ PONG_G[i].gain.value=v; }catch(e){} }
+    else { try{ PONG_EL[i].volume=v; }catch(e){} }
+  }
   function pongPrime(){
+    pongWire();
     if(pongPrimed) return; pongPrimed=true;
     PONG_EL.forEach(a=>{ try{ const v=a.volume; a.volume=0;
       const p=a.play(); const done=()=>{ try{ a.pause(); a.currentTime=0; a.volume=v; }catch(e){} };
@@ -7285,9 +7307,10 @@ function hhClose(){
     }catch(e){} });
   }
   function pongPlay(n){
-    const a=PONG_EL[Math.min(n, PONG_EL.length-1)];
+    const i=Math.min(n, PONG_EL.length-1), a=PONG_EL[i];
     if(!a) return false;
-    try{ a.currentTime=0; a.volume=window.__mute?0:0.34;
+    pongWire();
+    try{ a.currentTime=0; pongSetVol(i, window.__mute?0:0.34);
       const p=a.play(); if(p&&p.catch) p.catch(()=>{});
       return true;
     }catch(e){ return false; }
@@ -7415,19 +7438,68 @@ function hhClose(){
   const BGM={ el:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6'), fadeId:null, want:null };
   try{ window.__BGM=BGM; }catch(e){}
   function bgmVol(){ return window.__mute?0:BGM.vol*0.72; }   // 배경음 20% 낮춤
+  /* iOS Safari는 audio 요소의 volume 지정을 아예 무시한다 (하드웨어 볼륨만 허용).
+     그래서 실제로 먹히는지 한 번 시험해 보고, 안 먹히면 Web Audio 게인으로 갈아탄다. */
+  let _volOK=null;
+  function volWorks(a){
+    if(_volOK!==null) return _volOK;
+    try{ const keep=a.volume; a.volume=0.37; _volOK=Math.abs(a.volume-0.37)<0.01; a.volume=keep; }
+    catch(e){ _volOK=false; }
+    return _volOK;
+  }
+  let _mst=null;
+  function master(){                 // 모든 소리가 지나가는 마지막 관문
+    const ctx=ac(); if(!ctx || ctx.state!=='running') return null;
+    if(_mst && _mst.context===ctx) return _mst;
+    try{
+      const lim=ctx.createDynamicsCompressor();
+      lim.threshold.value=-3; lim.knee.value=0; lim.ratio.value=20;
+      lim.attack.value=0.003; lim.release.value=0.25;
+      const g=ctx.createGain(); g.gain.value=1;
+      g.connect(lim); lim.connect(ctx.destination);
+      _mst=g;
+    }catch(e){ _mst=null; }
+    return _mst;
+  }
+  try{ window.__master=master; }catch(e){}
+  function bgmGain(){
+    if('g' in BGM) return BGM.g;
+    BGM.g=null;
+    try{
+      const ctx=ac();                       // 터치 안에서 만들어져야 running 상태가 된다
+      if(!ctx || ctx.state!=='running') { delete BGM.g; return null; }   // 아직이면 다음 터치에 다시
+      const src=ctx.createMediaElementSource(bgmEl());
+      const g=ctx.createGain(); g.gain.value=bgmVol();
+      src.connect(g); g.connect(master()||ctx.destination);
+      BGM.ctx=ctx; BGM.g=g;
+      try{ bgmEl().volume=1; }catch(e){}    // 요소는 항상 최대, 실제 크기는 게인이 정한다
+    }catch(e){ BGM.g=null; }
+    return BGM.g;
+  }
+  function bgmNode(){ return volWorks(bgmEl()) ? null : bgmGain(); }
   function bgmEl(){
     if(!BGM.el){ const a=new Audio(); a.preload='auto'; a.loop=false; a.volume=0; BGM.el=a;
       a.addEventListener('ended',()=>{ if(BGM.onEnd) BGM.onEnd(); }); }
     return BGM.el;
   }
   function bgmFadeTo(target, ms, done){
-    const a=bgmEl(); if(BGM.fadeId) clearInterval(BGM.fadeId);
+    const a=bgmEl(); if(BGM.fadeId){ clearInterval(BGM.fadeId); BGM.fadeId=null; }
+    const g=bgmNode();
+    if(g){   // 게인 경로: 소리 다듬기를 오디오 스레드가 맡으므로 끊김도 없다
+      const t=BGM.ctx.currentTime, sec=Math.max(0.01,ms/1000);
+      try{ a.volume=1; }catch(e){}
+      try{ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t);
+           g.gain.linearRampToValueAtTime(target,t+sec); }catch(e){ try{ g.gain.value=target; }catch(e2){} }
+      if(done) BGM.fadeId=setTimeout(()=>{ BGM.fadeId=null; done(); }, ms);
+      return;
+    }
     const from=a.volume, t0=performance.now();
     BGM.fadeId=setInterval(()=>{
-      const k=Math.min(1,(performance.now()-t0)/ms);
+      let k=Math.min(1,(performance.now()-t0)/ms);
+      k = k*k*(3-2*k);   // 부드러운 곡선 — 계단식 변화는 딱딱거리는 잡음을 만든다
       try{ a.volume=Math.max(0,Math.min(1, from+(target-from)*k)); }catch(e){}
       if(k>=1){ clearInterval(BGM.fadeId); BGM.fadeId=null; if(done) done(); }
-    },40);
+    },16);
   }
   function bgmTry(){
     const a=bgmEl(); if(!BGM.want) return;
@@ -7459,7 +7531,11 @@ function hhClose(){
   }
   function bgmApplyVol(){ if(!BGM.el) return;
     if(BGM.fadeId){ clearInterval(BGM.fadeId); BGM.fadeId=null; }
-    try{ BGM.el.volume=bgmVol(); }catch(e){}   // 재생 중이 아니어도 값은 즉시 반영
+    const v=bgmVol(), g=bgmNode();
+    if(g){ try{ BGM.el.volume=1; }catch(e){}
+           try{ g.gain.cancelScheduledValues(BGM.ctx.currentTime);
+                g.gain.setTargetAtTime(v,BGM.ctx.currentTime,0.015); }catch(e){ try{ g.gain.value=v; }catch(e2){} } }
+    else { try{ BGM.el.volume=v; }catch(e){} }
   }
   /* 첫 터치(그리고 그 뒤 모든 터치)에 막혔던 소리를 되살린다 */
   // 시작화면1 안에 들어가 있을 때, 해피아워가 열려 있지 않으면 소리를 내지 않는다
@@ -7467,6 +7543,7 @@ function hhClose(){
     return !box || box.classList.contains('on'); }
   function unlockAudio(){
     if(!hhVisible()) return;
+    try{ if(!volWorks(bgmEl())) bgmGain(); }catch(e){}   // iOS: 게인 경로 연결
     pongPrime();
     if(BGM.want && (BGM.blocked || (BGM.el && BGM.el.paused))) bgmTry();
     // 낙하음을 나중에 다시 내지 않는다 — 엉뚱한 때(설정 등)에 튀어나오던 원인
@@ -9608,8 +9685,11 @@ function hhClose(){
     const items=sprites.map((sp,i)=>({sp, x:40+Math.random()*(dcv.width-80), y:-80-i*110,
       vx:(Math.random()*2-1)*70, vy:0, rot:(Math.random()*2-1)*0.4, rv:(Math.random()*2-1)*2.5}));
     let last=performance.now();
+    let _decoPrev=0;
     (function loop(t){ requestAnimationFrame(loop);
       if($('title').classList.contains('hidden')){ last=t; return; }
+      if(t-_decoPrev < 33) return;   // 30fps로 제한 (소리 끊김 방지)
+      _decoPrev=t;
       const dt=Math.min(0.05,(t-last)/1000); last=t;
       const W=dcv.width,H=dcv.height; ctx2.clearRect(0,0,W,H);
       const cap=Math.max(26,Math.min(W,H)*0.10); // 데코 크기: 화면 짧은 변의 10% 이내 (폰 비율 유지)
@@ -9658,6 +9738,6 @@ function hhClose(){
 })();
 </script>
 
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-27b</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-27c</div>
 </body>
 </html>

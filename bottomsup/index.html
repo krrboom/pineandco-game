@@ -119,15 +119,43 @@
   }
   applySoundIcon();
   // ===== 배경음 (예전엔 부모 페이지가 틀어주던 곡. 해피아워에서 바로 들어와도 나오게 자체 재생) =====
-  var buBgm=null;
+  var buBgm=null, buGain=null, buCtx=null, buVolOK=null;
+  /* iOS Safari는 audio 요소의 volume 지정을 무시한다. 그러면 이 곡이 0.45가 아니라
+     최대 크기로 울려서, 화면녹화에 찢어지는 소리로 남는다. 게인으로 갈아탄다. */
+  function buVolWorks(a){
+    if(buVolOK!==null) return buVolOK;
+    try{ var keep=a.volume; a.volume=0.37; buVolOK=Math.abs(a.volume-0.37)<0.01; a.volume=keep; }
+    catch(e){ buVolOK=false; }
+    return buVolOK;
+  }
+  function buWire(){
+    if(buGain || !buBgm || buVolWorks(buBgm)) return;
+    try{
+      var C=window.AudioContext||window.webkitAudioContext; if(!C) return;
+      buCtx=buCtx||new C(); if(buCtx.state==='suspended') buCtx.resume();
+      if(buCtx.state!=='running') return;
+      var src=buCtx.createMediaElementSource(buBgm);
+      var lim=buCtx.createDynamicsCompressor();
+      lim.threshold.value=-3; lim.knee.value=0; lim.ratio.value=20;
+      lim.attack.value=0.003; lim.release.value=0.25;
+      buGain=buCtx.createGain(); buGain.gain.value=0;
+      src.connect(buGain); buGain.connect(lim); lim.connect(buCtx.destination);
+      try{ buBgm.volume=1; }catch(e){}
+    }catch(e){ buGain=null; }
+  }
+  function buSetVol(v){
+    buWire();
+    if(buGain){ try{ buGain.gain.value=v; }catch(e){} }
+    else { try{ buBgm.volume=v; }catch(e){} }
+  }
   function buStartBgm(){
-    if(buBgm) { if(buBgm.paused && !buMuted()) { try{ buBgm.play(); }catch(e){} } return; }
+    if(buBgm) { buWire(); if(buBgm.paused && !buMuted()) { try{ buBgm.play(); }catch(e){} } return; }
     try{
       buBgm=new Audio('../assets/music_bottomsup.mp3?v4');
       buBgm.loop=true; buBgm.volume=0; buBgm.muted=buMuted();
       var p=buBgm.play();
-      var fadeIn=function(){ var v=0; var id=setInterval(function(){ v+=0.05;
-        try{ buBgm.volume=Math.min(0.45,v); }catch(e){}
+      var fadeIn=function(){ buWire(); var v=0; var id=setInterval(function(){ v+=0.05;
+        buSetVol(Math.min(0.45,v));
         if(v>=0.45) clearInterval(id); },60); };
       if(p&&p.then) p.then(fadeIn).catch(function(){ buBgm=null; }); else fadeIn();
     }catch(e){ buBgm=null; }

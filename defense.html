@@ -1599,15 +1599,22 @@ let sfxBus=null, musicBus=null;
 function initAudio(){
   if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume(); loadMusicBuffers(desiredName()); reconcileMusic(); return; }
   try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; }
+  // 최종 관문: 효과음과 음악이 겹쳐 한계를 넘으면 화면녹화에 찢어지는 소리로 남는다.
+  var finalBus=null;
+  try{ const lim=audioCtx.createDynamicsCompressor();
+    lim.threshold.value=-3; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
+    lim.connect(audioCtx.destination); finalBus=lim;
+  }catch(e){ finalBus=null; }
+  const OUT=()=> finalBus||audioCtx.destination;
   // 효과음 마스터: 부드러운 리미터(겹쳐 칠 때만 살짝) + 메이크업 게인으로 전체 크게
   try{ const comp=audioCtx.createDynamicsCompressor();
     comp.threshold.value=-2; comp.knee.value=6; comp.ratio.value=6; comp.attack.value=0.003; comp.release.value=0.12;
     const makeup=audioCtx.createGain(); makeup.gain.value=1.5;   // 메이크업(소리 키움)
-    comp.connect(makeup); makeup.connect(audioCtx.destination);
+    comp.connect(makeup); makeup.connect(OUT());
     sfxBus=comp;
   }catch(e){ sfxBus=null; }
   // 음악 마스터 게인(설정 음량). iOS는 <audio>.volume을 무시하므로 Web Audio 게인으로 제어해야 함.
-  try{ musicBus=audioCtx.createGain(); musicBus.gain.value=musicVol; musicBus.connect(audioCtx.destination); }catch(e){ musicBus=null; }
+  try{ musicBus=audioCtx.createGain(); musicBus.gain.value=musicVol; musicBus.connect(OUT()); }catch(e){ musicBus=null; }
   loadMusicBuffers(desiredName());
   if(audioCtx.state==='suspended'){ try{ audioCtx.resume(); }catch(e){} }   // iOS: 첫 제스처에서 컨텍스트 깨우기
   loadSfx('hit','assets/hit.mp3','first');      // 타격음 3번 중 첫 1번만
