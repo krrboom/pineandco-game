@@ -7202,7 +7202,7 @@ function hhClose(){
     if(PONG_EL.length) return;
     for(let i=0;i<PONG_CLIPS.length;i++){
       try{ const a=new Audio('data:audio/mpeg;base64,'+PONG_CLIPS[i]);
-        a.preload='auto'; a.volume=0.44; PONG_EL.push(a);
+        a.preload='auto'; a.volume=0.37; PONG_EL.push(a);
       }catch(e){}
     }
   }
@@ -7219,12 +7219,13 @@ function hhClose(){
   function pongPlay(n){
     const a=PONG_EL[Math.min(n, PONG_EL.length-1)];
     if(!a) return false;
-    try{ a.currentTime=0; a.volume=window.__mute?0:0.44;
+    try{ a.currentTime=0; a.volume=window.__mute?0:0.37;
       const p=a.play(); if(p&&p.catch) p.catch(()=>{});
       return true;
     }catch(e){ return false; }
   }
   function gunShot(){ if(window.__mute) return;
+    if(typeof hhVisible==='function' && !hhVisible()) return;
     const n=gunIdx++;
     const ok=pongPlay(n);
     try{ window.__gunLog.push([Math.round(performance.now()), 'el', 'n='+n, ok?'재생':'실패']); }catch(e){}
@@ -7341,7 +7342,7 @@ function hhClose(){
      오디오 컨텍스트를 쓰지 않으므로 잠금 상태와 무관하고, 재생이 막히면 다음 터치에 자동 재시도한다. */
   const BGM={ el:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6'), fadeId:null, want:null };
   try{ window.__BGM=BGM; }catch(e){}
-  function bgmVol(){ return window.__mute?0:BGM.vol; }
+  function bgmVol(){ return window.__mute?0:BGM.vol*0.8; }   // 배경음 20% 낮춤
   function bgmEl(){
     if(!BGM.el){ const a=new Audio(); a.preload='auto'; a.loop=false; a.volume=0; BGM.el=a;
       a.addEventListener('ended',()=>{ if(BGM.onEnd) BGM.onEnd(); }); }
@@ -7358,6 +7359,7 @@ function hhClose(){
   }
   function bgmTry(){
     const a=bgmEl(); if(!BGM.want) return;
+    if(typeof hhVisible==='function' && !hhVisible()){ try{ a.pause(); }catch(e){} return; }
     const p=a.play();
     if(p&&p.then) p.then(()=>{ BGM.blocked=false; bgmFadeTo(bgmVol(),700); })
                    .catch(()=>{ BGM.blocked=true; });   // 막히면 다음 터치에 재시도
@@ -7385,7 +7387,11 @@ function hhClose(){
   }
   function bgmApplyVol(){ if(BGM.el && !BGM.el.paused) bgmFadeTo(bgmVol(),200); }
   /* 첫 터치(그리고 그 뒤 모든 터치)에 막혔던 소리를 되살린다 */
+  // 시작화면1 안에 들어가 있을 때, 해피아워가 열려 있지 않으면 소리를 내지 않는다
+  function hhVisible(){ const box=document.getElementById('happyHour');
+    return !box || box.classList.contains('on'); }
   function unlockAudio(){
+    if(!hhVisible()) return;
     pongPrime();
     if(BGM.want && (BGM.blocked || (BGM.el && BGM.el.paused))) bgmTry();
     if(introMuted){ introMuted=false; gunIdx=0;
@@ -9526,7 +9532,9 @@ function hhClose(){
       playTitleBgm();
       titleIntro();
     },
-    leave:function(){ try{ stopBgm(300); }catch(e){} }
+    leave:function(){ try{ stopBgm(0); }catch(e){}
+      try{ PONG_EL.forEach(function(a){ a.pause(); a.currentTime=0; }); }catch(e){}
+      try{ if(BGM.el){ BGM.el.pause(); BGM.el.volume=0; } }catch(e){} }
   }; }catch(e){}
 })();
 
