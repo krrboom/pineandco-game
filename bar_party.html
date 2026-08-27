@@ -376,7 +376,7 @@
     if(PONG_EL.length) return;
     for(let i=0;i<PONG_CLIPS.length;i++){
       try{ const a=new Audio('data:audio/mpeg;base64,'+PONG_CLIPS[i]);
-        a.preload='auto'; a.volume=0.37; PONG_EL.push(a);
+        a.preload='auto'; a.volume=0.28; PONG_EL.push(a);
       }catch(e){}
     }
   }
@@ -393,7 +393,7 @@
   function pongPlay(n){
     const a=PONG_EL[Math.min(n, PONG_EL.length-1)];
     if(!a) return false;
-    try{ a.currentTime=0; a.volume=window.__mute?0:0.37;
+    try{ a.currentTime=0; a.volume=window.__mute?0:0.28;
       const p=a.play(); if(p&&p.catch) p.catch(()=>{});
       return true;
     }catch(e){ return false; }
@@ -516,7 +516,7 @@
      오디오 컨텍스트를 쓰지 않으므로 잠금 상태와 무관하고, 재생이 막히면 다음 터치에 자동 재시도한다. */
   const BGM={ el:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6'), fadeId:null, want:null };
   try{ window.__BGM=BGM; }catch(e){}
-  function bgmVol(){ return window.__mute?0:BGM.vol*0.8; }   // 배경음 20% 낮춤
+  function bgmVol(){ return window.__mute?0:BGM.vol*0.58; }   // 배경음 20% 낮춤
   function bgmEl(){
     if(!BGM.el){ const a=new Audio(); a.preload='auto'; a.loop=false; a.volume=0; BGM.el=a;
       a.addEventListener('ended',()=>{ if(BGM.onEnd) BGM.onEnd(); }); }

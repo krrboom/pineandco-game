@@ -1016,6 +1016,16 @@
   background:linear-gradient(90deg,#6fcf8f,#3a7d4f); border:2px solid #000; }
 #happyHour input[type=range]::-moz-range-thumb{ width:26px; height:26px; border-radius:4px;
   background:#e6b450; border:3px solid #000; }
+
+/* 배경음 볼륨 줄 */
+#happyHour #hh_volRow{ display:flex; align-items:center; justify-content:center; gap:10px; width:min(320px,92vw); }
+#happyHour #hh_setVol{ flex:1; min-width:0; }
+#happyHour .volbtn{ font-family:var(--hh-pixfont); font-size:20px; line-height:1; width:52px; height:52px;
+  color:#1d1206; background:linear-gradient(180deg,#e6b450,#b9832c); border:3px solid #000;
+  box-shadow:0 4px 0 #000; cursor:pointer; touch-action:manipulation; flex:0 0 auto; }
+#happyHour .volbtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #000; }
+#happyHour #hh_volNum{ font-family:var(--hh-pixfont); font-size:12px; color:var(--hh-amber);
+  min-width:34px; text-align:right; font-variant-numeric:tabular-nums; }
 </style>
 <script>/* __WEBP_SWAP: 큰 이미지는 WebP로 자동 대체 (미지원/실패 시 원본으로 폴백) */
 (function(){ try{ var OK=false;
@@ -7126,7 +7136,12 @@ addEventListener('keydown', function(e){
       <button class="lgbtn" data-l="zh">中文</button>
     </div>
     <div class="kr" id="hh_setVolLbl" style="font-size:11px;color:var(--dim)">BGM VOLUME</div>
-    <input type="range" id="hh_setVol" min="0" max="100" style="width:220px">
+    <div id="hh_volRow">
+      <button class="volbtn" id="hh_volDown" aria-label="volume down">−</button>
+      <input type="range" id="hh_setVol" min="0" max="100">
+      <button class="volbtn" id="hh_volUp" aria-label="volume up">＋</button>
+      <span id="hh_volNum">60</span>
+    </div>
     <button class="btn ghost" id="hh_setBack"><span id="hh_setBackTxt">← HOME</span></button>
   </div>
   <div id="hh_siteRow">
@@ -7255,7 +7270,7 @@ function hhClose(){
     if(PONG_EL.length) return;
     for(let i=0;i<PONG_CLIPS.length;i++){
       try{ const a=new Audio('data:audio/mpeg;base64,'+PONG_CLIPS[i]);
-        a.preload='auto'; a.volume=0.37; PONG_EL.push(a);
+        a.preload='auto'; a.volume=0.28; PONG_EL.push(a);
       }catch(e){}
     }
   }
@@ -7272,7 +7287,7 @@ function hhClose(){
   function pongPlay(n){
     const a=PONG_EL[Math.min(n, PONG_EL.length-1)];
     if(!a) return false;
-    try{ a.currentTime=0; a.volume=window.__mute?0:0.37;
+    try{ a.currentTime=0; a.volume=window.__mute?0:0.28;
       const p=a.play(); if(p&&p.catch) p.catch(()=>{});
       return true;
     }catch(e){ return false; }
@@ -7399,7 +7414,7 @@ function hhClose(){
      오디오 컨텍스트를 쓰지 않으므로 잠금 상태와 무관하고, 재생이 막히면 다음 터치에 자동 재시도한다. */
   const BGM={ el:null, name:'', vol:parseFloat(localStorage.getItem('bp_vol')||'0.6'), fadeId:null, want:null };
   try{ window.__BGM=BGM; }catch(e){}
-  function bgmVol(){ return window.__mute?0:BGM.vol*0.8; }   // 배경음 20% 낮춤
+  function bgmVol(){ return window.__mute?0:BGM.vol*0.58; }   // 배경음 20% 낮춤
   function bgmEl(){
     if(!BGM.el){ const a=new Audio(); a.preload='auto'; a.loop=false; a.volume=0; BGM.el=a;
       a.addEventListener('ended',()=>{ if(BGM.onEnd) BGM.onEnd(); }); }
@@ -7591,12 +7606,21 @@ function hhClose(){
       applyLang(); }); });
   // 설정 화면
   $('setBtn').onclick=()=>{ ac(); beep(600,0.08);
-    $('setVol').value=Math.round(BGM.vol*100); show('setting'); };
+    $('setVol').value=Math.round(BGM.vol*100);
+    { const n=$('volNum'); if(n) n.textContent=Math.round(BGM.vol*100); }
+    show('setting'); };
   const _sv=$('setVol');
   function svApply(v){ v=Math.max(0,Math.min(100,Math.round(v)));
     _sv.value=v; BGM.vol=v/100;
     try{ localStorage.setItem('bp_vol',String(BGM.vol)); }catch(e){}
+    const num=$('volNum'); if(num) num.textContent=v;
     bgmApplyVol(); }
+  // −/+ 버튼: 슬라이더가 안 먹는 기기에서도 확실히 조절된다
+  (function(){ const dn=$('volDown'), up=$('volUp');
+    const step=d=>{ svApply((parseInt(_sv.value,10)||0)+d); try{ beep(700,0.05); }catch(e){} };
+    if(dn) ['click','touchend'].forEach(ev=> dn.addEventListener(ev,e=>{ e.preventDefault(); step(-10); }));
+    if(up) ['click','touchend'].forEach(ev=> up.addEventListener(ev,e=>{ e.preventDefault(); step(+10); }));
+  })();
   ['input','change'].forEach(ev=> _sv.addEventListener(ev,()=>svApply(_sv.value)));
   // ★터치로 직접 조작 (body의 touch-action:none이 기본 드래그를 막기 때문)
   (function(){
@@ -7609,9 +7633,9 @@ function hhClose(){
     const up=e=>{ if(!dragging) return; dragging=false;
       try{ _sv.releasePointerCapture(e.pointerId); }catch(err){} };
     _sv.addEventListener('pointerdown',dn);
-    _sv.addEventListener('pointermove',mv);
-    _sv.addEventListener('pointerup',up);
-    _sv.addEventListener('pointercancel',up);
+    document.addEventListener('pointermove',mv);
+    document.addEventListener('pointerup',up);
+    document.addEventListener('pointercancel',up);
     // 포인터 이벤트가 없는 옛 기기 대비
     _sv.addEventListener('touchstart',e=>{ const t=e.touches[0]; if(t){ dragging=true; svApply(fromX(t.clientX)); e.preventDefault(); } },{passive:false});
     _sv.addEventListener('touchmove',e=>{ const t=e.touches[0]; if(dragging&&t){ svApply(fromX(t.clientX)); e.preventDefault(); } },{passive:false});
@@ -9633,5 +9657,7 @@ function hhClose(){
   if(document.readyState==="complete") setTimeout(go,60); else addEventListener("load",function(){ setTimeout(go,60); });
 })();
 </script>
+
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-27a</div>
 </body>
 </html>
