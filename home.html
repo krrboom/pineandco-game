@@ -1925,8 +1925,20 @@ const MVOL=0.3, MXF=0.3;      // 음악 기준 음량 + 전환 페이드(초)
 let musicUnlocked=false, musicMode=null, curPlay=null, musicVoice=null;  // musicVoice = 현재 한 곡만
 let musicDuckUntil=0;   // 이 frame 전까지는 음악을 살짝 줄임(팁 등). 시간 기반이라 자동 복구됨(끼임 방지)
 function loadMusic(){}        // (구버전 호환 스텁: 실제 로딩은 initAudio→loadMusicBuffers)
+/* __preMusic: 오디오 잠금과 무관하게 미리 받아 디코딩 → 첫 터치에 곧바로 재생 */
+const PREMUSIC={};
+(function(){ try{
+  var OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext; if(!OAC) return;
+  fetch(MUSIC_SRC.title).then(function(r){return r.arrayBuffer();}).then(function(b){
+    [48000,44100].forEach(function(sr){ try{ new OAC(1,1,sr).decodeAudioData(b.slice(0))
+      .then(function(buf){ PREMUSIC[sr]=buf;
+        try{ if(!MUSICBUF.title && audioCtx && audioCtx.sampleRate===sr){ MUSICBUF.title=buf; reconcileMusic(); } }catch(e){} })
+      .catch(function(){}); }catch(e){} });
+  }).catch(function(){});
+}catch(e){} })();
 function loadMusicBuffers(only){
   if(!audioCtx) return;
+  if(!MUSICBUF.title && PREMUSIC[audioCtx.sampleRate]) MUSICBUF.title=PREMUSIC[audioCtx.sampleRate];
   /* ★only가 주어지면 그 곡만 (시작 화면에서 7곡 전부 받던 것을 중단) */
   const names = only ? [].concat(only) : Object.keys(MUSIC_SRC);
   for(const name of names){ if(!MUSIC_SRC[name]) continue; if(MUSICBUF[name]||MUSICBUF['_l_'+name]) continue;
@@ -7394,13 +7406,7 @@ function hhClose(){
     if(!hhVisible()) return;
     pongPrime();
     if(BGM.want && (BGM.blocked || (BGM.el && BGM.el.paused))) bgmTry();
-    if(introMuted){ introMuted=false; gunIdx=0;
-      if(!$('title').classList.contains('hidden')){
-        ['tMain','tHandle','tBest'].forEach(id=>{ const el=$(id); if(el){ el.classList.remove('land','hit'); void el.offsetWidth; } });
-        [['tMain',60],['tHandle',520],['tBest',980]].forEach(([id,dl])=>{ setTimeout(()=>{ const el=$(id); if(!el) return;
-          el.classList.add('land');
-          setTimeout(()=>{ gunShot(); flash('#fff2c8'); el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),240); },420); },dl); });
-      } }
+    // 낙하음을 나중에 다시 내지 않는다 — 엉뚱한 때(설정 등)에 튀어나오던 원인
   }
   ['pointerdown','touchstart','click','keydown'].forEach(ev=>
     document.addEventListener(ev, unlockAudio, {capture:true, passive:true}));

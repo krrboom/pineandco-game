@@ -567,13 +567,7 @@
     if(!hhVisible()) return;
     pongPrime();
     if(BGM.want && (BGM.blocked || (BGM.el && BGM.el.paused))) bgmTry();
-    if(introMuted){ introMuted=false; gunIdx=0;
-      if(!$('title').classList.contains('hidden')){
-        ['tMain','tHandle','tBest'].forEach(id=>{ const el=$(id); if(el){ el.classList.remove('land','hit'); void el.offsetWidth; } });
-        [['tMain',60],['tHandle',520],['tBest',980]].forEach(([id,dl])=>{ setTimeout(()=>{ const el=$(id); if(!el) return;
-          el.classList.add('land');
-          setTimeout(()=>{ gunShot(); flash('#fff2c8'); el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),240); },420); },dl); });
-      } }
+    // 낙하음을 나중에 다시 내지 않는다 — 엉뚱한 때(설정 등)에 튀어나오던 원인
   }
   ['pointerdown','touchstart','click','keydown'].forEach(ev=>
     document.addEventListener(ev, unlockAudio, {capture:true, passive:true}));
