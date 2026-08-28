@@ -7582,10 +7582,28 @@ function hhClose(){
   $('turnBtn').onclick=()=>{ beep(700,0.1); if(mode==='fp') fpNext(); else nextRound(); };
   function hud(){ const p=players[cur]; $('hudWho').textContent=p.name; $('hudRd').textContent='ROUND '+(round+1)+'/'+ROUNDS; $('hudSc').textContent=p.score; $('hud').classList.remove('hidden'); }
   // 게임별 로컬 랭킹 (top5)
+
+  /* 순위 비교: 점수가 같으면 실제 기록으로 가른다.
+     점수가 100에서 막히기 때문에 이게 없으면 만점자끼리 순서가 뒤죽박죽이 된다. */
+  function rankMetric(t){
+    const s = String(t || '');
+    const m = s.match(/-?\d+(?:\.\d+)?/);
+    if (!m) return null;
+    return { v: parseFloat(m[0]), low: s.indexOf('±') >= 0 };   // ±4.1ml 처럼 오차는 작을수록 좋다
+  }
+  function rankCmp(a, b){
+    if ((b.s || 0) !== (a.s || 0)) return (b.s || 0) - (a.s || 0);
+    const ma = rankMetric(a.t), mb = rankMetric(b.t);
+    if (ma && mb) return ma.low ? ma.v - mb.v : mb.v - ma.v;
+    if (ma) return -1;
+    if (mb) return 1;
+    return (a.at || 0) - (b.at || 0);
+  }
+
   function loadRanks(){ try{ return JSON.parse(localStorage.getItem('bp_ranks')||'{}'); }catch(e){ return {}; } }
   function record(game,score,txt){ try{ const R=loadRanks(); const arr=R[game]||[];
     arr.push({n:(localStorage.getItem('bp_name')||'PINE').slice(0,6),s:Math.round(score),t:String(txt).slice(0,14)});
-    arr.sort((a,b)=>b.s-a.s); R[game]=arr.slice(0,5); localStorage.setItem('bp_ranks',JSON.stringify(R)); }catch(e){} }
+    arr.sort(rankCmp); R[game]=arr.slice(0,5); localStorage.setItem('bp_ranks',JSON.stringify(R)); }catch(e){} }
   // 비시바시식 HOW TO PLAY 오버레이
   const HOWTO={
     'FREE POUR MASTER':'Flip the bottle, watch the ml counter, and nail 30 → 45 → 60ml like a pro. Spill it and the boss sees EVERYTHING.',
@@ -7641,7 +7659,8 @@ function hhClose(){
     let online=null;
     try{ const r=await fetch(BOARD_URL+'?all=1&t='+Date.now()); const j=await r.json(); if(j&&j.ok) online=j.games||{}; }catch(e){}
     const R=loadRanks(); w.innerHTML='';
-    GAMES.forEach(g=>{ const arr=(online&&online[g.name])||R[g.name]||[]; const d=document.createElement('div'); d.className='rkgame';
+    // 서버가 어떤 순서로 주든 여기서 다시 줄을 세운다
+    GAMES.forEach(g=>{ const arr=[...((online&&online[g.name])||R[g.name]||[])].sort(rankCmp); const d=document.createElement('div'); d.className='rkgame';
       let html='<h3>'+g.name+(online?'':' <span style="color:#555">(OFFLINE)</span>')+'</h3>';
       if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
       else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span><span class="sc2">'+r2.s+'</span> · '+r2.t+'</span></div>'; });
@@ -9720,6 +9739,6 @@ function hhClose(){
 })();
 </script>
 
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-28b</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-28d</div>
 </body>
 </html>
