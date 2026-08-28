@@ -7172,7 +7172,7 @@ addEventListener('keydown', function(e){
   </div>
 
   <div id="hh_roundResult" class="screen hidden">
-    <div class="rate" id="hh_rrRate">GOOD</div><div class="addscore" id="hh_rrAdd">+72</div>
+    <div class="rate" id="hh_rrRate">GOOD</div><div class="addscore" id="hh_rrAdd" style="display:none"></div>
     <div id="hh_rrNameLbl" style="font-size:9px;color:var(--dim)">YOUR NAME</div>
     <input id="hh_rrName" maxlength="8" style="font-family:var(--pixfont);font-size:14px;text-transform:uppercase;width:170px;text-align:center;padding:10px;background:#000;color:var(--amber);border:3px solid #333">
     <button class="btn amber" id="hh_rrSubmit"><span id="hh_rrSubmitTxt">🏆 SUBMIT RANK</span></button>
@@ -7355,6 +7355,7 @@ function hhClose(){
       desc:{
         'BLIND POUR':'지거 없이 가보자! 3초에 1온스, 그게 기본이다',
         'STIR STOP':'멈추는 타이밍이 전부다. 온도가 생명이다!',
+        'GLASS STACK':'쟁반이 흔들린다. 접시가 몇 층까지 버틸까?',
         'ICE CARVING':'손목 힘 빼고 찍어라. 녹기 전에 완성하자!',
         'CHAMPAGNE LAUNCH':'코르크 날리기 자신 있는 사람!',
         'SHAKE MASTER':'13초다. 손님 앞이라 생각하고 제대로 흔들어라',
@@ -7370,6 +7371,7 @@ function hhClose(){
       desc:{
         'BLIND POUR':'Ditch the jigger. Three seconds is an ounce, more or less',
         'STIR STOP':'Stopping is the whole job. Temperature is everything!',
+        'GLASS STACK':'The tray is swaying. How high can you stack it?',
         'ICE CARVING':'Loose wrist, steady taps. Finish it before it melts!',
         'CHAMPAGNE LAUNCH':'Think you can send that cork flying?',
         'SHAKE MASTER':'Thirteen seconds. Shake like a guest is watching',
@@ -7385,6 +7387,7 @@ function hhClose(){
       desc:{
         'BLIND POUR':'ジガーなしでいこう！3秒で1オンス、それが基本だ',
         'STIR STOP':'止めるタイミングが全て。温度が命だ！',
+        'GLASS STACK':'トレイが揺れている。何段まで積める？',
         'ICE CARVING':'手首の力を抜いて叩け。溶ける前に仕上げよう！',
         'CHAMPAGNE LAUNCH':'コルクを飛ばす自信ある人！',
         'SHAKE MASTER':'13秒だ。客の前だと思ってしっかり振れ',
@@ -7400,6 +7403,7 @@ function hhClose(){
       desc:{
         'BLIND POUR':'不用量酒器！三秒一盎司，这是基本功',
         'STIR STOP':'停手的时机就是一切。温度是命脉！',
+        'GLASS STACK':'托盘在晃。你能叠到第几层？',
         'ICE CARVING':'手腕放松地敲。趁没化完成它！',
         'CHAMPAGNE LAUNCH':'有信心把软木塞打飞吗？',
         'SHAKE MASTER':'十三秒。当着客人的面好好摇',
@@ -7409,8 +7413,8 @@ function hhClose(){
         'FRESH SQUEEZE':'青柠当天榨的最好。三十秒内搞定',
         'TIP CATCH':'掉下来的都接住。垃圾除外',
         'FLY SWAT':'虫子是酒吧最大的敌人！全部消灭！' } } };
-  const MANUAL = {"ko":{"BLIND POUR":["버튼을 누르고 있으면 병이 기울어진다","30ml, 45ml, 60ml 세 번의 도전","카운터는 안 보인다. 3초에 1온스를 기억해라","오차가 적을수록 고득점"],"STIR STOP":["잔 위를 손가락으로 빙빙 돌려 저어라","저을수록 음료가 하늘색으로 차가워진다","목표 색과 같아지면 SERVE!","빨리 맞출수록 점수가 높다"],"ICE CARVING":["TAP 버튼을 연타해 얼음을 깎아라","손을 멈추면 다시 얼어붙는다","볼 아이스가 되면 DONE!","15초 안에 몇 개나 만들 수 있나"],"CHAMPAGNE LAUNCH":["RUN을 연타해 달리며 병을 흔들어라","연타를 멈추면 파워가 떨어진다","LAUNCH를 누르고 있으면 각도가 올라간다","45도에서 떼면 가장 멀리 날아간다"],"SHAKE MASTER":["START를 눌러 모션 센서를 허용한다","3, 2, 1 카운트 후 시작","폰을 두 손으로 잡고 흔들어라","13초 동안 많이 흔든 사람이 이긴다"],"QUICK TAB":["손님이 영수증을 내민다","품목 가격을 암산해 합계를 입력하라","총 7명, 빠를수록 점수가 오른다","틀리면 20점 감점"],"ORDER UP!":["손님들이 순서대로 칵테일을 외친다","다 듣고 나면 포스기가 올라온다","같은 순서로 눌러라","하나만 틀려도 그 판은 끝"],"WHERE IS MY SHOT?":["샷 잔에 뚜껑이 덮이고 자리가 섞인다","눈으로 끝까지 쫓아라","술이 있는 뚜껑을 탭하라","맞히면 잔이 늘고 속도도 빨라진다"],"FRESH SQUEEZE":["라임을 도마로 끌어와 좌우로 밀어 자른다","반쪽을 스퀴저에 넣고 아래로 밀어 짜라","다 쓴 껍질은 쓰레기통으로","30초 동안 얼마나 채우나"],"TIP CATCH":["팁 자를 좌우로 움직여 받아라","동전 +1, 만원 +2, 오만원 +3","쓰레기가 들어가면 감점","15초 승부"],"FLY SWAT":["파리를 탭해서 쏴 떨어뜨려라","과일에 앉은 파리는 과일을 갉아먹는다","과일 체력이 0이 되면 끝","끝까지 지켜내라"]},"en":{"BLIND POUR":["Hold the button to tip the bottle","Three pours: 30ml, 45ml, 60ml","No counter. Three seconds is an ounce","The smaller the error, the higher the score"],"STIR STOP":["Drag in circles over the glass to stir","The drink turns icy blue as it chills","Hit SERVE when it matches the target color","Faster is better"],"ICE CARVING":["Mash TAP to carve the ice","Stop and it freezes back over","Hit DONE when the ball is round","How many can you make in 15 seconds?"],"CHAMPAGNE LAUNCH":["Mash RUN to sprint and shake the bottle","Stop tapping and the power drains","Hold LAUNCH to raise the angle","Release at 45 degrees for max distance"],"SHAKE MASTER":["Press START to allow the motion sensor","Countdown 3, 2, 1","Grab the phone with both hands and shake","Most shakes in 13 seconds wins"],"QUICK TAB":["A guest hands you the tab","Add up the prices and punch in the total","Seven guests. Faster means more points","A wrong answer costs 20 points"],"ORDER UP!":["Guests call their drinks in order","The POS rises once they finish","Punch them in the same order","One slip ends the round"],"WHERE IS MY SHOT?":["A cover drops over the shot and they shuffle","Follow it with your eyes","Tap the cover hiding the drink","Get it right and more covers join, faster"],"FRESH SQUEEZE":["Drag a lime to the board and slide to slice","Put a half in the squeezer and press down","Drag the spent peel to the trash","How much can you fill in 30 seconds?"],"TIP CATCH":["Slide the jar to catch the tips","Coin +1, 10k bill +2, 50k bill +3","Trash costs you points","15 seconds"],"FLY SWAT":["Tap to shoot the flies down","Flies on the fruit eat it away","Fruit HP at zero ends the game","Hold the line"]},"ja":{"BLIND POUR":["ボタンを押している間ボトルが傾く","30ml, 45ml, 60ml の3回勝負","カウンターは見えない。3秒で1オンス","誤差が小さいほど高得点"],"STIR STOP":["グラスの上を指で回してステア","混ぜるほど水色に冷えていく","目標の色になったら SERVE!","早いほど高得点"],"ICE CARVING":["TAPを連打して氷を削れ","手を止めると再び凍る","ボール状になったら DONE!","15秒で何個作れるか"],"CHAMPAGNE LAUNCH":["RUNを連打して走りながら瓶を振る","連打を止めるとパワーが落ちる","LAUNCHを長押しで角度が上がる","45度で離すと一番飛ぶ"],"SHAKE MASTER":["STARTでモーションセンサーを許可","3, 2, 1のカウント後スタート","両手でスマホを持って振れ","13秒で多く振った人が勝ち"],"QUICK TAB":["客が伝票を差し出す","品目を暗算して合計を入力しろ","全7人。早いほど高得点","間違えると20点減点"],"ORDER UP!":["客が順番にカクテルを頼む","聞き終わるとPOSが上がってくる","同じ順番で押せ","ひとつ間違えたら終わり"],"WHERE IS MY SHOT?":["ショットに蓋がかぶさりシャッフル","目で最後まで追え","酒が入っている蓋をタップ","当たると数も速さも増える"],"FRESH SQUEEZE":["ライムをまな板へ運びスライドで切る","半分をスクイーザーに入れて押し下げる","使った皮はゴミ箱へ","30秒でどれだけ搾れるか"],"TIP CATCH":["チップジャーを左右に動かして受けろ","コイン+1, 1万+2, 5万+3","ゴミが入ると減点","15秒勝負"],"FLY SWAT":["ハエをタップで撃ち落とせ","フルーツに止まったハエが食い荒らす","フルーツのHPが0で終了","最後まで守り抜け"]},"zh":{"BLIND POUR":["按住按钮酒瓶就会倾斜","30ml, 45ml, 60ml 三次挑战","看不到计数器。三秒一盎司","误差越小分数越高"],"STIR STOP":["在杯口画圈搅拌","越搅越冷，颜色转为浅蓝","和目标颜色一致就按 SERVE!","越快分越高"],"ICE CARVING":["连打 TAP 削冰","手一停就重新结冰","削成圆球就按 DONE!","15秒内能做几个"],"CHAMPAGNE LAUNCH":["连打 RUN 边跑边摇瓶","停手能量就下降","长按 LAUNCH 抬高角度","45度松手飞得最远"],"SHAKE MASTER":["按 START 允许使用体感","3, 2, 1 倒数后开始","双手握住手机用力摇","13秒内摇得多的人赢"],"QUICK TAB":["客人递上账单","心算商品价格并输入总额","共7位客人，越快分越高","答错扣20分"],"ORDER UP!":["客人依次报出鸡尾酒","听完后收银机升起","按相同顺序点击","错一个这局就结束"],"WHERE IS MY SHOT?":["盖子罩住酒杯并开始洗牌","用眼睛紧紧追踪","点击藏着酒的那个盖子","答对后数量增加速度加快"],"FRESH SQUEEZE":["把青柠拖到砧板上横向滑动切开","半个放进压榨器向下压","用完的皮丢进垃圾桶","30秒能榨多少"],"TIP CATCH":["左右移动小费罐接住","硬币+1，一万+2，五万+3","接到垃圾要扣分","15秒定胜负"],"FLY SWAT":["点击射下苍蝇","停在水果上的苍蝇会啃食水果","水果血量归零就结束","守到最后"]}};
-  const TAUNTS = {"ko":{"BLIND POUR":"지거 없이도 정확한 손, 너한테 있을까?","STIR STOP":"잔이 몇 도인지 손끝으로 아는 바텐더, 될 수 있겠어?","ICE CARVING":"얼음 하나에 5분을 쓰는 인내, 견딜 수 있겠어?","CHAMPAGNE LAUNCH":"손님 시선을 다 뺏는 한 방, 자신 있어?","SHAKE MASTER":"하루 300잔 흔드는 팔, 버틸 수 있겠어?","QUICK TAB":"계산기보다 빠른 머리, 따라올 수 있겠어?","ORDER UP!":"주문 열 개를 한 번에 외우는 바텐더, 될 수 있겠어?","WHERE IS MY SHOT?":"바 안에서 벌어지는 걸 다 보는 눈, 가졌을까?","FRESH SQUEEZE":"러시 타임에 라임 스무 개, 감당할 수 있겠어?","TIP CATCH":"받을 것과 버릴 것을 0.1초에 가르는 눈, 있을까?","FLY SWAT":"바를 지키는 마지막 방어선, 네가 될 수 있을까?"},"en":{"BLIND POUR":"A hand that pours true without a jigger. Got one?","STIR STOP":"Know the exact chill by touch alone. Can you?","ICE CARVING":"Five minutes on a single cube. Think you would last?","CHAMPAGNE LAUNCH":"One move that steals the whole room. Got it in you?","SHAKE MASTER":"Three hundred drinks a night. Would your arms hold?","QUICK TAB":"Faster than the calculator. Can you keep up?","ORDER UP!":"Ten orders in one go, no notes. Could you?","WHERE IS MY SHOT?":"Eyes that catch everything behind the bar. Yours?","FRESH SQUEEZE":"Twenty limes in the rush. Think you can handle it?","TIP CATCH":"Keep or toss, decided in a blink. Can you call it?","FLY SWAT":"The last line of defense for the bar. Could that be you?"},"ja":{"BLIND POUR":"ジガーなしで正確に注ぐ手、君にある？","STIR STOP":"指先で温度がわかるバーテンダー、なれる？","ICE CARVING":"氷ひとつに5分かける忍耐、耐えられる？","CHAMPAGNE LAUNCH":"客の視線を全部奪う一撃、自信ある？","SHAKE MASTER":"1日300杯振る腕、持ちこたえられる？","QUICK TAB":"電卓より速い頭、ついてこられる？","ORDER UP!":"注文10個を一度に覚えるバーテンダー、なれる？","WHERE IS MY SHOT?":"バーの全部を見ている目、持ってる？","FRESH SQUEEZE":"ラッシュ時にライム20個、さばける？","TIP CATCH":"取るか捨てるか0.1秒で決める目、ある？","FLY SWAT":"バーを守る最後の砦、君になれる？"},"zh":{"BLIND POUR":"不用量酒器也精准的手，你有吗？","STIR STOP":"靠指尖就知道温度的调酒师，你能吗？","ICE CARVING":"为一块冰花五分钟的耐心，撑得住吗？","CHAMPAGNE LAUNCH":"一招夺走全场目光，有把握吗？","SHAKE MASTER":"一天摇三百杯的手臂，扛得住吗？","QUICK TAB":"比计算器还快的脑子，跟得上吗？","ORDER UP!":"一次记住十个点单的调酒师，做得到吗？","WHERE IS MY SHOT?":"看清吧台里一切的眼睛，你有吗？","FRESH SQUEEZE":"高峰期二十个青柠，应付得来吗？","TIP CATCH":"零点一秒决定接或不接，判断得了吗？","FLY SWAT":"守护酒吧的最后防线，会是你吗？"}};
+  const MANUAL = {"ko":{"GLASS STACK":["물건이 좌우로 흔들린다","탭하면 그 자리에 얹힌다","어긋난 만큼 탑이 기운다","BALANCE 막대가 끝에 닿으면 와르르"],"BLIND POUR":["버튼을 누르고 있으면 병이 기울어진다","30ml, 45ml, 60ml 세 번의 도전","카운터는 안 보인다. 3초에 1온스를 기억해라","오차가 적을수록 고득점"],"STIR STOP":["잔 위를 손가락으로 빙빙 돌려 저어라","저을수록 음료가 하늘색으로 차가워진다","목표 색과 같아지면 SERVE!","빨리 맞출수록 점수가 높다"],"ICE CARVING":["TAP 버튼을 연타해 얼음을 깎아라","손을 멈추면 다시 얼어붙는다","볼 아이스가 되면 DONE!","15초 안에 몇 개나 만들 수 있나"],"CHAMPAGNE LAUNCH":["RUN을 연타해 달리며 병을 흔들어라","연타를 멈추면 파워가 떨어진다","LAUNCH를 누르고 있으면 각도가 올라간다","45도에서 떼면 가장 멀리 날아간다"],"SHAKE MASTER":["START를 눌러 모션 센서를 허용한다","3, 2, 1 카운트 후 시작","폰을 두 손으로 잡고 흔들어라","13초 동안 많이 흔든 사람이 이긴다"],"QUICK TAB":["손님이 영수증을 내민다","품목 가격을 암산해 합계를 입력하라","총 7명, 빠를수록 점수가 오른다","틀리면 20점 감점"],"ORDER UP!":["손님들이 순서대로 칵테일을 외친다","다 듣고 나면 포스기가 올라온다","같은 순서로 눌러라","하나만 틀려도 그 판은 끝"],"WHERE IS MY SHOT?":["샷 잔에 뚜껑이 덮이고 자리가 섞인다","눈으로 끝까지 쫓아라","술이 있는 뚜껑을 탭하라","맞히면 잔이 늘고 속도도 빨라진다"],"FRESH SQUEEZE":["라임을 도마로 끌어와 좌우로 밀어 자른다","반쪽을 스퀴저에 넣고 아래로 밀어 짜라","다 쓴 껍질은 쓰레기통으로","30초 동안 얼마나 채우나"],"TIP CATCH":["팁 자를 좌우로 움직여 받아라","동전 +1, 만원 +2, 오만원 +3","쓰레기가 들어가면 감점","15초 승부"],"FLY SWAT":["파리를 탭해서 쏴 떨어뜨려라","과일에 앉은 파리는 과일을 갉아먹는다","과일 체력이 0이 되면 끝","끝까지 지켜내라"]},"en":{"GLASS STACK":["The piece swings left and right","Tap to drop it where it stands","Every miss tips the tower further","When BALANCE hits the end, it all goes over"],"BLIND POUR":["Hold the button to tip the bottle","Three pours: 30ml, 45ml, 60ml","No counter. Three seconds is an ounce","The smaller the error, the higher the score"],"STIR STOP":["Drag in circles over the glass to stir","The drink turns icy blue as it chills","Hit SERVE when it matches the target color","Faster is better"],"ICE CARVING":["Mash TAP to carve the ice","Stop and it freezes back over","Hit DONE when the ball is round","How many can you make in 15 seconds?"],"CHAMPAGNE LAUNCH":["Mash RUN to sprint and shake the bottle","Stop tapping and the power drains","Hold LAUNCH to raise the angle","Release at 45 degrees for max distance"],"SHAKE MASTER":["Press START to allow the motion sensor","Countdown 3, 2, 1","Grab the phone with both hands and shake","Most shakes in 13 seconds wins"],"QUICK TAB":["A guest hands you the tab","Add up the prices and punch in the total","Seven guests. Faster means more points","A wrong answer costs 20 points"],"ORDER UP!":["Guests call their drinks in order","The POS rises once they finish","Punch them in the same order","One slip ends the round"],"WHERE IS MY SHOT?":["A cover drops over the shot and they shuffle","Follow it with your eyes","Tap the cover hiding the drink","Get it right and more covers join, faster"],"FRESH SQUEEZE":["Drag a lime to the board and slide to slice","Put a half in the squeezer and press down","Drag the spent peel to the trash","How much can you fill in 30 seconds?"],"TIP CATCH":["Slide the jar to catch the tips","Coin +1, 10k bill +2, 50k bill +3","Trash costs you points","15 seconds"],"FLY SWAT":["Tap to shoot the flies down","Flies on the fruit eat it away","Fruit HP at zero ends the game","Hold the line"]},"ja":{"GLASS STACK":["物が左右に揺れる","タップするとその位置に載る","ズレた分だけタワーが傾く","BALANCEが端に届くと全部倒れる"],"BLIND POUR":["ボタンを押している間ボトルが傾く","30ml, 45ml, 60ml の3回勝負","カウンターは見えない。3秒で1オンス","誤差が小さいほど高得点"],"STIR STOP":["グラスの上を指で回してステア","混ぜるほど水色に冷えていく","目標の色になったら SERVE!","早いほど高得点"],"ICE CARVING":["TAPを連打して氷を削れ","手を止めると再び凍る","ボール状になったら DONE!","15秒で何個作れるか"],"CHAMPAGNE LAUNCH":["RUNを連打して走りながら瓶を振る","連打を止めるとパワーが落ちる","LAUNCHを長押しで角度が上がる","45度で離すと一番飛ぶ"],"SHAKE MASTER":["STARTでモーションセンサーを許可","3, 2, 1のカウント後スタート","両手でスマホを持って振れ","13秒で多く振った人が勝ち"],"QUICK TAB":["客が伝票を差し出す","品目を暗算して合計を入力しろ","全7人。早いほど高得点","間違えると20点減点"],"ORDER UP!":["客が順番にカクテルを頼む","聞き終わるとPOSが上がってくる","同じ順番で押せ","ひとつ間違えたら終わり"],"WHERE IS MY SHOT?":["ショットに蓋がかぶさりシャッフル","目で最後まで追え","酒が入っている蓋をタップ","当たると数も速さも増える"],"FRESH SQUEEZE":["ライムをまな板へ運びスライドで切る","半分をスクイーザーに入れて押し下げる","使った皮はゴミ箱へ","30秒でどれだけ搾れるか"],"TIP CATCH":["チップジャーを左右に動かして受けろ","コイン+1, 1万+2, 5万+3","ゴミが入ると減点","15秒勝負"],"FLY SWAT":["ハエをタップで撃ち落とせ","フルーツに止まったハエが食い荒らす","フルーツのHPが0で終了","最後まで守り抜け"]},"zh":{"GLASS STACK":["物件左右摇摆","点击就落在那个位置","偏多少，塔就斜多少","BALANCE 到头就全部倒塌"],"BLIND POUR":["按住按钮酒瓶就会倾斜","30ml, 45ml, 60ml 三次挑战","看不到计数器。三秒一盎司","误差越小分数越高"],"STIR STOP":["在杯口画圈搅拌","越搅越冷，颜色转为浅蓝","和目标颜色一致就按 SERVE!","越快分越高"],"ICE CARVING":["连打 TAP 削冰","手一停就重新结冰","削成圆球就按 DONE!","15秒内能做几个"],"CHAMPAGNE LAUNCH":["连打 RUN 边跑边摇瓶","停手能量就下降","长按 LAUNCH 抬高角度","45度松手飞得最远"],"SHAKE MASTER":["按 START 允许使用体感","3, 2, 1 倒数后开始","双手握住手机用力摇","13秒内摇得多的人赢"],"QUICK TAB":["客人递上账单","心算商品价格并输入总额","共7位客人，越快分越高","答错扣20分"],"ORDER UP!":["客人依次报出鸡尾酒","听完后收银机升起","按相同顺序点击","错一个这局就结束"],"WHERE IS MY SHOT?":["盖子罩住酒杯并开始洗牌","用眼睛紧紧追踪","点击藏着酒的那个盖子","答对后数量增加速度加快"],"FRESH SQUEEZE":["把青柠拖到砧板上横向滑动切开","半个放进压榨器向下压","用完的皮丢进垃圾桶","30秒能榨多少"],"TIP CATCH":["左右移动小费罐接住","硬币+1，一万+2，五万+3","接到垃圾要扣分","15秒定胜负"],"FLY SWAT":["点击射下苍蝇","停在水果上的苍蝇会啃食水果","水果血量归零就结束","守到最后"]}};
+  const TAUNTS = {"ko":{"GLASS STACK":"한 손에 접시 열 장 드는 손목, 가졌을까?","BLIND POUR":"지거 없이도 정확한 손, 너한테 있을까?","STIR STOP":"잔이 몇 도인지 손끝으로 아는 바텐더, 될 수 있겠어?","ICE CARVING":"얼음 하나에 5분을 쓰는 인내, 견딜 수 있겠어?","CHAMPAGNE LAUNCH":"손님 시선을 다 뺏는 한 방, 자신 있어?","SHAKE MASTER":"하루 300잔 흔드는 팔, 버틸 수 있겠어?","QUICK TAB":"계산기보다 빠른 머리, 따라올 수 있겠어?","ORDER UP!":"주문 열 개를 한 번에 외우는 바텐더, 될 수 있겠어?","WHERE IS MY SHOT?":"바 안에서 벌어지는 걸 다 보는 눈, 가졌을까?","FRESH SQUEEZE":"러시 타임에 라임 스무 개, 감당할 수 있겠어?","TIP CATCH":"받을 것과 버릴 것을 0.1초에 가르는 눈, 있을까?","FLY SWAT":"바를 지키는 마지막 방어선, 네가 될 수 있을까?"},"en":{"GLASS STACK":"Ten plates on one hand without a wobble. Got that wrist?","BLIND POUR":"A hand that pours true without a jigger. Got one?","STIR STOP":"Know the exact chill by touch alone. Can you?","ICE CARVING":"Five minutes on a single cube. Think you would last?","CHAMPAGNE LAUNCH":"One move that steals the whole room. Got it in you?","SHAKE MASTER":"Three hundred drinks a night. Would your arms hold?","QUICK TAB":"Faster than the calculator. Can you keep up?","ORDER UP!":"Ten orders in one go, no notes. Could you?","WHERE IS MY SHOT?":"Eyes that catch everything behind the bar. Yours?","FRESH SQUEEZE":"Twenty limes in the rush. Think you can handle it?","TIP CATCH":"Keep or toss, decided in a blink. Can you call it?","FLY SWAT":"The last line of defense for the bar. Could that be you?"},"ja":{"GLASS STACK":"片手で皿10枚、その手首ある？","BLIND POUR":"ジガーなしで正確に注ぐ手、君にある？","STIR STOP":"指先で温度がわかるバーテンダー、なれる？","ICE CARVING":"氷ひとつに5分かける忍耐、耐えられる？","CHAMPAGNE LAUNCH":"客の視線を全部奪う一撃、自信ある？","SHAKE MASTER":"1日300杯振る腕、持ちこたえられる？","QUICK TAB":"電卓より速い頭、ついてこられる？","ORDER UP!":"注文10個を一度に覚えるバーテンダー、なれる？","WHERE IS MY SHOT?":"バーの全部を見ている目、持ってる？","FRESH SQUEEZE":"ラッシュ時にライム20個、さばける？","TIP CATCH":"取るか捨てるか0.1秒で決める目、ある？","FLY SWAT":"バーを守る最後の砦、君になれる？"},"zh":{"GLASS STACK":"单手托十个盘子不抖，你有那个手腕吗？","BLIND POUR":"不用量酒器也精准的手，你有吗？","STIR STOP":"靠指尖就知道温度的调酒师，你能吗？","ICE CARVING":"为一块冰花五分钟的耐心，撑得住吗？","CHAMPAGNE LAUNCH":"一招夺走全场目光，有把握吗？","SHAKE MASTER":"一天摇三百杯的手臂，扛得住吗？","QUICK TAB":"比计算器还快的脑子，跟得上吗？","ORDER UP!":"一次记住十个点单的调酒师，做得到吗？","WHERE IS MY SHOT?":"看清吧台里一切的眼睛，你有吗？","FRESH SQUEEZE":"高峰期二十个青柠，应付得来吗？","TIP CATCH":"零点一秒决定接或不接，判断得了吗？","FLY SWAT":"守护酒吧的最后防线，会是你吗？"}};
   const MAN_OF = n => (MANUAL[LANG]&&MANUAL[LANG][n]) || MANUAL.en[n] || [];
   const TAUNT_OF = n => (TAUNTS[LANG]&&TAUNTS[LANG][n]) || TAUNTS.en[n] || "";
   const T = k => (L10N[LANG]&&L10N[LANG].ui[k]) || L10N.en.ui[k] || k;
@@ -7589,15 +7593,15 @@ function hhClose(){
     const s = String(t || '');
     const m = s.match(/-?\d+(?:\.\d+)?/);
     if (!m) return null;
-    return { v: parseFloat(m[0]), low: s.indexOf('±') >= 0 };   // ±4.1ml 처럼 오차는 작을수록 좋다
+    // ±(오차)와 ⏱(시간)은 작을수록 좋다
+    return { v: parseFloat(m[0]), low: s.indexOf('±') >= 0 || s.indexOf('⏱') >= 0 };
   }
   function rankCmp(a, b){
-    if ((b.s || 0) !== (a.s || 0)) return (b.s || 0) - (a.s || 0);
     const ma = rankMetric(a.t), mb = rankMetric(b.t);
-    if (ma && mb) return ma.low ? ma.v - mb.v : mb.v - ma.v;
+    if (ma && mb) return ma.low ? ma.v - mb.v : mb.v - ma.v;   // 순위는 오직 기록으로
     if (ma) return -1;
     if (mb) return 1;
-    return (a.at || 0) - (b.at || 0);
+    return (b.s || 0) - (a.s || 0);   // 숫자가 없는 옛 기록만 점수로 (하위 호환)
   }
 
   function loadRanks(){ try{ return JSON.parse(localStorage.getItem('bp_ranks')||'{}'); }catch(e){ return {}; } }
@@ -7608,6 +7612,7 @@ function hhClose(){
   const HOWTO={
     'FREE POUR MASTER':'Flip the bottle, watch the ml counter, and nail 30 → 45 → 60ml like a pro. Spill it and the boss sees EVERYTHING.',
     'BLIND POUR':'Same as Free Pour… but the counter is GONE. Count in your soul — 1oz = 3 seconds. Trust the wrist.',
+    'GLASS STACK':'Plates and glasses swing over a swaying tray. Tap to drop each one, keep the tower centered, and stack it as high as you dare. Lean too far and the whole tray goes over.',
     'STIR STOP':'Stir in circles and watch the drink turn icy blue. Match the TARGET color exactly, then SERVE! Stop and it warms back up.',
     'ICE CARVING':'Mash to carve a perfect ice ball! Let go and it refreezes. Hit DONE on the sphere — too early and it SHATTERS.',
     'CHAMPAGNE LAUNCH':'Sprint & shake the bottle! HOLD launch to raise the angle, release at 45°. Kiss the wall and you wear the foam.',
@@ -7641,7 +7646,7 @@ function hhClose(){
     showHowto(GAMES[g].name,()=>{ let done=false; GAMES[g].run(function(s,t,c){ if(done) return; done=true;
       record(GAMES[g].name,s,t); award(Math.round(s),t,c); }); }); }
   function award(score, rateTxt, rateCls){ score=Math.max(0,Math.min(100,score)); players[cur].score+=score; $('hudSc').textContent=players[cur].score;
-    $('rrRate').textContent=rateTxt; $('rrRate').className='rate '+rateCls; $('rrAdd').textContent='+'+score; show('roundResult');
+    $('rrRate').textContent=rateTxt; $('rrRate').className='rate '+rateCls; show('roundResult');   // 점수는 보여주지 않는다
     if(rateCls==='miss') sBad(); else sGood(); setTimeout(()=>{ round++; nextRound(); }, 1000); }
   function endTurn(){ $('hud').classList.add('hidden'); cur++; if(cur<players.length) startTurn(); else showFinal(); }
   function showFinal(){ const ranked=[...players].map(p=>({...p})).sort((a,b)=>b.score-a.score); const top=ranked[0].score;
@@ -7663,7 +7668,7 @@ function hhClose(){
     GAMES.forEach(g=>{ const arr=[...((online&&online[g.name])||R[g.name]||[])].sort(rankCmp); const d=document.createElement('div'); d.className='rkgame';
       let html='<h3>'+g.name+(online?'':' <span style="color:#555">(OFFLINE)</span>')+'</h3>';
       if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
-      else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span><span class="sc2">'+r2.s+'</span> · '+r2.t+'</span></div>'; });
+      else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span class="sc2">'+r2.t+'</span></div>'; });
       d.innerHTML=html; w.appendChild(d); }); }
   // ── 언어 적용 ──
   function applyLang(){
@@ -7776,7 +7781,8 @@ function hhClose(){
   const BOARD_URL='https://barparty-board.showjojo100.workers.dev';
   let rrCtx=null;
   function showResult(game,score,txt,cls){
-    $('rrRate').textContent=txt; $('rrRate').className='rate '+cls; $('rrAdd').textContent='SCORE '+score;
+    $('rrRate').textContent=txt; $('rrRate').className='rate '+cls;
+    { const ad=$('rrAdd'); if(ad){ ad.textContent=''; ad.style.display='none'; } }   // 점수는 보여주지 않는다
     $('rrName').value=localStorage.getItem('bp_name')||'PINE';
     $('rrStatus').textContent=''; $('rrSubmit').disabled=false; $('rrSubmit').style.opacity='1';
     rrCtx={game,score,txt}; show('roundResult');
@@ -7794,7 +7800,7 @@ function hhClose(){
   // 게임 상단 로고: 플레이 시작(HOW TO 탭) 후에만 표시, 흰 배경 키잉 후 캐시
   const GLOGO={};
   const GLOGO_PFX={ 'FREE POUR MASTER':'fp','BLIND POUR':'fp','STIR STOP':'st','ICE CARVING':'ic','CHAMPAGNE LAUNCH':'cl',
-    'SHAKE MASTER':'sm','QUICK TAB':'qt','ORDER UP!':'ou','WHERE IS MY SHOT?':'ws','FRESH SQUEEZE':'sq','TIP CATCH':'tc','FLY SWAT':'fs' };
+    'SHAKE MASTER':'sm','QUICK TAB':'qt','ORDER UP!':'ou','WHERE IS MY SHOT?':'ws','FRESH SQUEEZE':'sq','TIP CATCH':'tc','FLY SWAT':'fs','GLASS STACK':'gs' };
   function loadLogo(pfx,cb){ if(GLOGO[pfx]){ if(cb)cb(); return; }
     // 로고는 일러스트 재작업본(투명 배경) — 키잉 없이 원본 그대로 (화질 유지)
     const im=new Image(); im.onload=()=>{ GLOGO[pfx]='assets/'+pfx+'_logo.png'; if(cb)cb(); };
@@ -8103,7 +8109,7 @@ function hhClose(){
   // 게임별 전용 배경 (50 베스트 바 스타일)
   const GB={ imgs:{}, loading:false };
   function gbLoad(){ if(GB.loading) return; GB.loading=true;
-    ['freepour','stir','icecarving','champagne','shake','tipcatch','flyswat','orderup','whereshot','squeeze'].forEach(k=>{
+    ['freepour','stir','icecarving','champagne','shake','tipcatch','flyswat','orderup','whereshot','squeeze','glassstack'].forEach(k=>{
       const im=new Image(); im.onload=()=>{ GB.imgs[k]=im; }; im.src='assets/bg_'+k+'.jpg'; }); }
   function fpKeyUI(img,maxW){ // UI 이미지용: 낮은 임계 키잉 + 가장자리 흰 잔재(halo) 2패스 제거
     const c=fpKey(img,maxW,205);
@@ -8620,6 +8626,7 @@ function hhClose(){
     const ARM=1500, MAXWAIT=28000;
     let round=0, lines=[], total=0, input='', printT=0, solveT=0, wrong=0, state='intro'; // intro|print|answer|win|end
     let winT=0, custIn=0, roundScores=[], t0=0, lastT=0, raf=0, shake=0, badT=-1e9;
+    let qtWrong=0, qtStart=0;   // 기록용: 총 걸린 시간과 오답 수
     const parts=[];
     function newRound(){ const n=4+round; lines=sample(QT_MENU,n).map(m=>[m[0], m[1]+rnd(m[2]-m[1]+1)]);
       total=lines.reduce((a,l)=>a+l[1],0); input=''; wrong=0; custIn=lastT; state='print'; printT=lastT+500;
@@ -8628,7 +8635,8 @@ function hhClose(){
       if(k==='C'){ input=''; sTap(); return; }
       if(k==='O'){ if(!input) return;
         if(parseInt(input,10)===total){ state='win'; winT=lastT; sGood(); flash('#6fcf8f'); setTimeout(()=>beep(1500,0.12,'square',0.1),100);
-          const el=(lastT-solveT)/1000; roundScores.push(Math.max(0,Math.min(100,Math.round(112-el*6)-wrong*20)));
+          const el=(lastT-solveT)/1000; qtWrong+=wrong; if(!qtStart) qtStart=t0;
+          roundScores.push(Math.max(0,Math.min(100,Math.round(112-el*6)-wrong*20)));
           for(let j=0;j<16;j++) parts.push({x:200+(Math.random()*80-40),y:250,vx:(Math.random()*2-1)*140,vy:-100-Math.random()*160,gv:600,r:2+Math.random()*2.5,c:['#ffd977','#6fcf8f','#fff'][rnd(3)],life:0.5+Math.random()*0.4});
           setTimeout(()=>{ if(round>=6){ finish(); } else { round++; newRound(); } },1100); }
         else { wrong++; input=''; badT=lastT; shake=7; sBad(); }
@@ -8642,7 +8650,9 @@ function hhClose(){
     function finish(){ state='end';
       const avg=roundScores.length?Math.round(roundScores.reduce((a,b)=>a+b,0)/7):0;
       const cls=avg>=80?'perfect':(avg>=50?'good':'miss');
-      setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(avg,'TAB CLEARED!',cls); },1500); }
+      const secs=qtStart?((lastT-qtStart)/1000):0;
+      const txt='\u23f1'+secs.toFixed(1)+'s'+(qtWrong?' '+qtWrong+'X':'');   // \u23f1 = 짧을수록 좋다
+      setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(avg,txt,cls); },1500); }
     function cleanup(){ cancelAnimationFrame(raf); }
     function draw(t){
       raf=requestAnimationFrame(draw);
@@ -8758,7 +8768,7 @@ function hhClose(){
       const a=e.acceleration;
       if(a&&a.x!=null) mag=Math.hypot(a.x||0,a.y||0,a.z||0);
       else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null) mag=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81); }
-      if(mag!=null&&mag>11&&now()-lastShakeT>130) addShake(); }
+      if(mag!=null&&mag>11&&now()-lastShakeT>55) addShake(); }   // 55ms: 사람이 낼 수 있는 속도보다 빠르다 (사실상 상한 없음)
     function begin(){ btn.style.display='none'; permMsg=''; ac(); loadShaker(); state='ice'; stT=now();
       playFile('assets/sfx_glass_ice.mp3',1);
       try{ window.addEventListener('devicemotion',onMotion); }catch(e){} }
@@ -9013,6 +9023,175 @@ function hhClose(){
     raf=requestAnimationFrame(draw);
   }
 
+
+  /* ====================== GLASS STACK ====================== */
+  // 쟁반 위에 접시와 잔을 쌓는다. 좌우로 흔들리는 물건을 탭해서 얹고, 어긋난 만큼 탑이 기운다.
+  const GS={ imgs:{}, loading:false };
+  function gsLoad(){ if(GS.loading) return; GS.loading=true;
+    // 투명 배경 원본이라 키잉 없이 그대로 쓴다
+    // 변형(b, c)은 있으면 쓰고 없으면 조용히 건너뛴다. 새 그림을 넣기만 하면 바로 섞여 나온다.
+    ['tray','hand','logo',
+     'plate1','plate1b','plate1c','plate2','plate2b','plate2c',
+     'wine','wineb','coupe','coupeb','shot','shotb','rocks','highball','martini','pick'].forEach(k=>{
+      const im=new Image(); im.onload=()=>{ GS.imgs[k]=im; }; im.onerror=()=>{}; im.src='assets/gs_'+k+'.png'; }); }
+  // 층이 오를수록 물건이 조금씩 좁아진다. 티 안 나게 줄다가, 어느 선을 넘으면 다음 물건으로 바뀐다.
+  // 얹을 수 있는 면적이 계속 줄어드니 위로 갈수록 저절로 어려워진다.
+  const R90=-Math.PI/2;
+  // 그림마다 원본이 이미 누워 있거나 서 있어서, 돌려야 하는 것만 rot을 준다.
+  const GS_BANDS=[
+    { min:112, opts:[ {k:'plate1',rot:0}, {k:'plate1b',rot:0}, {k:'plate1c',rot:0} ] },       // 큰 접시
+    { min:74,  opts:[ {k:'plate2',rot:0}, {k:'plate2b',rot:0}, {k:'plate2c',rot:0} ] },       // 작은 접시
+    { min:56,  opts:[ {k:'wine',rot:0}, {k:'wineb',rot:0}, {k:'highball',rot:0} ] },          // 잔 — 눕힘
+    { min:40,  opts:[ {k:'coupe',rot:0}, {k:'martini',rot:0}, {k:'rocks',rot:0} ] },          // 잔 — 세움
+    { min:26,  opts:[ {k:'shot',rot:R90}, {k:'shotb',rot:0} ] },                              // 잔 — 눕힘
+    { min:0,   opts:[ {k:'pick',rot:R90} ] } ];                                               // 픽 — 세움 (제일 좁다)
+  let gsLastK=null;
+  function gsPiece(level){
+    const w=Math.max(14, 150*Math.pow(0.962, level));   // 한 층마다 약 4%씩 (한 번에는 티가 안 난다)
+    const b=GS_BANDS.find(x=>w>=x.min)||GS_BANDS[GS_BANDS.length-1];
+    const have=b.opts.filter(o=>GS.imgs[o.k]);          // 실제로 들어와 있는 그림만
+    let pool=have.length?have:[b.opts[0]];
+    if(pool.length>1){ const nd=pool.filter(o=>o.k!==gsLastK); if(nd.length) pool=nd; }   // 같은 그림 연달아 나오지 않게
+    const o=pool[rnd(pool.length)]; gsLastK=o.k;
+    return { k:o.k, rot:o.rot, w:Math.round(w) }; }
+  function engGlassStack(done){
+    fpLoad(); gsLoad();
+    stage.innerHTML='<canvas id="hh_gscv" width="400" height="480"></canvas>'
+      +'<button class="btn amber bigbtn" id="hh_gsDrop">STACK!</button>';
+    const cv=$('gscv'), ctx=cv.getContext('2d'), btn=$('gsDrop');
+    const CX=200, BASEY=430, TRAYW=200, ARM=1100;
+    let state='intro', stT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
+    let stack=[], cur=null, camY=0, camWant=0, level=0, lean=0, stampObj=null, stampT=0, endTxt='';
+    const parts=[], fallers=[];
+    function sizeOf(k,w,rot){ const im=GS.imgs[k];
+      if(!im) return { w:w, h:Math.max(8,Math.round(w*0.3)) };
+      const ar = rot ? (im.width/im.height) : (im.height/im.width);   // 90도 돌리면 가로세로가 바뀐다
+      return { w:w, h:Math.max(8,Math.round(w*ar)) }; }
+    function topOf(){ return stack.length?stack[stack.length-1]:{x:CX,w:TRAYW,y:BASEY,h:0}; }
+    function spawn(){
+      const s=gsPiece(level), d=sizeOf(s.k,s.w,s.rot), top=topOf();
+      cur={ k:s.k, rot:s.rot, w:d.w, h:d.h, y:top.y-d.h, x:CX, ph:Math.random()*6.283,
+            sp:1.03+level*0.06, amp:Math.min(150,80+level*3.5) };   // 시작 속도 25% 올림. 좁아지는 것만으로도 어려우니 가속은 완만하게
+    }
+    function place(){
+      if(state!=='play'||stampObj||!cur) return;
+      const top=topOf(), dx=cur.x-top.x;
+      const over=Math.min(cur.x+cur.w/2, top.x+top.w/2)-Math.max(cur.x-cur.w/2, top.x-top.w/2);
+      const need=Math.min(cur.w, top.w)*0.30;        // 이만큼은 걸쳐야 버틴다
+      if(over<need){                                  // 못 걸치면 미끄러져 떨어진다
+        fallers.push({ k:cur.k, rot:cur.rot, x:cur.x, y:cur.y, w:cur.w, h:cur.h,
+          vx:(dx>=0?1:-1)*90, vy:-40, spin:0, vs:(dx>=0?4:-4) });
+        cur=null; shake=10; sBad(); finish('SLID OFF'); return; }
+      const acc=Math.abs(dx);
+      stack.push({ k:cur.k, rot:cur.rot, x:cur.x, w:cur.w, h:cur.h, y:cur.y });
+      lean+=dx*0.55;                                  // 어긋난 만큼 탑이 한쪽으로 기운다
+      level++;
+      if(acc<5){ beep(1320,0.1,'square',0.11); flash('#6fcf8f');
+        for(let j=0;j<12;j++) parts.push({ x:cur.x+(Math.random()*cur.w-cur.w/2), y:cur.y,
+          vx:(Math.random()*2-1)*70, vy:-50-Math.random()*70, gv:340,
+          r:1.6+Math.random()*1.8, c:['#ffd977','#fff','#6fcf8f'][rnd(3)], life:0.55 }); }
+      else if(acc<16) beep(900,0.07,'square',0.09);
+      else beep(520,0.07,'square',0.08);
+      if(Math.abs(lean)>TRAYW*0.5){                   // 무게중심이 쟁반을 벗어나면 와르르
+        shake=13; sBad(); finish('TOPPLED');
+        stack.forEach((b,i)=>{ if(i<1) return;
+          fallers.push({ k:b.k, rot:b.rot, x:b.x, y:b.y, w:b.w, h:b.h,
+            vx:(lean>=0?1:-1)*(30+i*14), vy:-30-i*8, spin:0, vs:(lean>=0?1:-1)*(2+i*0.4) }); });
+        return; }
+      camWant=Math.max(0,(BASEY-topOf().y)-190);
+      spawn();
+    }
+    function finish(why){
+      if(stampObj) return;
+      endTxt=why;
+      const lv=stack.length;
+      const sc=Math.max(0,Math.min(100,Math.round(lv*7)));
+      const cls=lv>=12?'perfect':(lv>=7?'good':'miss');
+      const quip=lv>=12?'The whole room watched that':(lv>=7?'Solid tray work'
+        :(why==='TOPPLED'?'The whole tray went over':'Straight to the floor'));
+      stampObj={ txt:lv+' STACKED!', cls, quip }; stampT=lastT;
+      if(cls==='perfect'){ flash('#6fcf8f'); sGood(); } else if(cls==='good') sGood();
+      setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc, lv+' STACKED!', cls); },1700); }
+    btn.addEventListener('pointerdown',e=>{ e.preventDefault(); ac(); place(); });
+    cv.addEventListener('pointerdown',e=>{ e.preventDefault(); ac(); place(); });
+    function cleanup(){ cancelAnimationFrame(raf); }
+    function drawObj(o){
+      const im=GS.imgs[o.k];
+      if(!im){ ctx.fillStyle='#8a8d82'; ctx.fillRect(o.x-o.w/2,o.y,o.w,o.h); return; }
+      ctx.save(); ctx.translate(o.x, o.y+o.h/2);
+      if(o.spin) ctx.rotate(o.spin);
+      if(o.rot){ ctx.rotate(o.rot); ctx.drawImage(im, -o.h/2, -o.w/2, o.h, o.w); }
+      else ctx.drawImage(im, -o.w/2, -o.h/2, o.w, o.h);
+      ctx.restore(); }
+    function draw(t){
+      raf=requestAnimationFrame(draw);
+      if(!t0){ t0=t; lastT=t; stT=t; }
+      const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+      const el=t-stT;
+      if(state==='intro'&&el>=ARM){ state='play'; stT=t; spawn(); beep(700,0.08,'square',0.1); }
+      if(state==='play'&&cur&&!stampObj){ cur.ph+=dt*cur.sp; cur.x=CX+Math.sin(cur.ph)*cur.amp; }
+      camY+=(camWant-camY)*Math.min(1,dt*6);
+      for(let i=fallers.length-1;i>=0;i--){ const f=fallers[i];
+        f.vy+=620*dt; f.x+=f.vx*dt; f.y+=f.vy*dt; f.spin+=f.vs*dt;
+        if(f.y>760) fallers.splice(i,1); }
+      shake=Math.max(0,shake-dt*26);
+      ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,400,480);
+      ctx.translate((Math.random()*2-1)*shake,(Math.random()*2-1)*shake);
+      const bgi=GB.imgs.glassstack||GB.imgs.stir||FP.imgs.bg;
+      if(bgi){ const s=Math.max(400/bgi.width,480/bgi.height);
+        ctx.drawImage(bgi,(400-bgi.width*s)/2,(480-bgi.height*s)/2,bgi.width*s,bgi.height*s); }
+      else { ctx.fillStyle='#14170f'; ctx.fillRect(0,0,400,480); }
+      ctx.fillStyle='rgba(0,0,0,0.42)'; ctx.fillRect(0,0,400,480);
+      ctx.save(); ctx.translate(0,camY);
+      const hd=GS.imgs.hand;
+      if(hd){ const hw=104, hh=hw*(hd.height/hd.width); ctx.drawImage(hd,CX-hw/2,BASEY+18,hw,hh); }
+      const tim=GS.imgs.tray, trh=tim?TRAYW*(tim.height/tim.width):24;
+      drawObj({k:'tray',x:CX,y:BASEY,w:TRAYW,h:trh,rot:0});
+      for(const b of stack) drawObj(b);
+      if(cur&&!stampObj) drawObj(cur);
+      for(const f of fallers) drawObj(f);
+      for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.life-=dt;
+        if(p.life<=0){ parts.splice(i,1); continue; }
+        p.vy+=p.gv*dt; p.x+=p.vx*dt; p.y+=p.vy*dt;
+        ctx.globalAlpha=Math.min(1,p.life*2.2); ctx.fillStyle=p.c;
+        ctx.fillRect(p.x-p.r/2,p.y-p.r/2,p.r,p.r); }
+      ctx.globalAlpha=1; ctx.restore();
+      // HUD: 쌓은 층수와 균형
+      if(state==='play'&&!stampObj){
+        ctx.textAlign='center'; ctx.font='20px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText(String(stack.length),202,44);
+        ctx.fillStyle='#e8e6dd'; ctx.fillText(String(stack.length),200,42);
+        ctx.font='8px "Press Start 2P"'; ctx.fillStyle='#8a8d82'; ctx.fillText('STACKED',200,60);
+        const bal=Math.max(-1,Math.min(1,lean/(TRAYW*0.5)));
+        ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(100,74,200,8);
+        ctx.fillStyle=Math.abs(bal)>0.7?'#d9544d':(Math.abs(bal)>0.4?'#e6b450':'#3a7d4f');
+        ctx.fillRect(200,74,bal*100,8);
+        ctx.fillStyle='#e8e6dd'; ctx.fillRect(199,71,2,14);
+        ctx.font='8px "Press Start 2P"'; ctx.fillStyle='#8a8d82'; ctx.fillText('BALANCE',200,96);
+        if(el<2600&&stack.length<2){ ctx.font='10px "Press Start 2P"';
+          ctx.fillStyle='#000'; ctx.fillText('TAP TO DROP IT!',201,451);
+          ctx.fillStyle='#e8e6dd'; ctx.fillText('TAP TO DROP IT!',200,450); } }
+      if(state==='intro'){ ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,0,400,480);
+        const lg=GS.imgs.logo;
+        if(lg){ const k=0.55+eob2(Math.min(1,el/280))*0.45, lw=330*k, lh=lw*(lg.height/lg.width);
+          ctx.drawImage(lg,200-lw/2,215-lh/2,lw,lh); } }
+      if(stampObj){ const s2=(t-stampT)/1000;
+        ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,400,480);
+        ctx.save(); ctx.translate(200,200); ctx.rotate(-0.06);
+        const k2=1+Math.max(0,1-s2*6)*1.4; ctx.scale(k2,k2);
+        ctx.font='20px "Press Start 2P"'; ctx.textAlign='center';
+        const col=stampObj.cls==='perfect'?'#6fcf8f':(stampObj.cls==='good'?'#e6b450':'#d9544d');
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.txt,3,3);
+        ctx.fillStyle=col; ctx.fillText(stampObj.txt,0,0); ctx.restore();
+        ctx.font='11px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(endTxt,202,252);
+        ctx.fillStyle='#ffd977'; ctx.fillText(endTxt,200,250);
+        ctx.font='9px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText(stampObj.quip,201,283);
+        ctx.fillStyle='#e8e6dd'; ctx.fillText(stampObj.quip,200,282); }
+    }
+    raf=requestAnimationFrame(draw);
+  }
   /* ====================== FLY SWAT ====================== */
   // 과일 바구니에 꼬이는 파리들을 탭 사격으로 잡아라 — 인트로: 큰 파리가 윙윙 돌다 바구니에 앉는 순간 펑!
   const FS={ imgs:{}, loading:false };
@@ -9630,6 +9809,7 @@ function hhClose(){
     { name:'FRESH SQUEEZE', cat:'MASH', run:d=>engSqueeze(d) },
     { name:'TIP CATCH', cat:'REFLEX', run:d=>engTipCatch(d) },
     { name:'FLY SWAT', cat:'REFLEX', run:d=>engFlySwat(d) },
+    { name:'GLASS STACK', cat:'TIMING', run:d=>engGlassStack(d) },
   ];
   // (구 subCount 텍스트 제거 — 타이틀 이미지로 대체)
 
@@ -9643,7 +9823,7 @@ function hhClose(){
   //   휴대폰/저속 회선에서는 선워밍을 아예 하지 않고, 게임을 고른 순간(HOW TO PLAY 표시 중) 그 게임 것만 받는다.
   // 게임 이름 → 접두어(GLOGO_PFX) → 그 게임 전용 로더. 이름을 새로 적지 않으므로 오타로 빠질 일이 없다.
   const PFX_LOADER={ fp:()=>fpLoad(), st:()=>stLoad(), ic:()=>icLoad(), cl:()=>clLoad(), sm:()=>smLoad(),
-    qt:()=>qtLoad(), ou:()=>ouLoad(), ws:()=>wsLoad(), sq:()=>sqLoad(), tc:()=>tcLoad(), fs:()=>fsLoad() };
+    qt:()=>qtLoad(), ou:()=>ouLoad(), ws:()=>wsLoad(), sq:()=>sqLoad(), tc:()=>tcLoad(), fs:()=>fsLoad(), gs:()=>gsLoad() };
   function warmGame(name){
     try{ fpLoad(); }catch(e){}                       // 잔/배경 등 모든 게임 공용
     const p=GLOGO_PFX[name];
@@ -9744,6 +9924,6 @@ function hhClose(){
 })();
 </script>
 
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-28e</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29b</div>
 </body>
 </html>

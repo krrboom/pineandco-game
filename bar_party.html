@@ -627,15 +627,15 @@
     const s = String(t || '');
     const m = s.match(/-?\d+(?:\.\d+)?/);
     if (!m) return null;
-    return { v: parseFloat(m[0]), low: s.indexOf('±') >= 0 };   // ±4.1ml 처럼 오차는 작을수록 좋다
+    // ±(오차)와 ⏱(시간)은 작을수록 좋다
+    return { v: parseFloat(m[0]), low: s.indexOf('±') >= 0 || s.indexOf('⏱') >= 0 };
   }
   function rankCmp(a, b){
-    if ((b.s || 0) !== (a.s || 0)) return (b.s || 0) - (a.s || 0);
     const ma = rankMetric(a.t), mb = rankMetric(b.t);
-    if (ma && mb) return ma.low ? ma.v - mb.v : mb.v - ma.v;
+    if (ma && mb) return ma.low ? ma.v - mb.v : mb.v - ma.v;   // 순위는 오직 기록으로
     if (ma) return -1;
     if (mb) return 1;
-    return (a.at || 0) - (b.at || 0);
+    return (b.s || 0) - (a.s || 0);   // 숫자가 없는 옛 기록만 점수로 (하위 호환)
   }
 
   function loadRanks(){ try{ return JSON.parse(localStorage.getItem('bp_ranks')||'{}'); }catch(e){ return {}; } }
@@ -701,7 +701,7 @@
     GAMES.forEach(g=>{ const arr=[...((online&&online[g.name])||R[g.name]||[])].sort(rankCmp); const d=document.createElement('div'); d.className='rkgame';
       let html='<h3>'+g.name+(online?'':' <span style="color:#555">(OFFLINE)</span>')+'</h3>';
       if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
-      else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span><span class="sc2">'+r2.s+'</span> · '+r2.t+'</span></div>'; });
+      else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span class="sc2">'+r2.t+'</span></div>'; });
       d.innerHTML=html; w.appendChild(d); }); }
   // ── 언어 적용 ──
   function applyLang(){
@@ -1625,6 +1625,7 @@
     const ARM=1500, MAXWAIT=28000;
     let round=0, lines=[], total=0, input='', printT=0, solveT=0, wrong=0, state='intro'; // intro|print|answer|win|end
     let winT=0, custIn=0, roundScores=[], t0=0, lastT=0, raf=0, shake=0, badT=-1e9;
+    let qtWrong=0, qtStart=0;   // 기록용: 총 걸린 시간과 오답 수
     const parts=[];
     function newRound(){ const n=4+round; lines=sample(QT_MENU,n).map(m=>[m[0], m[1]+rnd(m[2]-m[1]+1)]);
       total=lines.reduce((a,l)=>a+l[1],0); input=''; wrong=0; custIn=lastT; state='print'; printT=lastT+500;
@@ -1633,7 +1634,8 @@
       if(k==='C'){ input=''; sTap(); return; }
       if(k==='O'){ if(!input) return;
         if(parseInt(input,10)===total){ state='win'; winT=lastT; sGood(); flash('#6fcf8f'); setTimeout(()=>beep(1500,0.12,'square',0.1),100);
-          const el=(lastT-solveT)/1000; roundScores.push(Math.max(0,Math.min(100,Math.round(112-el*6)-wrong*20)));
+          const el=(lastT-solveT)/1000; qtWrong+=wrong; if(!qtStart) qtStart=t0;
+          roundScores.push(Math.max(0,Math.min(100,Math.round(112-el*6)-wrong*20)));
           for(let j=0;j<16;j++) parts.push({x:200+(Math.random()*80-40),y:250,vx:(Math.random()*2-1)*140,vy:-100-Math.random()*160,gv:600,r:2+Math.random()*2.5,c:['#ffd977','#6fcf8f','#fff'][rnd(3)],life:0.5+Math.random()*0.4});
           setTimeout(()=>{ if(round>=6){ finish(); } else { round++; newRound(); } },1100); }
         else { wrong++; input=''; badT=lastT; shake=7; sBad(); }
