@@ -640,7 +640,7 @@
 
   function loadRanks(){ try{ return JSON.parse(localStorage.getItem('bp_ranks')||'{}'); }catch(e){ return {}; } }
   function record(game,score,txt){ try{ const R=loadRanks(); const arr=R[game]||[];
-    arr.push({n:(localStorage.getItem('bp_name')||'PINE').slice(0,6),s:Math.round(score),t:String(txt).slice(0,14)});
+    arr.push({n:(localStorage.getItem('bp_name')||'PINE').slice(0,6),s:Math.round(score),t:String(txt).slice(0,20)});
     arr.sort(rankCmp); R[game]=arr.slice(0,5); localStorage.setItem('bp_ranks',JSON.stringify(R)); }catch(e){} }
   // 비시바시식 HOW TO PLAY 오버레이
   const HOWTO={
@@ -1186,7 +1186,7 @@
         if(pourIdx<2){ nextPour(); return; }
         finished=true; cleanup();
         const tot=pourErrs.reduce((a,b)=>a+b,0), avg=Math.round(pourScores.reduce((a,b)=>a+b,0)/3);
-        let ftxt,fcls; if(tot<=3){ ftxt='POUR MASTER!'; fcls='perfect'; }
+        let ftxt,fcls; if(tot<=3){ ftxt='MASTER ±'+tot.toFixed(1)+'ml'; fcls='perfect'; }   // 1위도 오차를 남긴다
         else if(tot<=9){ ftxt='±'+tot.toFixed(1)+'ml'; fcls='good'; }
         else { ftxt='±'+tot.toFixed(1)+'ml'; fcls='miss'; }
         done(avg,ftxt,fcls,tot,pourErrs.slice()); },1350);
@@ -1972,7 +1972,7 @@
         ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET',cx0+184,cy0+56);
         // 온도 숫자: 처음에만 보이고 +5도 아래로 내려가면 사라진다
         if(temp>5){ ctx.font='13px "Press Start 2P"'; ctx.textAlign='center';
-          const tt=temp.toFixed(1)+'\u00B0C';
+          const tt=temp.toFixed(2)+'\u00B0C';
           ctx.fillStyle='#000'; ctx.fillText(tt,cx0+66,cy0+32);
           ctx.fillStyle='#1a1208'; ctx.fillText(tt,cx0+64,cy0+30); }
         if(state==='play'&&!stampObj){ const tl2=Math.max(0,1-(t-stT)/TOTAL);
@@ -1998,12 +1998,16 @@
         ctx.fillStyle=tempColor(target); ctx.fillRect(206,238,80,26); ctx.strokeRect(206,238,80,26);
         ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#e8e6dd'; ctx.fillText('YOURS',154,280); ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET',246,280);
-        // 목표와의 차이
-        const _d=temp-target, _ds=(_d>0?'+':'')+_d.toFixed(1)+'\u00B0C';
+        // 저을 때는 가려진 온도를, SERVE 뒤에는 숫자로 보여준다
+        ctx.font='10px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText(temp.toFixed(2)+'\u00B0',155,299);
+        ctx.fillStyle='#e8e6dd'; ctx.fillText(temp.toFixed(2)+'\u00B0',154,298);
+        ctx.fillStyle='#000'; ctx.fillText(target.toFixed(2)+'\u00B0',247,299);
+        ctx.fillStyle='#6fcf8f'; ctx.fillText(target.toFixed(2)+'\u00B0',246,298);
+        const _d=temp-target, _ds='DIFF '+(_d>0?'+':'')+_d.toFixed(2)+'\u00B0C';
         const _dc=Math.abs(_d)<=0.3?'#6fcf8f':(Math.abs(_d)<=0.8?'#e6b450':'#d9544d');
-        ctx.font='14px "Press Start 2P"'; ctx.textAlign='center';
-        ctx.fillStyle='#000'; ctx.fillText(_ds,202,306); ctx.fillStyle=_dc; ctx.fillText(_ds,200,304);
-        ctx.font='8px "Press Start 2P"'; ctx.fillStyle='#8a8d82'; ctx.fillText('DIFF FROM TARGET',200,322);
+        ctx.font='12px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(_ds,202,322); ctx.fillStyle=_dc; ctx.fillText(_ds,200,320);
         ctx.font='11px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',202,344);
         ctx.fillStyle='#ffd977'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',200,342);

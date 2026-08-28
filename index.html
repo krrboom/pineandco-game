@@ -7602,7 +7602,7 @@ function hhClose(){
 
   function loadRanks(){ try{ return JSON.parse(localStorage.getItem('bp_ranks')||'{}'); }catch(e){ return {}; } }
   function record(game,score,txt){ try{ const R=loadRanks(); const arr=R[game]||[];
-    arr.push({n:(localStorage.getItem('bp_name')||'PINE').slice(0,6),s:Math.round(score),t:String(txt).slice(0,14)});
+    arr.push({n:(localStorage.getItem('bp_name')||'PINE').slice(0,6),s:Math.round(score),t:String(txt).slice(0,20)});
     arr.sort(rankCmp); R[game]=arr.slice(0,5); localStorage.setItem('bp_ranks',JSON.stringify(R)); }catch(e){} }
   // 비시바시식 HOW TO PLAY 오버레이
   const HOWTO={
@@ -8181,7 +8181,7 @@ function hhClose(){
         if(pourIdx<2){ nextPour(); return; }
         finished=true; cleanup();
         const tot=pourErrs.reduce((a,b)=>a+b,0), avg=Math.round(pourScores.reduce((a,b)=>a+b,0)/3);
-        let ftxt,fcls; if(tot<=3){ ftxt='POUR MASTER!'; fcls='perfect'; }
+        let ftxt,fcls; if(tot<=3){ ftxt='MASTER ±'+tot.toFixed(1)+'ml'; fcls='perfect'; }   // 1위도 오차를 남긴다
         else if(tot<=9){ ftxt='±'+tot.toFixed(1)+'ml'; fcls='good'; }
         else { ftxt='±'+tot.toFixed(1)+'ml'; fcls='miss'; }
         done(avg,ftxt,fcls,tot,pourErrs.slice()); },1350);
@@ -8889,10 +8889,11 @@ function hhClose(){
     window.addEventListener('pointerup',pup);
     function judge(){ if(state!=='play'||stampObj) return;
       const diff=Math.abs(temp-target), el3=(lastT-stT)/1000; let base,txt,cls,quip;
-      if(diff<=0.3){ base=114; txt='PERFECT!'; cls='perfect'; quip='Diamond-clear and ice cold'; }
-      else if(diff<=0.8){ base=100-diff*20; txt='GOOD'; cls='good'; quip=temp>target?'A touch warm':'A touch overchilled'; }
-      else if(diff<=1.8){ base=76-diff*14; txt=temp>target?'TOO WARM':'OVER-CHILLED'; cls='miss'; quip=temp>target?'The guest wanted it colder…':'Watered it down…'; }
-      else { base=46-diff*8; txt=temp>target?'TOO WARM':'OVER-DILUTED!'; cls='miss'; quip=temp>target?'That is room temp, chief':'That is meltwater now'; }
+      const err='±'+diff.toFixed(2);   // 기록에 오차를 남긴다 (±는 작을수록 좋다 — 순위가 이걸로 갈린다)
+      if(diff<=0.3){ base=114; txt='PERFECT '+err; cls='perfect'; quip='Diamond-clear and ice cold'; }
+      else if(diff<=0.8){ base=100-diff*20; txt='GOOD '+err; cls='good'; quip=temp>target?'A touch warm':'A touch overchilled'; }
+      else if(diff<=1.8){ base=76-diff*14; txt=(temp>target?'WARM ':'CHILL ')+err; cls='miss'; quip=temp>target?'The guest wanted it colder…':'Watered it down…'; }
+      else { base=46-diff*8; txt=(temp>target?'TOO WARM ':'DILUTED ')+err; cls='miss'; quip=temp>target?'That is room temp, chief':'That is meltwater now'; }
       const sc=Math.max(0,Math.min(100,Math.round(base-Math.max(0,el3-5)*3.5))); // 빠를수록 고득점 (5초 이후 초당 -3.5)
       stampObj={txt,cls,quip,el3}; stampT=lastT;
       if(cls==='perfect'){ flash('#6fcf8f'); sGood(); setTimeout(()=>beep(1320,0.14,'square',0.12),140);
@@ -8967,7 +8968,7 @@ function hhClose(){
         ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET',cx0+184,cy0+56);
         // 온도 숫자: 처음에만 보이고 +5도 아래로 내려가면 사라진다
         if(temp>5){ ctx.font='13px "Press Start 2P"'; ctx.textAlign='center';
-          const tt=temp.toFixed(1)+'\u00B0C';
+          const tt=temp.toFixed(2)+'\u00B0C';
           ctx.fillStyle='#000'; ctx.fillText(tt,cx0+66,cy0+32);
           ctx.fillStyle='#1a1208'; ctx.fillText(tt,cx0+64,cy0+30); }
         if(state==='play'&&!stampObj){ const tl2=Math.max(0,1-(t-stT)/TOTAL);
@@ -8993,12 +8994,16 @@ function hhClose(){
         ctx.fillStyle=tempColor(target); ctx.fillRect(206,238,80,26); ctx.strokeRect(206,238,80,26);
         ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
         ctx.fillStyle='#e8e6dd'; ctx.fillText('YOURS',154,280); ctx.fillStyle='#6fcf8f'; ctx.fillText('TARGET',246,280);
-        // 목표와의 차이
-        const _d=temp-target, _ds=(_d>0?'+':'')+_d.toFixed(1)+'\u00B0C';
+        // 저을 때는 가려진 온도를, SERVE 뒤에는 숫자로 보여준다
+        ctx.font='10px "Press Start 2P"';
+        ctx.fillStyle='#000'; ctx.fillText(temp.toFixed(2)+'\u00B0',155,299);
+        ctx.fillStyle='#e8e6dd'; ctx.fillText(temp.toFixed(2)+'\u00B0',154,298);
+        ctx.fillStyle='#000'; ctx.fillText(target.toFixed(2)+'\u00B0',247,299);
+        ctx.fillStyle='#6fcf8f'; ctx.fillText(target.toFixed(2)+'\u00B0',246,298);
+        const _d=temp-target, _ds='DIFF '+(_d>0?'+':'')+_d.toFixed(2)+'\u00B0C';
         const _dc=Math.abs(_d)<=0.3?'#6fcf8f':(Math.abs(_d)<=0.8?'#e6b450':'#d9544d');
-        ctx.font='14px "Press Start 2P"'; ctx.textAlign='center';
-        ctx.fillStyle='#000'; ctx.fillText(_ds,202,306); ctx.fillStyle=_dc; ctx.fillText(_ds,200,304);
-        ctx.font='8px "Press Start 2P"'; ctx.fillStyle='#8a8d82'; ctx.fillText('DIFF FROM TARGET',200,322);
+        ctx.font='12px "Press Start 2P"'; ctx.textAlign='center';
+        ctx.fillStyle='#000'; ctx.fillText(_ds,202,322); ctx.fillStyle=_dc; ctx.fillText(_ds,200,320);
         ctx.font='11px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',202,344);
         ctx.fillStyle='#ffd977'; ctx.fillText('TIME '+stampObj.el3.toFixed(1)+'s',200,342);
@@ -9739,6 +9744,6 @@ function hhClose(){
 })();
 </script>
 
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-28d</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-28e</div>
 </body>
 </html>
