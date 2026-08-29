@@ -28,7 +28,7 @@ const DEF = {
 };
 
 const ROWS = [
-  ['— TABLE RUSH —'],
+  ['— TABLE RUSH —','tr'],
   ['tr_speed','웨이터 속도',40,260,2],
   ['tr_meSize','웨이터 크기',16,80,1],
   ['tr_hitR','웨이터 몸 크기(충돌)',6,28,1],
@@ -39,40 +39,40 @@ const ROWS = [
   ['tr_spdBase','손님 걸음 기준',4,90,1],
   ['tr_spdPer','스테이지마다 빨라지는 정도',0,14,0.5],
   ['tr_inv','부딪힌 뒤 무적(초)',0.3,4,0.1],
-  ['— GLASS STACK —'],
+  ['— GLASS STACK —','gs'],
   ['gs_sway','흔들리는 속도',0.3,3,0.01],
   ['gs_amp','흔들리는 폭',30,150,1],
   ['gs_lean','기울기 민감도',0.2,2,0.01],
   ['gs_fall','무너지는 한계',0.2,0.9,0.01],
   ['gs_shrink','한 층마다 좁아지는 비율',0.90,0.995,0.001],
-  ['— BLIND POUR —'],
+  ['— BLIND POUR —','bp'],
   ['bp_rate','따르는 속도(ml/초)',4,20,0.5],
-  ['— STIR STOP —'],
+  ['— STIR STOP —','st'],
   ['st_time','제한 시간(초)',8,40,1],
   ['st_cool','차가워지는 속도',0.1,0.8,0.01],
-  ['— ICE CARVING —'],
+  ['— ICE CARVING —','ic'],
   ['ic_time','제한 시간(초)',6,40,1],
   ['ic_up','한 번 칠 때 깎이는 양',2,12,0.25],
   ['ic_decay','손 멈추면 얼어붙는 속도',10,80,1],
-  ['— CHAMPAGNE LAUNCH —'],
+  ['— CHAMPAGNE LAUNCH —','cl'],
   ['cl_pow','한 번 칠 때 힘',1,6,0.1],
   ['cl_leak','힘이 새는 속도',0.15,1.2,0.05],
   ['cl_ang','각도 올라가는 속도',25,120,1],
-  ['— SHAKE MASTER —'],
+  ['— SHAKE MASTER —','sm'],
   ['sm_time','제한 시간(초)',5,30,1],
   ['sm_thr','흔들림 인식 세기',4,20,0.5],
   ['sm_cd','연속 인식 간격(ms)',25,200,5],
-  ['— ORDER UP! —'],
+  ['— ORDER UP! —','ou'],
   ['ou_start','첫 주문 개수',2,8,1],
-  ['— WHERE IS MY SHOT? —'],
+  ['— WHERE IS MY SHOT? —','ws'],
   ['ws_cups','첫 잔 개수',2,6,1],
   ['ws_speed','섞이는 속도(느릴수록 큼)',200,700,10],
-  ['— FRESH SQUEEZE —'],
+  ['— FRESH SQUEEZE —','sq'],
   ['sq_time','제한 시간(초)',10,60,1],
-  ['— TIP CATCH —'],
+  ['— TIP CATCH —','tc'],
   ['tc_time','제한 시간(초)',6,40,1],
   ['tc_fall','떨어지는 속도',90,340,5],
-  ['— FLY SWAT —'],
+  ['— FLY SWAT —','fs'],
   ['fs_time','제한 시간(초)',10,50,1],
   ['fs_hp','과일 체력',40,220,5],
   ['fs_bite','파리가 갉아먹는 속도',0.5,5,0.1]
@@ -160,6 +160,20 @@ const PANEL =
 +'  window.TUNE=T;\n'
 +'  window.TV=function(k,fb){ var v=T[k]; return (typeof v==="number")?v:fb; };\n'
 +'  var ROWS='+JSON.stringify(ROWS)+';\n'
++'  function copyText(txt){\n'
++'    try{ if(navigator.clipboard&&window.isSecureContext){ navigator.clipboard.writeText(txt); return; } }catch(e){}\n'
++'    try{ var ta=document.createElement("textarea"); ta.value=txt;\n'
++'      ta.style.cssText="position:fixed;top:0;left:0;opacity:0";\n'
++'      document.body.appendChild(ta); ta.focus(); ta.select();\n'
++'      document.execCommand("copy"); document.body.removeChild(ta); }catch(e){}\n'
++'  }\n'
++'  function copyGroup(pfx, title){\n'
++'    var out=[];\n'
++'    for(var k in DEF) if(k.indexOf(pfx+"_")===0 && T[k]!==DEF[k]) out.push(k+" = "+T[k]);\n'
++'    if(!out.length){ alert(title+"\\n\\n바꾼 값이 없습니다."); return; }\n'
++'    var txt=title+"\\n"+out.join("\\n");\n'
++'    copyText(txt);\n'
++'    alert(txt+"\\n\\n(복사했습니다. 클로드에게 붙여넣으세요)"); }\n'
 +'  function build(){\n'
 +'    var box=document.createElement("div"); box.id="tunePanel";\n'
 +'    box.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99998;width:250px;max-height:74vh;"\n'
@@ -171,9 +185,16 @@ const PANEL =
 +'    box.appendChild(h);\n'
 +'    var body=document.createElement("div"); body.id="tuneBody"; box.appendChild(body);\n'
 +'    ROWS.forEach(function(r){\n'
-+'      if(r.length===1){ var t=document.createElement("div");\n'
-+'        t.style.cssText="margin:10px 0 4px;color:#c9a96e;font-weight:700";\n'
-+'        t.textContent=r[0]; body.appendChild(t); return; }\n'
++'      if(r.length<=2){ var t=document.createElement("div");\n'
++'        t.style.cssText="margin:12px 0 4px;color:#c9a96e;font-weight:700;"\n'
++'          +"display:flex;justify-content:space-between;align-items:center;gap:6px";\n'
++'        var nm=document.createElement("span"); nm.textContent=r[0]; t.appendChild(nm);\n'
++'        if(r[1]){ var cb=document.createElement("button"); cb.textContent="복사";\n'
++'          cb.style.cssText="padding:3px 9px;background:#2a2418;color:#e6b450;"\n'
++'            +"border:1px solid #6b5a3a;border-radius:4px;font:10px system-ui;cursor:pointer";\n'
++'          cb.onclick=function(){ copyGroup(r[1], r[0].replace(/—/g,"").trim()); };\n'
++'          t.appendChild(cb); }\n'
++'        body.appendChild(t); return; }\n'
 +'      var key=r[0];\n'
 +'      var row=document.createElement("div"); row.style.cssText="margin:7px 0";\n'
 +'      var lab=document.createElement("div");\n'
@@ -192,7 +213,7 @@ const PANEL =
 +'      b.style.cssText="flex:1;padding:7px 0;background:#2a2418;color:#e8e6dd;border:1px solid #6b5a3a;"\n'
 +'        +"border-radius:5px;font:11px system-ui;cursor:pointer"; b.onclick=fn; return b; };\n'
 +'    btns.appendChild(mk("기본값", function(){ for(var k in DEF) T[k]=DEF[k]; T.__save(); location.reload(); }));\n'
-+'    btns.appendChild(mk("값 복사", function(){\n'
++'    btns.appendChild(mk("전부 복사", function(){\n'
 +'      var out=[]; for(var k in DEF) if(T[k]!==DEF[k]) out.push(k+" = "+T[k]);\n'
 +'      var txt=out.length?out.join("\\n"):"바꾼 값 없음";\n'
 +'      try{ navigator.clipboard.writeText(txt); }catch(e){}\n'
@@ -200,7 +221,7 @@ const PANEL =
 +'    body.appendChild(btns);\n'
 +'    var note=document.createElement("div");\n'
 +'    note.style.cssText="margin-top:8px;opacity:.55;font-size:10px;line-height:1.4";\n'
-+'    note.textContent="여기는 조절 전용입니다. 손님이 보는 게임은 그대로입니다.";\n'
++'    note.textContent="게임 이름 옆 복사를 누르면 그 게임만 복사됩니다. 여기는 로컬 전용이라 배포되지 않습니다.";\n'
 +'    body.appendChild(note);\n'
 +'    var open = innerWidth>600;\n'
 +'    body.style.display=open?"block":"none";\n'

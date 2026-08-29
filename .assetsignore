@@ -8,3 +8,6 @@ node_modules
 node_modules/**
 package-lock.json
 ranking_backup_*.json
+tune.html
+make-tune.js
+조절판 켜기.bat
