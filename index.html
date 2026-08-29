@@ -7787,9 +7787,16 @@ function hhClose(){
   let rrCtx=null;
   function showResult(game,score,txt,cls){
     $('rrRate').textContent=txt; $('rrRate').className='rate '+cls;
+    // 조절판으로 수치를 바꾼 채 논 기록은 공용 랭킹에 올리지 않는다
+    { const tuned=(typeof window.__tuned==='function') && window.__tuned();
+      const sb=$('rrSubmit'); if(sb) sb.style.display=tuned?'none':'';
+      const stt=$('rrStatus'); if(stt) stt.textContent=tuned?'조절판 사용 중 — 랭킹 등록 안 됨':''; }
     { const ad=$('rrAdd'); if(ad){ ad.textContent=''; ad.style.display='none'; } }   // 점수는 보여주지 않는다
     $('rrName').value=localStorage.getItem('bp_name')||'PINE';
     $('rrStatus').textContent=''; $('rrSubmit').disabled=false; $('rrSubmit').style.opacity='1';
+    { const tuned=(typeof window.__tuned==='function') && window.__tuned();   // 조절판을 쓴 판은 랭킹에 올리지 않는다
+      const sb2=$('rrSubmit'); if(sb2) sb2.style.display=tuned?'none':'';
+      const st2=$('rrStatus'); if(st2&&tuned) st2.textContent='조절판 사용 중 — 랭킹 등록 안 됨'; }
     rrCtx={game,score,txt}; show('roundResult');
     if(cls==='miss') sBad(); else sGood(); }
   $('rrSubmit').onclick=async()=>{ if(!rrCtx||$('rrSubmit').disabled) return;
@@ -7939,7 +7946,7 @@ function hhClose(){
     let stampObj=null, stampT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
     const parts=[]; const armed=()=>t0&&now()-t0>=ARM;
     function tap(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return;
-      power+=2.8; vel=Math.min(460,vel+62); runPh+=0.3; sTap(); // 게이지 40% 완화
+      power+=TV('cl_pow',2.8); vel=Math.min(460,vel+62); runPh+=0.3; sTap(); // 게이지 40% 완화
       parts.push({x:RX+22,y:GY-100,vx:-60-Math.random()*40,vy:-20-Math.random()*40,gv:300,r:1.5+Math.random()*1.5,c:'#eef6d8',life:0.35}); }
     function holdStart(e){ if(e)e.preventDefault(); ac(); if(state!=='run'||!armed()) return; holdA=true; }
     function fire(){ if(state!=='run') return; holdA=false;
@@ -7975,8 +7982,8 @@ function hhClose(){
       if(state==='intro'&&it>=ARM) state='run';
       if(state==='run'){ vel=holdA?Math.max(0,vel-dt*1400):Math.max(30,vel-dt*230); // 홀드 순간 급정지(스키드)
         worldX+=vel*dt; runPh+=dt*vel/20; // 애니 속도 ∝ 연타 속도
-        power=Math.max(0,power-power*dt*0.55-dt*0.3); // 연타를 멈추면 파워가 샌다 (완화)
-        if(holdA){ angle=Math.min(88,angle+dt*62);
+        power=Math.max(0,power-power*dt*TV('cl_leak',0.55)-dt*0.3); // 연타를 멈추면 파워가 샌다 (완화)
+        if(holdA){ angle=Math.min(88,angle+dt*TV('cl_ang',62));
           if(Math.floor(angle/8)>Math.floor(prevAng/8)) beep(380+angle*7,0.03,'square',0.07); prevAng=angle; }
         if(worldX>=TRACK){ if(holdA) fire(); else crash(); }
         if(it>ARM+16000&&power<5){ holdA=true; if(angle>=45) fire(); } } // 방치 방지
@@ -8202,7 +8209,7 @@ function hhClose(){
       t0=lastT; armT=700; glassPopT=0; bannerUntil=lastT+1000; beep(700,0.08); }
     function release(force){ if(released||finished) return; if(!hold&&!force) return;
       // 병이 돌아오는 동안 물줄기가 가늘어지며 잔여분이 더 들어간다 (매번 조금씩 다름, 약 1.7~2.4ml)
-      released=true; hold=false; dribble=(flip>0.92)?FP_RATE:flip*3; tailTau=0.17+Math.random()*0.07;
+      released=true; hold=false; dribble=(flip>0.92)?TV('bp_rate',FP_RATE):flip*3; tailTau=0.17+Math.random()*0.07;
       if(noise) noise.set(false,0); settleT=lastT; }
     function dn(e){ e.preventDefault(); ac(); if(finished||released||stampObj||!t0||now()-t0<armT) return;
       if(!hold){ hold=true; beep(500,0.05,'square',0.08); } }
@@ -8217,7 +8224,7 @@ function hhClose(){
       const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
       flip+=((hold&&!released)?1:-1)*dt/0.28; flip=Math.max(0,Math.min(1,flip));
       const pouring=hold&&!released&&flip>0.92;
-      if(pouring){ ml+=FP_RATE*dt; if(noise) noise.set(true,Math.min(1,ml/g.cap));
+      if(pouring){ ml+=TV('bp_rate',FP_RATE)*dt; if(noise) noise.set(true,Math.min(1,ml/g.cap));
         if(Math.floor(ml/10)>Math.floor(lastTick/10)) beep(880,0.04,'square',0.1);
         lastTick=ml; if(ml>=g.cap){ ml=g.cap; release(true); } }
       else if(noise&&hold) noise.set(false,0);
@@ -8249,7 +8256,7 @@ function hhClose(){
         ctx.beginPath(); ctx.moveTo(gx0-8,ty2); ctx.lineTo(gx0+GW+8,ty2); ctx.stroke(); ctx.setLineDash([]);
         ctx.font='8px "Press Start 2P"'; ctx.textAlign='right'; ctx.fillStyle='#e6b450'; ctx.fillText(target+'ml',gx0-12,ty2+3); }
       // ── 물줄기: 팁에서 방출된 액체 조각이 각자 중력 낙하 (병이 움직여도 이미 나온 액체는 제자리에서 떨어진다) ──
-      const flow=pouring?FP_RATE:((released&&!stampObj)?dribble:0);
+      const flow=pouring?TV('bp_rate',FP_RATE):((released&&!stampObj)?dribble:0);
       const spout=flip>0.55; // 주둥이가 아래를 향할 때만 액체가 나온다 (세워지면 방출 중단, 공중 기둥만 낙하)
       if(spout&&flow>0.35){ const tp=tip(); streamPts.push({x:tp.x,y:tp.y+3,vy:110,w:0.7+flow*0.38}); }
       else if(flip>0.35&&flow>0.08&&Math.random()<0.5){ const tp=tip(); // 기울어진 주둥이 끝의 마지막 방울들
@@ -8375,7 +8382,8 @@ function hhClose(){
       +'<button class="btn amber" id="hh_icTap" style="width:min(200px,46vw);height:70px;font-size:16px">TAP!</button>'
       +'<button class="btn" id="hh_icDone" style="width:min(140px,32vw);height:70px;font-size:13px">DONE!</button></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const ICEX=185, ICEY=392, ZONE=88, TOTAL=15000, ARM=1200, DECAY=38, TAPUP=5.25; // 게이지 40% 완화
+    const ICEX=185, ICEY=392, ZONE=88, TOTAL=TV('ic_time',15)*1000, ARM=1200,
+      DECAY=TV('ic_decay',38), TAPUP=TV('ic_up',5.25); // 게이지 40% 완화
     let gauge=0, count=0, stunUntil=0, strikeT=-1e9, brokeT=-1e9, popT=0, finished=false, ended=false;
     let t0=0, lastT=0, raf=0, shake=0, contactX=ICEX+22, contactY=ICEY-120, prevStage=0;
     const parts=[], flyBalls=[], msgs=[];
@@ -8510,7 +8518,7 @@ function hhClose(){
     fpLoad(); tcLoad();
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const LANES=[44,96,148,200,252,304,356], ARM=1200, TOTAL=15000, MOUTHY=330;
+    const LANES=[44,96,148,200,252,304,356], ARM=1200, TOTAL=TV('tc_time',15)*1000, MOUTHY=330;
     const KINDS=[ {k:'bill10',good:1,g:2,s:46,wt:28},{k:'bill50',good:1,g:3,s:46,wt:18},{k:'coin',good:1,g:1,s:27,wt:26,spin:1},
       {k:'receipt',good:0,s:48,wt:11,sway:1},{k:'env',good:0,s:40,wt:8},{k:'cap',good:0,s:27,wt:9,spin:1},
       {k:'bottle',good:0,s:50,wt:12,spin:1} ]; // 동전 +1 / 만원 +2 / 오만원 +3
@@ -8521,7 +8529,7 @@ function hhClose(){
     function pickKind(){ let r=rnd(WT); for(const kd of KINDS){ if(r<kd.wt) return kd; r-=kd.wt; } return KINDS[0]; }
     function spawn(elapsed,t){ const rush=elapsed>TOTAL-4200;
       const mk=()=>{ const kd=pickKind(); items.push({x:LANES[rnd(7)]+(Math.random()*10-5), y:80,
-        vy:(185+Math.random()*70)*(rush?1.45:1)+elapsed/TOTAL*50, kd,
+        vy:(TV('tc_fall',185)+Math.random()*70)*(rush?1.45:1)+elapsed/TOTAL*50, kd,
         imgK:kd.k==='bottle'?('bottle'+(1+rnd(3))):kd.k, rot:Math.random()*6.28,
         rv:(Math.random()*2-1)*(kd.spin?6:1.4), ph:Math.random()*6.28}); };
       mk(); if(Math.random()<(rush?0.6:0.38)) mk();
@@ -8759,7 +8767,7 @@ function hhClose(){
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="hh_smStart">START</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('smStart');
-    const TOTAL=13000;
+    const TOTAL=TV('sm_time',13)*1000;
     // 상태: title → ice(3프레임) → cap(2프레임+탁) → hold(안내) → cnt(3,2,1) → go → play → end
     let state='title', stT=0, count=0, wob=0, lastShakeT=0, playT0=0, finished=false, ended=false;
     let t0=0, lastT=0, raf=0, shake=0, sloshPh=0;
@@ -8773,7 +8781,7 @@ function hhClose(){
       const a=e.acceleration;
       if(a&&a.x!=null) mag=Math.hypot(a.x||0,a.y||0,a.z||0);
       else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null) mag=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81); }
-      if(mag!=null&&mag>11&&now()-lastShakeT>55) addShake(); }   // 55ms: 사람이 낼 수 있는 속도보다 빠르다 (사실상 상한 없음)
+      if(mag!=null&&mag>TV('sm_thr',11)&&now()-lastShakeT>TV('sm_cd',55)) addShake(); }   // 55ms: 사람이 낼 수 있는 속도보다 빠르다 (사실상 상한 없음)
     function begin(){ btn.style.display='none'; permMsg=''; ac(); loadShaker(); state='ice'; stT=now();
       playFile('assets/sfx_glass_ice.mp3',1);
       try{ window.addEventListener('devicemotion',onMotion); }catch(e){} }
@@ -8881,7 +8889,7 @@ function hhClose(){
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>'
       +'<button class="btn amber bigbtn" id="hh_stServe">SERVE!</button>';
     const cv=$('fpcv'), ctx=cv.getContext('2d'), btn=$('stServe');
-    const CX=200, CY=272, GR=272, ARM=1100, TOTAL=22000;
+    const CX=200, CY=272, GR=272, ARM=1100, TOTAL=TV('st_time',22)*1000;
     const target=-(15+rnd(26))/10; // -1.5 ~ -4.0
     let state='intro', stT=0, temp=20.0, omega=0, spoonA=Math.random()*6.28, liquidA=0, lastPtrA=null, dragging=false;
     let stampObj=null, stampT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
@@ -8930,7 +8938,7 @@ function hhClose(){
         omega-=Math.sign(omega)*Math.min(Math.abs(omega),dt*fr2);
         const om=Math.abs(omega);
         liquidA+=omega*dt*0.4;
-        const cool=om*dt*0.3*(dragging?1:0.45)*(0.35+0.65*Math.max(0,(temp+8)/28)); // 냉각 완화, 멈추면 잔여 냉각도 절반 이하
+        const cool=om*dt*TV('st_cool',0.30)*(dragging?1:0.45)*(0.35+0.65*Math.max(0,(temp+8)/28)); // 냉각 완화, 멈추면 잔여 냉각도 절반 이하
         temp=Math.max(-8,temp-cool);
         if(om<0.5) temp=Math.min(20,temp+dt*0.33); // 멈추면 서서히 데워짐
         if(noise) noise.set(om>0.6,Math.min(1,om/10));
@@ -9501,9 +9509,9 @@ function hhClose(){
     fpLoad(); fsLoad();
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const BX=200, BY=352, TOTAL=25000;
+    const BX=200, BY=352, TOTAL=TV('fs_time',25)*1000;
     let state='cine', stT=0, pts=0, nextSpawn=0, finished=false, ended=false;
-    let t0=0, lastT=0, raf=0, shake=0, crossT=-1e9, crossX=0, crossY=0, popped=false, fruitHP=100, hpStage=0;
+    let t0=0, lastT=0, raf=0, shake=0, crossT=-1e9, crossX=0, crossY=0, popped=false, fruitHP=TV('fs_hp',100), hpStage=0;
     const flies=[], parts=[], pops=[]; const buzz=fsBuzz();
     function spawnFly(elapsed){ // 전부 날파리 (로고 파리는 인트로 전용)
       const side=rnd(4); let x,y;
@@ -9564,14 +9572,14 @@ function hhClose(){
         if(buzz) buzz.set(flies.length>0,140+flies.length*12+Math.sin(t/90)*20);
         // 과일 HP: 앉아있는 파리가 갉아먹는다
         let sitters=0; for(const f of flies) if(f.sit>0) sitters++;
-        fruitHP=Math.max(0,fruitHP-sitters*2.0*dt);
+        fruitHP=Math.max(0,fruitHP-sitters*TV('fs_bite',2.0)*dt);
         const stg=fruitHP>60?0:(fruitHP>25?1:2);
         if(stg!==hpStage){ hpStage=stg; beep(180,0.15,'sawtooth',0.12); shake=Math.max(shake,5);
           for(let j=0;j<12;j++) parts.push({x:BX+(Math.random()*160-80),y:280+Math.random()*60,
             vx:(Math.random()*2-1)*50,vy:-30-Math.random()*50,gv:0,r:2+Math.random()*2,c:'#7a9c3a',life:0.7}); }
         if(fruitHP<=0&&left>600){ finished=true; if(buzz) buzz.set(false,100); flash('#d9544d'); sBad(); shake=10; // 시간 종료 직전엔 RUINED 대신 정상 종료
           const sc=Math.min(40,pts);
-          setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,'FRUIT RUINED!','miss'); },1500); }
+          setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,pts+' FLIES · RUINED','miss'); },1500); }
         else if(left<=0){ finished=true; if(buzz) buzz.set(false,100);
           const sc=Math.min(100,Math.round(pts*1.5)), cls=pts>=55?'perfect':(pts>=32?'good':'miss'); // 25초 기준
           setTimeout(()=>{ if(ended) return; ended=true; cleanup(); done(sc,pts+' FLIES!',cls); },1500); } }
@@ -9666,7 +9674,7 @@ function hhClose(){
     let stampObj=null, stampT=0, wrongCk=-1, t0=0, lastT=0, raf=0, shake=0, finished=false, ended=false;
     let best=parseInt(localStorage.getItem('pine_orderup_best')||'0')||0;
     const parts=[];
-    function newRound(){ const n=3+round; seq=[]; for(let i=0;i<n;i++) seq.push(rnd(10));
+    function newRound(){ const n=TV('ou_start',3)+round; seq=[]; for(let i=0;i<n;i++) seq.push(rnd(10));
       showIdx=0; input=[]; state='order'; stT=lastT;
       window.__ouSeq=seq.slice(); window.__ouRound=round; }
     function itemDur(){ return Math.max(650,1200-round*60); }
@@ -9826,7 +9834,7 @@ function hhClose(){
     function cupW(n){ return Math.min(96,340/Math.max(1,n-1))-6<74?68:88; }
     function newRound(){ nCups=Math.min(5,1+round); shotAt=rnd(nCups); picked=-1;
       cups=[]; for(let i=0;i<nCups;i++) cups.push({slot:i});
-      const nSw=2+round*2; swaps=[]; swapDur=Math.max(170,460-round*55);
+      const nSw=TV('ws_cups',2)+round*2; swaps=[]; swapDur=Math.max(170,TV('ws_speed',460)-round*55);
       for(let i=0;i<nSw;i++){ let a=rnd(nCups),b; do{ b=rnd(nCups); }while(b===a); swaps.push([a,b]); }
       swapI=0; state='place'; stT=lastT; lift=1; beep(520,0.08,'square',0.1); }
     function tap(e){ e.preventDefault(); ac(); if(state!=='pick'||finished) return;
@@ -9940,7 +9948,7 @@ function hhClose(){
     fpLoad(); sqLoad();
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
-    const ARM=1300, TOTAL=30000;
+    const ARM=1300, TOTAL=TV('sq_time',30)*1000;
     // 스테이션 좌표
     const BK={x:58,y:300}, BD={x:175,y:398}, SZ={x:292,y:186}, CUP={x:319,y:306}, TR={x:334,y:492}; // 도마=하단 식탁 위, 바구니=도마 왼쪽, 휴지통=하단에 머리 크게
     let state='intro', stT=0, phase='grab', halves=0, ml=0, shownMl=0, pressT=-1e9, cutT=-1e9;
@@ -10222,9 +10230,18 @@ function hhClose(){
 (function(){
   var DEF = {
     tr_speed:118, tr_mobBase:8, tr_mobPer:4, tr_spdBase:26, tr_spdPer:4,
-    tr_inv:1.5, tr_mobSize:30, tr_meSize:35, tr_still:36,
-    gs_sway:1.03, tr_hitR:12,
-    gs_amp:80, gs_lean:0.78, gs_fall:0.45, gs_shrink:0.962
+    tr_inv:1.5, tr_mobSize:30, tr_meSize:35, tr_still:36, tr_hitR:12,
+    gs_sway:1.03, gs_amp:80, gs_lean:0.78, gs_fall:0.45, gs_shrink:0.962,
+    bp_rate:10,
+    st_time:22, st_cool:0.30,
+    ic_time:15, ic_up:5.25, ic_decay:38,
+    cl_pow:2.8, cl_leak:0.55, cl_ang:62,
+    sm_time:13, sm_thr:11, sm_cd:55,
+    ou_start:3,
+    ws_cups:2, ws_speed:460,
+    sq_time:30,
+    tc_time:15, tc_fall:185,
+    fs_time:25, fs_hp:100, fs_bite:2.0
   };
   var saved={}; try{ saved=JSON.parse(localStorage.getItem("pine_tune")||"{}"); }catch(e){}
   var T={}; for(var k in DEF) T[k]=(typeof saved[k]==="number")?saved[k]:DEF[k];
@@ -10234,7 +10251,15 @@ function hhClose(){
   window.TUNE=T;
   window.TV=function(k,fb){ var v=window.TUNE&&window.TUNE[k]; return (typeof v==="number")?v:fb; };
 
-  if(location.search.indexOf("tune=1")<0) return;
+  /* 열쇠를 넣은 기기에서만 열린다. 한 번 넣으면 기억하고, ?k=off 로 끈다. */
+  var KEY="gangnam-b1-2020";
+  var qs=location.search;
+  var unlocked=false;
+  try{ unlocked=localStorage.getItem("pine_tune_ok")==="1"; }catch(e){}
+  if(qs.indexOf("k="+KEY)>=0){ unlocked=true; try{ localStorage.setItem("pine_tune_ok","1"); }catch(e){} }
+  if(qs.indexOf("k=off")>=0){ unlocked=false; try{ localStorage.removeItem("pine_tune_ok"); }catch(e){} }
+  window.__tuned=function(){ for(var k in DEF) if(T[k]!==DEF[k]) return true; return false; };
+  if(!unlocked) return;
 
   var ROWS=[
     ["— TABLE RUSH —"],
@@ -10253,7 +10278,38 @@ function hhClose(){
     ["gs_amp","흔들리는 폭",30,150,1],
     ["gs_lean","기울기 민감도",0.2,2,0.01],
     ["gs_fall","무너지는 한계",0.2,0.9,0.01],
-    ["gs_shrink","한 층마다 좁아지는 비율",0.90,0.995,0.001]
+    ["gs_shrink","한 층마다 좁아지는 비율",0.90,0.995,0.001],
+    ["— BLIND POUR —"],
+    ["bp_rate","따르는 속도(ml/초)",4,20,0.5],
+    ["— STIR STOP —"],
+    ["st_time","제한 시간(초)",8,40,1],
+    ["st_cool","차가워지는 속도",0.1,0.8,0.01],
+    ["— ICE CARVING —"],
+    ["ic_time","제한 시간(초)",6,40,1],
+    ["ic_up","한 번 칠 때 깎이는 양",2,12,0.25],
+    ["ic_decay","손 멈추면 얼어붙는 속도",10,80,1],
+    ["— CHAMPAGNE LAUNCH —"],
+    ["cl_pow","한 번 칠 때 힘",1,6,0.1],
+    ["cl_leak","힘이 새는 속도",0.15,1.2,0.05],
+    ["cl_ang","각도 올라가는 속도",25,120,1],
+    ["— SHAKE MASTER —"],
+    ["sm_time","제한 시간(초)",5,30,1],
+    ["sm_thr","흔들림 인식 세기",4,20,0.5],
+    ["sm_cd","연속 인식 간격(ms)",25,200,5],
+    ["— ORDER UP! —"],
+    ["ou_start","첫 주문 개수",2,8,1],
+    ["— WHERE IS MY SHOT? —"],
+    ["ws_cups","첫 잔 개수",2,6,1],
+    ["ws_speed","섞이는 속도(느릴수록 큼)",200,700,10],
+    ["— FRESH SQUEEZE —"],
+    ["sq_time","제한 시간(초)",10,60,1],
+    ["— TIP CATCH —"],
+    ["tc_time","제한 시간(초)",6,40,1],
+    ["tc_fall","떨어지는 속도",90,340,5],
+    ["— FLY SWAT —"],
+    ["fs_time","제한 시간(초)",10,50,1],
+    ["fs_hp","과일 체력",40,220,5],
+    ["fs_bite","파리가 갉아먹는 속도",0.5,5,0.1]
   ];
 
   function build(){
@@ -10318,6 +10374,6 @@ function hhClose(){
   else build();
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29f</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29g</div>
 </body>
 </html>
