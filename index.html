@@ -9052,7 +9052,7 @@ function hhClose(){
     { min:0,   opts:[ {k:'pick',rot:R90} ] } ];                                               // 픽 — 세움 (제일 좁다)
   let gsLastK=null;
   function gsPiece(level){
-    const w=Math.max(14, 150*Math.pow(0.962, level));   // 한 층마다 약 4%씩 (한 번에는 티가 안 난다)
+    const w=Math.max(14, 150*Math.pow(TV('gs_shrink',0.962), level));   // 한 층마다 약 4%씩 (한 번에는 티가 안 난다)
     const b=GS_BANDS.find(x=>w>=x.min)||GS_BANDS[GS_BANDS.length-1];
     const have=b.opts.filter(o=>GS.imgs[o.k]);          // 실제로 들어와 있는 그림만
     let pool=have.length?have:[b.opts[0]];
@@ -9077,7 +9077,8 @@ function hhClose(){
       const s=gsPiece(level), d=sizeOf(s.k,s.w,s.rot), top=topOf();
       const cx0=Math.max(70,Math.min(330,top.x));   // 화면 가운데가 아니라 탑 위를 기준으로 흔들린다
       cur={ k:s.k, rot:s.rot, w:d.w, h:d.h, y:top.y-d.h, x:cx0, cx0:cx0, ph:Math.random()*6.283,
-            sp:1.03+level*0.06, amp:Math.min(150,80+level*3.5) };   // 시작 속도 25% 올림. 좁아지는 것만으로도 어려우니 가속은 완만하게
+            sp:TV('gs_sway',1.03)+level*0.06,
+            amp:Math.min(150,TV('gs_amp',80)+level*3.5) };
     }
     function place(){
       if(state!=='play'||stampObj||!cur) return;
@@ -9090,7 +9091,7 @@ function hhClose(){
         cur=null; shake=10; sBad(); finish('SLID OFF'); return; }
       const acc=Math.abs(dx);
       stack.push({ k:cur.k, rot:cur.rot, x:cur.x, w:cur.w, h:cur.h, y:cur.y });
-      lean+=dx*0.78;                                  // 어긋난 만큼 탑이 한쪽으로 기운다 (예민하게)
+      lean+=dx*TV('gs_lean',0.78);                                  // 어긋난 만큼 탑이 한쪽으로 기운다 (예민하게)
       level++;
       if(acc<5){ beep(1320,0.1,'square',0.11); flash('#6fcf8f');
         for(let j=0;j<12;j++) parts.push({ x:cur.x+(Math.random()*cur.w-cur.w/2), y:cur.y,
@@ -9098,7 +9099,7 @@ function hhClose(){
           r:1.6+Math.random()*1.8, c:['#ffd977','#fff','#6fcf8f'][rnd(3)], life:0.55 }); }
       else if(acc<16) beep(900,0.07,'square',0.09);
       else beep(520,0.07,'square',0.08);
-      if(Math.abs(lean)>TRAYW*0.45){                  // 무게중심이 쟁반을 벗어나면 와르르
+      if(Math.abs(lean)>TRAYW*TV('gs_fall',0.45)){                  // 무게중심이 쟁반을 벗어나면 와르르
         shake=13; sBad(); finish('TOPPLED');
         const dir=(lean>=0?1:-1), n=stack.length;
         stack.forEach((b,i)=>{                        // 맨 아래 것까지 전부 쏟아진다
@@ -9225,7 +9226,7 @@ function hhClose(){
     const MINY=118, MAXY=H-BARH-16;                 // 손님이 돌아다니는 구간
     let state='intro', stT=0, t0=0, lastT=0, raf=0, shake=0, ended=false;
     let lv=1, glasses=3, inv=0, cleared=0, stampObj=null, stampT=0, endTxt='';
-    const me={ x:200, y:MAXY+4, r:12, ang:0, vx:0, vy:0 };   // 35% 축소
+    const me={ x:200, y:MAXY+4, r:TV('tr_hitR',12), ang:0, vx:0, vy:0 };
     const mob=[], parts=[];
     let joy=null;                                   // {bx,by,dx,dy} 화면 아무 데나 눌러 잡는다
     const keys={};
@@ -9250,10 +9251,12 @@ function hhClose(){
     }
     function spawnMobs(){
       mob.length=0;
-      const n=Math.min(52, 8+lv*4), base=26+lv*4;
+      const n=Math.min(52, Math.round(TV('tr_mobBase',8)+lv*TV('tr_mobPer',4)));
+      const base=TV('tr_spdBase',26)+lv*TV('tr_spdPer',4);
       let made=0;
       // 셋이 모여 선 무리
-      const trios=Math.max(1, Math.floor(n*0.10));
+      const st=TV('tr_still',36)/100;   // 서 있는 사람 비율
+      const trios=Math.max(1, Math.floor(n*st*0.28));
       for(let g=0; g<trios && made+3<=n; g++){
         const c=fitSpot(46); if(!c) break;
         for(let i=0;i<3;i++){
@@ -9263,7 +9266,7 @@ function hhClose(){
           mob.push(m); made++; }
       }
       // 둘이 마주보고 이야기
-      const pairs=Math.max(1, Math.floor(n*0.12));
+      const pairs=Math.max(1, Math.floor(n*st*0.33));
       for(let g=0; g<pairs && made+2<=n; g++){
         const c=fitSpot(38); if(!c) break;
         const a=Math.random()*6.283;
@@ -9274,7 +9277,7 @@ function hhClose(){
           mob.push(m); made++; }
       }
       // 혼자 가만히 서 있는 사람
-      const idles=Math.max(1, Math.floor(n*0.14));
+      const idles=Math.max(1, Math.floor(n*st*0.39));
       for(let g=0; g<idles && made<n; g++){
         const c=fitSpot(26); if(!c) break;
         mob.push(newMob(c.x,c.y,0,Math.random()*6.283,'still')); made++;
@@ -9289,7 +9292,7 @@ function hhClose(){
     }
     function hurt(m){
       if(inv>0||stampObj) return;
-      glasses--; inv=1.5; shake=11; sBad();
+      glasses--; inv=TV('tr_inv',1.5); shake=11; sBad();
       const a=Math.atan2(me.y-m.y, me.x-m.x);
       me.x+=Math.cos(a)*26; me.y+=Math.sin(a)*26;
       for(let j=0;j<16;j++) parts.push({ x:me.x, y:me.y-14, vx:(Math.random()*2-1)*130,
@@ -9364,7 +9367,7 @@ function hhClose(){
         if(joy){ ix=joy.dx/42; iy=joy.dy/42; }
         if(keys.ArrowLeft||keys.a) ix=-1; if(keys.ArrowRight||keys.d) ix=1;
         if(keys.ArrowUp||keys.w) iy=-1; if(keys.ArrowDown||keys.s) iy=1;
-        const SPD=118;
+        const SPD=TV('tr_speed',118);
         me.vx=ix*SPD; me.vy=iy*SPD;
         me.x=Math.max(20,Math.min(W-20, me.x+me.vx*dt));
         me.y=Math.max(TOPY+8, Math.min(MAXY+10, me.y+me.vy*dt));
@@ -9420,12 +9423,12 @@ function hhClose(){
         ctx.drawImage(br,(W-bw)/2,H-bh,bw,bh); }
       else { ctx.fillStyle='#241608'; ctx.fillRect((W-BARW)/2,H-BARH,BARW,BARH); }
       // 손님
-      for(const m of mob) drawSprite(m.k, m.x, m.y, 30, m.ang);   // 35% 축소
+      for(const m of mob) drawSprite(m.k, m.x, m.y, TV('tr_mobSize',30), m.ang);
       // 웨이터 (무적일 때 깜빡)
       if(state!=='intro'){
         const blink = inv>0 && (Math.floor(t/90)%2===0);
         if(!blink){
-          drawSprite('waiter', me.x, me.y, 35, me.ang);   // 35% 축소
+          drawSprite('waiter', me.x, me.y, TV('tr_meSize',35), me.ang);
           // 쟁반 위의 잔 = 남은 목숨
           ctx.save(); ctx.translate(me.x,me.y); ctx.rotate(me.ang);
           for(let i=0;i<glasses;i++){
@@ -10214,6 +10217,107 @@ function hhClose(){
 })();
 </script>
 
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29e</div>
+<script>
+/* 조절 화면. 주소 뒤에 ?tune=1 을 붙였을 때만 열린다. 손님에게는 보이지 않는다. */
+(function(){
+  var DEF = {
+    tr_speed:118, tr_mobBase:8, tr_mobPer:4, tr_spdBase:26, tr_spdPer:4,
+    tr_inv:1.5, tr_mobSize:30, tr_meSize:35, tr_still:36,
+    gs_sway:1.03, tr_hitR:12,
+    gs_amp:80, gs_lean:0.78, gs_fall:0.45, gs_shrink:0.962
+  };
+  var saved={}; try{ saved=JSON.parse(localStorage.getItem("pine_tune")||"{}"); }catch(e){}
+  var T={}; for(var k in DEF) T[k]=(typeof saved[k]==="number")?saved[k]:DEF[k];
+  T.__def=DEF;
+  T.__save=function(){ try{ var o={}; for(var k in DEF) if(T[k]!==DEF[k]) o[k]=T[k];
+    localStorage.setItem("pine_tune", JSON.stringify(o)); }catch(e){} };
+  window.TUNE=T;
+  window.TV=function(k,fb){ var v=window.TUNE&&window.TUNE[k]; return (typeof v==="number")?v:fb; };
+
+  if(location.search.indexOf("tune=1")<0) return;
+
+  var ROWS=[
+    ["— TABLE RUSH —"],
+    ["tr_speed","웨이터 속도",40,260,2],
+    ["tr_meSize","웨이터 크기",16,80,1],
+    ["tr_hitR","웨이터 몸 크기(충돌)",6,28,1],
+    ["tr_mobSize","손님 크기",14,70,1],
+    ["tr_mobBase","1스테이지 손님 수",2,40,1],
+    ["tr_mobPer","스테이지마다 늘어나는 수",0,10,1],
+    ["tr_still","서 있는 사람 비율(%)",0,90,1],
+    ["tr_spdBase","손님 걸음 기준",4,90,1],
+    ["tr_spdPer","스테이지마다 빨라지는 정도",0,14,0.5],
+    ["tr_inv","부딪힌 뒤 무적(초)",0.3,4,0.1],
+    ["— GLASS STACK —"],
+    ["gs_sway","흔들리는 속도",0.3,3,0.01],
+    ["gs_amp","흔들리는 폭",30,150,1],
+    ["gs_lean","기울기 민감도",0.2,2,0.01],
+    ["gs_fall","무너지는 한계",0.2,0.9,0.01],
+    ["gs_shrink","한 층마다 좁아지는 비율",0.90,0.995,0.001]
+  ];
+
+  function build(){
+    var box=document.createElement("div");
+    box.id="tunePanel";
+    box.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99998;width:250px;max-height:74vh;"
+      +"overflow:auto;background:rgba(16,14,10,0.96);border:2px solid #6b5a3a;border-radius:8px;"
+      +"padding:10px;font:11px/1.5 system-ui,sans-serif;color:#e8e6dd;box-shadow:0 6px 24px rgba(0,0,0,.6)";
+    var h=document.createElement("div");
+    h.style.cssText="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;cursor:pointer";
+    h.innerHTML="<b style='color:#e6b450'>조절판</b><span id='tuneFold' style='opacity:.6'>접기</span>";
+    box.appendChild(h);
+    var body=document.createElement("div"); body.id="tuneBody"; box.appendChild(body);
+    ROWS.forEach(function(r){
+      if(r.length===1){
+        var t=document.createElement("div");
+        t.style.cssText="margin:10px 0 4px;color:#c9a96e;font-weight:700";
+        t.textContent=r[0]; body.appendChild(t); return; }
+      var key=r[0], label=r[1], min=r[2], max=r[3], step=r[4];
+      var row=document.createElement("div"); row.style.cssText="margin:7px 0";
+      var lab=document.createElement("div");
+      lab.style.cssText="display:flex;justify-content:space-between;gap:6px";
+      var num=document.createElement("span");
+      num.style.cssText="color:#ffd977;font-variant-numeric:tabular-nums";
+      num.textContent=T[key];
+      lab.innerHTML="<span>"+label+"</span>"; lab.appendChild(num);
+      var sl=document.createElement("input");
+      sl.type="range"; sl.min=min; sl.max=max; sl.step=step; sl.value=T[key];
+      sl.style.cssText="width:100%;height:22px;margin-top:2px;accent-color:#e6b450";
+      var apply=function(){ var v=parseFloat(sl.value); T[key]=v; num.textContent=v; T.__save(); };
+      sl.addEventListener("input",apply);
+      sl.addEventListener("change",apply);
+      row.appendChild(lab); row.appendChild(sl); body.appendChild(row);
+    });
+    var btns=document.createElement("div");
+    btns.style.cssText="display:flex;gap:6px;margin-top:10px";
+    var mk=function(txt,fn){ var b=document.createElement("button");
+      b.textContent=txt;
+      b.style.cssText="flex:1;padding:7px 0;background:#2a2418;color:#e8e6dd;border:1px solid #6b5a3a;"
+        +"border-radius:5px;font:11px system-ui;cursor:pointer";
+      b.onclick=fn; return b; };
+    btns.appendChild(mk("기본값", function(){
+      for(var k in DEF) T[k]=DEF[k]; T.__save(); location.reload(); }));
+    btns.appendChild(mk("값 복사", function(){
+      var out=[]; for(var k in DEF) if(T[k]!==DEF[k]) out.push(k+" = "+T[k]);
+      var txt=out.length?out.join("\n"):"바꾼 값 없음";
+      try{ navigator.clipboard.writeText(txt); }catch(e){}
+      alert(txt+"\n\n(복사했습니다. 클로드에게 붙여넣으세요)"); }));
+    body.appendChild(btns);
+    var note=document.createElement("div");
+    note.style.cssText="margin-top:8px;opacity:.55;font-size:10px;line-height:1.4";
+    note.textContent="속도와 크기는 바로 반영됩니다. 손님 수는 다음 스테이지부터입니다.";
+    body.appendChild(note);
+    var open = innerWidth>600;                 // 폰에서는 접힌 채로 시작해 화면을 가리지 않는다
+    body.style.display=open?"block":"none";
+    h.querySelector("#tuneFold").textContent=open?"접기":"펼치기";
+    h.onclick=function(){ open=!open; body.style.display=open?"block":"none";
+      document.getElementById("tuneFold").textContent=open?"접기":"펼치기"; };
+    document.body.appendChild(box);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",build);
+  else build();
+})();
+</script>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29f</div>
 </body>
 </html>
