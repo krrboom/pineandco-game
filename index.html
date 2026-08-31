@@ -895,6 +895,13 @@
   
   #happyHour #hh_fpcv{ width:min(100vw,80vh); width:min(100vw,80dvh); flex:1 1 auto; min-height:0; align-self:center;
     border:none; background:#000; touch-action:none; image-rendering:pixelated; }
+  /* 크기는 게임마다 다르지만, 손가락으로 끌 때 화면이 따라 밀리는 것은 전부 막는다.
+     예전엔 hh_fpcv 하나만 걸려 있어서 TABLE RUSH 조이스틱이 안 먹었다. */
+  #happyHour #hh_stage canvas{ touch-action:none; overscroll-behavior:none; }
+  /* 캔버스가 화면보다 넓으면 잘린다. 비율을 지키면서 화면 안에 들어오게 한다. */
+  #happyHour #hh_gscv, #happyHour #hh_dgcv{
+    max-width:100%; max-height:100%; width:auto; height:auto;
+    align-self:center; image-rendering:pixelated; }
   #happyHour #hh_game{ padding:0 0 6px; gap:5px; justify-content:flex-start; }
   #happyHour #hh_game #hh_stage{ flex:1 1 auto; min-height:0; width:100%; gap:6px; }
   #happyHour #hh_gameLogo{ max-height:72px; width:auto; max-width:80vw; margin-top:8px; image-rendering:pixelated; display:none; }
@@ -9321,20 +9328,27 @@ function hhClose(){
     function pt(e){ const r=cv.getBoundingClientRect();
       return { x:(e.clientX-r.left)*(W/r.width), y:(e.clientY-r.top)*(H/r.height) }; }
     function dn(e){ e.preventDefault(); ac(); if(state!=='play'||stampObj) return;
-      const p=pt(e); joy={ bx:p.x, by:p.y, dx:0, dy:0 }; }
-    function mv(e){ if(!joy) return; if(e.cancelable) e.preventDefault();
+      const p=pt(e); joy={ bx:p.x, by:p.y, dx:0, dy:0, id:e.pointerId };
+      try{ cv.setPointerCapture(e.pointerId); }catch(err){} }   // 손가락이 밖으로 나가도 계속 따라온다
+    function mv(e){ if(!joy) return;
+      if(joy.id!=null && e.pointerId!=null && e.pointerId!==joy.id) return;
+      if(e.cancelable) e.preventDefault();
       const p=pt(e); let dx=p.x-joy.bx, dy=p.y-joy.by;
       const d=Math.hypot(dx,dy), MAXD=42;
       if(d>MAXD){ dx=dx/d*MAXD; dy=dy/d*MAXD; }
       joy.dx=dx; joy.dy=dy; }
-    function up(){ joy=null; }
+    function up(e){ if(joy&&e&&e.pointerId!=null){ try{ cv.releasePointerCapture(e.pointerId); }catch(err){} }
+      joy=null; }
     cv.addEventListener('pointerdown',dn);
     cv.addEventListener('pointermove',mv);
+    window.addEventListener('pointermove',mv);   // 캔버스를 벗어나도 놓치지 않게
     window.addEventListener('pointerup',up);
     window.addEventListener('pointercancel',up);
+    cv.addEventListener('touchmove',e=>{ if(e.cancelable) e.preventDefault(); },{passive:false});
     const kd=e=>{ keys[e.key]=true; }, ku=e=>{ keys[e.key]=false; };
     window.addEventListener('keydown',kd); window.addEventListener('keyup',ku);
     function cleanup(){ cancelAnimationFrame(raf);
+      window.removeEventListener('pointermove',mv);
       window.removeEventListener('pointerup',up); window.removeEventListener('pointercancel',up);
       window.removeEventListener('keydown',kd); window.removeEventListener('keyup',ku); }
     function drawSprite(k,x,y,w,ang){
@@ -10214,6 +10228,6 @@ function hhClose(){
 })();
 </script>
 
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29h</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29i</div>
 </body>
 </html>
