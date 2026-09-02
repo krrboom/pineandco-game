@@ -642,7 +642,7 @@
   #titleScreen{ gap:13px; background-color:#0d0f0c;
     background-image:linear-gradient(rgba(13,15,12,.9), rgba(11,13,10,.93)), url('assets/bg_logo.png');
     background-size:cover, 76px auto; background-repeat:no-repeat, repeat; image-rendering:pixelated; }
-  .title-logo{ width:clamp(280px,80vw,500px); height:auto; image-rendering:pixelated; z-index:2;
+  .title-logo{ width:clamp(200px,80vw,500px); height:auto; image-rendering:pixelated; z-index:2;
     filter:drop-shadow(3px 3px 0 #000) drop-shadow(0 0 20px rgba(111,207,143,.45)); }
   /* ★타이틀 로고 = About Pine&Co(소개서) 링크 */
   .title-logo-wrap{ position:relative; display:inline-block; z-index:3; line-height:0; }
@@ -662,9 +662,9 @@
   .about-cue .about-text{ display:block; line-height:1.25; text-align:center; margin-bottom:4px; font-family:'Press Start 2P',monospace; font-size:clamp(6px,1.4vw,8px); letter-spacing:.3px;
     transform-origin:50% 100%; transform:rotate(var(--fdeg));   /* ★검지 방향과 같게 기울여 나란히 */
     color:#ffd24a; white-space:nowrap; text-shadow:1px 1px 0 #000, -1px -1px 0 #000, 0 0 5px rgba(0,0,0,.9); }
-  .title-sub-img{ width:clamp(190px,48vw,320px); height:auto; image-rendering:pixelated; z-index:2;
+  .title-sub-img{ width:clamp(140px,48vw,320px); height:auto; image-rendering:pixelated; z-index:2;
     margin-top:-6px; filter:drop-shadow(2px 2px 0 #000); }
-  .tagline{ width:clamp(190px,48vw,330px); height:auto; image-rendering:pixelated; z-index:2;
+  .tagline{ width:clamp(140px,48vw,330px); height:auto; image-rendering:pixelated; z-index:2;
     animation:tagglow 1.8s ease-in-out infinite; }
   @keyframes tagglow{
     0%,100%{ filter:brightness(1.4) drop-shadow(0 0 7px rgba(255,180,120,.9)) drop-shadow(0 0 16px rgba(230,110,60,.7)); }
@@ -674,13 +674,13 @@
   .imgbtn{ background:none; border:0; padding:0; cursor:pointer; display:flex; flex-direction:column;
     align-items:center; gap:5px; transition:transform .05s; -webkit-tap-highlight-color:transparent; }
   .imgbtn:active{ transform:translateY(3px); }
-  .imgbtn .cap{ width:clamp(110px,31vw,170px); height:auto; image-rendering:pixelated;
+  .imgbtn .cap{ width:clamp(80px,31vw,170px); height:auto; image-rendering:pixelated;
     filter:drop-shadow(1px 1px 0 #000); }
-  .imgbtn .btnimg{ width:clamp(140px,39vw,205px); height:auto; image-rendering:pixelated;
+  .imgbtn .btnimg{ width:clamp(100px,39vw,205px); height:auto; image-rendering:pixelated;
     filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55)); }
   .imgbtn:hover .btnimg{ filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55)) drop-shadow(0 0 13px rgba(111,207,143,.6)); }
   .cap.blink{ animation:blink 1s steps(1) infinite; }
-  .backbtn .btnimg{ width:clamp(120px,32vw,185px); }
+  .backbtn .btnimg{ width:clamp(88px,32vw,185px); }
   /* 시작화면 하단 작은 부제목 버튼 (HIGHSCORE / BOTTOMS UP / MONSTER INDEX) */
   .sub-btn-row{ gap:clamp(8px,3vw,20px); margin-top:0; }
   /* 두 버튼 동일 캔버스(260x94)로 슬라이스됨 → 같은 width면 크기 동일. START/MENU(132~205)보다 작게. */
@@ -723,7 +723,7 @@
   /* 타이틀 듀오 아트 (여백 트리밍됨 → 크게) */
   .title-art{ position:relative; display:flex; flex-direction:column; align-items:center;
     z-index:2; margin:2px 0 0; }
-  .title-art img{ width:clamp(320px,97vw,560px); height:auto; image-rendering:pixelated; display:block;
+  .title-art img{ width:clamp(230px,97vw,560px); height:auto; image-rendering:pixelated; display:block;
     filter:drop-shadow(4px 6px 0 rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(111,207,143,.35)); }
   .joe-wrap{ position:relative; display:inline-block; line-height:0; animation:bob 3.4s ease-in-out infinite; }
   /* 데스크톱: 예약줄까지 한 화면에 들어오게 듀오 아트를 화면 높이에 맞춰 캡 (모바일은 영향 없음) */
@@ -734,7 +734,7 @@
   }
   @media (min-width:700px){
     #titleScreen{ gap:8px; }
-    .title-art img{ width:min(clamp(320px,97vw,560px), 47vh); }
+    .title-art img{ width:min(clamp(230px,97vw,560px), 47vh); }
   }
   /* 히든게임: Joe 입 핫스팟(평소 안 보임) */
   #joeMouth{ position:absolute; left:58%; top:22%; width:16%; height:18%; cursor:pointer; border-radius:50%; z-index:3; }
@@ -10319,6 +10319,34 @@ function hhClose(){
 })();
 </script>
 
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29i · 조절판</div>
+<script>
+/* 시작화면 맞춤
+   화면이 짧거나 좁으면 START 버튼이 아래로 밀려 잘렸다 (갤럭시 폴드 등).
+   넘치는 만큼 화면 전체를 줄여서 어떤 기기에서도 다 보이게 한다. */
+(function(){
+  function fitTitle(){
+    var el=document.getElementById("titleScreen");
+    if(!el) return;
+    var cs=getComputedStyle(el);
+    if(cs.display==="none"||el.classList.contains("hidden")) return;
+    el.style.zoom="";                                   // 원래 크기로 되돌리고 다시 잰다
+    var hNeed=el.scrollHeight, hHave=el.clientHeight;
+    var wNeed=el.scrollWidth,  wHave=el.clientWidth;
+    if(!hHave||!wHave) return;
+    var z=Math.min(hHave/Math.max(1,hNeed), wHave/Math.max(1,wNeed), 1);
+    if(z<0.999){ el.style.zoom=Math.max(0.45, z-0.01); }   // 살짝 더 줄여 여유를 둔다
+  }
+  window.__fitTitle=fitTitle;
+  ["resize","orientationchange"].forEach(function(ev){ addEventListener(ev, fitTitle); });
+  if(window.visualViewport) visualViewport.addEventListener("resize", fitTitle);
+  /* 그림이 늦게 오면 높이가 달라지니 다시 잰다 */
+  addEventListener("load", function(){ fitTitle(); setTimeout(fitTitle,300); setTimeout(fitTitle,1200); });
+  if(document.readyState==="loading") addEventListener("DOMContentLoaded",fitTitle);
+  else fitTitle();
+  setTimeout(fitTitle,200); setTimeout(fitTitle,900); setTimeout(fitTitle,2500);
+  try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
+})();
+</script>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29j · 조절판</div>
 </body>
 </html>
