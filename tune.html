@@ -7701,10 +7701,10 @@ function hhClose(){
     return (b.s || 0) - (a.s || 0);   // 숫자가 없는 옛 기록만 점수로 (하위 호환)
   }
 
-  function loadRanks(){ try{ return JSON.parse(localStorage.getItem('bp_ranks')||'{}'); }catch(e){ return {}; } }
-  function record(game,score,txt){ try{ const R=loadRanks(); const arr=R[game]||[];
-    arr.push({n:(localStorage.getItem('bp_name')||'PINE').slice(0,6),s:Math.round(score),t:String(txt).slice(0,20)});
-    arr.sort(rankCmp); R[game]=arr.slice(0,5); localStorage.setItem('bp_ranks',JSON.stringify(R)); }catch(e){} }
+  // 폰에 기록을 쌓지 않는다. 랭킹은 서버에 등록된 것만 보여주므로 쌓아둘 이유가 없다.
+  // (예전에 쌓아둔 것도 여기서 지운다)
+  try{ localStorage.removeItem('bp_ranks'); localStorage.removeItem('bp_name'); }catch(e){}
+  function record(){}
   // 비시바시식 HOW TO PLAY 오버레이
   const HOWTO={
     'FREE POUR MASTER':'Flip the bottle, watch the ml counter, and nail 30 → 45 → 60ml like a pro. Spill it and the boss sees EVERYTHING.',
@@ -7887,15 +7887,14 @@ function hhClose(){
   function showResult(game,score,txt,cls){
     $('rrRate').textContent=txt; $('rrRate').className='rate '+cls;
     { const ad=$('rrAdd'); if(ad){ ad.textContent=''; ad.style.display='none'; } }   // 점수는 보여주지 않는다
-    $('rrName').value=localStorage.getItem('bp_name')||'PINE';
+    $('rrName').value='PINE&CO';   // 늘 기본값으로. 손님이 고쳐 쓰면 된다
     $('rrStatus').textContent=''; $('rrSubmit').disabled=false; $('rrSubmit').style.opacity='1';
     rrCtx={game,score,txt}; show('roundResult');
     { const sb=$('rrSubmit'); if(sb) sb.style.display='none';
       const st=$('rrStatus'); if(st) st.textContent='조절판 — 랭킹에 올라가지 않습니다'; }
     if(cls==='miss') sBad(); else sGood(); }
   $('rrSubmit').onclick=async()=>{ if(!rrCtx||$('rrSubmit').disabled) return;
-    const n=($('rrName').value.toUpperCase().replace(/[^A-Z0-9]/g,'')||'PINE').slice(0,8);
-    localStorage.setItem('bp_name',n);
+    const n=($('rrName').value.toUpperCase().replace(/[^A-Z0-9&]/g,'')||'PINE&CO').slice(0,8);
     $('rrSubmit').disabled=true; $('rrSubmit').style.opacity='0.5'; $('rrStatus').textContent='SENDING...';
     try{ const r=await fetch(BOARD_URL,{method:'POST',body:JSON.stringify({secret:'pine-2026',game:rrCtx.game,name:n,score:rrCtx.score,txt:rrCtx.txt})});
       const j=await r.json();
@@ -10353,6 +10352,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29k · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29L · 조절판</div>
 </body>
 </html>
