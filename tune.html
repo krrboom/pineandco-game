@@ -7898,7 +7898,14 @@ function hhClose(){
     $('rrSubmit').disabled=true; $('rrSubmit').style.opacity='0.5'; $('rrStatus').textContent='SENDING...';
     try{ const r=await fetch(BOARD_URL,{method:'POST',body:JSON.stringify({secret:'pine-2026',game:rrCtx.game,name:n,score:rrCtx.score,txt:rrCtx.txt})});
       const j=await r.json();
-      $('rrStatus').textContent=(j&&j.ok)?(j.rank<=5?('🏆 RANK #'+j.rank+'!'):'SAVED! (RANK #'+j.rank+')'):'FAILED';
+      // 등록 직후 안내: 전체 몇 개 중 몇 등인지 (랭킹 화면은 상위 5개 그대로)
+      if(j&&j.ok){
+        const tot = (typeof j.total==='number' && j.total>0) ? j.total : null;
+        const of  = tot ? (' / '+tot) : '';
+        $('rrStatus').textContent = (j.rank<=5)
+          ? ('🏆 RANK #'+j.rank+of+'!')
+          : ('SAVED! RANK #'+j.rank+of);
+      } else { $('rrStatus').textContent='FAILED'; }
       if(j&&j.ok&&j.rank<=5){ flash('#e6b450'); sGood(); } }
     catch(e){ $('rrStatus').textContent='OFFLINE — SAVED LOCALLY'; } };
   $('rrDone').onclick=()=>{ beep(500,0.08); backToTitle(); };
@@ -10352,6 +10359,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29L · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29m · 조절판</div>
 </body>
 </html>
