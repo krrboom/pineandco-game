@@ -7675,10 +7675,16 @@ function hhClose(){
   async function buildRank(){ const w=$('rankWrap'); w.innerHTML='<div class="rkempty" style="padding:14px">LOADING RANKINGS…</div>';
     let online=null;
     try{ const r=await fetch(BOARD_URL+'?all=1&t='+Date.now()); const j=await r.json(); if(j&&j.ok) online=j.games||{}; }catch(e){}
-    const R=loadRanks(); w.innerHTML='';
+    w.innerHTML='';
+    // 랭킹은 서버에 등록된 기록만 보여준다.
+    // 예전에는 서버가 비면 이 폰에 쌓인 내 기록으로 넘어가서, 남의 폰에서는
+    // 보이지도 않는 기록이 랭킹인 것처럼 보였다.
+    if(!online){
+      w.innerHTML='<div class="rkempty" style="padding:18px;line-height:1.6">COULD NOT LOAD RANKINGS<br><span style="font-size:8px;opacity:.6">CHECK YOUR CONNECTION</span></div>';
+      return; }
     // 서버가 어떤 순서로 주든 여기서 다시 줄을 세운다
-    GAMES.forEach(g=>{ const arr=[...((online&&online[g.name])||R[g.name]||[])].sort(rankCmp); const d=document.createElement('div'); d.className='rkgame';
-      let html='<h3>'+g.name+(online?'':' <span style="color:#555">(OFFLINE)</span>')+'</h3>';
+    GAMES.forEach(g=>{ const arr=[...(online[g.name]||[])].sort(rankCmp); const d=document.createElement('div'); d.className='rkgame';
+      let html='<h3>'+g.name+'</h3>';
       if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
       else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span class="sc2">'+r2.t+'</span></div>'; });
       d.innerHTML=html; w.appendChild(d); }); }
@@ -10256,6 +10262,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29j</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29k</div>
 </body>
 </html>
