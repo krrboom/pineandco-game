@@ -10,7 +10,7 @@
 <script>
 /* 조절판. 이 페이지에만 있다. 라이브 게임(index.html)에는 없다. */
 (function(){
-  var DEF={"tr_speed":118,"tr_mobBase":8,"tr_mobPer":4,"tr_spdBase":26,"tr_spdPer":4,"tr_inv":1.5,"tr_mobSize":30,"tr_meSize":35,"tr_still":36,"tr_hitR":12,"gs_sway":1.03,"gs_amp":80,"gs_lean":0.78,"gs_fall":0.45,"gs_shrink":0.962,"bp_rate":10,"st_time":22,"st_cool":0.3,"ic_time":15,"ic_up":5.25,"ic_decay":38,"cl_pow":2.8,"cl_leak":0.55,"cl_ang":62,"sm_time":13,"sm_thr":11,"sm_cd":55,"ou_start":3,"ws_cups":2,"ws_speed":460,"sq_time":30,"tc_time":15,"tc_fall":185,"fs_time":25,"fs_hp":100,"fs_bite":2};
+  var DEF={"tr_speed":118,"tr_mobBase":8,"tr_mobPer":4,"tr_spdBase":26,"tr_spdPer":4,"tr_inv":1.5,"tr_mobSize":30,"tr_meSize":35,"tr_still":36,"tr_hitR":12,"gs_sway":1.03,"gs_amp":80,"gs_lean":0.78,"gs_fall":0.45,"gs_shrink":0.962,"bp_rate":10,"st_time":22,"st_cool":0.3,"ic_time":15,"ic_up":5.25,"ic_decay":38,"cl_pow":2.8,"cl_leak":0.55,"cl_ang":62,"sm_time":13,"sm_thr":11,"sm_lo":5.5,"sm_drop":0.45,"sm_cd":25,"ou_start":3,"ws_cups":2,"ws_speed":460,"sq_time":30,"tc_time":15,"tc_fall":185,"fs_time":25,"fs_hp":100,"fs_bite":2};
   var saved={}; try{ saved=JSON.parse(localStorage.getItem("pine_tune")||"{}"); }catch(e){}
   var T={}; for(var k in DEF) T[k]=(typeof saved[k]==="number")?saved[k]:DEF[k];
   T.__def=DEF;
@@ -18,7 +18,7 @@
     localStorage.setItem("pine_tune", JSON.stringify(o)); }catch(e){} };
   window.TUNE=T;
   window.TV=function(k,fb){ var v=T[k]; return (typeof v==="number")?v:fb; };
-  var ROWS=[["— TABLE RUSH —","tr"],["tr_speed","웨이터 속도",40,260,2],["tr_meSize","웨이터 크기",16,80,1],["tr_hitR","웨이터 몸 크기(충돌)",6,28,1],["tr_mobSize","손님 크기",14,70,1],["tr_mobBase","1스테이지 손님 수",2,40,1],["tr_mobPer","스테이지마다 늘어나는 수",0,10,1],["tr_still","서 있는 사람 비율(%)",0,90,1],["tr_spdBase","손님 걸음 기준",4,90,1],["tr_spdPer","스테이지마다 빨라지는 정도",0,14,0.5],["tr_inv","부딪힌 뒤 무적(초)",0.3,4,0.1],["— GLASS STACK —","gs"],["gs_sway","흔들리는 속도",0.3,3,0.01],["gs_amp","흔들리는 폭",30,150,1],["gs_lean","기울기 민감도",0.2,2,0.01],["gs_fall","무너지는 한계",0.2,0.9,0.01],["gs_shrink","한 층마다 좁아지는 비율",0.9,0.995,0.001],["— BLIND POUR —","bp"],["bp_rate","따르는 속도(ml/초)",4,20,0.5],["— STIR STOP —","st"],["st_time","제한 시간(초)",8,40,1],["st_cool","차가워지는 속도",0.1,0.8,0.01],["— ICE CARVING —","ic"],["ic_time","제한 시간(초)",6,40,1],["ic_up","한 번 칠 때 깎이는 양",2,12,0.25],["ic_decay","손 멈추면 얼어붙는 속도",10,80,1],["— CHAMPAGNE LAUNCH —","cl"],["cl_pow","한 번 칠 때 힘",1,6,0.1],["cl_leak","힘이 새는 속도",0.15,1.2,0.05],["cl_ang","각도 올라가는 속도",25,120,1],["— SHAKE MASTER —","sm"],["sm_time","제한 시간(초)",5,30,1],["sm_thr","흔들림 인식 세기",4,20,0.5],["sm_cd","연속 인식 간격(ms)",25,200,5],["— ORDER UP! —","ou"],["ou_start","첫 주문 개수",2,8,1],["— WHERE IS MY SHOT? —","ws"],["ws_cups","첫 잔 개수",2,6,1],["ws_speed","섞이는 속도(느릴수록 큼)",200,700,10],["— FRESH SQUEEZE —","sq"],["sq_time","제한 시간(초)",10,60,1],["— TIP CATCH —","tc"],["tc_time","제한 시간(초)",6,40,1],["tc_fall","떨어지는 속도",90,340,5],["— FLY SWAT —","fs"],["fs_time","제한 시간(초)",10,50,1],["fs_hp","과일 체력",40,220,5],["fs_bite","파리가 갉아먹는 속도",0.5,5,0.1]];
+  var ROWS=[["— TABLE RUSH —","tr"],["tr_speed","웨이터 속도",40,260,2],["tr_meSize","웨이터 크기",16,80,1],["tr_hitR","웨이터 몸 크기(충돌)",6,28,1],["tr_mobSize","손님 크기",14,70,1],["tr_mobBase","1스테이지 손님 수",2,40,1],["tr_mobPer","스테이지마다 늘어나는 수",0,10,1],["tr_still","서 있는 사람 비율(%)",0,90,1],["tr_spdBase","손님 걸음 기준",4,90,1],["tr_spdPer","스테이지마다 빨라지는 정도",0,14,0.5],["tr_inv","부딪힌 뒤 무적(초)",0.3,4,0.1],["— GLASS STACK —","gs"],["gs_sway","흔들리는 속도",0.3,3,0.01],["gs_amp","흔들리는 폭",30,150,1],["gs_lean","기울기 민감도",0.2,2,0.01],["gs_fall","무너지는 한계",0.2,0.9,0.01],["gs_shrink","한 층마다 좁아지는 비율",0.9,0.995,0.001],["— BLIND POUR —","bp"],["bp_rate","따르는 속도(ml/초)",4,20,0.5],["— STIR STOP —","st"],["st_time","제한 시간(초)",8,40,1],["st_cool","차가워지는 속도",0.1,0.8,0.01],["— ICE CARVING —","ic"],["ic_time","제한 시간(초)",6,40,1],["ic_up","한 번 칠 때 깎이는 양",2,12,0.25],["ic_decay","손 멈추면 얼어붙는 속도",10,80,1],["— CHAMPAGNE LAUNCH —","cl"],["cl_pow","한 번 칠 때 힘",1,6,0.1],["cl_leak","힘이 새는 속도",0.15,1.2,0.05],["cl_ang","각도 올라가는 속도",25,120,1],["— SHAKE MASTER —","sm"],["sm_time","제한 시간(초)",5,30,1],["sm_thr","흔들림 인식 세기(한 번 셈)",4,20,0.5],["sm_lo","힘 빠짐 기준(이 아래로 내려가야 다음 한 번)",1,10,0.5],["sm_drop","다음 한 번을 받는 기준(최고치 대비)",0.2,0.9,0.05],["sm_cd","잡음 거르는 최소 간격(ms)",5,100,5],["— ORDER UP! —","ou"],["ou_start","첫 주문 개수",2,8,1],["— WHERE IS MY SHOT? —","ws"],["ws_cups","첫 잔 개수",2,6,1],["ws_speed","섞이는 속도(느릴수록 큼)",200,700,10],["— FRESH SQUEEZE —","sq"],["sq_time","제한 시간(초)",10,60,1],["— TIP CATCH —","tc"],["tc_time","제한 시간(초)",6,40,1],["tc_fall","떨어지는 속도",90,340,5],["— FLY SWAT —","fs"],["fs_time","제한 시간(초)",10,50,1],["fs_hp","과일 체력",40,220,5],["fs_bite","파리가 갉아먹는 속도",0.5,5,0.1]];
   function copyText(txt){
     try{ if(navigator.clipboard&&window.isSecureContext){ navigator.clipboard.writeText(txt); return; } }catch(e){}
     try{ var ta=document.createElement("textarea"); ta.value=txt;
@@ -8877,11 +8877,32 @@ function hhClose(){
       for(let j=0;j<3;j++) parts.push({x:200+(Math.random()*80-40),y:250+(Math.random()*100-50),
         vx:(Math.random()*2-1)*160,vy:(Math.random()*2-1)*160,gv:500,r:1.6+Math.random()*1.8,c:['#bfe6ff','#fff','#dff1ff'][rnd(3)],life:0.35}); }
     let gotMotion=false, permMsg='';
-    function onMotion(e){ gotMotion=true; let mag=null;
+    // 흔든 횟수를 '한 번 젓는 동작'으로 센다.
+    // 예전에는 55ms에 한 번씩만 셌는데, 센서가 초당 60번 오다 보니 실제 간격이 66.7ms가 되어
+    // 세게 흔들면 누구나 13초에 196회에서 멈췄다. 흔든 횟수가 아니라 시간 칸을 센 셈이었다.
+    // 지금은 세기가 한 번 죽었다가(LO) 다시 살아날 때(HI) 한 번으로 센다. 상한이 없고,
+    // 한 번 흔든 것이 여러 번으로 부풀지도 않는다.
+    const SM_HI=TV('sm_thr',11), SM_LO=TV('sm_lo',5.5), SM_DROP=TV('sm_drop',0.45), SM_MIN=TV('sm_cd',25);   // SM_MIN은 센서 잡음만 걸러내는 최소 간격
+    let smArmed=true, smPeak=0, smLX=0, smLY=0, smLZ=0;   // smL*: 마지막으로 센 순간의 방향
+    let smGX=0, smGY=0, smGZ=0, smGot=false;              // 중력 성분 추정 (센서가 중력 포함으로 줄 때만)
+    function onMotion(e){ gotMotion=true; let x=null,y=0,z=0;
       const a=e.acceleration;
-      if(a&&a.x!=null) mag=Math.hypot(a.x||0,a.y||0,a.z||0);
-      else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null) mag=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81); }
-      if(mag!=null&&mag>TV('sm_thr',11)&&now()-lastShakeT>TV('sm_cd',55)) addShake(); }   // 55ms: 사람이 낼 수 있는 속도보다 빠르다 (사실상 상한 없음)
+      if(a&&a.x!=null){ x=a.x||0; y=a.y||0; z=a.z||0; }
+      else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null){
+        // 중력은 천천히 변하고 흔들림은 빠르게 변한다. 느린 성분을 중력으로 보고 빼낸다.
+        if(!smGot){ smGX=g.x||0; smGY=g.y||0; smGZ=g.z||0; smGot=true; }
+        else { smGX+=((g.x||0)-smGX)*0.12; smGY+=((g.y||0)-smGY)*0.12; smGZ+=((g.z||0)-smGZ)*0.12; }
+        x=(g.x||0)-smGX; y=(g.y||0)-smGY; z=(g.z||0)-smGZ; } }
+      if(x==null) return;
+      const mag=Math.hypot(x,y,z);
+      if(mag>smPeak) smPeak=mag;
+      // 다음 한 번을 받을 준비가 되는 두 가지 경우. 어느 쪽도 시간 제한이 아니므로 상한이 없다.
+      //  1) 방향이 뒤집혔다 (되돌아오는 동작)
+      //  2) 힘이 꺾였다 (직전 최고치 대비. 고정값으로 잡으면 계속 세게 흔드는 사람이 안 세진다)
+      if(mag>0&&(x*smLX+y*smLY+z*smLZ)/mag<0) smArmed=true;
+      if(mag<Math.max(SM_LO,smPeak*SM_DROP)) smArmed=true;
+      if(mag>SM_HI&&smArmed&&now()-lastShakeT>SM_MIN){
+        smArmed=false; smPeak=mag; smLX=x/mag; smLY=y/mag; smLZ=z/mag; addShake(); } }
     function begin(){ btn.style.display='none'; permMsg=''; ac(); loadShaker(); state='ice'; stT=now();
       playFile('assets/sfx_glass_ice.mp3',1);
       try{ window.addEventListener('devicemotion',onMotion); }catch(e){} }
@@ -10359,6 +10380,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29m · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29n · 조절판</div>
 </body>
 </html>

@@ -8788,11 +8788,32 @@ function hhClose(){
       for(let j=0;j<3;j++) parts.push({x:200+(Math.random()*80-40),y:250+(Math.random()*100-50),
         vx:(Math.random()*2-1)*160,vy:(Math.random()*2-1)*160,gv:500,r:1.6+Math.random()*1.8,c:['#bfe6ff','#fff','#dff1ff'][rnd(3)],life:0.35}); }
     let gotMotion=false, permMsg='';
-    function onMotion(e){ gotMotion=true; let mag=null;
+    // 흔든 횟수를 '한 번 젓는 동작'으로 센다.
+    // 예전에는 55ms에 한 번씩만 셌는데, 센서가 초당 60번 오다 보니 실제 간격이 66.7ms가 되어
+    // 세게 흔들면 누구나 13초에 196회에서 멈췄다. 흔든 횟수가 아니라 시간 칸을 센 셈이었다.
+    // 지금은 세기가 한 번 죽었다가(LO) 다시 살아날 때(HI) 한 번으로 센다. 상한이 없고,
+    // 한 번 흔든 것이 여러 번으로 부풀지도 않는다.
+    const SM_HI=11, SM_LO=5.5, SM_DROP=0.45, SM_MIN=25;   // SM_MIN은 센서 잡음만 걸러내는 최소 간격
+    let smArmed=true, smPeak=0, smLX=0, smLY=0, smLZ=0;   // smL*: 마지막으로 센 순간의 방향
+    let smGX=0, smGY=0, smGZ=0, smGot=false;              // 중력 성분 추정 (센서가 중력 포함으로 줄 때만)
+    function onMotion(e){ gotMotion=true; let x=null,y=0,z=0;
       const a=e.acceleration;
-      if(a&&a.x!=null) mag=Math.hypot(a.x||0,a.y||0,a.z||0);
-      else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null) mag=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81); }
-      if(mag!=null&&mag>11&&now()-lastShakeT>55) addShake(); }   // 55ms: 사람이 낼 수 있는 속도보다 빠르다 (사실상 상한 없음)
+      if(a&&a.x!=null){ x=a.x||0; y=a.y||0; z=a.z||0; }
+      else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null){
+        // 중력은 천천히 변하고 흔들림은 빠르게 변한다. 느린 성분을 중력으로 보고 빼낸다.
+        if(!smGot){ smGX=g.x||0; smGY=g.y||0; smGZ=g.z||0; smGot=true; }
+        else { smGX+=((g.x||0)-smGX)*0.12; smGY+=((g.y||0)-smGY)*0.12; smGZ+=((g.z||0)-smGZ)*0.12; }
+        x=(g.x||0)-smGX; y=(g.y||0)-smGY; z=(g.z||0)-smGZ; } }
+      if(x==null) return;
+      const mag=Math.hypot(x,y,z);
+      if(mag>smPeak) smPeak=mag;
+      // 다음 한 번을 받을 준비가 되는 두 가지 경우. 어느 쪽도 시간 제한이 아니므로 상한이 없다.
+      //  1) 방향이 뒤집혔다 (되돌아오는 동작)
+      //  2) 힘이 꺾였다 (직전 최고치 대비. 고정값으로 잡으면 계속 세게 흔드는 사람이 안 세진다)
+      if(mag>0&&(x*smLX+y*smLY+z*smLZ)/mag<0) smArmed=true;
+      if(mag<Math.max(SM_LO,smPeak*SM_DROP)) smArmed=true;
+      if(mag>SM_HI&&smArmed&&now()-lastShakeT>SM_MIN){
+        smArmed=false; smPeak=mag; smLX=x/mag; smLY=y/mag; smLZ=z/mag; addShake(); } }
     function begin(){ btn.style.display='none'; permMsg=''; ac(); loadShaker(); state='ice'; stT=now();
       playFile('assets/sfx_glass_ice.mp3',1);
       try{ window.addEventListener('devicemotion',onMotion); }catch(e){} }
@@ -10268,6 +10289,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29m</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29n</div>
 </body>
 </html>
