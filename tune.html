@@ -206,6 +206,19 @@
   .ck-glass{ display:inline-flex; align-items:center; }
   .ck-card{ cursor:pointer; transition:border-color .12s, background .12s; }
   .ck-card:hover{ border-color:var(--gold,#c89a3c); background:rgba(30,40,26,.6); }
+  /* ── 음식 카드: 칵테일과 같은 촉감, 왼쪽에 사진 프레임 ── */
+  .fd-card{ display:flex; align-items:center; gap:11px; text-align:left; cursor:pointer;
+    border:1px solid #2a3a2a; border-radius:8px; padding:10px 12px; margin-bottom:9px;
+    background:rgba(20,27,18,.45); transition:border-color .12s, background .12s; }
+  .fd-card:hover{ border-color:var(--gold,#c89a3c); background:rgba(30,40,26,.6); }
+  .fd-thumb{ flex:0 0 auto; width:60px; height:60px; display:flex; align-items:center; justify-content:center;
+    border:1px solid #33412c; border-radius:6px; background:rgba(0,0,0,.28); overflow:hidden; }
+  .fd-thumb img{ width:100%; height:100%; object-fit:contain; image-rendering:pixelated; }
+  .fd-body{ flex:1; min-width:0; }
+  .fd-name{ color:#fff; font-size:11px; letter-spacing:.8px; line-height:1.35; }
+  .fd-desc{ color:var(--dim); font-size:8px; line-height:1.6; margin-top:5px; }
+  .fd-price{ color:var(--amber); font-size:10px; letter-spacing:.3px; white-space:nowrap; flex-shrink:0; align-self:center; }
+  @media(max-width:360px){ .fd-thumb{ width:50px; height:50px; } .fd-name{ font-size:10px; } .fd-price{ font-size:9px; } }
   /* ── 칵테일 사진 모달 ── */
   .ck-modal{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:safe center;
     padding:20px; overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -2464,14 +2477,14 @@ const SEC_PACO = { cat:'PACO SHOP', items:[
   { img:'paco_keyring', n:'Paco Key Ring', p:'₩15,000', d:'Enjoy Pine&Co anywhere you go.' },
 ]};
 const SEC_FOOD = { cat:'FOOD', items:[
-  { n:'Bloody Mary Chips', p:'₩15,000', d:'french fries · Bloody Mary seasoning · celery mayo' },
-  { n:'Ramen', p:'₩20,000', d:'beef & chicken soup · capellini · mungbean sprout · tuna & kimchi onigiri' },
-  { n:'Makgeolli Ice-cream', p:'₩23,000', d:'fresh salad · makgeolli · roasted rice · solomon’s seal · seasonal fruit · redbean chip (contains alcohol)' },
-  { n:'Charcuterie & Bruschetta', p:'₩25,000', d:'mortadella · tuna pâté · herbs · olive tapenade · carrot rape · rye cracker' },
-  { n:'Ddeok-Galbi', p:'₩25,000', d:'minced pork & beef · homemade galbi sauce · cinnamon · mayo · shichimi' },
-  { n:'P.F.C', p:'₩25,000', d:'boneless chicken leg · Uiseong garlic · homemade soy sauce · mezcal spray' },
-  { n:'Roasted Chicken', p:'₩25,000', d:'sake-marinade chicken leg · yuzu soy · perilla · oven-roasted (takes 15 min+)' },
-  { n:'Samgyupsal', p:'₩30,000', d:'caramelized pork belly · namul chimichurri · basil yuzu olive oil · red pepper oil' },
+  { img:'food_bloodymarychips', n:'Bloody Mary Chips', p:'₩15,000', d:'french fries · Bloody Mary seasoning · celery mayo' },
+  { img:'food_ramen', n:'Ramen', p:'₩20,000', d:'beef & chicken soup · capellini · mungbean sprout · tuna & kimchi onigiri' },
+  { img:'food_makgeolliicecream', n:'Makgeolli Ice-cream', p:'₩23,000', d:'fresh salad · makgeolli · roasted rice · solomon’s seal · seasonal fruit · redbean chip (contains alcohol)' },
+  { img:'food_charcuteriebruschetta', n:'Charcuterie & Bruschetta', p:'₩25,000', d:'mortadella · tuna pâté · herbs · olive tapenade · carrot rape · rye cracker' },
+  { img:'food_ddeokgalbi', n:'Ddeok-Galbi', p:'₩25,000', d:'minced pork & beef · homemade galbi sauce · cinnamon · mayo · shichimi' },
+  { img:'food_pfc', n:'P.F.C', p:'₩25,000', d:'boneless chicken leg · Uiseong garlic · homemade soy sauce · mezcal spray' },
+  { img:'food_roastedchicken', n:'Roasted Chicken', p:'₩25,000', d:'sake-marinade chicken leg · yuzu soy · perilla · oven-roasted (takes 15 min+)' },
+  { img:'food_samgyupsal', n:'Samgyupsal', p:'₩30,000', d:'caramelized pork belly · namul chimichurri · basil yuzu olive oil · red pepper oil' },
 ]};
 const SEC_CHAMP = { cat:'CHAMPAGNE  (bottle / glass)', items:[
   { n:'Telmont Reserve Brut', p:'₩290,000 / 19,000', d:'' },
@@ -3082,12 +3095,36 @@ function menuRows(items){ return items.map(it=>`<div class="menu-item${it.img?' 
 function menuSection(catLabel, items){ return `<div class="menu-cat">${catLabel}</div>`+menuRows(items); }
 /* 칵테일 사진 모달: 카드 탭 → 큰 픽셀 사진 + 이름(사진 위) + 재료·가격 + 설명. 좌우 화살표로 이동, 그 외 클릭은 닫힘 */
 function ckSlug(name){ return name.toLowerCase().replace(/[^a-z0-9]/g,''); }
-let ckModalIdx=0, _ckPhotoCache=[];
+let ckModalIdx=0, _ckPhotoCache=[], _fdPhotoCache=[];
 function preloadCocktailPhotos(){   // 15개 사진 미리 로드(캐시 유지) → 화살표 넘김이 즉시
   if(_ckPhotoCache.length) return;
   for(const c of MENU_COCKTAILS){ const im=new Image(); im.src='assets/photo_'+ckSlug(c.name)+'.png'; _ckPhotoCache.push(im); }
 }
+/* 음식 사진도 칵테일과 같은 모달을 쓴다.
+   칵테일에만 있는 줄(트위스트 이름, 따옴표 설명)은 음식일 때 숨긴다. */
+let ckModalMode='ck';
+function preloadFoodPhotos(){
+  if(_fdPhotoCache.length) return;
+  for(const it of SEC_FOOD.items){ const im=new Image(); im.src='assets/'+it.img+'.png'; _fdPhotoCache.push(im); }
+}
+function openFoodModal(i){
+  const L=SEC_FOOD.items;
+  ckModalMode='food';
+  ckModalIdx = (i % L.length + L.length) % L.length;
+  const raw=L[ckModalIdx], it=secT(SEC_FOOD,'food')[ckModalIdx];
+  document.getElementById('ckmImg').src='assets/'+raw.img+'.png';
+  document.getElementById('ckmName').textContent=it.n;
+  const _tw=document.getElementById('ckmTwist'); _tw.textContent=''; _tw.style.display='none';
+  const _pe=document.getElementById('ckmPrice'); _pe.textContent=won(raw.p); _pe.classList.remove('ckm-long');
+  document.getElementById('ckmIng').textContent=it.d||'';
+  const _de=document.getElementById('ckmDesc'); _de.textContent=''; _de.style.display='none';
+  document.getElementById('ckModal').classList.remove('hidden');
+  try{ playSelect(); }catch(e){}
+}
 function openCkModal(i){
+  ckModalMode='ck';
+  document.getElementById('ckmTwist').style.display='';
+  document.getElementById('ckmDesc').style.display='';
   ckModalIdx = (i % MENU_COCKTAILS.length + MENU_COCKTAILS.length) % MENU_COCKTAILS.length;
   const c0=MENU_COCKTAILS[ckModalIdx], c=ckT(c0,ckModalIdx);
   document.getElementById('ckmImg').src='assets/photo_'+ckSlug(c0.name)+'.png';
@@ -3100,7 +3137,8 @@ function openCkModal(i){
   document.getElementById('ckModal').classList.remove('hidden');
   try{ playSelect(); }catch(e){}
 }
-function ckModalNav(dir, ev){ if(ev) ev.stopPropagation(); openCkModal(ckModalIdx + dir); }   // 화살표: 옆 칵테일로(닫히지 않게 전파 차단)
+function ckModalNav(dir, ev){ if(ev) ev.stopPropagation();
+  if(ckModalMode==='food') openFoodModal(ckModalIdx + dir); else openCkModal(ckModalIdx + dir); }   // 화살표: 옆 칵테일로(닫히지 않게 전파 차단)
 function closeCkModal(){ document.getElementById('ckModal').classList.add('hidden'); }   // 아무 곳이나 클릭하면 닫힘
 function openPromo(){ try{ initAudio(); playSelect(); }catch(e){} document.getElementById('promoModal').classList.remove('hidden'); }   // 헤네시 마이웨이 삽지
 function closePromo(){ document.getElementById('promoModal').classList.add('hidden'); try{ playSelect(); }catch(e){} }
@@ -3123,7 +3161,13 @@ function renderMenu(){
         </div>`; }).join('')
       + menuSection(T('moreDrinks'), secT(SEC_MORE,'more'));
   } else if(curMenuTab==='food'){
-    html = menuSection(T('foodHdr'), secT(SEC_FOOD,'food'));
+    preloadFoodPhotos();
+    html = `<div class="menu-cat">${T('foodHdr')}</div>`
+      + secT(SEC_FOOD,'food').map((it,i)=>`<div class="fd-card" onclick="openFoodModal(${i})">
+          <div class="fd-thumb"><img loading="lazy" decoding="async" src="assets/${SEC_FOOD.items[i].img}.png" alt=""></div>
+          <div class="fd-body"><div class="fd-name">${it.n}</div>${it.d?`<div class="fd-desc">${it.d}</div>`:''}</div>
+          <span class="fd-price">${won(it.p)}</span>
+        </div>`).join('');
   } else if(curMenuTab==='bottles'){
     html = menuSection(T('champagne'), SEC_CHAMP.items)+menuSection(T('wine'), SEC_WINE.items)+menuSection(T('beerSoft'), SEC_BEER.items);
   } else if(curMenuTab==='paco'){
@@ -10380,6 +10424,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-29n · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-30a · 조절판</div>
 </body>
 </html>
