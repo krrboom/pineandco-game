@@ -997,6 +997,16 @@
   /* 크기는 게임마다 다르지만, 손가락으로 끌 때 화면이 따라 밀리는 것은 전부 막는다.
      예전엔 hh_fpcv 하나만 걸려 있어서 TABLE RUSH 조이스틱이 안 먹었다. */
   #happyHour #hh_stage canvas{ touch-action:none; overscroll-behavior:none; }
+  /* QUICK TAB: 아래 숫자 키패드가 화면 밖으로 밀려 폰에서 안 보이던 문제.
+     캔버스(영수증)는 400x480 비율을 지키면서 남는 높이만 쓰고,
+     키패드는 flex-shrink 를 0으로 묶어 어떤 화면에서도 줄거나 잘리지 않게 한다. */
+  #happyHour #hh_game.qt-pad #hh_gameLogo{ max-height:44px; margin-top:2px; }
+  #happyHour #hh_game.qt-pad #hh_stage{ gap:8px; justify-content:center; padding-bottom:6px; }
+  #happyHour #hh_game.qt-pad #hh_fpcv{
+    /* 1 1 로 두면 남는 높이를 다 먹어 영수증이 세로로 늘어난다. 커지지는 않고 줄기만 하게. */
+    flex:0 1 auto; min-height:0; width:auto; height:auto;
+    max-width:100%; aspect-ratio:400/480; align-self:center; }
+  #happyHour #hh_game.qt-pad #hh_qtPad{ flex:0 0 auto; }
   /* 캔버스가 화면보다 넓으면 잘린다. 비율을 지키면서 화면 안에 들어오게 한다. */
   #happyHour #hh_gscv, #happyHour #hh_dgcv{
     max-width:100%; max-height:100%; width:auto; height:auto;
@@ -7767,6 +7777,7 @@ function hhClose(){
     'FRESH SQUEEZE':'Drag, slice, squeeze, trash, repeat! 1 lime = 50ml. 30 seconds of pure citrus cardio.' };
   let htpVoice=null;
   function showHowto(name,cb){ const ht=$('howto');
+    try{ $('game').classList.remove('qt-pad'); }catch(e){}   // QUICK TAB 전용 배치는 여기서 해제
     $('htName').textContent=name;
     const _lines=MAN_OF(name);
     $('htDesc').innerHTML = _lines.length
@@ -8777,7 +8788,8 @@ function hhClose(){
   function engQuickTab(done){
     fpLoad(); qtLoad();
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>'
-      +'<div id="hh_qtPad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(290px,78vw)"></div>';
+      +'<div id="hh_qtPad" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:min(290px,78vw)"></div>';
+    try{ $('game').classList.add('qt-pad'); }catch(e){}   // 키패드 자리를 지키는 배치로 전환
     const cv=$('fpcv'), ctx=cv.getContext('2d'), pad=$('qtPad');
     const CUSTS=shuffle(['c1','c2','c3','c4','c5','c6']).concat(['c7']); // 마지막은 진상 손님
     const ARM=1500, MAXWAIT=28000;
@@ -8801,7 +8813,7 @@ function hhClose(){
       if(input.length<3){ input+=k; sTap(); } }
     [['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['6','6'],['7','7'],['8','8'],['9','9'],['C','CLR'],['0','0'],['O','OK']].forEach(([k,label])=>{
       const b=document.createElement('button'); b.className='btn'+(k==='O'?' amber':(k==='C'?' ghost':''));
-      b.style.cssText='padding:11px 0;font-size:'+(k==='C'||k==='O'?'11px':'15px'); b.textContent=label;
+      b.style.cssText='min-width:0;padding:11px 0;font-size:'+(k==='C'||k==='O'?'11px':'15px'); b.textContent=label;
       b.addEventListener('pointerdown',e=>{ e.preventDefault(); key(k); }); pad.appendChild(b); });
     let ended=false;
     function finish(){ state='end';
@@ -10424,6 +10436,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-30a · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-30b · 조절판</div>
 </body>
 </html>
