@@ -7644,7 +7644,7 @@ function hhClose(){
   window.__mute=localStorage.getItem('bp_mute')==='1';
 
   // START 버튼 제거 — 게임 목록이 타이틀 화면에 바로 노출됨
-  function showTitleGames(){ const g=$('titleGames'); window.__cardsReady=true; frLoad(); buildSandbox(); buildMore(); wireSiteBtns();
+  function showTitleGames(){ const g=$('titleGames'); window.__cardsReady=true; frLoad(); buildSandbox(); buildMore(); wireSiteBtns(); try{ prefetchRank(); }catch(e){}   // 랭킹 미리 받아두기
     g.classList.add('on'); requestAnimationFrame(()=>g.classList.add('show')); }
   function backToTitle(){ show('title'); showTitleGames(); }
   function startTurn(){ round=0; const p=players[cur]; $('turnWho').textContent=p.name; $('turnMsg').textContent=(players.length>1?'Got the phone? Press!':'Press when ready'); show('turn'); $('hud').classList.add('hidden'); }
@@ -7727,22 +7727,34 @@ function hhClose(){
   // 랭킹 화면
   $('rankBtn').onclick=()=>{ ac(); beep(600,0.08); buildRank(); show('rank'); };
   $('rankBack').onclick=()=>{ beep(500,0.08); show('title'); };
-  async function buildRank(){ const w=$('rankWrap'); w.innerHTML='<div class="rkempty" style="padding:14px">LOADING RANKINGS…</div>';
-    let online=null;
-    try{ const j=await boardCall({action:'all'}, 30000); if(j&&j.ok) online=j.games||{}; }catch(e){}   // 시트 첫 읽기가 느릴 수 있어 30초까지 기다린다
-    w.innerHTML='';
-    // 랭킹은 서버에 등록된 기록만 보여준다.
-    // 예전에는 서버가 비면 이 폰에 쌓인 내 기록으로 넘어가서, 남의 폰에서는
-    // 보이지도 않는 기록이 랭킹인 것처럼 보였다.
-    if(!online){
-      w.innerHTML='<div class="rkempty" style="padding:18px;line-height:1.6">COULD NOT LOAD RANKINGS<br><span style="font-size:8px;opacity:.6">CHECK YOUR CONNECTION</span></div>';
-      return; }
-    // 서버가 어떤 순서로 주든 여기서 다시 줄을 세운다
+  // ── 랭킹 체감 속도 ──
+  // 시트 서버가 8~10초 걸릴 수 있다. 손님이 그걸 기다리지 않게:
+  //  1) 해피아워 화면이 뜨는 순간 미리 받아둔다 (prefetchRank)
+  //  2) 지난번 받은 결과를 폰에 남겨 두었다가 랭킹을 누르면 즉시 보여주고,
+  //     새 결과가 오면 조용히 갈아끼운다. 보여주는 내용은 언제나 서버(시트)에서 온 것이다.
+  let _rankMem=null, _rankBusy=null;
+  function loadRankMem(){ if(_rankMem) return _rankMem; try{ const j=JSON.parse(localStorage.getItem('bp_rank_cache')||'null'); if(j&&j.games) _rankMem=j; }catch(e){} return _rankMem; }
+  function saveRankMem(games){ _rankMem={t:Date.now(),games}; try{ localStorage.setItem('bp_rank_cache',JSON.stringify(_rankMem)); }catch(e){} }
+  function fetchRank(){   // 같은 요청이 겹치지 않게 하나로 묶는다
+    if(_rankBusy) return _rankBusy;
+    _rankBusy=(async()=>{ try{ const j=await boardCall({action:'all'}, 45000); if(j&&j.ok&&j.games){ saveRankMem(j.games); return j.games; } }catch(e){} return null; })()
+      .finally(()=>{ _rankBusy=null; });
+    return _rankBusy; }
+  function prefetchRank(){ fetchRank().then(g=>{ if(g&&$('rank')&&!$('rank').classList.contains('hidden')) renderRank(g); }); }
+  function renderRank(online){ const w=$('rankWrap'); w.innerHTML='';
+    // 랭킹은 서버(시트)에 등록된 기록만 보여준다.
     GAMES.forEach(g=>{ const arr=[...(online[g.name]||online[g.name.replace(/[\[\]\*\?\/\\:]/g,'')]||[])]; /* 순서는 시트가 정한 그대로 */ const d=document.createElement('div'); d.className='rkgame';
       let html='<h3>'+g.name+'</h3>';
       if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
       else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span class="sc2">'+r2.t+'</span></div>'; });
       d.innerHTML=html; w.appendChild(d); }); }
+  async function buildRank(){ const w=$('rankWrap');
+    const mem=loadRankMem();
+    if(mem&&mem.games){ renderRank(mem.games); }   // 즉시: 지난번 서버 결과
+    else { w.innerHTML='<div class="rkempty" style="padding:14px">LOADING RANKINGS…</div>'; }
+    const fresh=await fetchRank();                   // 새로: 서버에서 다시
+    if(fresh){ renderRank(fresh); return; }
+    if(!mem){ w.innerHTML='<div class="rkempty" style="padding:18px;line-height:1.6">COULD NOT LOAD RANKINGS<br><span style="font-size:8px;opacity:.6">CHECK YOUR CONNECTION</span></div>'; } }
   // ── 언어 적용 ──
   function applyLang(){
     document.querySelectorAll('.lgbtn').forEach(b=>b.classList.toggle('sel', b.dataset.l===LANG));
@@ -10358,6 +10370,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-31a</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-31b</div>
 </body>
 </html>
