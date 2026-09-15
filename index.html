@@ -9093,9 +9093,9 @@ function hhClose(){
         const cw=248,chh=66,cx0=200-cw/2,cy0=12;
         ctx.fillStyle='rgba(0,0,0,0.72)'; ctx.fillRect(cx0,cy0,cw,chh);
         ctx.strokeStyle=omega>0.6?'#6fcf8f':'#333'; ctx.lineWidth=3; ctx.strokeRect(cx0,cy0,cw,chh);
-        const near=Math.abs(temp-target)<=0.3;
+        // 목표 온도에 가까워져도 아무 신호를 주지 않는다. 색만 보고 스스로 판단해야 한다. (붐: 너무 쉬웠다)
         ctx.fillStyle=tempColor(temp); ctx.fillRect(cx0+14,cy0+10,100,30);
-        ctx.strokeStyle=near?(Math.floor(t/140)%2?'#6fcf8f':'#eaffea'):'#000'; ctx.lineWidth=near?4:2;
+        ctx.strokeStyle='#000'; ctx.lineWidth=2;
         ctx.strokeRect(cx0+14,cy0+10,100,30);
         ctx.fillStyle=tempColor(target); ctx.fillRect(cx0+134,cy0+10,100,30);
         ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.strokeRect(cx0+134,cy0+10,100,30);
@@ -10370,6 +10370,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-31b</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-31c</div>
 </body>
 </html>
