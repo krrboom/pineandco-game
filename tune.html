@@ -7815,7 +7815,7 @@ function hhClose(){
   $('rankBack').onclick=()=>{ beep(500,0.08); show('title'); };
   async function buildRank(){ const w=$('rankWrap'); w.innerHTML='<div class="rkempty" style="padding:14px">LOADING RANKINGS…</div>';
     let online=null;
-    try{ const r=await fetch(BOARD_URL+'?all=1&t='+Date.now()); const j=await r.json(); if(j&&j.ok) online=j.games||{}; }catch(e){}
+    try{ const j=await boardCall({action:'all'}, 30000); if(j&&j.ok) online=j.games||{}; }catch(e){}   // 시트 첫 읽기가 느릴 수 있어 30초까지 기다린다
     w.innerHTML='';
     // 랭킹은 서버에 등록된 기록만 보여준다.
     // 예전에는 서버가 비면 이 폰에 쌓인 내 기록으로 넘어가서, 남의 폰에서는
@@ -7824,7 +7824,7 @@ function hhClose(){
       w.innerHTML='<div class="rkempty" style="padding:18px;line-height:1.6">COULD NOT LOAD RANKINGS<br><span style="font-size:8px;opacity:.6">CHECK YOUR CONNECTION</span></div>';
       return; }
     // 서버가 어떤 순서로 주든 여기서 다시 줄을 세운다
-    GAMES.forEach(g=>{ const arr=[...(online[g.name]||[])].sort(rankCmp); const d=document.createElement('div'); d.className='rkgame';
+    GAMES.forEach(g=>{ const arr=[...(online[g.name]||online[g.name.replace(/[\[\]\*\?\/\\:]/g,'')]||[])]; /* 순서는 시트가 정한 그대로 */ const d=document.createElement('div'); d.className='rkgame';
       let html='<h3>'+g.name+'</h3>';
       if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
       else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span class="sc2">'+r2.t+'</span></div>'; });
@@ -7937,7 +7937,21 @@ function hhClose(){
       b.onclick=()=>{ ac(); beep(660,0.08); try{ stopBgm(500); }catch(e){}
         setTimeout(()=>{ location.href=g.url; },260); };
       w.appendChild(b); }); }
-  const BOARD_URL='https://barparty-board.showjojo100.workers.dev';
+  // 랭킹 저장소: 구글 시트 (Apps Script). 게임마다 탭 하나, 순위는 '값' 열 하나로.
+  // 시트를 열면 모든 기록이 그대로 보인다. 숨기는 것도 보류하는 것도 없다.
+  const BOARD_URL='https://script.google.com/macros/s/AKfycbxqE55j-komFkThd92-P8mD9RFRQJbvb0tYdY6Ba7nuCK6vK66EAMBqHrM3h9VmUazb/exec';
+  let _bcN=0;
+  function boardCall(params, timeoutMs){   // Apps Script 는 JSONP 로 읽는다 (칵테일 디펜스와 같은 방식)
+    return new Promise(res=>{
+      const cb='__bpCb'+(_bcN++), s=document.createElement('script'); let done=false;
+      const fin=v=>{ if(done) return; done=true; try{ delete window[cb]; }catch(_){ window[cb]=null; } s.remove(); res(v); };
+      window[cb]=fin; s.onerror=()=>fin(null);
+      const q=Object.entries(params).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+      s.src=BOARD_URL+'?'+q+'&callback='+cb+'&t='+Date.now();
+      document.body.appendChild(s);
+      setTimeout(()=>fin(null), timeoutMs||15000);
+    });
+  }
   let rrCtx=null;
   function showResult(game,score,txt,cls){
     $('rrRate').textContent=txt; $('rrRate').className='rate '+cls;
@@ -7951,8 +7965,7 @@ function hhClose(){
   $('rrSubmit').onclick=async()=>{ if(!rrCtx||$('rrSubmit').disabled) return;
     const n=($('rrName').value.toUpperCase().replace(/[^A-Z0-9&]/g,'')||'PINE&CO').slice(0,8);
     $('rrSubmit').disabled=true; $('rrSubmit').style.opacity='0.5'; $('rrStatus').textContent='SENDING...';
-    try{ const r=await fetch(BOARD_URL,{method:'POST',body:JSON.stringify({secret:'pine-2026',game:rrCtx.game,name:n,score:rrCtx.score,txt:rrCtx.txt})});
-      const j=await r.json();
+    try{ const j=await boardCall({action:'submit',secret:'pine-2026',game:rrCtx.game,name:n,score:rrCtx.score,txt:rrCtx.txt});
       // 등록 직후 안내: 전체 몇 개 중 몇 등인지 (랭킹 화면은 상위 5개 그대로)
       if(j&&j.ok){
         const tot = (typeof j.total==='number' && j.total>0) ? j.total : null;
@@ -7960,7 +7973,7 @@ function hhClose(){
         $('rrStatus').textContent = (j.rank<=5)
           ? ('🏆 RANK #'+j.rank+of+'!')
           : ('SAVED! RANK #'+j.rank+of);
-      } else { $('rrStatus').textContent='FAILED'; }
+      } else { $('rrStatus').textContent=(j&&j.err==='INVALID')?'INVALID RECORD':'FAILED'; }   // 범위 밖이면 숨기지 않고 그대로 말해준다
       if(j&&j.ok&&j.rank<=5){ flash('#e6b450'); sGood(); } }
     catch(e){ $('rrStatus').textContent='OFFLINE — SAVED LOCALLY'; } };
   $('rrDone').onclick=()=>{ beep(500,0.08); backToTitle(); };
@@ -10436,6 +10449,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-30b · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-31a · 조절판</div>
 </body>
 </html>
