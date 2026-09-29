@@ -7175,9 +7175,12 @@ function goCricket(){ try{ playSelect&&playSelect(); }catch(e){} location.href='
 (function(){
   const SPOTS=[[21,45.6],[43.8,41.2],[54.5,41],[81.3,42.3],[30.4,4.5],[70.5,1.1]];   // Pat 왼어깨·오른어깨, Joe 왼어깨·오른어깨, Pat 머리, Joe 머리 (title_duo.png 픽셀 실측)
   let cur=0; const el=document.getElementById('cricketHop'); if(!el) return;
-  const ci=Math.floor(Math.random()*5); el.src='assets/cricket_ch'+ci+'.png';   // 들어올 때마다 5마리 중 하나
-  const HEAD_RIGHT=(ci===3);   // ch3 만 머리가 오른쪽, 나머지는 왼쪽
-  const place=(x,y,f)=>{ el.style.left=x+'%'; el.style.top=y+'%'; el.style.transform='translate(-50%,-100%) scaleX('+f+')'; };
+  let ci=-1, HEAD_RIGHT=false;
+  function pickChar(){ let n; do{ n=Math.floor(Math.random()*5); }while(n===ci); ci=n; el.src='assets/cricket_ch'+ci+'.png'; HEAD_RIGHT=(ci===3); }   // 착지할 때마다 다른 캐릭터. ch3 만 머리가 오른쪽
+  for(let i=0;i<5;i++){ const im=new Image(); im.src='assets/cricket_ch'+i+'.png'; }   // 5종 미리 받아 두기(바뀔 때 깜빡임 방지)
+  pickChar();
+  // 발이 정확히 지점에 닿게: 상자엔 손가락용 패딩 8px 이 있어 -100% 에서 8px 되돌린다 (CSS 와 같은 식)
+  const place=(x,y,f)=>{ el.style.left=x+'%'; el.style.top=y+'%'; el.style.transform='translate(-50%,calc(-100% + 8px)) scaleX('+f+')'; };
   function hop(){
     const ts=document.getElementById('titleScreen');
     if(document.hidden||!ts||ts.classList.contains('hidden')){ setTimeout(hop,900); return; }   // 타이틀이 안 보이면 쉰다
@@ -7186,7 +7189,7 @@ function goCricket(){ try{ playSelect&&playSelect(); }catch(e){} location.href='
     const dur=520+Math.random()*320, arc=16+Math.random()*12, t0=performance.now();
     (function fr(now){ const p=Math.min(1,(now-t0)/dur);
       place(x0+(x1-x0)*p, y0+(y1-y0)*p-arc*4*p*(1-p), f);
-      if(p<1) requestAnimationFrame(fr); else { cur=nx; setTimeout(hop,700+Math.random()*2000); } })(t0);
+      if(p<1) requestAnimationFrame(fr); else { cur=nx; pickChar(); place(x1,y1,HEAD_RIGHT===goR?1:-1); setTimeout(hop,700+Math.random()*2000); } })(t0);
   }
   place(SPOTS[0][0],SPOTS[0][1],HEAD_RIGHT?1:-1); setTimeout(hop,1500);
 })();
@@ -10522,6 +10525,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-37 · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-38 · 조절판</div>
 </body>
 </html>
