@@ -2395,8 +2395,8 @@ const MENU_COCKTAILS = [
 ];
 /* 리스트형 섹션 */
 const SEC_MORE = { cat:'MORE DRINKS', items:[
-  { n:'SPECIAL HIGHBALL — Clase Azul Reposado', p:'₩40,000', d:'Clase Azul Reposado · orange soda' },
-  { n:'NON-ALCOHOL — Mr. Tropical', p:'₩18,000', d:'seasonal fruits · tea' },
+  { n:'SPECIAL HIGHBALL — Clase Azul Reposado', p:'₩40,000', d:'Clase Azul Reposado · orange soda', img:'more_specialhighball' },
+  { n:'NON-ALCOHOL — Mr. Tropical', p:'₩18,000', d:'seasonal fruits · tea', img:'more_mrtropical' },
 ]};
 const SEC_PACO = { cat:'PACO SHOP', items:[
   { img:'paco_gacha', n:'Gacha Cocktail', p:'₩23,000', d:'Can’t decide? Spin the gacha for a surprise cocktail.' },
@@ -3037,12 +3037,28 @@ function preloadFoodPhotos(){
   if(_fdPhotoCache.length) return;
   for(const it of SEC_FOOD.items){ const im=new Image(); im.src='assets/'+it.img+'.png'; _fdPhotoCache.push(im); }
 }
+function openMoreModal(i){
+  const L=SEC_MORE.items;
+  ckModalMode='more';
+  ckModalIdx = (i % L.length + L.length) % L.length;
+  const raw=L[ckModalIdx], it=secT(SEC_MORE,'more')[ckModalIdx];
+  { const im=document.getElementById('ckmImg'); im.style.display=''; im.onerror=()=>{ im.style.display='none'; }; im.src='assets/'+raw.img+'.png'; }
+  // 'SPECIAL HIGHBALL — Clase Azul Reposado' 처럼 긴 이름은 앞부분을 금색 태그로, 뒷부분만 이름으로 (사진을 안 가리게)
+  { const parts=String(it.n).split(' — '); const _tw=document.getElementById('ckmTwist');
+    if(parts.length===2){ document.getElementById('ckmName').textContent=parts[1]; _tw.textContent=parts[0]; _tw.style.display=''; }
+    else { document.getElementById('ckmName').textContent=it.n; _tw.textContent=''; _tw.style.display='none'; } }
+  const _pe=document.getElementById('ckmPrice'); _pe.textContent=won(raw.p); _pe.classList.remove('ckm-long');
+  document.getElementById('ckmIng').textContent=it.d||'';
+  const _de=document.getElementById('ckmDesc'); _de.textContent=''; _de.style.display='none';
+  document.getElementById('ckModal').classList.remove('hidden');
+  try{ playSelect(); }catch(e){}
+}
 function openFoodModal(i){
   const L=SEC_FOOD.items;
   ckModalMode='food';
   ckModalIdx = (i % L.length + L.length) % L.length;
   const raw=L[ckModalIdx], it=secT(SEC_FOOD,'food')[ckModalIdx];
-  document.getElementById('ckmImg').src='assets/'+raw.img+'.png';
+  { const im=document.getElementById('ckmImg'); im.style.display=''; im.onerror=()=>{ im.style.display='none'; }; im.src='assets/'+raw.img+'.png'; }
   document.getElementById('ckmName').textContent=it.n;
   const _tw=document.getElementById('ckmTwist'); _tw.textContent=''; _tw.style.display='none';
   const _pe=document.getElementById('ckmPrice'); _pe.textContent=won(raw.p); _pe.classList.remove('ckm-long');
@@ -3068,7 +3084,7 @@ function openCkModal(i){
   try{ playSelect(); }catch(e){}
 }
 function ckModalNav(dir, ev){ if(ev) ev.stopPropagation();
-  if(ckModalMode==='food') openFoodModal(ckModalIdx + dir); else openCkModal(ckModalIdx + dir); }   // 화살표: 옆 칵테일로(닫히지 않게 전파 차단)
+  if(ckModalMode==='food') openFoodModal(ckModalIdx + dir); else if(ckModalMode==='more') openMoreModal(ckModalIdx + dir); else openCkModal(ckModalIdx + dir); }   // 화살표: 옆 칵테일로(닫히지 않게 전파 차단)
 function closeCkModal(){ document.getElementById('ckModal').classList.add('hidden'); }   // 아무 곳이나 클릭하면 닫힘
 function openPromo(){ try{ initAudio(); playSelect(); }catch(e){} document.getElementById('promoModal').classList.remove('hidden'); }   // 헤네시 마이웨이 삽지
 function closePromo(){ document.getElementById('promoModal').classList.add('hidden'); try{ playSelect(); }catch(e){} }
@@ -3087,7 +3103,12 @@ function renderMenu(){
           <div class="ck-meta"><span class="ck-twist">${c.tw}</span>${c0.tag?`<span class="ck-tag">${c0.tag}</span>`:''}</div>
           <div class="ck-ing">${c.ing}</div>
         </div>`; }).join('')
-      + menuSection(T('moreDrinks'), secT(SEC_MORE,'more'));
+      + `<div class="menu-cat">${T('moreDrinks')}</div>`
+      + secT(SEC_MORE,'more').map((it,i)=>`<div class="fd-card" onclick="openMoreModal(${i})">
+          <div class="fd-thumb"><img loading="lazy" decoding="async" src="assets/${SEC_MORE.items[i].img}.png" alt="" onerror="this.parentElement.style.display='none'"></div>
+          <div class="fd-body"><div class="fd-name">${it.n}</div>${it.d?`<div class="fd-desc">${it.d}</div>`:''}</div>
+          <span class="fd-price">${won(it.p)}</span>
+        </div>`).join('');
   } else if(curMenuTab==='food'){
     preloadFoodPhotos();
     html = `<div class="menu-cat">${T('foodHdr')}</div>`
@@ -10437,6 +10458,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-43</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-44</div>
 </body>
 </html>
