@@ -2396,7 +2396,6 @@ const MENU_COCKTAILS = [
 /* 리스트형 섹션 */
 const SEC_MORE = { cat:'MORE DRINKS', items:[
   { n:'SPECIAL HIGHBALL — Clase Azul Reposado', p:'₩40,000', d:'Clase Azul Reposado · orange soda' },
-  { n:'SOMAC — Peanut Soju & Beer', p:'₩8,000', d:'peanut butter · soju · beer' },
   { n:'NON-ALCOHOL — Mr. Tropical', p:'₩18,000', d:'seasonal fruits · tea' },
 ]};
 const SEC_PACO = { cat:'PACO SHOP', items:[
@@ -2936,7 +2935,6 @@ const SEC_TR = {
   ko:{
   more:[
     { n:'스페셜 하이볼 — 클라세 아술 레포사도', d:'클라세 아술 레포사도 · 오렌지 소다' },
-    { n:'소맥 — 피넛 소주 & 맥주', d:'땅콩버터 · 소주 · 맥주' },
     { n:'논알콜 — 미스터 트로피컬', d:'제철 과일 · 티' },
   ],
   food:[
@@ -2959,7 +2957,6 @@ const SEC_TR = {
   ja:{
   more:[
     { n:'スペシャルハイボール — クラセアスール レポサド', d:'クラセアスール レポサド · オレンジソーダ' },
-    { n:'ソメク — ピーナッツ焼酎 & ビール', d:'ピーナッツバター · 焼酎 · ビール' },
     { n:'ノンアルコール — ミスター・トロピカル', d:'季節のフルーツ · ティー' },
   ],
   food:[
@@ -2982,7 +2979,6 @@ const SEC_TR = {
   zh:{
   more:[
     { n:'特调高球 — Clase Azul 陈酿', d:'Clase Azul 陈酿 · 橙味苏打' },
-    { n:'烧啤 — 花生烧酒 & 啤酒', d:'花生酱 · 烧酒 · 啤酒' },
     { n:'无酒精 — Mr. Tropical', d:'时令水果 · 茶' },
   ],
   food:[
@@ -6837,7 +6833,7 @@ function appleLocalAnswer(q){
   if(has('커피','coffee','에스프레소','아메리카노')) return say(byName('AMERICANO','HOT BEER'), '커피면');
   if(has('초콜','카카오','choco','cacao')) return say(byName('CACAO'), '초콜릿이면');
   if(has('논알콜','무알콜','안 마시','non-alc','술 안')) return '술 안 드시면 Mr. Tropical 있어요. 제철과일이랑 차로 만들어요. ₩18,000.';
-  if(has('맥주','beer','소맥')) return '소맥이면 SOMAC 있어요. 땅콩버터·소주·맥주. ₩8,000.';
+  if(has('맥주','beer','소맥')) return say(byName('HOT BEER'), '맥주면');   // 소맥은 9/29 메뉴에서 뺐다
   if(has('추천','뭐 마','뭐마','골라','모르겠','아무거나')){
     const c=MENU_COCKTAILS[Math.floor(Math.random()*MENU_COCKTAILS.length)];
     return `${c.name} 한번 가보세요. ${c.tw.replace('Twisted ','')} 비틀어 만든 거예요. ${price(c)}. 못 고르겠으면 Gacha Cocktail(₩23,000)로 뽑기도 있어요.`;
@@ -10441,6 +10437,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-40</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-41</div>
 </body>
 </html>
