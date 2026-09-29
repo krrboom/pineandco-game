@@ -7173,7 +7173,7 @@ addEventListener('resize', resize); resize();
 function goCricket(){ try{ playSelect&&playSelect(); }catch(e){} location.href='https://cricketseoul.com'; }   // 크리켓 서울 (붐 지시 9/29: 도메인으로 바로)
 /* 귀뚜라미 이스터에그: 어깨·머리 위 지점 사이를 무작위 방향으로 뛴다 (지점은 듀오 그림의 % 좌표) */
 (function(){
-  const SPOTS=[[17,45],[41,41],[57,41],[80,42],[29,4],[69,2]];
+  const SPOTS=[[19.3,44.8],[43.8,41.2],[54.5,41],[81.3,42.3],[30.4,4.5],[70.5,1.1]];   // Pat 왼어깨·오른어깨, Joe 왼어깨·오른어깨, Pat 머리, Joe 머리 (title_duo.png 픽셀 실측)
   let cur=0; const el=document.getElementById('cricketHop'); if(!el) return;
   const ci=Math.floor(Math.random()*5); el.src='assets/cricket_ch'+ci+'.png';   // 들어올 때마다 5마리 중 하나
   const HEAD_RIGHT=(ci===3);   // ch3 만 머리가 오른쪽, 나머지는 왼쪽
@@ -10522,6 +10522,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-36 · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-37 · 조절판</div>
 </body>
 </html>
