@@ -7084,7 +7084,7 @@ function resize(){ const size=Math.min(window.innerWidth,window.innerHeight)-16;
 addEventListener('resize', resize); resize();
 
 /* ===== 히든게임: Joe 입 클릭 → Joe's Dentist (iframe) ===== */
-function goCricket(){ try{ playSelect&&playSelect(); }catch(e){} location.href='cricket/'; }   // 크리켓 서울 메뉴(같은 사이트 /cricket/)
+function goCricket(){ try{ playSelect&&playSelect(); }catch(e){} location.href='https://cricketseoul.com'; }   // 크리켓 서울 (붐 지시 9/29: 도메인으로 바로)
 /* 귀뚜라미 이스터에그: 어깨·머리 위 지점 사이를 무작위 방향으로 뛴다 (지점은 듀오 그림의 % 좌표) */
 (function(){
   const SPOTS=[[17,45],[41,41],[57,41],[80,42],[29,4],[69,2]];
@@ -10429,6 +10429,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-34</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-35</div>
 </body>
 </html>
