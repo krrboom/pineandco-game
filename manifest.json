@@ -1,0 +1,13 @@
+{
+  "name": "Pine & Co Bartender's Happy Hour",
+  "short_name": "Happy Hour",
+  "start_url": "/?pad=1",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0d0f0c",
+  "theme_color": "#0d0f0c",
+  "icons": [
+    { "src": "assets/icon_192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon_512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

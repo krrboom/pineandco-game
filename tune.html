@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>PINE &amp; CO — COCKTAIL DEFENSE</title>
@@ -1115,6 +1118,34 @@
     aspect-ratio:2.5/1; background:transparent center/100% 100% no-repeat; cursor:pointer; line-height:1.35;
     letter-spacing:.3px; image-rendering:pixelated; text-shadow:1px 1px 0 rgba(0,0,0,.5); transition:transform .06s; padding:0 12px; }
   #happyHour .sbtn2:active{ transform:translateY(3px) scale(.98); }
+  /* ── 손잡이(게임패드) 모드: 커서·글자판·작은 정사각 화면 보정 ── */
+  #padCursor{ position:fixed; left:0; top:0; z-index:99999; pointer-events:none; width:0; height:0; display:none; will-change:transform; }
+  body.padmode #padCursor{ display:block; }
+  #padCursor i{ position:absolute; left:-15px; top:-15px; width:30px; height:30px; border:3px solid #ffd24a; border-radius:50%;
+    box-shadow:0 0 0 2px #000, inset 0 0 0 2px #000; background:rgba(255,210,74,.16); }
+  #padCursor i::after{ content:''; position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px; background:#ffd24a; border-radius:50%; box-shadow:0 0 0 1px #000; }
+  #padCursor.down i{ transform:scale(.8); background:rgba(255,210,74,.45); }
+  #padPick{ position:fixed; inset:0; z-index:99998; display:none; align-items:center; justify-content:center; flex-direction:column; gap:10px;
+    background:rgba(0,0,0,.82); font-family:'Press Start 2P','NeoDunggeunmo',monospace; color:#e8e6dd; text-align:center; }
+  #padPick.show{ display:flex; }
+  #padPick .ttl{ font-size:11px; color:#ffd24a; text-shadow:2px 2px 0 #000; }
+  #padPick .slots{ display:flex; gap:4px; }
+  #padPick .slots span{ width:26px; height:36px; line-height:36px; border:2px solid #333; background:#000; color:#e6b450; font-size:15px; }
+  #padPick .slots span.cur{ border-color:#ffd24a; background:#2a2200; color:#fff; }
+  #padPick .hint{ font-size:8px; color:#8a8d82; line-height:1.9; }
+  body.padmode #happyHour .screen{ overflow-y:auto; scrollbar-width:none; }
+  body.padmode #happyHour .screen::-webkit-scrollbar{ display:none; }
+  body.padmode #happyHour #hh_howto{ overflow-y:auto; }
+  @media (max-height:480px){
+    body.padmode #happyHour .screen{ padding:12px 10px 10px; gap:8px; }
+    body.padmode #happyHour #hh_gameLogo{ max-height:40px; margin-top:2px; }
+    body.padmode #happyHour #hh_howto{ gap:8px; padding:10px; justify-content:flex-start; }
+    body.padmode #happyHour #hh_htWords{ display:none; }
+    body.padmode #happyHour .ht-panel{ padding:10px 10px; }
+    body.padmode #happyHour .ht-li{ margin:0 0 3px; line-height:1.4; }
+    body.padmode #happyHour .ht-taunt{ margin-top:6px; font-size:1.1em; }
+    body.padmode #happyHour .ht-tap{ margin-top:6px; }
+  }
   #happyHour #hh_backBtn{ position:absolute; top:10px; right:10px; z-index:30; width:42px; height:42px;
     font-family:var(--hh-pixfont); font-size:15px; color:#e8e6dd; background:rgba(0,0,0,0.6);
     border:3px solid #444; box-shadow:0 3px 0 #000; cursor:pointer; }
@@ -3358,6 +3389,7 @@ function gpHeld(gp,i){ return gp.buttons[i] && gp.buttons[i].pressed; }
 function gpEdge(gp,i){ const now=gpHeld(gp,i), was=gpBtnPrev[i]; gpBtnPrev[i]=now; return now && !was; }
 function pollGamepad(){
   padDx=0; padDy=0;
+  { const hb=document.getElementById('happyHour'); if(hb&&hb.classList.contains('on')) return; }   // 해피아워가 떠 있으면 손잡이 모드가 맡는다
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   let gp=null; for(const p of pads){ if(p){ gp=p; break; } }
   if(!gp) return;
@@ -10516,6 +10548,77 @@ function hhClose(){
 </script>
 
 <script>/* __hhAuto: ?hh=1 로 돌아오면 해피아워를 바로 연다 */
+/* ===== 손잡이(게임패드) 모드 ===== 십자키 커서 + A(터치) + B(뒤로) + 십자키 글자판. ?pad=1 또는 패드 입력이 오면 켜진다. */
+(function(){
+  const hhOn=()=>{ const b=document.getElementById('happyHour'); return !!(b&&b.classList.contains('on')); };
+  let on=false, cx=180, cy=180, moveT=0, lastT=0, aWas=false, bWas=false, heldT=null, raf=0, cur=null;
+  const key={u:0,d:0,l:0,r:0,a:0,b:0};
+  const dirPrev={u:0,d:0,l:0,r:0};
+  /* 글자판 */
+  const CHARS='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789&';
+  let pick=null, pkSlots=[], pkIdx=0, pkInput=null;
+  function enable(){ if(on) return; on=true; document.body.classList.add('padmode');
+    if(!cur){ cur=document.createElement('div'); cur.id='padCursor'; cur.innerHTML='<i></i>'; document.body.appendChild(cur); }
+    cx=innerWidth/2; cy=innerHeight/2; place(); try{ localStorage.setItem('bp_pad','1'); }catch(e){}
+    try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(()=>{}); }catch(e){}
+    if(!raf) raf=setInterval(()=>loop(performance.now()),16); }   // rAF 대신 타이머: 화면 프레임이 잠깐 멈춰도 입력은 산다
+  function place(){ if(cur) cur.style.transform='translate('+cx+'px,'+cy+'px)'; }
+  function pev(type,t,down){ const init={bubbles:true,cancelable:true,composed:true,clientX:cx,clientY:cy,screenX:cx,screenY:cy,button:0,buttons:down?1:0,pointerId:1,pointerType:'touch',isPrimary:true,width:12,height:12,pressure:down?0.6:0};
+    let ev; try{ ev=new PointerEvent(type,init); }catch(e){ ev=new MouseEvent(type.replace('pointer','mouse'),init); } t.dispatchEvent(ev); }
+  function under(){ return document.elementFromPoint(Math.max(0,Math.min(innerWidth-1,cx)), Math.max(0,Math.min(innerHeight-1,cy))); }
+  function press(){ const t=under(); if(!t) return; if(cur) cur.classList.add('down');
+    if(t.tagName==='INPUT'&&t.id==='hh_rrName'){ openPick(t); return; }
+    heldT=t; pev('pointerdown',t,true); }
+  function release(){ if(cur) cur.classList.remove('down'); const t=heldT; heldT=null; if(!t) return;
+    pev('pointerup',t,false);
+    const now=under(); if(now&&(now===t||t.contains(now)||now.contains(t))){ try{ t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true,clientX:cx,clientY:cy,button:0})); }catch(e){} } }
+  function back(){ if(pick&&pick.classList.contains('show')){ closePick(); return; }
+    const ck=document.getElementById('ckModal'); if(ck&&!ck.classList.contains('hidden')){ try{ closeCkModal(); }catch(e){} return; }
+    for(const id of ['hh_backBtn','hh_rrDone','hh_againBtn','hh_rankBack','hh_setBack']){ const el=document.getElementById(id); if(el&&!el.classList.contains('hidden')&&el.offsetParent){ el.click(); return; } } }   // 화면마다 그 화면의 ✕/OK/뒤로
+  function scrollable(el){ while(el&&el!==document.body){ const cs=getComputedStyle(el); if(/(auto|scroll)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight+2) return el; el=el.parentElement; } return null; }
+  /* 글자판 */
+  function openPick(inp){ pkInput=inp; if(!pick){ pick=document.createElement('div'); pick.id='padPick'; pick.innerHTML='<div class="ttl">YOUR NAME</div><div class="slots"></div><div class="hint">\u2191\u2193 LETTER &nbsp; \u2190\u2192 MOVE<br>A = OK &nbsp; B = CANCEL</div>'; document.body.appendChild(pick); }
+    let v=(inp.value||'').toUpperCase().replace(/[^A-Z0-9&]/g,''); if(v==='PINE&CO') v='';   // 기본 이름이면 빈 칸부터 (손님 이름을 새로 쓰게)
+    pkSlots=[]; for(let i=0;i<8;i++) pkSlots.push(v[i]||''); pkIdx=Math.min(v.length,7); drawPick(); pick.classList.add('show'); }
+  function drawPick(){ pick.querySelector('.slots').innerHTML=pkSlots.map((c,i)=>'<span class="'+(i===pkIdx?'cur':'')+'">'+(c||'_')+'</span>').join(''); }
+  function pickStep(d){ const c=pkSlots[pkIdx]; let i=c?CHARS.indexOf(c):-1; i+=d; if(i<-1) i=CHARS.length-1; if(i>=CHARS.length) i=-1; pkSlots[pkIdx]=i<0?'':CHARS[i]; drawPick(); }
+  function closePick(ok){ if(ok&&pkInput){ pkInput.value=pkSlots.join('').trim(); } pick.classList.remove('show'); pkInput=null; }
+  /* 입력 읽기 */
+  function readPad(){ const out={u:0,d:0,l:0,r:0,a:0,b:0,any:false}; const pads=navigator.getGamepads?navigator.getGamepads():[];
+    for(const gp of pads){ if(!gp) continue; const B=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed); const ax=gp.axes[0]||0, ay=gp.axes[1]||0;
+      if(B(12)||ay<-0.5) out.u=1; if(B(13)||ay>0.5) out.d=1; if(B(14)||ax<-0.5) out.l=1; if(B(15)||ax>0.5) out.r=1;
+      if(B(0)||B(2)||B(3)||B(9)) out.a=1; if(B(1)||B(8)) out.b=1;
+      if(out.u||out.d||out.l||out.r||out.a||out.b) out.any=true; }
+    return out; }
+  function loop(ts){ const dt=Math.min(0.05,(ts-lastT)/1000||0.016); lastT=ts;
+    const gp=readPad(); if(gp.any&&!on&&hhOn()) enable(); if(!on) return;
+    const u=key.u||gp.u, d=key.d||gp.d, l=key.l||gp.l, r=key.r||gp.r, a=!!(key.a||gp.a), b=!!(key.b||gp.b);
+    if(pick&&pick.classList.contains('show')){   // 글자판: 한 칸씩
+      if(u&&!dirPrev.u) pickStep(1); if(d&&!dirPrev.d) pickStep(-1); if(l&&!dirPrev.l){ pkIdx=Math.max(0,pkIdx-1); drawPick(); } if(r&&!dirPrev.r){ pkIdx=Math.min(7,pkIdx+1); drawPick(); }
+      if(a&&!aWas) closePick(true); if(b&&!bWas) closePick(false);
+      dirPrev.u=u; dirPrev.d=d; dirPrev.l=l; dirPrev.r=r; aWas=a; bWas=b; return; }
+    dirPrev.u=u; dirPrev.d=d; dirPrev.l=l; dirPrev.r=r;
+    let dx=(r?1:0)-(l?1:0), dy=(d?1:0)-(u?1:0);
+    if(dx||dy){ moveT+=dt; const sp=(230+Math.min(1,moveT/0.45)*300)*dt; const n=Math.hypot(dx,dy); const nx=cx+dx/n*sp, ny=cy+dy/n*sp;
+      const EDGE=26; let scrolled=false;
+      if(!heldT&&((dy>0&&ny>innerHeight-EDGE)||(dy<0&&ny<EDGE))){ const sc=scrollable(under())||scrollable(document.querySelector('#hh_howto:not(.hidden)'))||scrollable(document.querySelector('#happyHour .screen:not(.hidden)')); if(sc){ sc.scrollTop+=dy/n*sp; scrolled=true; } }   // 커서 밑이 고정 버튼이어도 지금 화면을 스크롤
+      cx=Math.max(2,Math.min(innerWidth-2,nx)); cy=Math.max(2,Math.min(innerHeight-2,ny)); place();
+      { const mt=heldT||under(); if(mt&&mt.tagName==='CANVAS') pev('pointermove',mt,!!heldT); else if(heldT) pev('pointermove',heldT,true); } }   // 캔버스 위에서는 누르지 않아도 움직임을 넘긴다(팁 캐치·테이블 러시)
+    else moveT=0;
+    if(a&&!aWas) press(); if(!a&&aWas) release(); if(b&&!bWas) back();
+    aWas=a; bWas=b; }
+  /* 키보드(컴퓨터 테스트용 + 십자키를 키로 보내는 기기) */
+  const KEYS={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',Enter:'a',' ':'a',z:'a',Z:'a',Escape:'b',Backspace:'b',x:'b',X:'b'};
+  addEventListener('keydown',e=>{ const k=KEYS[e.key]; if(!k) return; if(!hhOn()) return; if(e.target&&e.target.tagName==='INPUT'&&!(pick&&pick.classList.contains('show'))) return;
+    if(!on){ if(k==='u'||k==='d'||k==='l'||k==='r') enable(); else return; } key[k]=1; e.preventDefault(); },true);
+  addEventListener('keyup',e=>{ const k=KEYS[e.key]; if(k){ key[k]=0; } },true);
+  addEventListener('gamepadconnected',()=>{ if(hhOn()) enable(); });
+  /* ?pad=1 → 해피아워를 바로 열고 켠다. 이전에 켠 기기(localStorage)는 해피아워를 열 때 자동 */
+  function boot(){ try{ if(location.search.indexOf('pad=1')>=0){ if(window.hhOpen) hhOpen(); enable(); }
+    else if(localStorage.getItem('bp_pad')==='1'){ const iv=setInterval(()=>{ if(hhOn()){ enable(); clearInterval(iv); } },500); } }catch(e){} }
+  if(document.readyState==='complete') setTimeout(boot,300); else addEventListener('load',()=>setTimeout(boot,300));
+  window.padMode={enable, isOn:()=>on, dbg:()=>({key:Object.assign({},key), cx, cy, held:!!heldT, on, moveT})};
+})();
 (function(){ function go(){ try{ if(location.search.indexOf("hh=1")>=0 && window.hhOpen) hhOpen(); }catch(e){} }
   if(document.readyState==="complete") setTimeout(go,60); else addEventListener("load",function(){ setTimeout(go,60); });
 })();
@@ -10549,6 +10652,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-44 · 조절판</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-45 · 조절판</div>
 </body>
 </html>
