@@ -252,8 +252,9 @@ const bestKey=c=>'pine_barbeat_'+slug(c.name);
 const bestOf=c=>{try{return +localStorage.getItem(bestKey(c))||0;}catch(e){return 0;}};
 
 // ── cocktail select ──
+let selectGuard=0;   // ignore taps that started on the overlay/result screen that just closed
 function showSelect(){
-  st='select';cancelAnimationFrame(raf);clearTimeout(schedTimer);
+  st='select';cancelAnimationFrame(raf);clearTimeout(schedTimer);selectGuard=performance.now()+450;
   const list=document.getElementById('selList');
   list.innerHTML=CK.map((c,i)=>{const d=DIFF(c.ing.length),b=bestOf(c);return `<div class="song" data-i="${i}">
       <img src="assets/beat/${slug(c.name)}.webp" alt="" draggable="false">
@@ -262,7 +263,8 @@ function showSelect(){
       <div class="i">${c.ing.map(short).join(' · ')}</div>
       <div class="b">${c.ing.length} LANES · ${d.bpm} BPM${b?' · BEST '+b.toLocaleString():''}</div>
     </div>`;}).join('');
-  list.querySelectorAll('.song').forEach(el=>el.addEventListener('pointerup',()=>start(CK[+el.dataset.i])));
+  // 'click' needs pointerdown AND pointerup on the card, so a tap that began on the HOW TO PLAY overlay can't pick a cocktail; the time guard covers the rest
+  list.querySelectorAll('.song').forEach(el=>el.addEventListener('click',()=>{if(st!=='select'||performance.now()<selectGuard)return;start(CK[+el.dataset.i]);}));
   document.getElementById('res').classList.remove('show');
   document.getElementById('select').classList.add('show');
 }
