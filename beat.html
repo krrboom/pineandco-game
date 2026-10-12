@@ -436,7 +436,7 @@ function finish(){
     <div class="rr"><input id="rrName" maxlength="8" value="PINE&CO" autocomplete="off" spellcheck="false"><button class="btn" id="rrSubmit">🏆 SUBMIT</button></div>
     <div class="rr-status" id="rrStatus">your name · 8 letters</div>
     <div class="rr-top" id="rrTop"></div>
-    <div class="f-btns"><button class="btn" id="again">PLAY AGAIN</button><button class="btn2" id="pick">PICK ANOTHER</button><button class="btn2" onclick="location.href='index.html'">BACK</button></div>`;
+    <div class="f-btns"><button class="btn" id="again">PLAY AGAIN</button><button class="btn2" id="pick">PICK ANOTHER</button><button class="btn2" onclick="location.href='index.html?hh=1'">BACK</button></div>`;
   r.classList.add('show');
   rrCtx={game:cur&&srcNode?rankKey(cur):rankKey({name:'SYNTH'}),score,txt:score.toLocaleString()+' PTS'};
   document.getElementById('rrSubmit').onclick=submitScore;
@@ -505,6 +505,7 @@ async function showRanking(){   // all songs, from the cocktail select screen
 // ── HOW TO PLAY → cocktail select ──
 (function showHowto(){
   const ht=document.getElementById('howto'), words=['htHow','htTo','htPlay'];
+  if(/[?&]h=1/.test(location.search)){ ht.classList.add('hidden'); showSelect(); return; }   // came from the hub: HOW TO PLAY was already shown there
   words.forEach((id,i)=>setTimeout(()=>{const el=document.getElementById(id);el.classList.add('land');setTimeout(()=>{el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),200);},238);},56+i*266));
   const go=e=>{e.preventDefault();ht.classList.add('hidden');ht.removeEventListener('pointerdown',go);audioInit();if(AC.state==='suspended')AC.resume();showSelect();};
   ht.addEventListener('pointerdown',go);
