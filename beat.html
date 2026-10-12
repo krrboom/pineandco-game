@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>Pine &amp; Co — Bar Beat</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet"/>
+<style>
+:root{--pf:'Press Start 2P',monospace;--df:'DotGothic16','Press Start 2P',monospace;--ink:#1e1208;--cream:#f0ebe0;--gold:#b8935a;--amber:#c9a96e;--muted:#7a6550;--ok:#5DCAA5;--fail:#c07070;--pink:#e8508a;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{font-family:var(--df);background:var(--ink);color:var(--cream);overflow:hidden;display:flex;flex-direction:column;touch-action:none;}
+#bg{position:fixed;inset:0;z-index:-1;background:var(--ink) url(assets/beat/ui_bg.webp) center top/cover no-repeat;opacity:.25;}
+#bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(30,18,8,.2),rgba(30,18,8,.85));}
+.hdr{text-align:center;padding:10px 12px 2px;flex:none;}
+#logo{display:block;max-height:64px;width:auto;max-width:78vw;margin:0 auto;filter:drop-shadow(0 4px 0 rgba(0,0,0,.55));}
+.hud{display:flex;justify-content:space-between;align-items:flex-end;padding:4px 14px 2px;font-family:var(--pf);font-size:9px;color:var(--amber);flex:none;}
+.hud b{display:block;font-size:14px;color:var(--cream);margin-top:3px;}
+.hud .c{text-align:center;}.hud .r{text-align:right;}
+.hud .song{font-size:7px;color:var(--gold);}
+#wrap{flex:1;position:relative;min-height:0;}
+canvas{display:block;width:100%;height:100%;}
+#judge{position:absolute;left:0;right:0;top:38%;text-align:center;font-family:var(--pf);font-size:18px;pointer-events:none;text-shadow:3px 3px 0 #000;opacity:0;}
+#judge.pop{animation:pop .45s ease-out both;}
+@keyframes pop{0%{opacity:1;transform:scale(.6);}30%{transform:scale(1.15);}100%{opacity:0;transform:scale(1) translateY(-18px);}}
+#judge.perfect{color:#ffd977;}#judge.good{color:var(--ok);}#judge.miss{color:var(--fail);}
+#count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--pf);font-size:44px;color:var(--gold);text-shadow:4px 4px 0 #000;pointer-events:none;opacity:0;}
+.btn{padding:14px 24px;border:none;border-radius:8px;cursor:pointer;font-family:var(--pf);font-size:10px;line-height:1.6;letter-spacing:.1em;background:linear-gradient(135deg,var(--gold),var(--amber));color:var(--ink);}
+.btn2{background:none;border:1px solid rgba(184,147,90,.3);color:var(--amber);font-size:8px;padding:10px 18px;border-radius:8px;cursor:pointer;font-family:var(--pf);letter-spacing:.08em;}
+
+/* ── cocktail (song) select ── */
+#select{position:fixed;inset:0;z-index:50;background:rgba(30,18,8,.92);display:none;flex-direction:column;touch-action:pan-y;}
+#select.show{display:flex;}
+.sel-h{flex:none;text-align:center;padding:14px 12px 6px;font-family:var(--pf);font-size:11px;color:var(--gold);letter-spacing:.14em;text-shadow:2px 2px 0 #000;}
+.sel-s{flex:none;text-align:center;font-size:13px;color:var(--muted);margin-bottom:8px;}
+.sel-list{flex:1;overflow-y:auto;padding:0 12px 24px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-content:start;-webkit-overflow-scrolling:touch;}
+.song{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px 8px;border:1px solid rgba(184,147,90,.25);border-radius:10px;background:rgba(0,0,0,.45);cursor:pointer;transition:transform .1s;}
+.song:active{transform:scale(.96);border-color:var(--gold);}
+.song img{height:70px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.5));}
+.song .n{font-family:var(--pf);font-size:8px;color:var(--cream);text-align:center;line-height:1.5;min-height:24px;display:flex;align-items:center;}
+.song .d{font-family:var(--pf);font-size:8px;letter-spacing:1px;}
+.song .d.e{color:var(--ok);}.song .d.m{color:#ffd977;}.song .d.h{color:#f0a040;}.song .d.x{color:var(--pink);}
+.song .i{font-size:11px;color:var(--muted);text-align:center;line-height:1.3;}
+.song .b{font-family:var(--pf);font-size:6px;color:var(--amber);margin-top:2px;}
+
+/* ── HOW TO PLAY (same flow as the other Pine & Co mini games) ── */
+#howto{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.68);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;cursor:pointer;}
+#howto.hidden{display:none;}
+#htWords{width:min(330px,86vw);}
+.htw{display:block;width:100%;image-rendering:pixelated;opacity:0;transform:translateY(-70vh);filter:drop-shadow(0 4px 0 rgba(0,0,0,.5));}
+.htw#htTo,.htw#htPlay{margin-top:-6.9%;}
+.htw.land{opacity:1;transform:translateY(0);transition:transform .24s cubic-bezier(.34,1.45,.5,1),opacity .08s linear;}
+.htw.hit{animation:htwHit .2s ease-out;}
+@keyframes htwHit{0%{transform:translateY(0) scale(1.12,.88);}55%{transform:translateY(0) scale(.97,1.05);}100%{transform:translateY(0) scale(1,1);}}
+.ht-panel{background:rgba(0,0,0,.74);border:3px solid rgba(255,255,255,.18);border-radius:10px;padding:18px 16px;max-width:340px;font-family:var(--pf);}
+.ht-name{font-size:12px;color:#e6b450;margin-bottom:12px;letter-spacing:1px;}
+.ht-desc{font-size:10px;color:#fff;line-height:1.9;}
+.ht-li{text-align:left;margin:0 0 7px;line-height:1.65;}
+.ht-taunt{margin-top:15px;font-size:1.4em;color:#ffd977;text-shadow:2px 2px 0 #000;line-height:1.5;}
+.ht-tap{font-size:10px;color:#6fcf8f;margin-top:14px;animation:htblink 1s step-end infinite;}
+@keyframes htblink{50%{opacity:.25;}}
+
+/* ── result ── */
+#res{position:fixed;inset:0;z-index:60;background:rgba(30,18,8,.96);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow-y:auto;}
+#res.show{display:flex;}
+.f-ban{width:min(92%,340px);margin:0 auto 6px;filter:drop-shadow(0 6px 0 rgba(0,0,0,.5));animation:tin .6s cubic-bezier(.2,1.4,.4,1) both;}
+@keyframes tin{0%{transform:translateY(-30px) scale(.7);opacity:0;}100%{transform:none;opacity:1;}}
+.f-song{display:flex;align-items:center;gap:10px;font-family:var(--pf);font-size:9px;color:var(--gold);margin:4px 0;}
+.f-song img{height:44px;}
+.f-score{font-family:var(--pf);font-size:30px;color:var(--gold);margin:6px 0 2px;}
+.f-label{font-family:var(--pf);font-size:8px;letter-spacing:.22em;color:var(--muted);}
+.f-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 8px;width:min(100%,320px);}
+.f-grid div{background:rgba(0,0,0,.4);border:1px solid rgba(184,147,90,.25);border-radius:8px;padding:10px 4px;}
+.f-grid span{display:block;font-family:var(--pf);font-size:7px;color:var(--muted);margin-bottom:6px;}
+.f-grid b{font-family:var(--pf);font-size:14px;color:var(--cream);}
+.f-grid .p b{color:#ffd977;}.f-grid .g b{color:var(--ok);}.f-grid .m b{color:var(--fail);}
+.f-msg{font-size:15px;color:var(--cream);line-height:1.7;max-width:300px;margin:4px 0 14px;}
+.f-best{font-family:var(--pf);font-size:8px;color:var(--amber);margin-bottom:14px;}
+.f-btns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div class="hdr"><img id="logo" src="assets/beat/title.webp" alt="Bar Beat" draggable="false"></div>
+<div class="hud">
+  <div>SCORE<b id="hScore">0</b></div>
+  <div class="c"><span class="song" id="hSong">—</span><b id="hCombo">0</b></div>
+  <div class="r">ACC<b id="hAcc">100%</b></div>
+</div>
+<div id="wrap"><canvas id="cv"></canvas><div id="judge"></div><div id="count"></div></div>
+
+<div id="select">
+  <div class="sel-h">PICK YOUR COCKTAIL</div>
+  <div class="sel-s">More ingredients = more lanes = harder. The lanes are the recipe.</div>
+  <div class="sel-list" id="selList"></div>
+</div>
+
+<div id="howto">
+  <div id="htWords">
+    <img class="htw" id="htHow" src="assets/beat/hp_how.webp" alt="HOW">
+    <img class="htw" id="htTo" src="assets/beat/hp_to.webp" alt="TO">
+    <img class="htw" id="htPlay" src="assets/beat/hp_play.webp" alt="PLAY">
+  </div>
+  <div class="ht-panel">
+    <div class="ht-name">BAR BEAT</div>
+    <div class="ht-desc">
+      <div class="ht-li">- Pick a cocktail. Its ingredients become the lanes: 2 for a Gin & Tonic, 5 for a Mojito.</div>
+      <div class="ht-li">- Ingredients fall down. Tap the lane the moment one hits the gold line.</div>
+      <div class="ht-li">- PERFECT keeps the combo. Miss and the drink goes flat.</div>
+      <div class="ht-taunt">Mix it to the beat.</div>
+    </div>
+    <div class="ht-tap">TAP TO START!</div>
+  </div>
+</div>
+
+<div id="res"></div>
+
+<script>
+/* ═══════════ BAR BEAT — Pine & Co rhythm game ═══════════
+   Each Cocktail Lab cocktail is a "song": its ingredients are the lanes (2–5), so the recipe is the difficulty.
+   Music is synthesized in WebAudio so notes and sound share one clock. */
+const CK=[
+  {name:'Gin & Tonic',ing:['Gin','Tonic Water']},
+  {name:'Dry Martini',ing:['Gin','Dry Vermouth']},
+  {name:'Daiquiri',ing:['White Rum','Lime Juice','Sugar Syrup']},
+  {name:'Margarita',ing:['Tequila','Lime Juice','Orange Liqueur']},
+  {name:'Sidecar',ing:['Cognac','Orange Liqueur','Lemon Juice']},
+  {name:'Espresso Martini',ing:['Vodka','Fresh Espresso','Coffee Liqueur']},
+  {name:'Manhattan',ing:['Rye Whiskey','Sweet Vermouth','Angostura Bitters']},
+  {name:'Negroni',ing:['Gin','Campari','Sweet Vermouth']},
+  {name:'Boulevardier',ing:['Bourbon','Campari','Sweet Vermouth']},
+  {name:'Old Fashioned',ing:['Bourbon','Sugar Syrup','Angostura Bitters']},
+  {name:'Moscow Mule',ing:['Vodka','Lime Juice','Ginger Beer']},
+  {name:'Americano',ing:['Campari','Sweet Vermouth','Soda Water']},
+  {name:'Aperol Spritz',ing:['Aperol','Prosecco','Soda Water']},
+  {name:'Cosmopolitan',ing:['Citrus Vodka','Orange Liqueur','Cranberry Juice','Lime Juice']},
+  {name:'Clover Club',ing:['Gin','Lemon Juice','Raspberry Syrup','Egg White']},
+  {name:'Sazerac',ing:['Rye Whiskey','Sugar Syrup',"Peychaud's Bitters",'Absinthe']},
+  {name:'Martinez',ing:['Gin','Sweet Vermouth','Maraschino','Orange Bitters']},
+  {name:'Tom Collins',ing:['Gin','Lemon Juice','Sugar Syrup','Soda Water']},
+  {name:'Whiskey Sour',ing:['Bourbon','Lemon Juice','Sugar Syrup','Egg White','Angostura Bitters']},
+  {name:'Mojito',ing:['White Rum','Lime Juice','Fresh Mint','Sugar Syrup','Soda Water']},
+];
+const slug=n=>n.toLowerCase().replace(/'/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const short=n=>n.replace(' Juice','').replace(' Syrup','').replace(' Water','').replace('Fresh ','').replace(' Liqueur','').replace(' Bitters',' Bit.').replace('Sweet Vermouth','Sw. Verm.').replace('Dry Vermouth','Dry Verm.').replace('Angostura','Angost.').replace("Peychaud's",'Peych.');
+const DIFF=n=>n<=2?{s:'★',k:'e',t:'EASY',bpm:112}:n===3?{s:'★★',k:'m',t:'MEDIUM',bpm:120}:n===4?{s:'★★★',k:'h',t:'HARD',bpm:128}:{s:'★★★★',k:'x',t:'EXPERT',bpm:136};
+const LANE_COL=['#5DCAA5','#c9a96e','#e8508a','#6fa8ff','#f0a040'];
+const PERF=0.07, GOOD=0.14, FALL=1.6, BARS=22;   // bar 0 = intro (no notes), 1..20 chart, last bar = final hit
+let BPM=120, BEAT=60/BPM, LANES=3, song=null;
+function hash(s){let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
+function rng(seed){let x=seed>>>0||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
+
+// ── chart: deterministic per cocktail ──
+function makeChart(c){
+  const n=c.ing.length, r=rng(hash(c.name)), notes=[]; let last=-1, run=0;
+  const lane=()=>{let l=Math.floor(r()*n); if(l===last){run++; if(run>=2){l=(l+1+Math.floor(r()*(n-1)))%n; run=0;}} else run=0; last=l; return l;};
+  for(let b=1;b<BARS;b++){
+    const t0=b*4*BEAT;
+    if(b===BARS-1){notes.push({t:t0,l:Math.floor(n/2),big:true});break;}
+    const steps=b<5?[0,2]:b<9?[0,1,2,3]:b<13?[0,1,2,2.5,3]:b<17?[0,0.5,1,2,2.5,3,3.5]:[0,0.5,1,1.5,2,2.5,3,3.5];
+    for(const s of steps){
+      notes.push({t:t0+s*BEAT,l:lane()});
+      if(n>=4&&b>=15&&(s===0||s===2)&&r()<0.35){const l2=(last+1+Math.floor(r()*(n-1)))%n;notes.push({t:t0+s*BEAT,l:l2});}
+    }
+  }
+  return notes.sort((a,b)=>a.t-b.t);
+}
+
+// ── audio ──
+let AC=null, master=null, startAt=0, schedPos=0, schedTimer=null, noiseBuf=null, PROG=null;
+const PROGS=[[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],[[60,64,67],[55,59,62],[57,60,64],[53,57,60]],[[62,65,69],[58,62,65],[53,57,60],[57,60,64]],[[55,59,62],[62,66,69],[60,64,67],[57,60,64]]];
+function audioInit(){
+  if(AC)return;
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  master=AC.createGain();master.gain.value=0.55;
+  const comp=AC.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=6;
+  master.connect(comp);comp.connect(AC.destination);
+}
+function osc(type,f,t,dur,vol,slide){
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+0.02);
+}
+function noise(t,dur,vol,hp){
+  if(!noiseBuf){noiseBuf=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+  const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=hp;
+  const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  s.connect(f);f.connect(g);g.connect(master);s.start(t);s.stop(t+dur+0.02);
+}
+const N=n=>440*Math.pow(2,(n-69)/12);
+function scheduleBeat(i){            // i = global 16th-note index
+  const t=startAt+i*BEAT/4, bar=Math.floor(i/16), step=i%16, chord=PROG[bar%4];
+  if(bar>=BARS)return;
+  if(step%8===0)osc('sine',150,t,0.18,0.9,45);                       // kick
+  if(step%8===4)noise(t,0.14,0.5,1800);                              // snare
+  if(step%2===0)noise(t,0.04,step%4===0?0.12:0.08,6000);             // hats
+  if(step%2===0)osc('square',N(chord[0]-24),t,0.2,0.16);             // bass
+  if(bar>=2){const n=chord[[0,1,2,1][step%4]]+(step%8>=4?12:0);osc('square',N(n),t,0.1,0.07);}   // arpeggio
+  if(bar>=8&&step%4===0)osc('triangle',N(chord[2]+12),t,0.3,0.1);    // lead
+  if(bar===BARS-1&&step===0){osc('square',N(chord[0]),t,1.2,0.25);osc('square',N(chord[1]),t,1.2,0.2);osc('square',N(chord[2]+12),t,1.4,0.2);}
+}
+function scheduler(){
+  while(startAt+schedPos*BEAT/4<AC.currentTime+0.25){scheduleBeat(schedPos);schedPos++;}
+  if(schedPos<BARS*16+8)schedTimer=setTimeout(scheduler,60);
+}
+function blip(kind){
+  if(!AC)return;const t=AC.currentTime;
+  if(kind==='perfect'){osc('square',880,t,0.08,0.18);osc('square',1320,t+0.05,0.1,0.14);}
+  else if(kind==='good')osc('square',660,t,0.08,0.15);
+  else osc('sawtooth',120,t,0.18,0.18,60);
+}
+
+// ── state ──
+let chart=[], st='intro', score=0, combo=0, maxCombo=0, cnt={perfect:0,good:0,miss:0}, laneFlash=[], bursts=[], raf=0;
+const imgs={};
+function img(k){if(!imgs[k]){const im=new Image();im.src='assets/beat/'+k+'.webp';imgs[k]=im;}return imgs[k];}
+CK.forEach(c=>{img(slug(c.name));c.ing.forEach(i=>img(slug(i)));});
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1;
+function fit(){DPR=Math.min(2,window.devicePixelRatio||1);const r=cv.parentElement.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener('resize',fit);fit();
+const bestKey=c=>'pine_barbeat_'+slug(c.name);
+const bestOf=c=>{try{return +localStorage.getItem(bestKey(c))||0;}catch(e){return 0;}};
+
+// ── cocktail select ──
+function showSelect(){
+  st='select';cancelAnimationFrame(raf);clearTimeout(schedTimer);
+  const list=document.getElementById('selList');
+  list.innerHTML=CK.map((c,i)=>{const d=DIFF(c.ing.length),b=bestOf(c);return `<div class="song" data-i="${i}">
+      <img src="assets/beat/${slug(c.name)}.webp" alt="" draggable="false">
+      <div class="n">${c.name}</div>
+      <div class="d ${d.k}">${d.s} ${d.t}</div>
+      <div class="i">${c.ing.map(short).join(' · ')}</div>
+      <div class="b">${c.ing.length} LANES · ${d.bpm} BPM${b?' · BEST '+b.toLocaleString():''}</div>
+    </div>`;}).join('');
+  list.querySelectorAll('.song').forEach(el=>el.addEventListener('pointerup',()=>start(CK[+el.dataset.i])));
+  document.getElementById('res').classList.remove('show');
+  document.getElementById('select').classList.add('show');
+}
+
+// ── play ──
+function songTime(){return AC?AC.currentTime-startAt:0;}
+function start(c){
+  audioInit(); if(AC.state==='suspended')AC.resume();
+  document.getElementById('select').classList.remove('show');
+  song=c;LANES=c.ing.length;BPM=DIFF(LANES).bpm;BEAT=60/BPM;PROG=PROGS[hash(c.name)%PROGS.length];
+  chart=makeChart(c).map(n=>({...n,hit:false,judged:false}));
+  score=0;combo=0;maxCombo=0;cnt={perfect:0,good:0,miss:0};bursts=[];laneFlash=new Array(LANES).fill(0);
+  document.getElementById('hSong').textContent=c.name.toUpperCase();
+  hud();
+  st='count';
+  const cd=document.getElementById('count');
+  startAt=AC.currentTime+4*BEAT+0.1; schedPos=0; clearTimeout(schedTimer);
+  for(let i=0;i<4;i++)osc('square',i===3?1320:880,startAt-(4-i)*BEAT,0.08,0.2);
+  const words=['3','2','1','MIX!'];
+  words.forEach((w,i)=>setTimeout(()=>{if(st!=='count')return;cd.textContent=w;cd.style.opacity=1;},(i*BEAT+0.1)*1000));
+  setTimeout(()=>{if(st!=='count')return;cd.style.opacity=0;st='play';scheduler();},(4*BEAT+0.1)*1000);
+  cancelAnimationFrame(raf);loop();
+}
+function hud(){
+  document.getElementById('hScore').textContent=score;
+  document.getElementById('hCombo').textContent=combo;
+  const tot=cnt.perfect+cnt.good+cnt.miss;
+  document.getElementById('hAcc').textContent=(tot?Math.round((cnt.perfect+cnt.good*0.6)/tot*100):100)+'%';
+}
+function judge(kind){const j=document.getElementById('judge');j.className='';void j.offsetWidth;j.textContent=kind.toUpperCase();j.className='pop '+kind;}
+function hitLane(l){
+  if(st!=='play'||l<0||l>=LANES)return;
+  laneFlash[l]=1;
+  const t=songTime();
+  let best=null,bd=1e9;
+  for(const n of chart){if(n.judged||n.l!==l)continue;const d=Math.abs(n.t-t);if(d<bd){bd=d;best=n;}if(n.t>t+GOOD)break;}
+  if(best&&bd<=GOOD){
+    best.judged=true;best.hit=true;
+    const kind=bd<=PERF?'perfect':'good';
+    cnt[kind]++;combo++;maxCombo=Math.max(maxCombo,combo);
+    score+=Math.round((kind==='perfect'?100:60)*(1+Math.min(0.5,combo/40))*(best.big?3:1));
+    bursts.push({l,t:performance.now(),kind});
+    judge(kind);blip(kind);if(navigator.vibrate)navigator.vibrate(kind==='perfect'?12:8);
+  }else if(AC)osc('square',330,AC.currentTime,0.04,0.05);
+  hud();
+}
+function miss(n){n.judged=true;cnt.miss++;combo=0;judge('miss');blip('miss');hud();}
+
+// ── input: touch lanes, keys 1-5 / A S D F G / arrows (≤3 lanes), gamepad ──
+const wrap=document.getElementById('wrap');
+wrap.addEventListener('pointerdown',e=>{e.preventDefault();const r=wrap.getBoundingClientRect();hitLane(Math.min(LANES-1,Math.floor((e.clientX-r.left)/(r.width/LANES))));});
+addEventListener('keydown',e=>{
+  if(e.repeat)return;const k=e.key;let l=-1;
+  if(/^[1-5]$/.test(k))l=+k-1;else if('asdfg'.includes(k.toLowerCase())&&k.length===1)l='asdfg'.indexOf(k.toLowerCase());
+  else if(k==='ArrowLeft')l=0;else if(k==='ArrowDown')l=LANES===2?1:1;else if(k==='ArrowRight')l=LANES-1;else if(k==='ArrowUp')l=LANES>=4?2:-1;
+  if(l>=0){e.preventDefault();hitLane(l);}
+});
+let padHeld=[];
+function pollPad(){const gps=navigator.getGamepads?navigator.getGamepads():[];for(const g of gps){if(!g)continue;const map=LANES===2?[[14,2],[15,1]]:LANES===3?[[14,2],[13,0],[15,1]]:LANES===4?[[14,2],[13,0],[12,3],[15,1]]:[[14],[13],[2],[12],[15,1]];map.forEach((bs,l)=>{const down=bs.some(b=>g.buttons[b]&&g.buttons[b].pressed);if(down&&!padHeld[l])hitLane(l);padHeld[l]=down;});}}
+
+// ── render ──
+function loop(){
+  raf=requestAnimationFrame(loop);
+  if(st!=='play'&&st!=='count')return;
+  pollPad();
+  const t=songTime();
+  ctx.clearRect(0,0,W,H);
+  const lw=W/LANES, hitY=H-86, top=18, small=LANES>=4;
+  for(let l=0;l<LANES;l++){
+    const x=l*lw, col=LANE_COL[l];
+    ctx.fillStyle=laneFlash[l]>0?`rgba(255,255,255,${0.10*laneFlash[l]})`:'rgba(0,0,0,.18)';
+    ctx.fillRect(x+3,top,lw-6,hitY-top+40);
+    ctx.strokeStyle='rgba(184,147,90,.25)';ctx.lineWidth=1;ctx.strokeRect(x+3.5,top+.5,lw-7,hitY-top+40);
+    laneFlash[l]=Math.max(0,laneFlash[l]-0.08);
+    const im=img(slug(song.ing[l]));
+    if(im.complete&&im.naturalWidth){const ih=small?44:54,iw=ih*im.naturalWidth/im.naturalHeight;ctx.globalAlpha=.92;ctx.drawImage(im,x+lw/2-iw/2,hitY+8,iw,ih);ctx.globalAlpha=1;}
+    ctx.fillStyle=col;ctx.font=(small?'6px':'7px')+' "Press Start 2P"';ctx.textAlign='center';
+    const label=short(song.ing[l]).toUpperCase();ctx.fillText(label.length>12?label.slice(0,11)+'.':label,x+lw/2,hitY+(small?66:76));
+  }
+  ctx.fillStyle='rgba(184,147,90,.95)';ctx.fillRect(0,hitY-2,W,4);
+  ctx.fillStyle='rgba(255,217,119,.35)';ctx.fillRect(0,hitY-8,W,16);
+  for(const n of chart){
+    const dt=n.t-t;
+    if(dt<-GOOD-0.05){if(!n.judged)miss(n);continue;}
+    if(dt>FALL)break;
+    if(n.judged)continue;
+    const y=hitY-(dt/FALL)*(hitY-top);
+    const x=n.l*lw+lw/2, s=n.big?Math.min(50,lw-8):Math.min(34,lw-10);
+    ctx.fillStyle=LANE_COL[n.l];ctx.fillRect(x-s/2,y-s/2,s,s);
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(x-s/2+3,y-s/2+3,s-6,5);
+    ctx.strokeStyle='#1e1208';ctx.lineWidth=3;ctx.strokeRect(x-s/2,y-s/2,s,s);
+    const im=img(slug(song.ing[n.l]));
+    if(im.complete&&im.naturalWidth){const ih=s-8,iw=ih*im.naturalWidth/im.naturalHeight;ctx.drawImage(im,x-iw/2,y-ih/2,iw,ih);}
+  }
+  const now=performance.now();
+  bursts=bursts.filter(b=>now-b.t<350);
+  for(const b of bursts){const k=(now-b.t)/350;ctx.strokeStyle=b.kind==='perfect'?'#ffd977':'#5DCAA5';ctx.lineWidth=4*(1-k);ctx.strokeRect(b.l*lw+lw/2-20-30*k,hitY-20-30*k,40+60*k,40+60*k);}
+  const total=BARS*4*BEAT;ctx.fillStyle='rgba(184,147,90,.2)';ctx.fillRect(0,H-4,W,4);ctx.fillStyle='#c9a96e';ctx.fillRect(0,H-4,W*Math.max(0,Math.min(1,t/total)),4);
+  if(st==='play'&&t>total+1.2)finish();
+}
+function finish(){
+  st='result';cancelAnimationFrame(raf);clearTimeout(schedTimer);
+  for(const n of chart)if(!n.judged)miss(n);
+  const tot=cnt.perfect+cnt.good+cnt.miss, acc=tot?(cnt.perfect+cnt.good*0.6)/tot:0;
+  const ban=acc>=0.95?'perfect':acc>=0.85?'close':acc>=0.6?'ok':'low';
+  const msg={perfect:`A flawless ${song.name}. Are you our new house DJ?`,close:`Almost a perfect ${song.name}. One more round!`,ok:'Steady hands. Now find the groove.',low:'The beat got away. Hear the kick, tap the kick.'}[ban];
+  let best=bestOf(song);try{if(score>best){best=score;localStorage.setItem(bestKey(song),String(best));}}catch(e){}
+  const d=DIFF(LANES), r=document.getElementById('res');
+  r.innerHTML=`<img class="f-ban" src="assets/beat/ui_res_${ban}.webp" alt="${ban}" draggable="false">
+    <div class="f-song"><img src="assets/beat/${slug(song.name)}.webp" alt="">${song.name.toUpperCase()} · ${d.s}</div>
+    <div class="f-score">${score.toLocaleString()}</div><div class="f-label">SCORE · ${Math.round(acc*100)}% · MAX COMBO ${maxCombo}</div>
+    <div class="f-grid"><div class="p"><span>PERFECT</span><b>${cnt.perfect}</b></div><div class="g"><span>GOOD</span><b>${cnt.good}</b></div><div class="m"><span>MISS</span><b>${cnt.miss}</b></div></div>
+    <div class="f-msg">${msg}</div>
+    <div class="f-best">BEST ${best.toLocaleString()}</div>
+    <div class="f-btns"><button class="btn" id="again">PLAY AGAIN</button><button class="btn2" id="pick">PICK ANOTHER</button><button class="btn2" onclick="location.href='index.html'">BACK</button></div>`;
+  r.classList.add('show');
+  document.getElementById('again').onclick=()=>{r.classList.remove('show');start(song);};
+  document.getElementById('pick').onclick=showSelect;
+}
+
+// ── HOW TO PLAY → cocktail select ──
+(function showHowto(){
+  const ht=document.getElementById('howto'), words=['htHow','htTo','htPlay'];
+  words.forEach((id,i)=>setTimeout(()=>{const el=document.getElementById(id);el.classList.add('land');setTimeout(()=>{el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),200);},238);},56+i*266));
+  const go=e=>{e.preventDefault();ht.classList.add('hidden');ht.removeEventListener('pointerdown',go);audioInit();if(AC.state==='suspended')AC.resume();showSelect();};
+  ht.addEventListener('pointerdown',go);
+})();
+</script>
+</body>
+</html>
