@@ -7826,6 +7826,12 @@ function hhClose(){
       let html='<h3>'+g.name+'</h3>';
       if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
       else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span class="sc2">'+r2.t+'</span></div>'; });
+      d.innerHTML=html; w.appendChild(d); });
+    // BAR BEAT: 노래마다 순위 탭 하나 ('BAR BEAT - 곡이름'), 시트에 있는 것만 그대로 보여준다
+    Object.keys(online).filter(k=>k.indexOf('BAR BEAT - ')===0).sort().forEach(k=>{ const arr=[...(online[k]||[])]; const d=document.createElement('div'); d.className='rkgame';
+      let html='<h3>🎵 '+k.replace('BAR BEAT - ','BAR BEAT · ')+'</h3>';
+      if(!arr.length) html+='<div class="rkempty">NO RECORDS YET</div>';
+      else arr.slice(0,5).forEach((r2,i)=>{ html+='<div class="rkrow"><span>'+(i+1)+'. <span class="nm2">'+r2.n+'</span></span><span class="sc2">'+r2.t+'</span></div>'; });
       d.innerHTML=html; w.appendChild(d); }); }
   async function buildRank(){ const w=$('rankWrap');
     const mem=loadRankMem();
@@ -10561,6 +10567,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-52</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-53</div>
 </body>
 </html>

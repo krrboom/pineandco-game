@@ -77,6 +77,20 @@ canvas{display:block;width:100%;height:100%;}
 .f-msg{font-size:15px;color:var(--cream);line-height:1.7;max-width:300px;margin:4px 0 14px;}
 .f-best{font-family:var(--pf);font-size:8px;color:var(--amber);margin-bottom:14px;}
 .f-btns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+/* ranking */
+.rr{display:flex;gap:8px;align-items:center;justify-content:center;margin:2px 0 6px;}
+.rr input{width:140px;padding:11px 10px;border:2px solid var(--gold);border-radius:8px;background:rgba(0,0,0,.5);color:var(--cream);font-family:var(--pf);font-size:11px;text-transform:uppercase;text-align:center;outline:none;}
+.rr .btn{padding:12px 14px;font-size:9px;}
+.rr-status{font-family:var(--pf);font-size:8px;color:#6fcf8f;min-height:14px;margin-bottom:8px;}
+.rr-top,.rkgame{width:min(100%,320px);background:rgba(0,0,0,.4);border:1px solid rgba(184,147,90,.25);border-radius:8px;padding:10px 12px;margin:0 auto 12px;text-align:left;}
+.rkh{font-family:var(--pf);font-size:8px;color:var(--gold);letter-spacing:.1em;margin-bottom:8px;text-align:center;}
+.rkrow{display:flex;justify-content:space-between;font-family:var(--pf);font-size:8px;color:var(--cream);padding:4px 0;border-bottom:1px dashed rgba(184,147,90,.15);}
+.rkrow b{color:#ffd977;font-weight:normal;}
+.rkempty{font-family:var(--pf);font-size:7px;color:var(--muted);text-align:center;padding:6px 0;}
+.sel-rk{margin-left:10px;vertical-align:middle;padding:7px 10px;font-size:7px;}
+#rank{position:fixed;inset:0;z-index:80;background:rgba(30,18,8,.96);display:none;flex-direction:column;align-items:center;padding:14px 12px 24px;overflow-y:auto;touch-action:pan-y;}
+#rank.show{display:flex;}
+#rank .rk-list{width:100%;max-width:340px;flex:1;}
 </style>
 </head>
 <body>
@@ -90,7 +104,7 @@ canvas{display:block;width:100%;height:100%;}
 <div id="wrap"><canvas id="cv"></canvas><div id="judge"></div><div id="count"></div></div>
 
 <div id="select">
-  <div class="sel-h">PICK YOUR COCKTAIL</div>
+  <div class="sel-h">PICK YOUR COCKTAIL <button class="btn2 sel-rk" onclick="showRanking()">🏆 RANKING</button></div>
   <div class="sel-s">More ingredients = more lanes = harder. The lanes are the recipe. A random song plays each round.</div>
   <div class="sel-list" id="selList"></div>
 </div>
@@ -114,6 +128,7 @@ canvas{display:block;width:100%;height:100%;}
 </div>
 
 <div id="res"></div>
+<div id="rank"></div>
 
 <script>
 /* ═══════════ BAR BEAT — Pine & Co rhythm game ═══════════
@@ -418,10 +433,73 @@ function finish(){
     <div class="f-grid"><div class="p"><span>PERFECT</span><b>${cnt.perfect}</b></div><div class="g"><span>GOOD</span><b>${cnt.good}</b></div><div class="m"><span>MISS</span><b>${cnt.miss}</b></div></div>
     <div class="f-msg">${msg}</div>
     <div class="f-best">BEST ${best.toLocaleString()}</div>
+    <div class="rr"><input id="rrName" maxlength="8" value="PINE&CO" autocomplete="off" spellcheck="false"><button class="btn" id="rrSubmit">🏆 SUBMIT</button></div>
+    <div class="rr-status" id="rrStatus">your name · 8 letters</div>
+    <div class="rr-top" id="rrTop"></div>
     <div class="f-btns"><button class="btn" id="again">PLAY AGAIN</button><button class="btn2" id="pick">PICK ANOTHER</button><button class="btn2" onclick="location.href='index.html'">BACK</button></div>`;
   r.classList.add('show');
+  rrCtx={game:cur&&srcNode?rankKey(cur):rankKey({name:'SYNTH'}),score,txt:score.toLocaleString()+' PTS'};
+  document.getElementById('rrSubmit').onclick=submitScore;
+  document.getElementById('rrName').onfocus=function(){this.select();};
+  showTop(rrCtx.game);
   document.getElementById('again').onclick=()=>{r.classList.remove('show');start(song);};
   document.getElementById('pick').onclick=showSelect;
+}
+
+// ── online ranking: one sheet tab per song ('BAR BEAT - UNDER' …), same Apps Script as Bar Party ──
+const BOARD_URL='https://script.google.com/macros/s/AKfycbxqE55j-komFkThd92-P8mD9RFRQJbvb0tYdY6Ba7nuCK6vK66EAMBqHrM3h9VmUazb/exec';
+let _bcN=0;
+function boardCall(params,timeoutMs){   // JSONP (CORS-free), identical to the party game
+  return new Promise(res=>{
+    const cb='__bbCb'+(_bcN++),s=document.createElement('script');let done=false;
+    const fin=v=>{if(done)return;done=true;try{delete window[cb];}catch(_){window[cb]=null;}s.remove();res(v);};
+    window[cb]=fin;s.onerror=()=>fin(null);
+    s.src=BOARD_URL+'?'+Object.entries(params).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&')+'&callback='+cb+'&t='+Date.now();
+    document.body.appendChild(s);setTimeout(()=>fin(null),timeoutMs||15000);
+  });
+}
+const rankKey=s=>'BAR BEAT - '+s.name;
+// name filter: same rules as the party game and the server (the server checks again)
+const BAD_SUB=['FUCK','FUK','FCK','PHUCK','SHIT','PUSSY','PUSSI','PENIS','VAGINA','BLOWJOB','HANDJOB','BITCH','CUNT','WHORE','SLUT','NIGG','FAGGOT','PORN','DILDO','ASSHOLE','BASTARD','WANK','JIZZ','BONER','HENTAI','RAPIST','HITLER','NAZI','SEX','DICK','COCK','BOOB','TITS','ANUS','ORGASM','HORNY','MILF','CUMSHOT','SIBAL','SSIBAL','SHIBAL','SSIBA','SAEKKI','SEKKI','BYUNSIN','BYEONGSI','JONNA','BOJI','JAJI','CAONIMA'];
+const BAD_EXACT=['ASS','ARSE','TIT','CUM','ANAL','FAG','HOE','KKK','JOT','RAPE','FU','FK','STFU','THOT','PEDO','DIK','SEKS'];
+const OK_WORDS=/COCKTAIL|PEACOCK|HANCOCK|ESSEX|SUSSEX/g;
+function isProfaneName(name){
+  let t=String(name||'').toUpperCase().replace(/0/g,'O').replace(/1/g,'I').replace(/3/g,'E').replace(/4/g,'A').replace(/5/g,'S').replace(/7/g,'T').replace(/8/g,'B').replace(/[^A-Z]/g,'');
+  t=t.replace(OK_WORDS,'');if(!t)return false;
+  const squash=s=>s.replace(/(.)\1+/g,'$1');const t2=squash(t);
+  if(BAD_EXACT.includes(t)||BAD_EXACT.includes(t2))return true;
+  for(const w of BAD_SUB){const w2=squash(w);if(t.includes(w))return true;if((w2===w||w2.length>=4)&&t2.includes(w2))return true;}
+  return false;
+}
+let rrCtx=null;
+function rankRow(r,i){return `<div class="rkrow"><span>${i+1}. <b>${r.n}</b></span><span>${r.t}</span></div>`;}
+async function submitScore(){
+  const btn=document.getElementById('rrSubmit'),stt=document.getElementById('rrStatus');if(!rrCtx||!btn||btn.disabled)return;
+  const n=(document.getElementById('rrName').value.toUpperCase().replace(/[^A-Z0-9&]/g,'')||'PINE&CO').slice(0,8);
+  if(isProfaneName(n)){stt.textContent='SHAME!';return;}
+  btn.disabled=true;btn.style.opacity='.5';stt.textContent='SENDING...';
+  if(!rrCtx.cid)rrCtx.cid=Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+  const req={action:'submit',secret:'pine-2026',game:rrCtx.game,name:n,score:rrCtx.score,txt:rrCtx.txt,cid:rrCtx.cid};
+  try{
+    let j=await boardCall(req,45000);
+    if(!j){stt.textContent='CHECKING...';const c=await boardCall({action:'check',secret:'pine-2026',game:rrCtx.game,cid:rrCtx.cid},30000);
+      if(c&&c.ok){if(c.found)j={ok:1,rank:c.rank,total:c.total};else{stt.textContent='RETRYING...';j=await boardCall(req,45000);}}}
+    if(j&&j.ok){const of=(typeof j.total==='number'&&j.total>0)?' / '+j.total:'';stt.textContent=(j.rank<=5?'🏆 RANK #':'SAVED! RANK #')+j.rank+of;rrCtx.done=true;showTop(rrCtx.game);}
+    else{stt.textContent='FAILED. TAP TO RETRY';btn.disabled=false;btn.style.opacity='1';}
+  }catch(e){stt.textContent='FAILED. TAP TO RETRY';btn.disabled=false;btn.style.opacity='1';}
+}
+async function showTop(game){
+  const el=document.getElementById('rrTop');if(!el)return;el.innerHTML='<div class="rkh">TOP 5 · '+game.replace('BAR BEAT - ','')+'</div><div class="rkempty">LOADING...</div>';
+  const j=await boardCall({action:'top',game},20000);
+  if(!el.isConnected)return;
+  const arr=(j&&j.ok&&j.top)||[];
+  el.innerHTML='<div class="rkh">TOP 5 · '+game.replace('BAR BEAT - ','')+'</div>'+(arr.length?arr.slice(0,5).map(rankRow).join(''):'<div class="rkempty">NO RECORDS YET</div>');
+}
+async function showRanking(){   // all songs, from the cocktail select screen
+  const ov=document.getElementById('rank');ov.innerHTML='<div class="sel-h">RANKING · BY SONG</div><div class="rk-list"><div class="rkempty">LOADING...</div></div><button class="btn2" onclick="document.getElementById(\'rank\').classList.remove(\'show\')">CLOSE</button>';ov.classList.add('show');
+  const j=await boardCall({action:'all'},45000);const games=(j&&j.ok&&j.games)||{};
+  const list=ov.querySelector('.rk-list');if(!list)return;
+  list.innerHTML=SONGS.map(s=>{const arr=games[rankKey(s)]||[];return '<div class="rkgame"><div class="rkh">🎵 '+s.name+'</div>'+(arr.length?arr.slice(0,5).map(rankRow).join(''):'<div class="rkempty">NO RECORDS YET</div>')+'</div>';}).join('');
 }
 
 // ── HOW TO PLAY → cocktail select ──
