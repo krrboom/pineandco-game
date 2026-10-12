@@ -145,7 +145,7 @@ const slug=n=>n.toLowerCase().replace(/'/g,'').replace(/[^a-z0-9]+/g,'-').replac
 const short=n=>n.replace(' Juice','').replace(' Syrup','').replace(' Water','').replace('Fresh ','').replace(' Liqueur','').replace(' Bitters',' Bit.').replace('Sweet Vermouth','Sw. Verm.').replace('Dry Vermouth','Dry Verm.').replace('Angostura','Angost.').replace("Peychaud's",'Peych.');
 const DIFF=n=>n<=2?{s:'★',k:'e',t:'EASY',bpm:112}:n===3?{s:'★★',k:'m',t:'MEDIUM',bpm:120}:n===4?{s:'★★★',k:'h',t:'HARD',bpm:128}:{s:'★★★★',k:'x',t:'EXPERT',bpm:136};
 const LANE_COL=['#5DCAA5','#c9a96e','#e8508a','#6fa8ff','#f0a040'];
-const PERF=0.07, GOOD=0.14, FALL=1.6, BARS=22;   // bar 0 = intro (no notes), 1..20 chart, last bar = final hit
+const PERF=0.06, GOOD=0.12, FALL=1.25, BARS=22;   // bar 0 = intro (no notes), 1..20 chart, last bar = final hit  (10/12: ~30% harder — faster fall, tighter windows, denser chart)
 let BPM=120, BEAT=60/BPM, LANES=3, song=null;
 function hash(s){let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
 function rng(seed){let x=seed>>>0||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
@@ -157,10 +157,11 @@ function makeChart(c){
   for(let b=1;b<BARS;b++){
     const t0=b*4*BEAT;
     if(b===BARS-1){notes.push({t:t0,l:Math.floor(n/2),big:true});break;}
-    const steps=b<5?[0,2]:b<9?[0,1,2,3]:b<13?[0,1,2,2.5,3]:b<17?[0,0.5,1,2,2.5,3,3.5]:[0,0.5,1,1.5,2,2.5,3,3.5];
+    const steps=b<3?[0,2]:b<6?[0,1,2,3]:b<10?[0,1,2,2.5,3]:b<14?[0,0.5,1,2,2.5,3,3.5]:b<18?[0,0.5,1,1.5,2,2.5,3,3.5]:[0,0.5,1,1.5,2,2.5,3,3.5,3.75];
     for(const s of steps){
       notes.push({t:t0+s*BEAT,l:lane()});
-      if(n>=4&&b>=15&&(s===0||s===2)&&r()<0.35){const l2=(last+1+Math.floor(r()*(n-1)))%n;notes.push({t:t0+s*BEAT,l:l2});}
+      if(n>=4&&b>=12&&(s===0||s===2)&&r()<0.45){const l2=(last+1+Math.floor(r()*(n-1)))%n;notes.push({t:t0+s*BEAT,l:l2});}
+      if(n>=3&&b>=18&&s===1&&r()<0.3){const l2=(last+1+Math.floor(r()*(n-1)))%n;notes.push({t:t0+s*BEAT,l:l2});}
     }
   }
   return notes.sort((a,b)=>a.t-b.t);
@@ -189,15 +190,42 @@ function noise(t,dur,vol,hp){
   s.connect(f);f.connect(g);g.connect(master);s.start(t);s.stop(t+dur+0.02);
 }
 const N=n=>440*Math.pow(2,(n-69)/12);
+/* Three synthesized tracks, one picked at random per round (10/12 붐: "3개 정도가 랜덤으로") */
+const TRACKS=[
+  {name:'NEON HOUSE', prog:[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],   // Am F C G — four-on-the-floor
+   beat(t,bar,step,chord){
+     if(step%4===0)osc('sine',150,t,0.18,0.9,45);                                  // kick on every beat
+     if(step%8===4)noise(t,0.14,0.5,1800);                                         // snare 2 & 4
+     if(step%4===2)noise(t,0.05,0.14,6000);else if(step%2===0)noise(t,0.03,0.06,7000);   // offbeat open hat
+     if(step%2===0)osc('square',N(chord[0]-24),t,0.2,0.16);                        // bass 8ths
+     if(bar>=2){const n=chord[[0,1,2,1][step%4]]+(step%8>=4?12:0);osc('square',N(n),t,0.1,0.07);}   // arpeggio
+     if(bar>=8&&step%4===0)osc('triangle',N(chord[2]+12),t,0.3,0.1);               // lead
+   }},
+  {name:'TIKI SAMBA', prog:[[60,64,67],[53,57,60],[55,59,62],[57,60,64]],   // C F G Am — latin
+   beat(t,bar,step,chord){
+     if(step===0||step===6||step===8||step===14)osc('sine',120,t,0.2,0.85,40);       // surdo-style kick
+     if([0,3,6,10,12].includes(step))noise(t,0.05,0.35,3500);                        // clave / rim
+     noise(t,0.025,step%2===0?0.07:0.04,9000);                                      // shaker 16ths
+     if([0,3,6,8,11,14].includes(step))osc('triangle',N(chord[step<8?0:2]-24),t,0.18,0.22);   // syncopated bass
+     if(bar>=2&&step%2===0){const n=chord[[0,2,1,2][(step/2)%4]]+12;osc('triangle',N(n),t,0.12,0.12);}   // marimba
+     if(bar>=8&&(step===0||step===10))osc('sawtooth',N(chord[1]+12),t,0.25,0.05);   // horn stab
+   }},
+  {name:'SPEAKEASY SWING', prog:[[62,65,69],[55,59,62],[60,64,67],[57,60,64]],   // Dm G C Am — jazz lounge
+   beat(t,bar,step,chord){
+     const sw=(step%4===2)?BEAT/12:0;                                               // swing the off-8ths
+     if(step%4===0)osc('sine',N(chord[[0,2,1,0][step/4]]-24),t,0.22,0.3,0);          // walking bass (quarter notes)
+     if(step%8===4)noise(t,0.2,0.22,900);                                            // brushed snare 2 & 4
+     if(step%4===2)noise(t+sw,0.06,0.1,8000);else if(step%4===0)noise(t,0.04,0.08,8000);   // ride: ding-da-ding
+     if(step===0||step===6)osc('sine',110,t,0.12,0.5,60);                            // soft kick
+     if(bar>=2&&(step%4===0||step%4===2)){const n=chord[[0,1,2,1][(step/2)%4]]+(bar%2?12:0);osc('sawtooth',N(n),t+sw,0.14,0.035);}   // muted trumpet comp
+     if(bar>=8&&step===0)osc('triangle',N(chord[2]+12),t,0.45,0.1);                 // piano hit
+   }},
+];
+let track=TRACKS[0];
 function scheduleBeat(i){            // i = global 16th-note index
   const t=startAt+i*BEAT/4, bar=Math.floor(i/16), step=i%16, chord=PROG[bar%4];
   if(bar>=BARS)return;
-  if(step%8===0)osc('sine',150,t,0.18,0.9,45);                       // kick
-  if(step%8===4)noise(t,0.14,0.5,1800);                              // snare
-  if(step%2===0)noise(t,0.04,step%4===0?0.12:0.08,6000);             // hats
-  if(step%2===0)osc('square',N(chord[0]-24),t,0.2,0.16);             // bass
-  if(bar>=2){const n=chord[[0,1,2,1][step%4]]+(step%8>=4?12:0);osc('square',N(n),t,0.1,0.07);}   // arpeggio
-  if(bar>=8&&step%4===0)osc('triangle',N(chord[2]+12),t,0.3,0.1);    // lead
+  track.beat(t,bar,step,chord);
   if(bar===BARS-1&&step===0){osc('square',N(chord[0]),t,1.2,0.25);osc('square',N(chord[1]),t,1.2,0.2);osc('square',N(chord[2]+12),t,1.4,0.2);}
 }
 function scheduler(){
@@ -244,10 +272,11 @@ function songTime(){return AC?AC.currentTime-startAt:0;}
 function start(c){
   audioInit(); if(AC.state==='suspended')AC.resume();
   document.getElementById('select').classList.remove('show');
-  song=c;LANES=c.ing.length;BPM=DIFF(LANES).bpm;BEAT=60/BPM;PROG=PROGS[hash(c.name)%PROGS.length];
+  song=c;LANES=c.ing.length;BPM=DIFF(LANES).bpm;BEAT=60/BPM;
+  track=TRACKS[Math.floor(Math.random()*TRACKS.length)];PROG=track.prog;
   chart=makeChart(c).map(n=>({...n,hit:false,judged:false}));
   score=0;combo=0;maxCombo=0;cnt={perfect:0,good:0,miss:0};bursts=[];laneFlash=new Array(LANES).fill(0);
-  document.getElementById('hSong').textContent=c.name.toUpperCase();
+  document.getElementById('hSong').textContent=c.name.toUpperCase()+' · '+track.name;
   hud();
   st='count';
   const cd=document.getElementById('count');
