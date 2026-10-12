@@ -7497,6 +7497,8 @@ function hhClose(){
         'STIR STOP':'멈추는 타이밍이 전부다. 온도가 생명이다!',
         'GLASS STACK':'쟁반이 흔들린다. 접시가 몇 층까지 버틸까?',
         'TABLE RUSH':'홀은 손님 천지다. 잔 세 개, 무사히 갈 수 있을까?',
+        'COCKTAIL LAB':'잔·재료·기법을 맞혀 클래식 5잔. 만점이면 바텐더에게 선물',
+        'BAR BEAT':'칵테일을 고르면 재료가 레인! 비트에 맞춰 탭, 노래마다 순위',
         'ICE CARVING':'손목 힘 빼고 찍어라. 녹기 전에 완성하자!',
         'CHAMPAGNE LAUNCH':'코르크 날리기 자신 있는 사람!',
         'SHAKE MASTER':'13초다. 손님 앞이라 생각하고 제대로 흔들어라',
@@ -7514,6 +7516,8 @@ function hhClose(){
         'STIR STOP':'Stopping is the whole job. Temperature is everything!',
         'GLASS STACK':'The tray is swaying. How high can you stack it?',
         'TABLE RUSH':'The floor is packed. Three glasses. Can you get through?',
+        'COCKTAIL LAB':'Glass, ingredients, technique: mix 5 classics. Ace it for a treat',
+        'BAR BEAT':'Pick a cocktail, tap its ingredients on the beat. Rankings per song',
         'ICE CARVING':'Loose wrist, steady taps. Finish it before it melts!',
         'CHAMPAGNE LAUNCH':'Think you can send that cork flying?',
         'SHAKE MASTER':'Thirteen seconds. Shake like a guest is watching',
@@ -7531,6 +7535,8 @@ function hhClose(){
         'STIR STOP':'止めるタイミングが全て。温度が命だ！',
         'GLASS STACK':'トレイが揺れている。何段まで積める？',
         'TABLE RUSH':'フロアは客だらけ。グラス3つ、無事に運べる？',
+        'COCKTAIL LAB':'グラス・材料・技法を当てて名作5杯。満点ならご褒美',
+        'BAR BEAT':'カクテルを選ぶと材料がレーンに！ビートに合わせてタップ、曲ごとにランキング',
         'ICE CARVING':'手首の力を抜いて叩け。溶ける前に仕上げよう！',
         'CHAMPAGNE LAUNCH':'コルクを飛ばす自信ある人！',
         'SHAKE MASTER':'13秒だ。客の前だと思ってしっかり振れ',
@@ -7548,6 +7554,8 @@ function hhClose(){
         'STIR STOP':'停手的时机就是一切。温度是命脉！',
         'GLASS STACK':'托盘在晃。你能叠到第几层？',
         'TABLE RUSH':'大厅全是客人。三杯酒，你送得到吗？',
+        'COCKTAIL LAB':'选对杯子、材料和手法，调出5杯经典。满分有奖',
+        'BAR BEAT':'选一杯鸡尾酒，材料就是轨道！跟着节拍点击，每首歌都有排行榜',
         'ICE CARVING':'手腕放松地敲。趁没化完成它！',
         'CHAMPAGNE LAUNCH':'有信心把软木塞打飞吗？',
         'SHAKE MASTER':'十三秒。当着客人的面好好摇',
@@ -7921,11 +7929,16 @@ function hhClose(){
         +'<div class="txt"><div class="gname"></div><div class="gdesc"></div></div>';
       b.querySelector('.gname').textContent=g.name;
       b.querySelector('.gdesc').textContent=DESC(g.name);
-      b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(gi); }; w.appendChild(b); }); }
+      b.onclick=()=>{ ac(); beep(660,0.08); playSandbox(gi); }; w.appendChild(b); });
+    // 칵테일 랩 / 바 비트: 별도 페이지지만 미니게임과 같은 카드로 맨 앞에 (10/12 붐)
+    EXT.slice().reverse().forEach((g,i)=>{ const key=FR_ORDER[(GAMES.length+i)%5]; const b=document.createElement('button'); b.className='gcard';
+      b.innerHTML='<img class="shot" loading="lazy" decoding="async" src="'+g.thumb+'" alt="">'+'<img class="frame" src="assets/gf_'+key+'.png" alt="">'+'<div class="txt"><div class="gname"></div><div class="gdesc"></div></div>';
+      b.querySelector('.gname').textContent=g.name; b.querySelector('.gdesc').textContent=DESC(g.name);
+      b.onclick=()=>{ ac(); beep(660,0.08); try{ stopBgm(500); }catch(e){} setTimeout(()=>{ location.href=g.url; },260); };
+      w.insertBefore(b, w.firstChild); }); }
+  const EXT=[ { name:'COCKTAIL LAB', thumb:'assets/thumb_lab.jpg', url:'lab.html' }, { name:'BAR BEAT', thumb:'assets/thumb_beat.jpg', url:'beat.html' } ];
   // ── 더 많은 게임: Cocktail Defense / Bottoms Up ── 
   const MORE=[
-    { name:'BAR BEAT', thumb:'assets/thumb_beat.jpg', url:'beat.html', key:'beatDesc' },
-    { name:'COCKTAIL LAB', thumb:'assets/thumb_lab.jpg', url:'lab.html', key:'labDesc' },
     { name:'COCKTAIL DEFENSE', thumb:'assets/thumb_cd.jpg', url:'defense.html', key:'cdDesc' },
     { name:'BOTTOMS UP', thumb:'assets/thumb_bu.jpg', url:'bottomsup/index.html', key:'buDesc' } ];
   // 하단: 파인앤코 사이트 / 메뉴 바로가기
@@ -10567,6 +10580,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-54</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-55</div>
 </body>
 </html>
