@@ -80,7 +80,7 @@
 | 악어 룰렛 | dentist/ | 복불복 |
 | 크리켓 더비 | cricket/ | 레이싱 관전/베팅 |
 | 칵테일 랩 | lab.html → reserve public/game.html | 칵테일 제조 퀴즈(잔·재료·기법, 쉐이크/스터/빌드 직접 수행) · MORE GAMES 10/10 |
-| 바 비트 | beat.html | 리듬 게임: 칵테일 랩 20종 중 하나를 고르면 그 재료가 레인(2~5개=난이도, 112~136BPM), WebAudio 합성 칩튠 40초 · MORE GAMES 10/12 |
+| 바 비트 | beat.html | 리듬 게임: 칵테일 랩 20종 중 하나를 고르면 그 재료가 레인(2~5개=난이도, 112~136BPM), 실제 음원 5곡 랜덤(assets/bgm, BPM 실측) ~45초, 합성 칩튠은 폴백 · MORE GAMES 10/12 |
 
 ## 4. 에셋 제작 규약
 
