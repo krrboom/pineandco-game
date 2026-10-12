@@ -91,7 +91,7 @@ canvas{display:block;width:100%;height:100%;}
 
 <div id="select">
   <div class="sel-h">PICK YOUR COCKTAIL</div>
-  <div class="sel-s">More ingredients = more lanes = harder. The lanes are the recipe.</div>
+  <div class="sel-s">More ingredients = more lanes = harder. The lanes are the recipe. A random song plays each round.</div>
   <div class="sel-list" id="selList"></div>
 </div>
 
@@ -145,7 +145,7 @@ const slug=n=>n.toLowerCase().replace(/'/g,'').replace(/[^a-z0-9]+/g,'-').replac
 const short=n=>n.replace(' Juice','').replace(' Syrup','').replace(' Water','').replace('Fresh ','').replace(' Liqueur','').replace(' Bitters',' Bit.').replace('Sweet Vermouth','Sw. Verm.').replace('Dry Vermouth','Dry Verm.').replace('Angostura','Angost.').replace("Peychaud's",'Peych.');
 const DIFF=n=>n<=2?{s:'★',k:'e',t:'EASY',bpm:112}:n===3?{s:'★★',k:'m',t:'MEDIUM',bpm:120}:n===4?{s:'★★★',k:'h',t:'HARD',bpm:128}:{s:'★★★★',k:'x',t:'EXPERT',bpm:136};
 const LANE_COL=['#5DCAA5','#c9a96e','#e8508a','#6fa8ff','#f0a040'];
-const PERF=0.06, GOOD=0.12, FALL=1.25, BARS=22;   // bar 0 = intro (no notes), 1..20 chart, last bar = final hit  (10/12: ~30% harder — faster fall, tighter windows, denser chart)
+const PERF=0.06, GOOD=0.12, FALL=1.25; let BARS=22;   // bar 0 = intro (no notes), 1..BARS-2 chart, last bar = final hit  (10/12: ~30% harder — faster fall, tighter windows, denser chart)
 let BPM=120, BEAT=60/BPM, LANES=3, song=null;
 function hash(s){let h=2166136261;for(const ch of s){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
 function rng(seed){let x=seed>>>0||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
@@ -157,11 +157,14 @@ function makeChart(c){
   for(let b=1;b<BARS;b++){
     const t0=b*4*BEAT;
     if(b===BARS-1){notes.push({t:t0,l:Math.floor(n/2),big:true});break;}
-    const steps=b<3?[0,2]:b<6?[0,1,2,3]:b<10?[0,1,2,2.5,3]:b<14?[0,0.5,1,2,2.5,3,3.5]:b<18?[0,0.5,1,1.5,2,2.5,3,3.5]:[0,0.5,1,1.5,2,2.5,3,3.5,3.75];
+    // density follows the song tempo: slower songs get 16ths earlier so a 93 BPM track is as busy as a 118 BPM one
+    const slow=BPM<100, L=BARS-2;                       // L = last chart bar; thresholds scale with song length
+    const q=b/L;                                         // 0..1 progress through the chart
+    const steps=q<0.1?[0,2]:q<0.25?[0,1,2,3]:q<0.45?[0,1,2,2.5,3]:q<0.65?[0,0.5,1,2,2.5,3,3.5]:q<0.85?(slow?[0,0.5,1,1.5,2,2.5,3,3.5,3.75]:[0,0.5,1,1.5,2,2.5,3,3.5]):(slow?[0,0.25,0.5,1,1.5,2,2.5,2.75,3,3.5,3.75]:[0,0.5,1,1.5,2,2.5,3,3.5,3.75]);
     for(const s of steps){
       notes.push({t:t0+s*BEAT,l:lane()});
-      if(n>=4&&b>=12&&(s===0||s===2)&&r()<0.45){const l2=(last+1+Math.floor(r()*(n-1)))%n;notes.push({t:t0+s*BEAT,l:l2});}
-      if(n>=3&&b>=18&&s===1&&r()<0.3){const l2=(last+1+Math.floor(r()*(n-1)))%n;notes.push({t:t0+s*BEAT,l:l2});}
+      if(n>=4&&q>=0.55&&(s===0||s===2)&&r()<0.45){const l2=(last+1+Math.floor(r()*(n-1)))%n;notes.push({t:t0+s*BEAT,l:l2});}
+      if(n>=3&&q>=0.85&&s===1&&r()<0.3){const l2=(last+1+Math.floor(r()*(n-1)))%n;notes.push({t:t0+s*BEAT,l:l2});}
     }
   }
   return notes.sort((a,b)=>a.t-b.t);
@@ -222,11 +225,37 @@ const TRACKS=[
    }},
 ];
 let track=TRACKS[0];
-function scheduleBeat(i){            // i = global 16th-note index
+function scheduleBeat(i){            // i = global 16th-note index (synth fallback only)
   const t=startAt+i*BEAT/4, bar=Math.floor(i/16), step=i%16, chord=PROG[bar%4];
   if(bar>=BARS)return;
   track.beat(t,bar,step,chord);
   if(bar===BARS-1&&step===0){osc('square',N(chord[0]),t,1.2,0.25);osc('square',N(chord[1]),t,1.2,0.2);osc('square',N(chord[2]+12),t,1.4,0.2);}
+}
+
+/* Real songs (SellBuyMusic, assets/bgm/). BPM and first-beat offset were measured from the audio (onset autocorrelation + comb-filter grid search, 10/12). */
+const SONGS=[
+  {id:'under',        name:'UNDER',         bpm:118,   first:0.134},
+  {id:'guitar_beat',  name:'GUITAR & BEAT', bpm:118,   first:0.019},
+  {id:'tongtong',     name:'TONG TONG',     bpm:109,   first:0.314},
+  {id:'pop_intro',    name:'POP INTRO',     bpm:109,   first:0.029},
+  {id:'beach_evening',name:'BEACH EVENING', bpm:93.34, first:0.246},
+];
+const songBuf={}; let cur=null, srcNode=null, srcGain=null;
+async function loadSong(s){
+  if(songBuf[s.id])return songBuf[s.id];
+  const ab=await (await fetch('assets/bgm/'+s.id+'.mp3')).arrayBuffer();
+  return songBuf[s.id]=await AC.decodeAudioData(ab);
+}
+function stopSong(){try{if(srcNode){srcNode.stop();srcNode.disconnect();}}catch(e){}srcNode=null;}
+function playSong(buf,s,when){   // first beat of the file lands exactly at `when` (= startAt)
+  stopSong();
+  srcNode=AC.createBufferSource();srcNode.buffer=buf;srcGain=AC.createGain();srcGain.gain.value=0.9;
+  srcNode.connect(srcGain);srcGain.connect(master);
+  const lead=Math.min(s.first,4*BEAT);                     // start a little before the first beat so the intro isn't cut
+  srcNode.start(when-lead,s.first-lead);
+  const end=when+BARS*4*BEAT+1.2;                         // fade out after the final hit
+  srcGain.gain.setValueAtTime(0.9,end-1.0);srcGain.gain.linearRampToValueAtTime(0.0001,end+0.3);
+  srcNode.stop(end+0.4);
 }
 function scheduler(){
   while(startAt+schedPos*BEAT/4<AC.currentTime+0.25){scheduleBeat(schedPos);schedPos++;}
@@ -254,14 +283,15 @@ const bestOf=c=>{try{return +localStorage.getItem(bestKey(c))||0;}catch(e){retur
 // ── cocktail select ──
 let selectGuard=0;   // ignore taps that started on the overlay/result screen that just closed
 function showSelect(){
-  st='select';cancelAnimationFrame(raf);clearTimeout(schedTimer);selectGuard=performance.now()+450;
+  st='select';cancelAnimationFrame(raf);clearTimeout(schedTimer);stopSong();selectGuard=performance.now()+450;
+  document.getElementById('count').style.opacity=0;
   const list=document.getElementById('selList');
   list.innerHTML=CK.map((c,i)=>{const d=DIFF(c.ing.length),b=bestOf(c);return `<div class="song" data-i="${i}">
       <img src="assets/beat/${slug(c.name)}.webp" alt="" draggable="false">
       <div class="n">${c.name}</div>
       <div class="d ${d.k}">${d.s} ${d.t}</div>
       <div class="i">${c.ing.map(short).join(' · ')}</div>
-      <div class="b">${c.ing.length} LANES · ${d.bpm} BPM${b?' · BEST '+b.toLocaleString():''}</div>
+      <div class="b">${c.ing.length} LANES${b?' · BEST '+b.toLocaleString():''}</div>
     </div>`;}).join('');
   // 'click' needs pointerdown AND pointerup on the card, so a tap that began on the HOW TO PLAY overlay can't pick a cocktail; the time guard covers the rest
   list.querySelectorAll('.song').forEach(el=>el.addEventListener('click',()=>{if(st!=='select'||performance.now()<selectGuard)return;start(CK[+el.dataset.i]);}));
@@ -271,23 +301,31 @@ function showSelect(){
 
 // ── play ──
 function songTime(){return AC?AC.currentTime-startAt:0;}
-function start(c){
+async function start(c){
   audioInit(); if(AC.state==='suspended')AC.resume();
   document.getElementById('select').classList.remove('show');
-  song=c;LANES=c.ing.length;BPM=DIFF(LANES).bpm;BEAT=60/BPM;
-  track=TRACKS[Math.floor(Math.random()*TRACKS.length)];PROG=track.prog;
+  stopSong();clearTimeout(schedTimer);cancelAnimationFrame(raf);
+  song=c;LANES=c.ing.length;
+  cur=SONGS[Math.floor(Math.random()*SONGS.length)];
+  const cd=document.getElementById('count');
+  st='load';cd.textContent='LOADING…';cd.style.fontSize='16px';cd.style.opacity=1;
+  let buf=null;try{buf=await loadSong(cur);}catch(e){console.warn('song load failed, using synth',e);}
+  if(st!=='load')return;                      // player left while the song was loading
+  cd.style.fontSize='';
+  if(buf){BPM=cur.bpm;BEAT=60/BPM;BARS=Math.min(22,Math.floor(46/(4*BEAT)),Math.floor((buf.duration-cur.first-1.5)/(4*BEAT)));}   // ~45 s per round whatever the tempo
+  else{BPM=DIFF(LANES).bpm;BEAT=60/BPM;BARS=22;track=TRACKS[Math.floor(Math.random()*TRACKS.length)];PROG=track.prog;}
   chart=makeChart(c).map(n=>({...n,hit:false,judged:false}));
   score=0;combo=0;maxCombo=0;cnt={perfect:0,good:0,miss:0};bursts=[];laneFlash=new Array(LANES).fill(0);
-  document.getElementById('hSong').textContent=c.name.toUpperCase()+' · '+track.name;
+  document.getElementById('hSong').textContent=c.name.toUpperCase()+' · '+(buf?cur.name+' '+Math.round(BPM)+'BPM':track.name);
   hud();
   st='count';
-  const cd=document.getElementById('count');
-  startAt=AC.currentTime+4*BEAT+0.1; schedPos=0; clearTimeout(schedTimer);
+  startAt=AC.currentTime+4*BEAT+0.1; schedPos=0;
+  if(buf)playSong(buf,cur,startAt);
   for(let i=0;i<4;i++)osc('square',i===3?1320:880,startAt-(4-i)*BEAT,0.08,0.2);
   const words=['3','2','1','MIX!'];
   words.forEach((w,i)=>setTimeout(()=>{if(st!=='count')return;cd.textContent=w;cd.style.opacity=1;},(i*BEAT+0.1)*1000));
-  setTimeout(()=>{if(st!=='count')return;cd.style.opacity=0;st='play';scheduler();},(4*BEAT+0.1)*1000);
-  cancelAnimationFrame(raf);loop();
+  setTimeout(()=>{if(st!=='count')return;cd.style.opacity=0;st='play';if(!buf)scheduler();},(4*BEAT+0.1)*1000);
+  loop();
 }
 function hud(){
   document.getElementById('hScore').textContent=score;
