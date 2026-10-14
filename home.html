@@ -228,6 +228,15 @@
   .promo-tag{ background:var(--gold,#c89a3c); color:#1a130a; font-size:8px; font-weight:800; padding:2px 6px; border-radius:4px; letter-spacing:.5px; }
   .promo-modal{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.85); display:flex; align-items:center; justify-content:center; padding:18px; }
   .promo-modal.hidden{ display:none; }
+  /* 10/20 Mother Bar 이벤트: VIEW MENU 오버레이 + COMING SOON 탭 */
+  .evt-modal{ position:fixed; inset:0; z-index:70; background:rgba(0,0,0,.88); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:14px; cursor:pointer; }
+  .evt-modal.hidden{ display:none; }
+  .evt-modal img{ max-width:min(96vw,620px); max-height:88vh; object-fit:contain; border-radius:6px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
+  .evt-tap{ color:#6fcf8f; font-size:9px; letter-spacing:1px; animation:evtBlink 1s step-end infinite; }
+  @keyframes evtBlink{ 50%{ opacity:.25; } }
+  .evt-tab{ display:flex; flex-direction:column; align-items:center; gap:12px; max-width:560px; margin:0 auto; }
+  .evt-tab img{ width:100%; height:auto; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.45); }
+  .evt-note{ color:var(--dim); font-size:10px; line-height:1.7; text-align:center; }
   .promo-img{ max-width:100%; max-height:92vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
   .promo-x{ position:absolute; top:12px; right:14px; z-index:2; width:34px; height:34px; border:none; border-radius:50%;
     background:rgba(0,0,0,.6); color:#fff; font-size:17px; cursor:pointer; line-height:1; }
@@ -1422,6 +1431,8 @@
     <div class="scrollbox"><div class="menu-list" id="menuList"></div></div>
     <button class="imgbtn backbtn" onclick="menuBack()"><img loading="lazy" decoding="async" class="btnimg" src="assets/back_btn.webp" onerror="this.onerror=null;this.src='assets/back_btn.png'" alt="BACK"></button>
     <!-- 프로모션 삽지: 헤네시 마이웨이 메뉴 이미지 -->
+    <!-- 10/20 Mother Bar 이벤트 메뉴: VIEW MENU 누르면 이벤트 시간에만 뜸, 탭하면 닫힘 -->
+    <div id="evtModal" class="evt-modal hidden" onclick="closeEvtMenu()"><img id="evtImg" src="" alt="Mother Bar takes over Pine & Co"><div class="evt-tap" id="evtTap">TAP TO CLOSE</div></div>
     <!-- 칵테일 사진 모달: 카드 탭 시 큰 사진 + 이름/재료/가격/설명 -->
     <div id="ckModal" class="ck-modal hidden" onclick="closeCkModal()">
       <button class="ckm-arrow ckm-prev" onclick="ckModalNav(-1,event)" aria-label="prev">‹</button>
@@ -2846,7 +2857,7 @@ function setMenuLang(l){ menuLang=l; try{ localStorage.setItem('paco_menulang',l
   document.getElementById('menuLetter').innerHTML = MENU_LETTER(); renderMenu(); }
 /* UI 문자열 (언어별). 없는 키는 en으로 폴백. */
 const UI = {
-  en:{ cocktails:'🍸 COCKTAILS', food:'🍽 FOOD', whisky:'🥃 WHISKY', bottles:'🍾 BUBBLES & WINE', paco:'🛍 PACO SHOP',
+  en:{ cocktails:'🍸 COCKTAILS', food:'🍽 FOOD', whisky:'🥃 WHISKY', bottles:'🍾 BUBBLES & WINE', paco:'🛍 PACO SHOP', evtSoon:'📅 COMING SOON', evtNow:'🎉 TONIGHT', evtSoonNote:'Tue 20 Oct · Mother Bar from Toronto takes over Pine & Co.', evtNowNote:'Tonight only · Mother Bar guest menu', evtTap:'TAP TO CLOSE',
     sigTitle:'SIGNATURE COCKTAILS', tip:'(tip not included)', viewMenu:'VIEW MENU ▸', askStaff:'Please ask our staff for the Wi-Fi.',
     moreDrinks:'MORE DRINKS', foodHdr:'FOOD', pacoTitle:'PACO SHOP', pacoNote:'take a piece of Pine&Co home',
     champagne:'CHAMPAGNE  (bottle / glass)', wine:'WINE  (bottle / glass)', beerSoft:'BEER & SOFT',
@@ -2859,7 +2870,7 @@ const UI = {
       <p>Pine &amp; Co's main theme is<br><b>"born from wild ideas and little moments in life."</b></p>
       <p>Our menu is a single sheet — simple to print, big on imagination. The game menu lives on your phone; if that feels too high-tech, don't worry, we've got you.</p>
       <p>If you have any allergies to food or drinks, please let us know in advance.<br>Classic cocktails on the menu are also available to order.</p>` },
-  ko:{ cocktails:'🍸 칵테일', food:'🍽 푸드', whisky:'🥃 위스키', bottles:'🍾 스파클링 & 와인', paco:'🛍 PACO 샵',
+  ko:{ cocktails:'🍸 칵테일', food:'🍽 푸드', whisky:'🥃 위스키', bottles:'🍾 스파클링 & 와인', paco:'🛍 PACO 샵', evtSoon:'📅 곧 열려요', evtNow:'🎉 오늘의 이벤트', evtSoonNote:'10월 20일 화요일, 토론토의 Mother Bar가 파인앤코에 옵니다.', evtNowNote:'오늘 하루만 · Mother Bar 게스트 메뉴', evtTap:'탭하면 닫혀요',
     sigTitle:'시그니처 칵테일', tip:'(팁 별도)', viewMenu:'메뉴 보기 ▸', askStaff:'와이파이는 직원에게 편하게 물어봐 주세요.',
     moreDrinks:'그 외 음료', foodHdr:'푸드', pacoTitle:'PACO 샵', pacoNote:'파인앤코를 집으로',
     champagne:'샴페인  (병 / 잔)', wine:'와인  (병 / 잔)', beerSoft:'맥주 & 음료',
@@ -2872,7 +2883,7 @@ const UI = {
       <p>파인앤코가 늘 생각하는 건<br><b>"엉뚱한 아이디어와 삶의 작은 순간들"</b> 이에요.</p>
       <p>메뉴는 딱 한 장. 인쇄는 단출하게, 대신 상상력은 넉넉하게 담았어요. 게임 메뉴는 손님 폰 안에 있고요. 좀 어려우면 편하게 불러 주세요, 저희가 도와드릴게요.</p>
       <p>음식이나 음료에 알레르기가 있으면 미리 살짝 말씀해 주세요.<br>메뉴판의 클래식 칵테일도 언제든 주문 가능해요.</p>` },
-  ja:{ cocktails:'🍸 カクテル', food:'🍽 フード', whisky:'🥃 ウイスキー', bottles:'🍾 スパークリング & ワイン', paco:'🛍 PACO ショップ',
+  ja:{ cocktails:'🍸 カクテル', food:'🍽 フード', whisky:'🥃 ウイスキー', bottles:'🍾 スパークリング & ワイン', paco:'🛍 PACO ショップ', evtSoon:'📅 近日開催', evtNow:'🎉 本日のイベント', evtSoonNote:'10月20日（火）、トロントの Mother Bar がパインアンドコーにやって来ます。', evtNowNote:'本日限り · Mother Bar ゲストメニュー', evtTap:'タップで閉じる',
     sigTitle:'シグネチャーカクテル', tip:'(チップ別)', viewMenu:'メニューを見る ▸', askStaff:'Wi-Fiはお気軽にスタッフまで。',
     moreDrinks:'その他のドリンク', foodHdr:'フード', pacoTitle:'PACO ショップ', pacoNote:'Pine&Coをお持ち帰り',
     champagne:'シャンパン  (ボトル / グラス)', wine:'ワイン  (ボトル / グラス)', beerSoft:'ビール & ソフトドリンク',
@@ -2885,7 +2896,7 @@ const UI = {
       <p>Pine &amp; Co がいつも大切にしているのは<br><b>「自由な発想と、暮らしのささやかな瞬間」</b>です。</p>
       <p>メニューは一枚だけ。印刷はシンプルに、そのぶん想像力はたっぷりと。ゲームのメニューはスマホの中に。難しそうなら、遠慮なくスタッフにお声がけを。</p>
       <p>アレルギーがございましたら、先にひとことお知らせください。<br>メニューのクラシックカクテルも、もちろんお作りします。</p>` },
-  zh:{ cocktails:'🍸 鸡尾酒', food:'🍽 餐点', whisky:'🥃 威士忌', bottles:'🍾 气泡酒 & 葡萄酒', paco:'🛍 PACO 商店',
+  zh:{ cocktails:'🍸 鸡尾酒', food:'🍽 餐点', whisky:'🥃 威士忌', bottles:'🍾 气泡酒 & 葡萄酒', paco:'🛍 PACO 商店', evtSoon:'📅 即将登场', evtNow:'🎉 今日活动', evtSoonNote:'10月20日（周二），多伦多的 Mother Bar 将来到 Pine & Co。', evtNowNote:'仅限今晚 · Mother Bar 客座酒单', evtTap:'点击关闭',
     sigTitle:'招牌鸡尾酒', tip:'(不含小费)', viewMenu:'查看菜单 ▸', askStaff:'Wi-Fi 直接问店员就好。',
     moreDrinks:'其他饮品', foodHdr:'餐点', pacoTitle:'PACO 商店', pacoNote:'把 Pine&Co 带回家',
     champagne:'香槟  (整瓶 / 单杯)', wine:'葡萄酒  (整瓶 / 单杯)', beerSoft:'啤酒 & 软饮',
@@ -3038,11 +3049,20 @@ const SPCAT_TR = {
 };
 function spCat(name){ const m=SPCAT_TR[menuLang]; return (m&&m[name])||name; }
 let curMenuTab='cocktails';
+/* ── 10/20(화) Mother Bar 게스트 바텐딩 (Behind the Lanes Seoul) ──
+   이벤트 메뉴: 화 10/20 02:00 ~ 수 10/21 00:00 KST 동안만. 그 전에는 COMING SOON 탭, 끝나면 둘 다 사라짐.
+   날짜를 바꾸려면 아래 두 줄만 고치면 된다 (UTC 기준: KST-9시간). 미리보기 ?evt=soon / ?evt=menu */
+const EVT={ start:Date.UTC(2026,9,19,17,0), end:Date.UTC(2026,9,20,15,0), menu:'assets/evt_mother_menu.webp', teaser:'assets/evt_mother_teaser.webp' };
+function evtState(){ const q=location.search||''; if(/[?&]evt=menu/.test(q)) return 'menu'; if(/[?&]evt=soon/.test(q)) return 'soon';
+  const t=Date.now(); return t<EVT.start ? 'soon' : (t<EVT.end ? 'menu' : 'off'); }
+function openEvtMenu(){ const m=document.getElementById('evtModal'); if(!m) return; document.getElementById('evtImg').src=EVT.menu;
+  const tp=document.getElementById('evtTap'); if(tp) tp.textContent=T('evtTap'); m.classList.remove('hidden'); }
+function closeEvtMenu(){ const m=document.getElementById('evtModal'); if(m) m.classList.add('hidden'); try{ playSelect(); }catch(e){} }
 function showMenu(){ initAudio(); playSelect(); setMusic('menu'); state='menu'; hideAllScreens(); curMenuTab='cocktails'; renderMenu();
   document.getElementById('menuLetter').innerHTML = MENU_LETTER(); updateLangBars();   // 편지 인트로 먼저
   document.getElementById('menuIntro').classList.remove('hidden');
   show('menuScreen'); }
-function menuSkipIntro(){ try{ playSelect(); }catch(e){} document.getElementById('menuIntro').classList.add('hidden'); }
+function menuSkipIntro(){ try{ playSelect(); }catch(e){} document.getElementById('menuIntro').classList.add('hidden'); if(evtState()==='menu') openEvtMenu(); }
 function menuWifi(){ const n=document.getElementById('wifiNote'); if(n) n.classList.toggle('hidden'); }
 function langBarHTML(){ return MENU_LANGS.map(([k,l])=>`<button class="${menuLang===k?'active':''}" onclick="setMenuLang('${k}')">${l}</button>`).join(''); }
 function updateLangBars(){ document.querySelectorAll('.js-langbar').forEach(el=>el.innerHTML=langBarHTML());
@@ -3120,6 +3140,8 @@ function closePromo(){ document.getElementById('promoModal').classList.add('hidd
 function renderMenu(){
   updateLangBars();
   const tabs=[['cocktails',T('cocktails')],['food',T('food')],['whisky',T('whisky')],['bottles',T('bottles')],['paco',T('paco')]];
+  const evs=evtState(); if(evs!=='off') tabs.push(['event', evs==='menu' ? T('evtNow') : T('evtSoon')]);
+  if(curMenuTab==='event' && evs==='off') curMenuTab='cocktails';
   document.getElementById('menuNav').innerHTML = tabs.map(([k,l])=>
     `<button class="${curMenuTab===k?'active':''}" onclick="showMenuTab('${k}')">${l}</button>`).join('');
   let html='';
@@ -3148,6 +3170,9 @@ function renderMenu(){
         </div>`).join('');
   } else if(curMenuTab==='bottles'){
     html = menuSection(T('champagne'), SEC_CHAMP.items)+menuSection(T('wine'), SEC_WINE.items)+menuSection(T('beerSoft'), SEC_BEER.items);
+  } else if(curMenuTab==='event'){
+    const now=evtState()==='menu';
+    html = `<div class="evt-tab"><img src="${now?EVT.menu:EVT.teaser}" alt="Mother Bar × Pine & Co"${now?' onclick="openEvtMenu()" style="cursor:pointer"':''}><div class="evt-note">${now?T('evtNowNote'):T('evtSoonNote')}</div></div>`;
   } else if(curMenuTab==='paco'){
     html = `<div class="menu-cat">${T('pacoTitle')} <span class="mc-note">${T('pacoNote')}</span></div>`
       + `<div class="paco-grid">`
@@ -10582,6 +10607,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-56</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-57</div>
 </body>
 </html>
