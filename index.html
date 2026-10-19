@@ -3050,11 +3050,11 @@ const SPCAT_TR = {
 function spCat(name){ const m=SPCAT_TR[menuLang]; return (m&&m[name])||name; }
 let curMenuTab='cocktails';
 /* ── 10/20(화) Mother Bar 게스트 바텐딩 (Behind the Lanes Seoul) ──
-   이벤트 메뉴: 화 10/20 02:00 ~ 수 10/21 00:00 KST 동안만. 그 전에는 COMING SOON 탭, 끝나면 둘 다 사라짐.
+   이벤트 메뉴: 화 10/20 18:00 ~ 수 10/21 00:00 KST 동안만. 그 전·후에는 탭도 포스터도 안 보임.
    날짜를 바꾸려면 아래 두 줄만 고치면 된다 (UTC 기준: KST-9시간). 미리보기 ?evt=soon / ?evt=menu */
-const EVT={ start:Date.UTC(2026,9,19,17,0), end:Date.UTC(2026,9,20,15,0), menu:'assets/evt_mother_menu.webp?v=2', teaser:'assets/evt_mother_teaser.webp?v=2' };
+const EVT={ start:Date.UTC(2026,9,20,9,0), end:Date.UTC(2026,9,20,15,0), menu:'assets/evt_mother_menu.webp?v=2', teaser:'assets/evt_mother_teaser.webp?v=2' };
 function evtState(){ const q=location.search||''; if(/[?&]evt=menu/.test(q)) return 'menu'; if(/[?&]evt=soon/.test(q)) return 'soon';
-  const t=Date.now(); return t<EVT.start ? 'soon' : (t<EVT.end ? 'menu' : 'off'); }
+  const t=Date.now(); return (t>=EVT.start && t<EVT.end) ? 'menu' : 'off'; }
 function openEvtMenu(){ const m=document.getElementById('evtModal'); if(!m) return; document.getElementById('evtImg').src=EVT.menu;
   const tp=document.getElementById('evtTap'); if(tp) tp.textContent=T('evtTap'); m.classList.remove('hidden'); }
 function closeEvtMenu(){ const m=document.getElementById('evtModal'); if(m) m.classList.add('hidden'); try{ playSelect(); }catch(e){} }
@@ -10607,6 +10607,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-58</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-59</div>
 </body>
 </html>
