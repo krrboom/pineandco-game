@@ -231,14 +231,20 @@
   /* 10/20 Mother Bar 이벤트: VIEW MENU 오버레이 + COMING SOON 탭 */
   .evt-modal{ position:fixed; inset:0; z-index:70; background:rgba(0,0,0,.88); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:14px; cursor:pointer; }
   .evt-modal.hidden{ display:none; }
-  .evt-modal img{ max-width:min(96vw,620px); max-height:88vh; object-fit:contain; border-radius:6px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
+  .evt-modal img{ display:block; max-width:min(96vw,620px); max-height:88vh; object-fit:contain; border-radius:6px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
+  .evt-iw{ position:relative; line-height:0; }
+  .evt-hs{ position:absolute; border:2px solid transparent; border-radius:4px; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; transition:border-color .15s, background .15s; }
+  .evt-hs:hover, .evt-hs:active{ border-color:#e6b450; background:rgba(230,180,80,.10); }
+  .evt-modal.slam .evt-hs, .evt-tab .evt-hs{ animation:evtHint 1.4s ease-out .9s 1; }
+  @keyframes evtHint{ 0%,100%{ border-color:transparent; } 35%,60%{ border-color:rgba(230,180,80,.9); } }
+  .ck-modal.over-evt{ z-index:80; }
   .evt-tap{ color:#6fcf8f; font-size:9px; letter-spacing:1px; animation:evtBlink 1s step-end infinite; }
   @keyframes evtBlink{ 50%{ opacity:.25; } }
   /* 등장 연출: 보스 경고 → 메뉴 착지 */
   .evt-warn{ display:none; position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); flex-direction:column; align-items:center; gap:16px; pointer-events:none; }
   .evt-modal.warn{ animation:evtRed .28s steps(2) infinite; }
   .evt-modal.warn .evt-warn{ display:flex; }
-  .evt-modal.warn img, .evt-modal.warn .evt-tap{ visibility:hidden; }
+  .evt-modal.warn .evt-iw, .evt-modal.warn .evt-tap{ visibility:hidden; }
   @keyframes evtRed{ 0%{ background:rgba(130,0,0,.92); } 100%{ background:rgba(0,0,0,.9); } }
   .evt-hz{ width:100%; height:20px; background:linear-gradient(-45deg,#f2c230 25%,#111 25%,#111 50%,#f2c230 50%,#f2c230 75%,#111 75%); background-size:40px 40px; animation:evtHz .45s linear infinite; }
   .evt-hz.r{ animation-direction:reverse; }
@@ -246,7 +252,7 @@
   .evt-wt{ color:#ff3b3b; font-size:clamp(22px,7vw,40px); letter-spacing:2px; text-shadow:3px 3px 0 #3a0000; animation:evtBlink .25s step-end infinite; }
   .evt-ws{ color:#f0ebe0; font-size:clamp(10px,3vw,15px); line-height:1.9; letter-spacing:1px; text-align:center; text-shadow:2px 2px 0 #000; }
   .evt-flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
-  .evt-modal.slam img{ animation:evtSlam .42s cubic-bezier(.3,1.4,.5,1) both; }
+  .evt-modal.slam .evt-iw{ animation:evtSlam .42s cubic-bezier(.3,1.4,.5,1) both; }
   .evt-modal.slam .evt-flash{ animation:evtFlash .4s ease-out .2s both; }
   .evt-modal.slam .evt-tap{ animation:evtFade .2s .6s both, evtBlink 1s step-end .8s infinite; }
   .evt-modal.shake{ animation:evtShake .36s steps(6) .2s 1; }
@@ -256,7 +262,8 @@
   @keyframes evtShake{ 0%,100%{ transform:none; } 17%{ transform:translate(-7px,4px); } 33%{ transform:translate(6px,-5px); } 50%{ transform:translate(-5px,-3px); } 67%{ transform:translate(4px,5px); } 83%{ transform:translate(-2px,2px); } }
   @media (prefers-reduced-motion: reduce){ .evt-modal, .evt-modal *{ animation:none !important; } }
   .evt-tab{ display:flex; flex-direction:column; align-items:center; gap:12px; max-width:560px; margin:0 auto; }
-  .evt-tab img{ width:100%; height:auto; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.45); }
+  .evt-tab .evt-iw{ width:100%; }
+  .evt-tab img{ display:block; width:100%; height:auto; border-radius:6px; box-shadow:0 4px 18px rgba(0,0,0,.45); }
   .evt-note{ color:var(--dim); font-size:10px; line-height:1.7; text-align:center; }
   .promo-img{ max-width:100%; max-height:92vh; object-fit:contain; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,.6); }
   .promo-x{ position:absolute; top:12px; right:14px; z-index:2; width:34px; height:34px; border:none; border-radius:50%;
@@ -1453,7 +1460,7 @@
     <button class="imgbtn backbtn" onclick="menuBack()"><img loading="lazy" decoding="async" class="btnimg" src="assets/back_btn.webp" onerror="this.onerror=null;this.src='assets/back_btn.png'" alt="BACK"></button>
     <!-- 프로모션 삽지: 헤네시 마이웨이 메뉴 이미지 -->
     <!-- 10/20 Mother Bar 이벤트 메뉴: VIEW MENU 누르면 이벤트 시간에만 뜸, 탭하면 닫힘 -->
-    <div id="evtModal" class="evt-modal hidden" onclick="evtTap()"><div class="evt-warn"><div class="evt-hz"></div><div class="evt-wt">&#9888; WARNING &#9888;</div><div class="evt-ws">GUEST BARTENDERS<br>APPROACHING</div><div class="evt-hz r"></div></div><img id="evtImg" src="" alt="Mother Bar takes over Pine & Co"><div class="evt-tap" id="evtTap">TAP TO CLOSE</div><div class="evt-flash"></div></div>
+    <div id="evtModal" class="evt-modal hidden" onclick="evtTap()"><div class="evt-warn"><div class="evt-hz"></div><div class="evt-wt">&#9888; WARNING &#9888;</div><div class="evt-ws">GUEST BARTENDERS<br>APPROACHING</div><div class="evt-hz r"></div></div><div class="evt-iw" id="evtIw"><img id="evtImg" src="" alt="Mother Bar takes over Pine & Co"></div><div class="evt-tap" id="evtTap">TAP TO CLOSE</div><div class="evt-flash"></div></div>
     <!-- 칵테일 사진 모달: 카드 탭 시 큰 사진 + 이름/재료/가격/설명 -->
     <div id="ckModal" class="ck-modal hidden" onclick="closeCkModal()">
       <button class="ckm-arrow ckm-prev" onclick="ckModalNav(-1,event)" aria-label="prev">‹</button>
@@ -2878,7 +2885,7 @@ function setMenuLang(l){ menuLang=l; try{ localStorage.setItem('paco_menulang',l
   document.getElementById('menuLetter').innerHTML = MENU_LETTER(); renderMenu(); }
 /* UI 문자열 (언어별). 없는 키는 en으로 폴백. */
 const UI = {
-  en:{ cocktails:'🍸 COCKTAILS', food:'🍽 FOOD', whisky:'🥃 WHISKY', bottles:'🍾 BUBBLES & WINE', paco:'🛍 PACO SHOP', evtSoon:'📅 COMING SOON', evtNow:'🎉 TONIGHT', evtSoonNote:'Tue 20 Oct · Mother Bar from Toronto takes over Pine & Co.', evtNowNote:'Tonight only · Mother Bar guest menu', evtTap:'TAP TO CLOSE',
+  en:{ cocktails:'🍸 COCKTAILS', food:'🍽 FOOD', whisky:'🥃 WHISKY', bottles:'🍾 BUBBLES & WINE', paco:'🛍 PACO SHOP', evtSoon:'📅 COMING SOON', evtNow:'🎉 TONIGHT', evtSoonNote:'Tue 20 Oct · Mother Bar from Toronto takes over Pine & Co.', evtNowNote:'Tonight only · Mother Bar guest menu · tap a drink for details', evtTap:'TAP A DRINK · TAP OUTSIDE TO CLOSE',
     sigTitle:'SIGNATURE COCKTAILS', tip:'(tip not included)', viewMenu:'VIEW MENU ▸', askStaff:'Please ask our staff for the Wi-Fi.',
     moreDrinks:'MORE DRINKS', foodHdr:'FOOD', pacoTitle:'PACO SHOP', pacoNote:'take a piece of Pine&Co home',
     champagne:'CHAMPAGNE  (bottle / glass)', wine:'WINE  (bottle / glass)', beerSoft:'BEER & SOFT',
@@ -2891,7 +2898,7 @@ const UI = {
       <p>Pine &amp; Co's main theme is<br><b>"born from wild ideas and little moments in life."</b></p>
       <p>Our menu is a single sheet — simple to print, big on imagination. The game menu lives on your phone; if that feels too high-tech, don't worry, we've got you.</p>
       <p>If you have any allergies to food or drinks, please let us know in advance.<br>Classic cocktails on the menu are also available to order.</p>` },
-  ko:{ cocktails:'🍸 칵테일', food:'🍽 푸드', whisky:'🥃 위스키', bottles:'🍾 스파클링 & 와인', paco:'🛍 PACO 샵', evtSoon:'📅 곧 열려요', evtNow:'🎉 오늘의 이벤트', evtSoonNote:'10월 20일 화요일, 토론토의 Mother Bar가 파인앤코에 옵니다.', evtNowNote:'오늘 하루만 · Mother Bar 게스트 메뉴', evtTap:'탭하면 닫혀요',
+  ko:{ cocktails:'🍸 칵테일', food:'🍽 푸드', whisky:'🥃 위스키', bottles:'🍾 스파클링 & 와인', paco:'🛍 PACO 샵', evtSoon:'📅 곧 열려요', evtNow:'🎉 오늘의 이벤트', evtSoonNote:'10월 20일 화요일, 토론토의 Mother Bar가 파인앤코에 옵니다.', evtNowNote:'오늘 하루만 · Mother Bar 게스트 메뉴 · 칵테일을 누르면 자세히 볼 수 있어요', evtTap:'칵테일을 누르면 자세히 · 바깥을 누르면 닫혀요',
     sigTitle:'시그니처 칵테일', tip:'(팁 별도)', viewMenu:'메뉴 보기 ▸', askStaff:'와이파이는 직원에게 편하게 물어봐 주세요.',
     moreDrinks:'그 외 음료', foodHdr:'푸드', pacoTitle:'PACO 샵', pacoNote:'파인앤코를 집으로',
     champagne:'샴페인  (병 / 잔)', wine:'와인  (병 / 잔)', beerSoft:'맥주 & 음료',
@@ -2904,7 +2911,7 @@ const UI = {
       <p>파인앤코가 늘 생각하는 건<br><b>"엉뚱한 아이디어와 삶의 작은 순간들"</b> 이에요.</p>
       <p>메뉴는 딱 한 장. 인쇄는 단출하게, 대신 상상력은 넉넉하게 담았어요. 게임 메뉴는 손님 폰 안에 있고요. 좀 어려우면 편하게 불러 주세요, 저희가 도와드릴게요.</p>
       <p>음식이나 음료에 알레르기가 있으면 미리 살짝 말씀해 주세요.<br>메뉴판의 클래식 칵테일도 언제든 주문 가능해요.</p>` },
-  ja:{ cocktails:'🍸 カクテル', food:'🍽 フード', whisky:'🥃 ウイスキー', bottles:'🍾 スパークリング & ワイン', paco:'🛍 PACO ショップ', evtSoon:'📅 近日開催', evtNow:'🎉 本日のイベント', evtSoonNote:'10月20日（火）、トロントの Mother Bar がパインアンドコーにやって来ます。', evtNowNote:'本日限り · Mother Bar ゲストメニュー', evtTap:'タップで閉じる',
+  ja:{ cocktails:'🍸 カクテル', food:'🍽 フード', whisky:'🥃 ウイスキー', bottles:'🍾 スパークリング & ワイン', paco:'🛍 PACO ショップ', evtSoon:'📅 近日開催', evtNow:'🎉 本日のイベント', evtSoonNote:'10月20日（火）、トロントの Mother Bar がパインアンドコーにやって来ます。', evtNowNote:'本日限り · Mother Bar ゲストメニュー · カクテルをタップで詳細', evtTap:'カクテルをタップで詳細 · 外側をタップで閉じる',
     sigTitle:'シグネチャーカクテル', tip:'(チップ別)', viewMenu:'メニューを見る ▸', askStaff:'Wi-Fiはお気軽にスタッフまで。',
     moreDrinks:'その他のドリンク', foodHdr:'フード', pacoTitle:'PACO ショップ', pacoNote:'Pine&Coをお持ち帰り',
     champagne:'シャンパン  (ボトル / グラス)', wine:'ワイン  (ボトル / グラス)', beerSoft:'ビール & ソフトドリンク',
@@ -2917,7 +2924,7 @@ const UI = {
       <p>Pine &amp; Co がいつも大切にしているのは<br><b>「自由な発想と、暮らしのささやかな瞬間」</b>です。</p>
       <p>メニューは一枚だけ。印刷はシンプルに、そのぶん想像力はたっぷりと。ゲームのメニューはスマホの中に。難しそうなら、遠慮なくスタッフにお声がけを。</p>
       <p>アレルギーがございましたら、先にひとことお知らせください。<br>メニューのクラシックカクテルも、もちろんお作りします。</p>` },
-  zh:{ cocktails:'🍸 鸡尾酒', food:'🍽 餐点', whisky:'🥃 威士忌', bottles:'🍾 气泡酒 & 葡萄酒', paco:'🛍 PACO 商店', evtSoon:'📅 即将登场', evtNow:'🎉 今日活动', evtSoonNote:'10月20日（周二），多伦多的 Mother Bar 将来到 Pine & Co。', evtNowNote:'仅限今晚 · Mother Bar 客座酒单', evtTap:'点击关闭',
+  zh:{ cocktails:'🍸 鸡尾酒', food:'🍽 餐点', whisky:'🥃 威士忌', bottles:'🍾 气泡酒 & 葡萄酒', paco:'🛍 PACO 商店', evtSoon:'📅 即将登场', evtNow:'🎉 今日活动', evtSoonNote:'10月20日（周二），多伦多的 Mother Bar 将来到 Pine & Co。', evtNowNote:'仅限今晚 · Mother Bar 客座酒单 · 点击鸡尾酒查看详情', evtTap:'点击鸡尾酒查看详情 · 点击外侧关闭',
     sigTitle:'招牌鸡尾酒', tip:'(不含小费)', viewMenu:'查看菜单 ▸', askStaff:'Wi-Fi 直接问店员就好。',
     moreDrinks:'其他饮品', foodHdr:'餐点', pacoTitle:'PACO 商店', pacoNote:'把 Pine&Co 带回家',
     champagne:'香槟  (整瓶 / 单杯)', wine:'葡萄酒  (整瓶 / 单杯)', beerSoft:'啤酒 & 软饮',
@@ -3077,7 +3084,27 @@ const EVT={ start:Date.UTC(2026,9,20,9,0), end:Date.UTC(2026,9,20,15,0), menu:'a
 function evtState(){ const q=location.search||''; if(/[?&]evt=menu/.test(q)) return 'menu'; if(/[?&]evt=soon/.test(q)) return 'soon';
   const t=Date.now(); return (t>=EVT.start && t<EVT.end) ? 'menu' : 'off'; }
 let evtTimer=0, evtReadyAt=0;
+const EVT_DRINKS=[
+  { n:'Dirty Tomato',      ing:'Vodka · Distilled Tomato · Lacto-Fermented Tomato · Fino Sherry · Acidified Kombucha · Castelvetrano Olive Brine' },
+  { n:'Visions Of Oaxaca', ing:'Reposado Tequila · Black Garlic · Sherry · Candy Caps Mushrooms · Mezcal · Chocolate' },
+  { n:'Tomato Soup', na:1, ing:'Coconut & Milk Whey · Basil · Oregano · Lemon · Black Pepper' },
+  { n:'Petrichor',         ing:'London Dry Gin · Islay Scotch Whisky · Eucalyptus · Pu’Er Tea · Chardonnay · Orange Blossom' } ];
+const EVT_HS=[[5.04,39.46,89.92,12.71],[5.04,52.97,89.92,12.71],[5.04,66.48,89.92,12.71],[5.04,79.99,89.92,12.71]];   // 메뉴 이미지 위 칵테일 카드 위치(%): left, top, width, height
+function evtHotspots(){ return EVT_HS.map((r,i)=>`<div class="evt-hs" style="left:${r[0]}%;top:${r[1]}%;width:${r[2]}%;height:${r[3]}%" onclick="evtDrink(${i},event)" role="button" aria-label="${EVT_DRINKS[i].n}"></div>`).join(''); }
+function evtDrink(i,ev){ if(ev) ev.stopPropagation(); const m=document.getElementById('evtModal');
+  if(m && !m.classList.contains('hidden')){ if(m.classList.contains('warn')){ evtSlam(); return; } if(performance.now()<evtReadyAt) return; }
+  openEvtDrink(i); }
+function openEvtDrink(i){ const L=EVT_DRINKS; ckModalMode='evt'; ckModalIdx=(i%L.length+L.length)%L.length; const d=L[ckModalIdx];
+  { const im=document.getElementById('ckmImg'); im.style.display=''; im.onerror=()=>{ im.style.display='none'; }; im.src='assets/evt_drink_'+(ckModalIdx+1)+'.png'; }
+  document.getElementById('ckmName').textContent=d.n;
+  const tw=document.getElementById('ckmTwist'); tw.textContent=d.na ? 'N/A · MOTHER BAR' : 'MOTHER BAR · GUEST'; tw.style.display='';
+  const pe=document.getElementById('ckmPrice'); pe.textContent=won('₩26,000'); pe.classList.remove('ckm-long');
+  document.getElementById('ckmIng').textContent=d.ing;
+  const de=document.getElementById('ckmDesc'); de.textContent=''; de.style.display='none';
+  const ck=document.getElementById('ckModal'); ck.classList.add('over-evt'); ck.classList.remove('hidden');
+  try{ playSelect(); }catch(e){} }
 function openEvtMenu(){ const m=document.getElementById('evtModal'); if(!m) return; document.getElementById('evtImg').src=EVT.menu;
+  { const iw=document.getElementById('evtIw'); if(iw && !iw.querySelector('.evt-hs')) iw.insertAdjacentHTML('beforeend', evtHotspots()); }
   const tp=document.getElementById('evtTap'); if(tp) tp.textContent=T('evtTap');
   m.classList.remove('hidden','slam','shake','warn'); clearTimeout(evtTimer);
   if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){ evtReadyAt=performance.now()+300; return; }
@@ -3168,8 +3195,8 @@ function openCkModal(i){
   try{ playSelect(); }catch(e){}
 }
 function ckModalNav(dir, ev){ if(ev) ev.stopPropagation();
-  if(ckModalMode==='food') openFoodModal(ckModalIdx + dir); else if(ckModalMode==='more') openMoreModal(ckModalIdx + dir); else openCkModal(ckModalIdx + dir); }   // 화살표: 옆 칵테일로(닫히지 않게 전파 차단)
-function closeCkModal(){ document.getElementById('ckModal').classList.add('hidden'); }   // 아무 곳이나 클릭하면 닫힘
+  if(ckModalMode==='evt') openEvtDrink(ckModalIdx + dir); else if(ckModalMode==='food') openFoodModal(ckModalIdx + dir); else if(ckModalMode==='more') openMoreModal(ckModalIdx + dir); else openCkModal(ckModalIdx + dir); }   // 화살표: 옆 칵테일로(닫히지 않게 전파 차단)
+function closeCkModal(){ const ck=document.getElementById('ckModal'); ck.classList.add('hidden'); ck.classList.remove('over-evt'); }   // 아무 곳이나 클릭하면 닫힘
 function openPromo(){ try{ initAudio(); playSelect(); }catch(e){} document.getElementById('promoModal').classList.remove('hidden'); }   // 헤네시 마이웨이 삽지
 function closePromo(){ document.getElementById('promoModal').classList.add('hidden'); try{ playSelect(); }catch(e){} }
 function renderMenu(){
@@ -3207,7 +3234,7 @@ function renderMenu(){
     html = menuSection(T('champagne'), SEC_CHAMP.items)+menuSection(T('wine'), SEC_WINE.items)+menuSection(T('beerSoft'), SEC_BEER.items);
   } else if(curMenuTab==='event'){
     const now=evtState()==='menu';
-    html = `<div class="evt-tab"><img src="${now?EVT.menu:EVT.teaser}" alt="Mother Bar × Pine & Co"${now?' onclick="openEvtMenu()" style="cursor:pointer"':''}><div class="evt-note">${now?T('evtNowNote'):T('evtSoonNote')}</div></div>`;
+    html = `<div class="evt-tab"><div class="evt-iw"><img src="${now?EVT.menu:EVT.teaser}" alt="Mother Bar × Pine & Co">${now?evtHotspots():''}</div><div class="evt-note">${now?T('evtNowNote'):T('evtSoonNote')}</div></div>`;
   } else if(curMenuTab==='paco'){
     html = `<div class="menu-cat">${T('pacoTitle')} <span class="mc-note">${T('pacoNote')}</span></div>`
       + `<div class="paco-grid">`
@@ -10642,6 +10669,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-60</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-61</div>
 </body>
 </html>
