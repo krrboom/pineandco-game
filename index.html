@@ -98,13 +98,18 @@
   .menu-intro .letter > :nth-child(4){ animation-delay:.26s; } .menu-intro .letter > :nth-child(5){ animation-delay:.36s; }
   .menu-intro .letter > :nth-child(6){ animation-delay:.5s; }  .menu-intro .letter > :nth-child(7){ animation-delay:.64s; }
   .menu-intro .letter > :nth-child(8){ animation-delay:.78s; } .menu-intro .letter > :nth-child(9){ animation-delay:.88s; }
-  .menu-intro .letter > :nth-child(10){ animation-delay:.96s; }
+  .menu-intro .letter > :nth-child(10){ animation-delay:.96s; } .menu-intro .letter > :nth-child(11){ animation-delay:1.04s; }
+  .menu-intro .letter > :nth-child(12){ animation-delay:1.12s; } .menu-intro .letter > :nth-child(13){ animation-delay:1.2s; }
+  .menu-intro .letter > :nth-child(14){ animation-delay:1.26s; }
   .menu-intro .letter > *{ text-wrap:balance; word-break:keep-all; }
   @keyframes ltRise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
   .lt-rule{ display:flex; align-items:center; gap:10px; margin:14px auto 12px; max-width:220px; color:var(--gold,#c89a3c); font-size:10px; }
   .lt-rule i{ flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(200,154,60,.7),transparent); }
   .lt-motto{ color:var(--amber); font-size:13px; line-height:1.7; letter-spacing:.3px; text-shadow:0 0 14px rgba(230,180,80,.25); }
-  .menu-intro .letter p.lt-body{ font-size:10.5px; line-height:1.85; color:#d9d1bf; margin:14px auto 0; max-width:34ch; }
+  .menu-intro .letter p.lt-body{ font-size:10px; line-height:1.85; color:#d9d1bf; margin:14px auto 0; max-width:36ch; }
+  .menu-intro .letter p.lt-body b{ color:#f0ebe0; }
+  .menu-intro .letter p.lt-cta{ color:var(--pine-light); margin-top:16px; }
+  .menu-intro .letter::after{ content:""; position:sticky; bottom:-18px; display:block; height:34px; margin:0 -22px -18px; pointer-events:none; background:linear-gradient(rgba(21,17,11,0), rgba(21,17,11,.96)); }
   .lt-sign{ color:var(--pine-light); font-size:10px; letter-spacing:1px; margin-top:12px; }
   .lt-fine{ color:#9c927e; font-size:9px; line-height:1.9; margin-top:16px; padding-top:12px; border-top:1px dashed #3a2f1e; }
   @media (prefers-reduced-motion: reduce){ .menu-intro .letter > *{ animation:none; } }
@@ -2913,7 +2918,10 @@ const UI = {
       <div class="lt-sub">Welcome back home.</div>
       <div class="lt-rule"><i></i><span>&#10022;</span><i></i></div>
       <div class="lt-motto">Born from wild ideas and little moments in life.</div>
-      <p class="lt-body">No paper menu here. The whole menu lives in your hands. Tap a cocktail and meet its story.</p>
+      <p class="lt-body">Since 2020, Pine &amp; Co has been a <b>retro house of Seoul</b>, tucked underground in Gangnam. The old doorbell you just pressed is our way of saying: come in, like it&rsquo;s a friend&rsquo;s home in the Seoul of the 80s and 90s.</p>
+      <p class="lt-body">Our name holds two meanings. The <b>pine tree</b>, a Korean symbol of loyalty and long life, and the <b>pineapple</b>, the bartender&rsquo;s sign of hospitality: rough outside, sweet within.</p>
+      <p class="lt-body">We twist the world&rsquo;s classics with Korean market ingredients and childhood memories. A G&amp;T that turns into bingsu, a highball made with nuruk, a Tom Collins that tastes like mom&rsquo;s picnic.</p>
+      <p class="lt-body lt-cta">No paper menu here. The whole menu lives in your hands. Tap a cocktail and meet its story.</p>
       <div class="lt-sign">&mdash; Pat &amp; Joe</div>
       <div class="lt-fine">Allergies? Tell us before you order.<br>Classic cocktails are always on request.</div>` },
   ko:{ cocktails:'🍸 칵테일', food:'🍽 푸드', whisky:'🥃 위스키', bottles:'🍾 스파클링 & 와인', paco:'🛍 PACO 샵', evtSoon:'📅 곧 열려요', evtNow:'🎉 오늘의 이벤트', evtSoonNote:'10월 20일 화요일, 토론토의 Mother Bar가 파인앤코에 옵니다.', evtNowNote:'오늘 하루만 · Mother Bar 게스트 메뉴 · 칵테일을 누르면 자세히 볼 수 있어요', evtTap:'칵테일을 누르면 자세히 · 바깥을 누르면 닫혀요',
@@ -2928,7 +2936,10 @@ const UI = {
       <div class="lt-sub">집에 오신 걸 환영해요.</div>
       <div class="lt-rule"><i></i><span>&#10022;</span><i></i></div>
       <div class="lt-motto">엉뚱한 아이디어와<br>삶의 작은 순간에서 태어난 한 잔</div>
-      <p class="lt-body">종이 메뉴는 없어요. 메뉴는 전부 손님 손안에 있어요. 칵테일을 눌러 그 한 잔의 이야기를 만나 보세요.</p>
+      <p class="lt-body">파인앤코는 2020년부터 강남의 한 지하에 자리한 <b>&lsquo;서울의 레트로 하우스&rsquo;</b>예요. 방금 누르고 들어오신 옛날 초인종처럼, 80~90년대 친구네 집에 놀러 온 기분으로 편하게 머물다 가세요.</p>
+      <p class="lt-body">이름에는 두 가지 뜻이 담겨 있어요. 지조와 장수를 뜻하는 한국의 <b>소나무</b>, 그리고 거친 껍질 속에 달콤한 진심을 품은 바텐더의 상징 <b>파인애플</b>.</p>
+      <p class="lt-body">세계의 클래식 칵테일을 우리 시장의 재료와 어린 시절의 기억으로 비틀어요. 빙수가 된 진토닉, 누룩으로 만든 하이볼, 엄마의 소풍 도시락 같은 톰 콜린스처럼요.</p>
+      <p class="lt-body lt-cta">종이 메뉴는 없어요. 메뉴는 전부 손님 손안에 있어요. 칵테일을 눌러 그 한 잔의 이야기를 만나 보세요.</p>
       <div class="lt-sign">&mdash; Pat &amp; Joe</div>
       <div class="lt-fine">알레르기가 있으면 주문 전에 알려 주세요.<br>클래식 칵테일도 언제든 주문할 수 있어요.</div>` },
   ja:{ cocktails:'🍸 カクテル', food:'🍽 フード', whisky:'🥃 ウイスキー', bottles:'🍾 スパークリング & ワイン', paco:'🛍 PACO ショップ', evtSoon:'📅 近日開催', evtNow:'🎉 本日のイベント', evtSoonNote:'10月20日（火）、トロントの Mother Bar がパインアンドコーにやって来ます。', evtNowNote:'本日限り · Mother Bar ゲストメニュー · カクテルをタップで詳細', evtTap:'カクテルをタップで詳細 · 外側をタップで閉じる',
@@ -2943,7 +2954,10 @@ const UI = {
       <div class="lt-sub">おかえりなさい。</div>
       <div class="lt-rule"><i></i><span>&#10022;</span><i></i></div>
       <div class="lt-motto">自由な発想と<br>暮らしのささやかな瞬間から生まれた一杯</div>
-      <p class="lt-body">紙のメニューはありません。メニューはすべて、あなたの手の中に。カクテルをタップして、その一杯の物語に出会ってください。</p>
+      <p class="lt-body">Pine &amp; Co は2020年から、江南の地下にある<b>「ソウルのレトロハウス」</b>。いま押していただいた古い呼び鈴のように、80〜90年代の友だちの家に遊びに来た気分でくつろいでください。</p>
+      <p class="lt-body">店名には二つの意味があります。節操と長寿を表す韓国の<b>松</b>、そして粗い皮の下に甘い真心を秘めた、バーテンダーの象徴<b>パイナップル</b>。</p>
+      <p class="lt-body">世界のクラシックカクテルを、韓国の市場の食材と子どもの頃の記憶でひねります。かき氷になったジントニック、ヌルク（麹）で作るハイボール、母の遠足弁当のようなトム・コリンズ。</p>
+      <p class="lt-body lt-cta">紙のメニューはありません。メニューはすべて、あなたの手の中に。カクテルをタップして、その一杯の物語に出会ってください。</p>
       <div class="lt-sign">&mdash; Pat &amp; Joe</div>
       <div class="lt-fine">アレルギーがあればご注文前にお知らせください。<br>クラシックカクテルもいつでもお作りします。</div>` },
   zh:{ cocktails:'🍸 鸡尾酒', food:'🍽 餐点', whisky:'🥃 威士忌', bottles:'🍾 气泡酒 & 葡萄酒', paco:'🛍 PACO 商店', evtSoon:'📅 即将登场', evtNow:'🎉 今日活动', evtSoonNote:'10月20日（周二），多伦多的 Mother Bar 将来到 Pine & Co。', evtNowNote:'仅限今晚 · Mother Bar 客座酒单 · 点击鸡尾酒查看详情', evtTap:'点击鸡尾酒查看详情 · 点击外侧关闭',
@@ -2958,7 +2972,10 @@ const UI = {
       <div class="lt-sub">欢迎回家。</div>
       <div class="lt-rule"><i></i><span>&#10022;</span><i></i></div>
       <div class="lt-motto">生于天马行空的想法<br>与生活里的小小瞬间</div>
-      <p class="lt-body">这里没有纸质菜单，整份菜单都在你手中。点开一杯鸡尾酒，读读它的故事。</p>
+      <p class="lt-body">自2020年起，Pine &amp; Co 就藏在江南的一处地下，是一座<b>“首尔的复古之家”</b>。就像你刚刚按下的那只老门铃，请像去八九十年代的朋友家串门一样，自在地待着。</p>
+      <p class="lt-body">我们的名字有两层意思：象征坚贞与长寿的韩国<b>松树</b>，以及<b>菠萝</b>：外皮粗糙、内里甘甜真诚，是调酒师待客之道的象征。</p>
+      <p class="lt-body">我们用韩国市场的食材和童年的回忆，把世界经典鸡尾酒拧一下：变成刨冰的金汤力、用酒曲做的嗨棒、像妈妈野餐便当一样的汤姆柯林斯。</p>
+      <p class="lt-body lt-cta">这里没有纸质菜单，整份菜单都在你手中。点开一杯鸡尾酒，读读它的故事。</p>
       <div class="lt-sign">&mdash; Pat &amp; Joe</div>
       <div class="lt-fine">如有过敏，请在点单前告诉我们。<br>经典鸡尾酒也随时可点。</div>` },
 };
@@ -10693,6 +10710,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-62</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-63</div>
 </body>
 </html>
