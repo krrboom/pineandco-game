@@ -89,17 +89,33 @@
   .menu-intro{ position:absolute; inset:0; z-index:12; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:16px; padding:24px; background:linear-gradient(180deg,#12100c,#171208 60%,#12100c); }
   .menu-intro.hidden{ display:none; }
-  .menu-intro .letter{ max-width:440px; width:100%; max-height:70vh; overflow-y:auto; text-align:center; color:#e9e2d2;
-    border:1px solid #3a2f1e; border-radius:12px; padding:22px 20px; background:rgba(20,16,10,.6); font-style:italic; line-height:1.7; }
+  .menu-intro .letter{ max-width:440px; width:100%; max-height:76vh; overflow-y:auto; text-align:center; color:#e9e2d2;
+    border:1px solid #3a2f1e; border-radius:12px; padding:22px 22px 18px; background:rgba(20,16,10,.6); line-height:1.7;
+    box-shadow:inset 0 0 0 4px rgba(18,16,12,.9), inset 0 0 0 5px rgba(200,154,60,.22); }
   .menu-intro .letter p{ font-size:11px; margin:12px 0; }
+  .menu-intro .letter > *{ animation:ltRise .6s cubic-bezier(.2,.7,.2,1) both; }
+  .menu-intro .letter > :nth-child(2){ animation-delay:.08s; } .menu-intro .letter > :nth-child(3){ animation-delay:.16s; }
+  .menu-intro .letter > :nth-child(4){ animation-delay:.26s; } .menu-intro .letter > :nth-child(5){ animation-delay:.36s; }
+  .menu-intro .letter > :nth-child(6){ animation-delay:.5s; }  .menu-intro .letter > :nth-child(7){ animation-delay:.64s; }
+  .menu-intro .letter > :nth-child(8){ animation-delay:.78s; } .menu-intro .letter > :nth-child(9){ animation-delay:.88s; }
+  .menu-intro .letter > :nth-child(10){ animation-delay:.96s; }
+  .menu-intro .letter > *{ text-wrap:balance; word-break:keep-all; }
+  @keyframes ltRise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+  .lt-rule{ display:flex; align-items:center; gap:10px; margin:14px auto 12px; max-width:220px; color:var(--gold,#c89a3c); font-size:10px; }
+  .lt-rule i{ flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(200,154,60,.7),transparent); }
+  .lt-motto{ color:var(--amber); font-size:13px; line-height:1.7; letter-spacing:.3px; text-shadow:0 0 14px rgba(230,180,80,.25); }
+  .menu-intro .letter p.lt-body{ font-size:10.5px; line-height:1.85; color:#d9d1bf; margin:14px auto 0; max-width:34ch; }
+  .lt-sign{ color:var(--pine-light); font-size:10px; letter-spacing:1px; margin-top:12px; }
+  .lt-fine{ color:#9c927e; font-size:9px; line-height:1.9; margin-top:16px; padding-top:12px; border-top:1px dashed #3a2f1e; }
+  @media (prefers-reduced-motion: reduce){ .menu-intro .letter > *{ animation:none; } }
   .menu-intro .letter b{ color:var(--amber); font-style:normal; }
   .lt-logo{ text-align:center; }
   .pine-logo{ width:66px; height:auto; display:inline-block; }
   .lt-brand{ font-style:normal; color:#f0ebe0; font-size:16px; letter-spacing:1.5px; margin:2px 0 12px; line-height:1.1; }
   .lt-brand span{ display:block; font-size:9px; letter-spacing:4px; color:var(--pine-light); margin-top:2px; }
   .lt-hi{ font-size:20px; letter-spacing:1px; color:#fff; font-style:normal; }
-  .lt-sub{ font-size:12px; color:var(--pine-light); margin-top:4px; }
-  .lt-staff{ font-size:8px; color:var(--dim); font-style:normal; margin-top:16px; letter-spacing:.3px; }
+  .lt-sub{ font-size:11px; color:var(--pine-light); margin-top:6px; letter-spacing:.5px; }
+  .lt-staff{ font-size:8px; color:var(--dim); font-style:normal; margin-top:8px; letter-spacing:.3px; }
   .letter-skip{ font-family:inherit; font-size:12px; letter-spacing:1px; color:#1a130a; background:var(--gold,#c89a3c);
     border:none; border-radius:22px; padding:11px 26px; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.4); }
   /* 시그니처 칵테일 스토리 카드 */
@@ -677,7 +693,7 @@
     .paco-grid{ flex-direction:row; max-width:760px; } .paco-card{ flex:1; } .paco-thumb{ height:300px; }
     .paco-name{ font-size:17px; } .paco-desc{ font-size:11px; } .paco-price{ font-size:14px; }
     .menu-welcome{ max-width:600px; font-size:12px; }
-    .pine-logo{ width:92px; } .lt-brand{ font-size:20px; } .menu-intro .letter p{ font-size:13px; } .lt-hi{ font-size:26px; }
+    .pine-logo{ width:92px; } .lt-brand{ font-size:20px; } .menu-intro .letter p{ font-size:13px; } .lt-hi{ font-size:26px; } .lt-motto{ font-size:16px; } .menu-intro .letter p.lt-body{ font-size:12px; } .lt-sign{ font-size:12px; } .lt-fine{ font-size:9.5px; } .lt-sub{ font-size:13px; }
     .ck-name{ font-size:15px; } .ck-num{ font-size:12px; } .ck-price{ font-size:13px; } .mi-price{ font-size:12.5px; }
     .ck-quote{ font-size:12.5px; } .ck-twist,.ck-tag{ font-size:9px; } .ck-ing{ font-size:10px; } .ck-num{ min-width:20px; } .gl-svg{ width:19px; height:26px; }
     .sp-legend{ font-size:11px; max-width:640px; } .sp-code{ font-size:9px; min-width:18px; } .sp-keep{ font-size:10px; max-width:600px; }
@@ -2893,11 +2909,13 @@ const UI = {
     keep:'We keep your whisky for 3 months · keeping charge ₩10,000 per person.<br>위스키 보관기간 3개월, 보관 후 1인당 ₩10,000 보관료가 부과됩니다.',
     lg:{R:'RICH',F:'FRUITY',W:'WOODY',S:'SMOKEY',L:'LIGHT',H:'HONEY'},
     letter:`<div class="lt-brand">Pine &amp; Co<span>SEOUL</span></div>
-      <div class="lt-hi">Dear, Guest</div>
-      <div class="lt-sub">Welcome back home &nbsp;🍸</div>
-      <p>Pine &amp; Co's main theme is<br><b>"born from wild ideas and little moments in life."</b></p>
-      <p>Our menu is a single sheet — simple to print, big on imagination. The game menu lives on your phone; if that feels too high-tech, don't worry, we've got you.</p>
-      <p>If you have any allergies to food or drinks, please let us know in advance.<br>Classic cocktails on the menu are also available to order.</p>` },
+      <div class="lt-hi">Dear Guest,</div>
+      <div class="lt-sub">Welcome back home.</div>
+      <div class="lt-rule"><i></i><span>&#10022;</span><i></i></div>
+      <div class="lt-motto">Born from wild ideas and little moments in life.</div>
+      <p class="lt-body">No paper menu here. The whole menu lives in your hands. Tap a cocktail and meet its story.</p>
+      <div class="lt-sign">&mdash; Pat &amp; Joe</div>
+      <div class="lt-fine">Allergies? Tell us before you order.<br>Classic cocktails are always on request.</div>` },
   ko:{ cocktails:'🍸 칵테일', food:'🍽 푸드', whisky:'🥃 위스키', bottles:'🍾 스파클링 & 와인', paco:'🛍 PACO 샵', evtSoon:'📅 곧 열려요', evtNow:'🎉 오늘의 이벤트', evtSoonNote:'10월 20일 화요일, 토론토의 Mother Bar가 파인앤코에 옵니다.', evtNowNote:'오늘 하루만 · Mother Bar 게스트 메뉴 · 칵테일을 누르면 자세히 볼 수 있어요', evtTap:'칵테일을 누르면 자세히 · 바깥을 누르면 닫혀요',
     sigTitle:'시그니처 칵테일', tip:'(팁 별도)', viewMenu:'메뉴 보기 ▸', askStaff:'와이파이는 직원에게 편하게 물어봐 주세요.',
     moreDrinks:'그 외 음료', foodHdr:'푸드', pacoTitle:'PACO 샵', pacoNote:'파인앤코를 집으로',
@@ -2906,11 +2924,13 @@ const UI = {
     keep:'위스키는 3개월간 보관해 드려요 · 보관료는 1인당 ₩10,000.<br>보관 기간이 지나면 따로 알려드리지 못하고 정리될 수 있어요.',
     lg:{R:'리치',F:'프루티',W:'우디',S:'스모키',L:'라이트',H:'허니'},
     letter:`<div class="lt-brand">Pine &amp; Co<span>SEOUL</span></div>
-      <div class="lt-hi">반가워요, 손님</div>
-      <div class="lt-sub">다시 오신 걸 환영해요 &nbsp;🍸</div>
-      <p>파인앤코가 늘 생각하는 건<br><b>"엉뚱한 아이디어와 삶의 작은 순간들"</b> 이에요.</p>
-      <p>메뉴는 딱 한 장. 인쇄는 단출하게, 대신 상상력은 넉넉하게 담았어요. 게임 메뉴는 손님 폰 안에 있고요. 좀 어려우면 편하게 불러 주세요, 저희가 도와드릴게요.</p>
-      <p>음식이나 음료에 알레르기가 있으면 미리 살짝 말씀해 주세요.<br>메뉴판의 클래식 칵테일도 언제든 주문 가능해요.</p>` },
+      <div class="lt-hi">어서 오세요, 손님</div>
+      <div class="lt-sub">집에 오신 걸 환영해요.</div>
+      <div class="lt-rule"><i></i><span>&#10022;</span><i></i></div>
+      <div class="lt-motto">엉뚱한 아이디어와<br>삶의 작은 순간에서 태어난 한 잔</div>
+      <p class="lt-body">종이 메뉴는 없어요. 메뉴는 전부 손님 손안에 있어요. 칵테일을 눌러 그 한 잔의 이야기를 만나 보세요.</p>
+      <div class="lt-sign">&mdash; Pat &amp; Joe</div>
+      <div class="lt-fine">알레르기가 있으면 주문 전에 알려 주세요.<br>클래식 칵테일도 언제든 주문할 수 있어요.</div>` },
   ja:{ cocktails:'🍸 カクテル', food:'🍽 フード', whisky:'🥃 ウイスキー', bottles:'🍾 スパークリング & ワイン', paco:'🛍 PACO ショップ', evtSoon:'📅 近日開催', evtNow:'🎉 本日のイベント', evtSoonNote:'10月20日（火）、トロントの Mother Bar がパインアンドコーにやって来ます。', evtNowNote:'本日限り · Mother Bar ゲストメニュー · カクテルをタップで詳細', evtTap:'カクテルをタップで詳細 · 外側をタップで閉じる',
     sigTitle:'シグネチャーカクテル', tip:'(チップ別)', viewMenu:'メニューを見る ▸', askStaff:'Wi-Fiはお気軽にスタッフまで。',
     moreDrinks:'その他のドリンク', foodHdr:'フード', pacoTitle:'PACO ショップ', pacoNote:'Pine&Coをお持ち帰り',
@@ -2919,11 +2939,13 @@ const UI = {
     keep:'ウイスキーは3ヶ月お預かりします · 保管料はお一人様 ₩10,000。<br>保管期間を過ぎると、予告なく処分させていただく場合がございます。',
     lg:{R:'リッチ',F:'フルーティ',W:'ウッディ',S:'スモーキー',L:'ライト',H:'ハニー'},
     letter:`<div class="lt-brand">Pine &amp; Co<span>SEOUL</span></div>
-      <div class="lt-hi">ようこそ、ゲスト</div>
-      <div class="lt-sub">おかえりなさい &nbsp;🍸</div>
-      <p>Pine &amp; Co がいつも大切にしているのは<br><b>「自由な発想と、暮らしのささやかな瞬間」</b>です。</p>
-      <p>メニューは一枚だけ。印刷はシンプルに、そのぶん想像力はたっぷりと。ゲームのメニューはスマホの中に。難しそうなら、遠慮なくスタッフにお声がけを。</p>
-      <p>アレルギーがございましたら、先にひとことお知らせください。<br>メニューのクラシックカクテルも、もちろんお作りします。</p>` },
+      <div class="lt-hi">ようこそ、お客さま</div>
+      <div class="lt-sub">おかえりなさい。</div>
+      <div class="lt-rule"><i></i><span>&#10022;</span><i></i></div>
+      <div class="lt-motto">自由な発想と<br>暮らしのささやかな瞬間から生まれた一杯</div>
+      <p class="lt-body">紙のメニューはありません。メニューはすべて、あなたの手の中に。カクテルをタップして、その一杯の物語に出会ってください。</p>
+      <div class="lt-sign">&mdash; Pat &amp; Joe</div>
+      <div class="lt-fine">アレルギーがあればご注文前にお知らせください。<br>クラシックカクテルもいつでもお作りします。</div>` },
   zh:{ cocktails:'🍸 鸡尾酒', food:'🍽 餐点', whisky:'🥃 威士忌', bottles:'🍾 气泡酒 & 葡萄酒', paco:'🛍 PACO 商店', evtSoon:'📅 即将登场', evtNow:'🎉 今日活动', evtSoonNote:'10月20日（周二），多伦多的 Mother Bar 将来到 Pine & Co。', evtNowNote:'仅限今晚 · Mother Bar 客座酒单 · 点击鸡尾酒查看详情', evtTap:'点击鸡尾酒查看详情 · 点击外侧关闭',
     sigTitle:'招牌鸡尾酒', tip:'(不含小费)', viewMenu:'查看菜单 ▸', askStaff:'Wi-Fi 直接问店员就好。',
     moreDrinks:'其他饮品', foodHdr:'餐点', pacoTitle:'PACO 商店', pacoNote:'把 Pine&Co 带回家',
@@ -2932,11 +2954,13 @@ const UI = {
     keep:'威士忌为您保存 3 个月 · 保管费每人 ₩10,000。<br>超过保管期限，可能会不另行通知就先行处理。',
     lg:{R:'醇厚',F:'果香',W:'木香',S:'烟熏',L:'清爽',H:'蜜香'},
     letter:`<div class="lt-brand">Pine &amp; Co<span>SEOUL</span></div>
-      <div class="lt-hi">亲爱的客人</div>
-      <div class="lt-sub">欢迎回家 &nbsp;🍸</div>
-      <p>Pine &amp; Co 一直在意的，是<br><b>“天马行空的想法，和生活里那些小小的瞬间。”</b></p>
-      <p>我们的菜单就一张 —— 印起来简单，脑洞却不小。游戏菜单都在你手机里；要是觉得太花哨，别担心，交给我们就好。</p>
-      <p>要是对食材或酒水过敏，先跟我们说一声。<br>菜单上的经典鸡尾酒，也都能点。</p>` },
+      <div class="lt-hi">亲爱的客人，</div>
+      <div class="lt-sub">欢迎回家。</div>
+      <div class="lt-rule"><i></i><span>&#10022;</span><i></i></div>
+      <div class="lt-motto">生于天马行空的想法<br>与生活里的小小瞬间</div>
+      <p class="lt-body">这里没有纸质菜单，整份菜单都在你手中。点开一杯鸡尾酒，读读它的故事。</p>
+      <div class="lt-sign">&mdash; Pat &amp; Joe</div>
+      <div class="lt-fine">如有过敏，请在点单前告诉我们。<br>经典鸡尾酒也随时可点。</div>` },
 };
 function T(k){ return (UI[menuLang]&&UI[menuLang][k]!=null)?UI[menuLang][k]:UI.en[k]; }
 /* 칵테일 번역 (tw=컨셉, q=인용문, ing=재료). 순서는 MENU_COCKTAILS(1~15)와 동일. 이름은 원문 유지. */
@@ -10669,6 +10693,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-61</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-62</div>
 </body>
 </html>
