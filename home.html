@@ -1093,6 +1093,9 @@
   /* ── 손잡이(게임패드) 모드: 커서·글자판·작은 정사각 화면 보정 ── */
   #padCursor{ position:fixed; left:0; top:0; z-index:99999; pointer-events:none; width:0; height:0; display:none; will-change:transform; }
   body.padmode #padCursor{ display:block; }
+  #padFs{ display:none; position:fixed; top:6px; right:6px; z-index:99998; font-family:'Press Start 2P',monospace; font-size:9px; letter-spacing:.5px; color:#1a130a;
+    background:#e6b450; border:2px solid #000; box-shadow:2px 2px 0 #000; padding:8px 10px; cursor:pointer; touch-action:manipulation; }
+  #padFs.show{ display:block; }
   #padCursor i{ position:absolute; left:-15px; top:-15px; width:30px; height:30px; border:3px solid #ffd24a; border-radius:50%;
     box-shadow:0 0 0 2px #000, inset 0 0 0 2px #000; background:rgba(255,210,74,.16); }
   #padCursor i::after{ content:''; position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px; background:#ffd24a; border-radius:50%; box-shadow:0 0 0 1px #000; }
@@ -1154,7 +1157,7 @@
 #happyHour #hh_volNum{ font-family:var(--hh-pixfont); font-size:12px; color:var(--hh-amber);
   min-width:34px; text-align:right; font-variant-numeric:tabular-nums; }
 </style>
-<script src="assets/compat78.js?v=1"></script>
+<script src="assets/compat78.js?v=2"></script>
 <script>/* __WEBP_SWAP: 큰 이미지는 WebP로 자동 대체 (미지원/실패 시 원본으로 폴백) */
 (function(){ try{ var OK=false;
   try{ OK=document.createElement("canvas").toDataURL("image/webp").indexOf("data:image/webp")===0; }catch(e){}
@@ -10620,10 +10623,21 @@ function hhClose(){
   function enable(){ if(on) return; on=true; document.body.classList.add('padmode');
     try{ const g0=readPad(); aWas=!!g0.a; bWas=!!g0.b; }catch(e){} graceUntil=performance.now()+1500;
     if(!cur){ cur=document.createElement('div'); cur.id='padCursor'; cur.innerHTML='<i></i>'; document.body.appendChild(cur); }
-    cx=innerWidth/2; cy=innerHeight/2; place(); try{ localStorage.setItem('bp_pad','1'); }catch(e){}
+    cx=innerWidth/2; cy=innerHeight/2; place(); try{ localStorage.setItem('bp_pad','1'); }catch(e){} setTimeout(fsUI,50);
     try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(()=>{}); }catch(e){}
     if(!raf) raf=setInterval(()=>loop(performance.now()),16); }   // rAF 대신 타이머: 화면 프레임이 잠깐 멈춰도 입력은 산다
   function place(){ if(cur) cur.style.transform='translate('+cx+'px,'+cy+'px)'; }
+  /* 전체화면: PWA(홈 화면 아이콘)로 열었으면 이미 주소창이 없고, 아니면 버튼/첫 키 입력으로 requestFullscreen */
+  function inApp(){ try{ return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone===true; }catch(e){ return false; } }
+  function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function goFs(){ try{ const el=document.documentElement; const p=el.requestFullscreen ? el.requestFullscreen({navigationUI:'hide'}) : (el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
+  let fsBtn=null;
+  function fsUI(){ if(!on) return; if(!fsBtn){ fsBtn=document.createElement('button'); fsBtn.id='padFs'; fsBtn.textContent='FULL SCREEN'; fsBtn.addEventListener('click',()=>{ goFs(); }); document.body.appendChild(fsBtn); }
+    fsBtn.classList.toggle('show', !isFs() && !inApp()); }
+  document.addEventListener('fullscreenchange', fsUI); document.addEventListener('webkitfullscreenchange', fsUI);
+  addEventListener('keydown', e=>{ if(on && !isFs() && !inApp() && e.isTrusted) goFs(); }, true);   // 물리 키(십자키가 키보드로 오는 기기)도 신뢰된 제스처
+  if(location.search.indexOf('pad=1')>=0 || (function(){ try{ return localStorage.getItem('bp_pad')==='1'; }catch(e){ return false; } })()){
+    try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){} }
   function pev(type,t,down){ const init={bubbles:true,cancelable:true,composed:true,clientX:cx,clientY:cy,screenX:cx,screenY:cy,button:0,buttons:down?1:0,pointerId:1,pointerType:'touch',isPrimary:true,width:12,height:12,pressure:down?0.6:0};
     let ev; try{ ev=new PointerEvent(type,init); }catch(e){ ev=new MouseEvent(type.replace('pointer','mouse'),init); } t.dispatchEvent(ev); }
   function under(){ return document.elementFromPoint(Math.max(0,Math.min(innerWidth-1,cx)), Math.max(0,Math.min(innerHeight-1,cy))); }
@@ -10714,6 +10728,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-65</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-66</div>
 </body>
 </html>
