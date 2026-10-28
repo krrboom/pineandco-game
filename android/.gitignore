@@ -1,0 +1,6 @@
+*.apk
+*.p12
+*.jks
+build/
+.gradle/
+local.properties

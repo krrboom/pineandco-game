@@ -10648,7 +10648,8 @@ function hhClose(){
     if(!raf) raf=setInterval(()=>loop(performance.now()),16); }   // rAF 대신 타이머: 화면 프레임이 잠깐 멈춰도 입력은 산다
   function place(){ if(cur) cur.style.transform='translate('+cx+'px,'+cy+'px)'; }
   /* 전체화면: PWA(홈 화면 아이콘)로 열었으면 이미 주소창이 없고, 아니면 버튼/첫 키 입력으로 requestFullscreen */
-  function inApp(){ try{ return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone===true; }catch(e){ return false; } }
+  const NATIVE_APP=/PineAndCoApp/.test(navigator.userAgent);   // 안드로이드 래퍼 앱(android/): 패드 버튼을 키보드 키로 보내온다
+  function inApp(){ if(NATIVE_APP) return true; try{ return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || navigator.standalone===true; }catch(e){ return false; } }
   function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function goFs(){ try{ const el=document.documentElement; const p=el.requestFullscreen ? el.requestFullscreen({navigationUI:'hide'}) : (el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
   let fsBtn=null;
@@ -10679,7 +10680,7 @@ function hhClose(){
   function pickStep(d){ const c=pkSlots[pkIdx]; let i=c?CHARS.indexOf(c):-1; i+=d; if(i<-1) i=CHARS.length-1; if(i>=CHARS.length) i=-1; pkSlots[pkIdx]=i<0?'':CHARS[i]; drawPick(); }
   function closePick(ok){ if(ok&&pkInput){ pkInput.value=pkSlots.join('').trim(); } pick.classList.remove('show'); pkInput=null; }
   /* 입력 읽기 */
-  function readPad(){ const out={u:0,d:0,l:0,r:0,a:0,b:0,any:false}; const pads=navigator.getGamepads?navigator.getGamepads():[];
+  function readPad(){ const out={u:0,d:0,l:0,r:0,a:0,b:0,any:false}; if(NATIVE_APP) return out; const pads=navigator.getGamepads?navigator.getGamepads():[];
     for(const gp of pads){ if(!gp) continue; const B=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed); const ax=gp.axes[0]||0, ay=gp.axes[1]||0;
       if(B(12)||ay<-0.5) out.u=1; if(B(13)||ay>0.5) out.d=1; if(B(14)||ax<-0.5) out.l=1; if(B(15)||ax>0.5) out.r=1;
       if(B(0)||B(2)||B(3)||B(9)) out.a=1; if(B(1)||B(8)) out.b=1;
@@ -10749,6 +10750,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-67</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-68</div>
 </body>
 </html>
