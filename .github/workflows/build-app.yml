@@ -37,7 +37,7 @@ jobs:
           KS_PASS: ${{ secrets.KS_PASS }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASS: ${{ secrets.KEY_PASS }}
-        run: gradle assembleRelease --no-daemon --warning-mode=none
+        run: gradle assembleRelease --no-daemon --warning-mode=none --stacktrace
       - run: cp app/build/outputs/apk/release/app-release.apk pineandco.apk && ls -l pineandco.apk
       - uses: softprops/action-gh-release@v2
         with:
