@@ -10615,7 +10615,9 @@ function hhClose(){
   /* 글자판 */
   const CHARS='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789&';
   let pick=null, pkSlots=[], pkIdx=0, pkInput=null;
+  let graceUntil=0;   // 켜진 직후 B 무시 (기기가 버튼을 '눌림'으로 보고하는 채로 부팅되는 경우)
   function enable(){ if(on) return; on=true; document.body.classList.add('padmode');
+    try{ const g0=readPad(); aWas=!!g0.a; bWas=!!g0.b; }catch(e){} graceUntil=performance.now()+1500;
     if(!cur){ cur=document.createElement('div'); cur.id='padCursor'; cur.innerHTML='<i></i>'; document.body.appendChild(cur); }
     cx=innerWidth/2; cy=innerHeight/2; place(); try{ localStorage.setItem('bp_pad','1'); }catch(e){}
     try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(()=>{}); }catch(e){}
@@ -10663,7 +10665,7 @@ function hhClose(){
       cx=Math.max(2,Math.min(innerWidth-2,nx)); cy=Math.max(2,Math.min(innerHeight-2,ny)); place();
       { const mt=heldT||under(); if(mt&&mt.tagName==='CANVAS') pev('pointermove',mt,!!heldT); else if(heldT) pev('pointermove',heldT,true); } }   // 캔버스 위에서는 누르지 않아도 움직임을 넘긴다(팁 캐치·테이블 러시)
     else moveT=0;
-    if(a&&!aWas) press(); if(!a&&aWas) release(); if(b&&!bWas) back();
+    if(a&&!aWas) press(); if(!a&&aWas) release(); if(b&&!bWas&&performance.now()>graceUntil) back();
     aWas=a; bWas=b; }
   /* 키보드(컴퓨터 테스트용 + 십자키를 키로 보내는 기기) */
   const KEYS={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',Enter:'a',' ':'a',z:'a',Z:'a',Escape:'b',Backspace:'b',x:'b',X:'b'};
@@ -10672,7 +10674,8 @@ function hhClose(){
   addEventListener('keyup',e=>{ const k=KEYS[e.key]; if(k){ key[k]=0; } },true);
   addEventListener('gamepadconnected',()=>{ if(hhOn()) enable(); });
   /* ?pad=1 → 해피아워를 바로 열고 켠다. 이전에 켠 기기(localStorage)는 해피아워를 열 때 자동 */
-  function boot(){ try{ if(location.search.indexOf('pad=1')>=0){ if(window.hhOpen) hhOpen(); enable(); }
+  function boot(){ try{ if(location.search.indexOf('pad=1')>=0){ if(window.hhOpen) hhOpen(); enable();
+      let tries=0; const re=setInterval(()=>{ tries++; if(hhOn()||tries>15){ clearInterval(re); return; } try{ if(window.hhOpen) hhOpen(); }catch(e){} }, 400); }
     else if(localStorage.getItem('bp_pad')==='1'){ const iv=setInterval(()=>{ if(hhOn()){ enable(); clearInterval(iv); } },500); } }catch(e){} }
   if(document.readyState==='complete') setTimeout(boot,300); else addEventListener('load',()=>setTimeout(boot,300));
   window.padMode={enable, isOn:()=>on, dbg:()=>({key:Object.assign({},key), cx, cy, held:!!heldT, on, moveT})};
@@ -10710,6 +10713,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-63</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-64</div>
 </body>
 </html>
