@@ -59,6 +59,17 @@
     return out;
   }
   var rules = null, sheet = null, arRules = [], gapRules = [];
+  /* ?compat=1 시험 모드(최신 크롬): 크롬 78처럼 보이게 원본 <style>에서 그 브라우저가 못 읽는 선언을 실제로 지운다.
+     그래야 보정이 빠뜨린 선언이 최신 크롬에서 몰래 살아남지 않고 눈에 보인다. (실제 옛 브라우저에서는 이미 버려져 있어 할 일 없음) */
+  var stripped = false;
+  function stripForTest() {
+    if (stripped || !(force && supports)) return; stripped = true;
+    var st = document.getElementsByTagName('style');
+    for (var i = 0; i < st.length; i++) { if (st[i].id === 'compat78') continue;
+      st[i].textContent = st[i].textContent.replace(/([a-z-]+)\s*:\s*([^;{}]*?)(;|(?=\}))/g, function (m, p, v, end) {
+        if (/\b(clamp|min|max)\(/.test(v) || /\bd(vh|vw)\b/.test(v) || p === 'inset' || p === 'aspect-ratio' || p === 'gap' || p === 'row-gap' || p === 'column-gap') return end === ';' ? '' : '';
+        return m; }); }
+  }
   function mediaOK(list) { for (var i = 0; i < list.length; i++) { var q = list[i]; if (q === '__supports__') return false; try { if (!matchMedia(q).matches) return false; } catch (e) { return false; } } return true; }
   function pxOf(v, ctx) {
     var nv = v.replace(/(clamp|min|max)\([^;]*?\)(?=(\s|$|\)))/g, function (m) { return Math.round(evalExpr(balanced(m), ctx) * 100) / 100 + 'px'; });
@@ -67,7 +78,7 @@
   }
   function build() {
     var ctx = { w: window.innerWidth, h: window.innerHeight };
-    if (!rules) { var css = ''; var st = document.getElementsByTagName('style'); for (var i = 0; i < st.length; i++) css += st[i].textContent + '\n'; rules = parseCSS(css); }
+    if (!rules) { var css = ''; var st = document.getElementsByTagName('style'); for (var i = 0; i < st.length; i++) css += st[i].textContent + '\n'; rules = parseCSS(css); stripForTest(); }
     var out = []; arRules = []; gapRules = [];
     rules.forEach(function (r) {
       if (!mediaOK(r.media)) return;
@@ -87,8 +98,9 @@
     var els = document.querySelectorAll('[style*="clamp("],[style*="min("],[style*="max("]');
     for (var e = 0; e < els.length; e++) { var el = els[e], raw = el.getAttribute('style') || ''; if (el.__c78 === raw) continue; el.__c78 = raw;
       raw.split(';').forEach(function (d) { var k = d.indexOf(':'); if (k < 0) return; var p = d.slice(0, k).trim(), v = d.slice(k + 1).trim(); if (!FN.test(v) || /var\(/.test(v)) return;
-        try { var nv = pxOf(v, ctx); if (!FN.test(nv)) el.style.setProperty(p, nv); } catch (x) {} }); }
+        try { var nv = pxOf(v, ctx); if (!FN.test(nv)) { if (force && supports) el.style.removeProperty(p); el.style.setProperty(p, nv); } } catch (x) {} }); }
     applyElements();
+    try { if (window.__fitTitle) window.__fitTitle(); } catch (e) {}   // 크기가 바뀌었으니 시작화면1 zoom 다시
   }
   /* aspect-ratio → 요소 높이, flex gap → 자식 margin (DOM 이 바뀔 때마다 다시) */
   function applyElements() {

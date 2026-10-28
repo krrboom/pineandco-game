@@ -1112,6 +1112,22 @@
   body.padmode #happyHour .screen::-webkit-scrollbar{ display:none; }
   body.padmode #happyHour #hh_howto{ overflow-y:auto; }
   @media (max-height:480px){
+    /* 시작화면1을 정사각 손잡이 화면에 통째로 */
+    body.padmode #titleScreen{ padding:6px 8px 4px; gap:4px; justify-content:flex-start; }
+    body.padmode #titleScreen .title-logo{ width:38vw; max-width:200px; }
+    body.padmode #titleScreen .about-cue, body.padmode #titleScreen .spotlight, body.padmode .ac-bubble{ display:none; }
+    body.padmode #titleScreen .title-sub-img{ width:30vw; max-width:150px; margin-top:-2px; }
+    body.padmode #titleScreen .title-art{ margin:0; }
+    body.padmode #titleScreen .title-art img{ width:46vh; max-width:60vw; }
+    body.padmode #titleScreen .tagline{ width:34vw; max-width:170px; }
+    body.padmode #titleScreen .btn-row{ gap:14px; }
+    body.padmode #titleScreen .imgbtn{ gap:2px; }
+    body.padmode #titleScreen .imgbtn .cap{ width:22vw; max-width:110px; }
+    body.padmode #titleScreen .imgbtn .btnimg{ width:27vw; max-width:140px; }
+    body.padmode #titleScreen #bookRow{ gap:0; margin-top:0; padding-bottom:0; }
+    body.padmode #titleScreen #bookLine{ width:40vw; max-width:200px; }
+    body.padmode #titleScreen #bookBtn img{ width:25vw; max-width:130px; }
+    body.padmode #cricketBtn{ width:32px; height:32px; left:50px; bottom:6px; }
     body.padmode #happyHour .screen{ padding:12px 10px 10px; gap:8px; }
     body.padmode #happyHour #hh_gameLogo{ max-height:40px; margin-top:2px; }
     body.padmode #happyHour #hh_howto{ gap:8px; padding:10px; justify-content:flex-start; }
@@ -7377,14 +7393,14 @@ addEventListener('keydown', function(e){
 
   <div id="hh_title" class="screen">
     <canvas id="hh_decoCv"></canvas>
-    <img class="tdrop" id="hh_tMain" src="assets/bp_t1_main.webp" onerror="this.onerror=null;this.src='assets/bp_t1_main.png'" alt="BARTENDER'S HAPPY HOUR" style="width:min(340px,86vw)">
-    <img class="tdrop" id="hh_tHandle" src="assets/bp_t2_handle.webp" onerror="this.onerror=null;this.src='assets/bp_t2_handle.png'" alt="CAN YOU HANDLE THE BAR?" style="width:min(300px,78vw)">
-    <img class="tdrop" id="hh_tBest" src="assets/bp_t3_best.webp" onerror="this.onerror=null;this.src='assets/bp_t3_best.png'" alt="BE THE BEST BARTENDER" style="width:min(250px,64vw)">
+    <img class="tdrop" id="hh_tMain" src="assets/bp_t1_main.webp" onerror="this.onerror=null;this.src='assets/bp_t1_main.png'" alt="BARTENDER'S HAPPY HOUR" style="width:340px;width:min(340px,86vw)">
+    <img class="tdrop" id="hh_tHandle" src="assets/bp_t2_handle.webp" onerror="this.onerror=null;this.src='assets/bp_t2_handle.png'" alt="CAN YOU HANDLE THE BAR?" style="width:300px;width:min(300px,78vw)">
+    <img class="tdrop" id="hh_tBest" src="assets/bp_t3_best.webp" onerror="this.onerror=null;this.src='assets/bp_t3_best.png'" alt="BE THE BEST BARTENDER" style="width:250px;width:min(250px,64vw)">
     <div id="hh_titleBtns">
       <button class="btn" id="hh_rankBtn">🏆 RANKING</button>
       <button class="btn ghost" id="hh_setBtn">⚙ SETTINGS</button>
-      <img id="hh_rankImg" class="imgbtn" alt="RANKING" style="width:min(168px,44vw)">
-      <img id="hh_setImg" class="imgbtn" alt="SETTINGS" style="width:min(168px,44vw)">
+      <img id="hh_rankImg" class="imgbtn" alt="RANKING" style="width:168px;width:min(168px,44vw)">
+      <img id="hh_setImg" class="imgbtn" alt="SETTINGS" style="width:168px;width:min(168px,44vw)">
     </div>
     <div id="hh_titleGames">
       <img id="hh_pickSub2" src="assets/records_ribbon.webp" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src='assets/records_ribbon.png'" alt="SET YOUR RECORDS!">
@@ -7453,7 +7469,7 @@ addEventListener('keydown', function(e){
   </div>
 
   <div id="hh_final" class="screen hidden">
-    <h1 style="font-size:clamp(16px,5vw,26px)">RESULTS</h1>
+    <h1 style="font-size:24px;font-size:clamp(16px,5vw,26px)">RESULTS</h1>
     <div class="rank" id="hh_rankList"></div>
     <button class="btn amber" id="hh_againBtn">PLAY AGAIN</button>
     <button class="btn ghost" id="hh_homeBtn">HOME</button>
@@ -8301,8 +8317,8 @@ function hhClose(){
     fpLoad(); clLoad();
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
-      +'<button class="btn amber" id="hh_clTap" style="width:min(190px,44vw);height:70px;font-size:15px">RUN!</button>'
-      +'<button class="btn" id="hh_clGo" style="width:min(150px,34vw);height:70px;font-size:12px">🍾 HOLD</button></div>';
+      +'<button class="btn amber" id="hh_clTap" style="width:190px;width:min(190px,44vw);height:70px;font-size:15px">RUN!</button>'
+      +'<button class="btn" id="hh_clGo" style="width:150px;width:min(150px,34vw);height:70px;font-size:12px">🍾 HOLD</button></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const ARM=1300, TRACK=2200, GY=402, RX=110, FRAMES=['run1','run2','run3','run4','run5'], PXM=40, GRV=700, RH=164, VSQ=0.85;
     let bgOff=0, prevCam=null, flyR=1;
@@ -8744,8 +8760,8 @@ function hhClose(){
     fpLoad(); icLoad();
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>'
       +'<div style="display:flex;gap:10px;justify-content:center">'
-      +'<button class="btn amber" id="hh_icTap" style="width:min(200px,46vw);height:70px;font-size:16px">TAP!</button>'
-      +'<button class="btn" id="hh_icDone" style="width:min(140px,32vw);height:70px;font-size:13px">DONE!</button></div>';
+      +'<button class="btn amber" id="hh_icTap" style="width:200px;width:min(200px,46vw);height:70px;font-size:16px">TAP!</button>'
+      +'<button class="btn" id="hh_icDone" style="width:140px;width:min(140px,32vw);height:70px;font-size:13px">DONE!</button></div>';
     const cv=$('fpcv'), ctx=cv.getContext('2d');
     const ICEX=185, ICEY=392, ZONE=88, TOTAL=15000, ARM=1200, DECAY=38, TAPUP=5.25; // 게이지 40% 완화
     let gauge=0, count=0, stunUntil=0, strikeT=-1e9, brokeT=-1e9, popT=0, finished=false, ended=false;
@@ -8997,7 +9013,7 @@ function hhClose(){
   function engQuickTab(done){
     fpLoad(); qtLoad();
     stage.innerHTML='<canvas id="hh_fpcv" width="400" height="480"></canvas>'
-      +'<div id="hh_qtPad" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:min(290px,78vw)"></div>';
+      +'<div id="hh_qtPad" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:290px;width:min(290px,78vw)"></div>';
     try{ $('game').classList.add('qt-pad'); }catch(e){}   // 키패드 자리를 지키는 배치로 전환
     const cv=$('fpcv'), ctx=cv.getContext('2d'), pad=$('qtPad');
     const CUSTS=shuffle(['c1','c2','c3','c4','c5','c6']).concat(['c7']); // 마지막은 진상 손님
@@ -9150,7 +9166,7 @@ function hhClose(){
     const SM_HI=11, SM_LO=5.5, SM_DROP=0.45, SM_MIN=25;   // SM_MIN은 센서 잡음만 걸러내는 최소 간격
     let smArmed=true, smPeak=0, smLX=0, smLY=0, smLZ=0;   // smL*: 마지막으로 센 순간의 방향
     let smGX=0, smGY=0, smGZ=0, smGot=false;              // 중력 성분 추정 (센서가 중력 포함으로 줄 때만)
-    function onMotion(e){ gotMotion=true; let x=null,y=0,z=0;
+    function onMotion(e){ let x=null,y=0,z=0;
       const a=e.acceleration;
       if(a&&a.x!=null){ x=a.x||0; y=a.y||0; z=a.z||0; }
       else { const g=e.accelerationIncludingGravity; if(g&&g.x!=null){
@@ -9158,7 +9174,7 @@ function hhClose(){
         if(!smGot){ smGX=g.x||0; smGY=g.y||0; smGZ=g.z||0; smGot=true; }
         else { smGX+=((g.x||0)-smGX)*0.12; smGY+=((g.y||0)-smGY)*0.12; smGZ+=((g.z||0)-smGZ)*0.12; }
         x=(g.x||0)-smGX; y=(g.y||0)-smGY; z=(g.z||0)-smGZ; } }
-      if(x==null) return;
+      if(x==null) return; gotMotion=true;
       const mag=Math.hypot(x,y,z);
       if(mag>smPeak) smPeak=mag;
       // 다음 한 번을 받을 준비가 되는 두 가지 경우. 어느 쪽도 시간 제한이 아니므로 상한이 없다.
@@ -9168,11 +9184,15 @@ function hhClose(){
       if(mag<Math.max(SM_LO,smPeak*SM_DROP)) smArmed=true;
       if(mag>SM_HI&&smArmed&&now()-lastShakeT>SM_MIN){
         smArmed=false; smPeak=mag; smLX=x/mag; smLY=y/mag; smLZ=z/mag; addShake(); } }
+    let mash=false;   // 손잡이 기기: 센서가 없으면 A 연타로
     function begin(){ btn.style.display='none'; permMsg=''; ac(); loadShaker(); state='ice'; stT=now();
       playFile('assets/sfx_glass_ice.mp3',1);
-      try{ window.addEventListener('devicemotion',onMotion); }catch(e){} }
+      try{ window.addEventListener('devicemotion',onMotion); }catch(e){}
+      if(document.body.classList.contains('padmode')){ mash=true;   // 손잡이 기기: A 연타도 1회로 센다(센서가 있으면 흔들기도 같이)
+        cv.addEventListener('pointerdown',ev=>{ if(mash){ ev.preventDefault(); addShake(); } }); } }
     // iOS는 사용자 제스처(click) 안에서 requestPermission을 불러야 수락 팝업이 뜸
     btn.addEventListener('click',e=>{ e.preventDefault(); if(state!=='title') return; ac();
+      if(document.body.classList.contains('padmode')){ begin(); return; }   // 손잡이 기기: 권한 팝업 없이 바로 시작(센서 없으면 1.5초 뒤 A 연타 모드)
       try{ if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
         DeviceMotionEvent.requestPermission().then(res=>{
           if(res==='granted') begin();
@@ -9233,8 +9253,8 @@ function hhClose(){
         if(permMsg){ ctx.font='8px "Press Start 2P"';
           ctx.fillStyle='#000'; ctx.fillText(permMsg,201,411); ctx.fillStyle='#ff7a6a'; ctx.fillText(permMsg,200,410); } }
       if(state==='play'&&!gotMotion&&t-playT0>2500){ ctx.font='8px "Press Start 2P"';
-        ctx.fillStyle='#000'; ctx.fillText('NO MOTION? CHECK SENSOR PERMISSION',201,411);
-        ctx.fillStyle='#ff7a6a'; ctx.fillText('NO MOTION? CHECK SENSOR PERMISSION',200,410); }
+        ctx.fillStyle='#000'; ctx.fillText((mash?'MASH THE A BUTTON!':'NO MOTION? CHECK SENSOR PERMISSION'),201,411);
+        ctx.fillStyle='#ff7a6a'; ctx.fillText((mash?'MASH THE A BUTTON!':'NO MOTION? CHECK SENSOR PERMISSION'),200,410); }
       if(state==='hold'){ ctx.font='16px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('HOLD YOUR PHONE',203,133); ctx.fillText('WITH BOTH HANDS!',203,163);
         ctx.fillStyle='#ffd977'; ctx.fillText('HOLD YOUR PHONE',200,130); ctx.fillText('WITH BOTH HANDS!',200,160); }
@@ -10712,6 +10732,7 @@ function hhClose(){
     if(cs.display==="none"||el.classList.contains("hidden")) return;
     el.style.zoom="";                                   // 원래 크기로 되돌리고 다시 잰다
     var hNeed=el.scrollHeight, hHave=el.clientHeight;
+    if(document.body.classList.contains('padmode')) hHave=Math.min(hHave, window.innerHeight);   // 손잡이 기기: 요소가 화면보다 길어도 화면 높이에 맞춘다
     var wNeed=el.scrollWidth,  wHave=el.clientWidth;
     if(!hHave||!wHave) return;
     var z=Math.min(hHave/Math.max(1,hNeed), wHave/Math.max(1,wNeed), 1);
@@ -10728,6 +10749,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-66</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-67</div>
 </body>
 </html>
