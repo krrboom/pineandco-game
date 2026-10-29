@@ -1093,6 +1093,19 @@
   /* ── 손잡이(게임패드) 모드: 커서·글자판·작은 정사각 화면 보정 ── */
   #padCursor{ position:fixed; left:0; top:0; z-index:99999; pointer-events:none; width:0; height:0; display:none; will-change:transform; }
   body.padmode #padCursor{ display:block; }
+  body.padmode #padCursor.off{ display:none; }   /* 선택 화면에서는 커서 대신 포커스 테두리 */
+  body.padmode .padfocus{ outline:3px solid #ffd24a !important; outline-offset:3px; box-shadow:0 0 0 7px rgba(255,210,74,.22) !important; border-radius:6px; position:relative; z-index:5; }
+  body.padmode #hh_howto.padfocus, body.padmode #evtModal.padfocus{ outline:none !important; box-shadow:none !important; }
+  body.padmode .padfocus.paddown{ transform:translateY(2px) scale(.98); }
+  /* 메뉴: 칵테일·음식 카드 2개씩 한 줄에 (붐 10/29) */
+  body.padmode #menuList{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-gap:8px; align-items:start; width:100%; }
+  body.padmode #menuList .ck-card, body.padmode #menuList .fd-card{ min-width:0; overflow:hidden; }
+  body.padmode #menuList .menu-cat{ grid-column:1 / -1; margin:10px 0 2px; }
+  body.padmode #menuList .ck-card, body.padmode #menuList .fd-card{ margin-bottom:0; padding:8px 9px; }
+  body.padmode #menuList .ck-quote{ display:none; }
+  body.padmode #menuList .ck-ing{ margin-top:5px; font-size:7.5px; line-height:1.5; }
+  body.padmode #menuList .ck-name{ font-size:10px; }
+  body.padmode #menuScreen .scrollbox{ max-height:none; flex:1 1 auto; min-height:0; }
   #padFs{ display:none; position:fixed; top:6px; right:6px; z-index:99998; font-family:'Press Start 2P',monospace; font-size:9px; letter-spacing:.5px; color:#1a130a;
     background:#e6b450; border:2px solid #000; box-shadow:2px 2px 0 #000; padding:8px 10px; cursor:pointer; touch-action:manipulation; }
   #padFs.show{ display:block; }
@@ -1114,7 +1127,9 @@
   @media (max-height:480px){
     /* 시작화면1을 정사각 손잡이 화면에 통째로 */
     body.padmode #titleScreen{ padding:6px 8px 4px; gap:4px; justify-content:flex-start; }
-    body.padmode #titleScreen .title-logo{ width:38vw; max-width:200px; }
+    body.padmode #titleScreen .title-logo{ width:60vw; max-width:300px; }   /* 붐: 더 크게 */
+    body.padmode #titleScreen #bookRow{ display:none; }                        /* 붐: 손잡이에서는 예약 줄 없음 */
+    body.padmode #titleScreen .title-art img#cricketHop{ width:22px; padding:4px; }             /* max() 못 읽는 크롬 78에서 원본 크기로 커지던 것 */
     body.padmode #titleScreen .about-cue, body.padmode #titleScreen .spotlight, body.padmode .ac-bubble{ display:none; }
     body.padmode #titleScreen .title-sub-img{ width:30vw; max-width:150px; margin-top:-2px; }
     body.padmode #titleScreen .title-art{ margin:0; }
@@ -10670,6 +10685,8 @@ function hhClose(){
     const now=under(); if(now&&(now===t||t.contains(now)||now.contains(t))){ try{ t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true,clientX:cx,clientY:cy,button:0})); }catch(e){} } }
   function back(){ if(pick&&pick.classList.contains('show')){ closePick(); return; }
     const ck=document.getElementById('ckModal'); if(ck&&!ck.classList.contains('hidden')){ try{ closeCkModal(); }catch(e){} return; }
+    const ev=document.getElementById('evtModal'); if(ev&&!ev.classList.contains('hidden')){ try{ evtTap(); }catch(e){} return; }
+    if(!hhOn()){ const ms=document.getElementById('menuScreen'); if(ms&&!ms.classList.contains('hidden')){ try{ menuBack(); }catch(e){} } return; }   // 시작화면1 계열: 메뉴면 뒤로, 타이틀이면 없음
     for(const id of ['hh_backBtn','hh_rrDone','hh_againBtn','hh_rankBack','hh_setBack']){ const el=document.getElementById(id); if(el&&!el.classList.contains('hidden')&&el.offsetParent){ el.click(); return; } } }   // 화면마다 그 화면의 ✕/OK/뒤로
   function scrollable(el){ while(el&&el!==document.body){ const cs=getComputedStyle(el); if(/(auto|scroll)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight+2) return el; el=el.parentElement; } return null; }
   /* 글자판 */
@@ -10686,6 +10703,59 @@ function hhClose(){
       if(B(0)||B(2)||B(3)||B(9)) out.a=1; if(B(1)||B(8)) out.b=1;
       if(out.u||out.d||out.l||out.r||out.a||out.b) out.any=true; }
     return out; }
+  /* ===== 선택 화면: 커서 대신 항목 포커스 (십자키 이동 · A 선택 · B 뒤로). 게임 플레이 중에만 커서. ===== */
+  let curVis=true, focusEl=null, focusRoot=null; const navRep={u:0,d:0,l:0,r:0}; const lastFocus=new WeakMap();
+  const $id=id=>document.getElementById(id);
+  const SEL='button, a[href], [onclick], input:not([type=range]), .gcard, .ck-card, .fd-card';
+  const SKIP='#joeMouth, #cricketHop, .pineco-hotspot, #padFs, [aria-hidden="true"]';
+  const SITE_SCREENS=['titleScreen','menuScreen','selectScreen','worldScreen','introScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen'];
+  function rect(el){ const r=el.getBoundingClientRect(); return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2}; }
+  function vis(el){ if(!el||!el.isConnected) return false; const r=el.getBoundingClientRect(); if(r.width<6||r.height<6) return false;
+    const cs=getComputedStyle(el); return cs.visibility!=='hidden'&&cs.display!=='none'&&cs.pointerEvents!=='none'&&!el.closest('.hidden'); }
+  function gameActive(){ const g=$id('hh_game'), ht=$id('hh_howto'); return hhOn()&&!!g&&!g.classList.contains('hidden')&&(!ht||ht.classList.contains('hidden')); }
+  function layer(){ const ck=$id('ckModal'); if(ck&&!ck.classList.contains('hidden')) return ck;
+    const ev=$id('evtModal'); if(ev&&!ev.classList.contains('hidden')) return ev;
+    if(hhOn()){ const ht=$id('hh_howto'); if(ht&&!ht.classList.contains('hidden')) return ht;
+      return document.querySelector('#hh_wrap > .screen:not(.hidden)')||$id('hh_wrap'); }
+    const ms=$id('menuScreen'), mi=$id('menuIntro'); if(ms&&!ms.classList.contains('hidden')&&mi&&!mi.classList.contains('hidden')) return mi;
+    for(const id of SITE_SCREENS){ const s=$id(id); if(s&&!s.classList.contains('hidden')) return s; } return document.body; }
+  function cands(root){ let list=[...root.querySelectorAll(SEL)]; if(root.matches(SEL)) list.unshift(root);
+    if(root.id==='hh_howto') return [root];
+    if(root.classList.contains('screen')){ if(hhOn()){ const bb=$id('hh_backBtn'); if(bb) list.push(bb); const sr=$id('hh_siteRow'); if(sr) list.push(...sr.querySelectorAll('button')); } else { const cb=$id('cricketBtn'); if(cb) list.push(cb); } }
+    list=list.filter(el=>vis(el)&&!el.matches(SKIP)&&!el.disabled);
+    list=list.filter(el=>!list.some(o=>o!==el&&el.contains(o)));   // 안에 더 작은 후보가 있으면 바깥은 뺀다
+    return [...new Set(list)]; }
+  function pickDefault(list,root){ if(root.id==='hh_title'&&!list.some(el=>el.matches('.gcard'))) return null;   // 인트로 중(카드 아직 안 뜸)에는 포커스 보류
+    const last=lastFocus.get(root); if(last&&list.includes(last)) return last;
+    for(const s of ['#letterSkip','.gcard','.ck-card','.fd-card','#hh_turnBtn','#hh_rrDone','#hh_againBtn','.btn-row .imgbtn']){ const f=list.find(el=>el.matches(s)); if(f) return f; }
+    return list[0]||null; }
+  function setFocus(el){ if(focusEl&&focusEl!==el) focusEl.classList.remove('padfocus','paddown'); focusEl=el; if(!el) return; el.classList.add('padfocus'); lastFocus.set(focusRoot,el);
+    try{ el.scrollIntoView({block:'nearest',inline:'nearest'}); }catch(e){ try{ el.scrollIntoView(false); }catch(_){} } }
+  function scrollLayer(dir){ const dy=dir==='d'?90:dir==='u'?-90:0; if(!dy) return;
+    let sc=(focusEl&&scrollable(focusEl))||null;
+    if(!sc&&focusRoot){ for(const el of [focusRoot,...focusRoot.querySelectorAll('.letter,.scrollbox,.sbwrap,.screen,#hh_howto')]){ const cs=getComputedStyle(el); if(/(auto|scroll)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight+2){ sc=el; break; } } }
+    if(sc) sc.scrollTop+=dy; }
+  function move(dir){ const root=focusRoot, list=cands(root); if(!focusEl||!list.includes(focusEl)){ setFocus(pickDefault(list,root)); return; }
+    const a=rect(focusEl); let best=null, bs=1e9;
+    for(const el of list){ if(el===focusEl) continue; const b=rect(el); let p,s;
+      if(dir==='u'){ if(b.cy>=a.cy-2) continue; p=a.top-b.bottom; s=Math.abs(b.cx-a.cx); }
+      else if(dir==='d'){ if(b.cy<=a.cy+2) continue; p=b.top-a.bottom; s=Math.abs(b.cx-a.cx); }
+      else if(dir==='l'){ if(b.cx>=a.cx-2) continue; p=a.left-b.right; s=Math.abs(b.cy-a.cy); }
+      else { if(b.cx<=a.cx+2) continue; p=b.left-a.right; s=Math.abs(b.cy-a.cy); }
+      if(p<0) p=0; const sc=p+s*2; if(sc<bs){ bs=sc; best=el; } }
+    if(best) setFocus(best); else scrollLayer(dir); }
+  function fpress(){ const t=focusEl; if(!t||!vis(t)) return; if(t.tagName==='INPUT'&&t.id==='hh_rrName'){ openPick(t); return; }
+    const r=rect(t); cx=r.cx; cy=r.cy; heldT=t; t.classList.add('paddown'); pev('pointerdown',t,true); }
+  function frelease(){ const t=heldT; heldT=null; if(!t) return; t.classList.remove('paddown'); pev('pointerup',t,false);
+    if(t.id!=='hh_howto') try{ t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,composed:true,clientX:cx,clientY:cy,button:0})); }catch(e){} }
+  function cursorVis(v){ if(curVis===v) return; curVis=v; if(cur) cur.classList.toggle('off',!v);
+    if(v){ cx=innerWidth/2; cy=innerHeight/2; place(); if(focusEl){ focusEl.classList.remove('padfocus','paddown'); focusEl=null; } focusRoot=null; } }
+  function focusTick(u,d,l,r,a,b){ const now=performance.now(); const root=layer();
+    if(root!==focusRoot){ focusRoot=root; if(focusEl) focusEl.classList.remove('padfocus','paddown'); focusEl=null; }
+    if(!focusEl||!vis(focusEl)){ const def=pickDefault(cands(root),root); if(def) setFocus(def); }
+    const dirs={u,d,l,r}; for(const k in dirs){ if(dirs[k]){ if(!dirPrev[k]){ move(k); navRep[k]=now+380; } else if(now>navRep[k]){ move(k); navRep[k]=now+140; } } dirPrev[k]=dirs[k]?1:0; }
+    if(a&&!aWas) fpress(); if(!a&&aWas) frelease(); if(b&&!bWas&&now>graceUntil) back();
+    aWas=a; bWas=b; }
   function loop(ts){ const dt=Math.min(0.05,(ts-lastT)/1000||0.016); lastT=ts;
     const gp=readPad(); if(gp.any&&!on&&hhOn()) enable(); if(!on) return;
     const u=key.u||gp.u, d=key.d||gp.d, l=key.l||gp.l, r=key.r||gp.r, a=!!(key.a||gp.a), b=!!(key.b||gp.b);
@@ -10693,6 +10763,8 @@ function hhClose(){
       if(u&&!dirPrev.u) pickStep(1); if(d&&!dirPrev.d) pickStep(-1); if(l&&!dirPrev.l){ pkIdx=Math.max(0,pkIdx-1); drawPick(); } if(r&&!dirPrev.r){ pkIdx=Math.min(7,pkIdx+1); drawPick(); }
       if(a&&!aWas) closePick(true); if(b&&!bWas) closePick(false);
       dirPrev.u=u; dirPrev.d=d; dirPrev.l=l; dirPrev.r=r; aWas=a; bWas=b; return; }
+    if(!gameActive()){ cursorVis(false); focusTick(u,d,l,r,a,b); return; }   // 선택 화면: 커서 없이 항목 포커스
+    cursorVis(true);
     dirPrev.u=u; dirPrev.d=d; dirPrev.l=l; dirPrev.r=r;
     let dx=(r?1:0)-(l?1:0), dy=(d?1:0)-(u?1:0);
     if(dx||dy){ moveT+=dt; const sp=(230+Math.min(1,moveT/0.45)*300)*dt; const n=Math.hypot(dx,dy); const nx=cx+dx/n*sp, ny=cy+dy/n*sp;
@@ -10705,16 +10777,14 @@ function hhClose(){
     aWas=a; bWas=b; }
   /* 키보드(컴퓨터 테스트용 + 십자키를 키로 보내는 기기) */
   const KEYS={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r',Enter:'a',' ':'a',z:'a',Z:'a',Escape:'b',Backspace:'b',x:'b',X:'b'};
-  addEventListener('keydown',e=>{ const k=KEYS[e.key]; if(!k) return; if(!hhOn()) return; if(e.target&&e.target.tagName==='INPUT'&&!(pick&&pick.classList.contains('show'))) return;
+  addEventListener('keydown',e=>{ const k=KEYS[e.key]; if(!k) return; if(!on&&!hhOn()) return; if(e.target&&e.target.tagName==='INPUT'&&!(pick&&pick.classList.contains('show'))) return;
     if(!on){ if(k==='u'||k==='d'||k==='l'||k==='r') enable(); else return; } key[k]=1; e.preventDefault(); },true);
   addEventListener('keyup',e=>{ const k=KEYS[e.key]; if(k){ key[k]=0; } },true);
   addEventListener('gamepadconnected',()=>{ if(hhOn()) enable(); });
   /* ?pad=1 → 해피아워를 바로 열고 켠다. 이전에 켠 기기(localStorage)는 해피아워를 열 때 자동 */
-  function boot(){ try{ if(location.search.indexOf('pad=1')>=0){ if(window.hhOpen) hhOpen(); enable();
-      let tries=0; const re=setInterval(()=>{ tries++; if(hhOn()||tries>15){ clearInterval(re); return; } try{ if(window.hhOpen) hhOpen(); }catch(e){} }, 400); }
-    else if(localStorage.getItem('bp_pad')==='1'){ const iv=setInterval(()=>{ if(hhOn()){ enable(); clearInterval(iv); } },500); } }catch(e){} }
+  function boot(){ try{ if(location.search.indexOf('pad=1')>=0 || localStorage.getItem('bp_pad')==='1') enable(); }catch(e){} }   // 시작화면1(START/MENU/예약)부터. 해피아워는 START 로 (붐 10/29)
   if(document.readyState==='complete') setTimeout(boot,300); else addEventListener('load',()=>setTimeout(boot,300));
-  window.padMode={enable, isOn:()=>on, dbg:()=>({key:Object.assign({},key), cx, cy, held:!!heldT, on, moveT})};
+  window.padMode={enable, isOn:()=>on, focus:()=>focusEl?(focusEl.id||focusEl.className||focusEl.tagName):null, cursor:()=>curVis, layer:()=>focusRoot&&(focusRoot.id||focusRoot.className), dbg:()=>({key:Object.assign({},key), cx, cy, held:!!heldT, on, moveT})};
 })();
 (function(){ function go(){ try{ if(location.search.indexOf("hh=1")>=0 && window.hhOpen) hhOpen(); }catch(e){} }
   if(document.readyState==="complete") setTimeout(go,60); else addEventListener("load",function(){ setTimeout(go,60); });
@@ -10750,6 +10820,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-68</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-69</div>
 </body>
 </html>

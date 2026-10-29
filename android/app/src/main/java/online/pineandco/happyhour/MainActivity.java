@@ -101,6 +101,7 @@ public class MainActivity extends Activity {
         int c = e.getKeyCode();
         if (c == KeyEvent.KEYCODE_BACK) {   // 뒤로 키: 사이트의 B(Escape). 1.5초 안에 두 번이면 앱 종료
             if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) {
+                if (wv.canGoBack()) { wv.goBack(); return true; }   // 소개서·예약 등 다른 페이지면 이전 페이지로
                 long now = SystemClock.uptimeMillis();
                 if (now - lastBack < 1500) { finish(); return true; }
                 lastBack = now;
