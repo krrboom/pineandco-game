@@ -15,6 +15,11 @@
 <div class="box"><b>1) 시작화면2 실제 로딩</b><div id="bp">…</div></div>
 <div class="box"><b>2) 시작화면1 실제 로딩</b><div id="ix">…</div></div>
 <div class="box"><b>3) 파일별 시간</b><table id="tbl"></table></div>
+<div class="box"><b>4) 흔들기 센서 (devicemotion)</b><div id="mo">기다리는 중… 기기를 흔들어 보세요</div></div>
+<script>(function(){var n=0,peak=0,src="",last=0;function f(x){return x==null?"-":(+x).toFixed(1)}
+window.addEventListener("devicemotion",function(e){n++;var a=e.acceleration,g=e.accelerationIncludingGravity;var ok=a&&a.x!=null;var x=ok?a:(g||{});src=ok?"acceleration(중력 제외)":(g&&g.x!=null?"accelerationIncludingGravity(중력 포함)":"빈 이벤트(값 없음)");var m=Math.hypot(x.x||0,x.y||0,x.z||0);if(m>peak)peak=m;var t=Date.now();if(t-last<120)return;last=t;
+document.getElementById("mo").innerHTML=row("이벤트 수",n)+row("종류",src)+row("x / y / z",f(x.x)+" / "+f(x.y)+" / "+f(x.z))+row("현재 세기",m.toFixed(1))+row("최대 세기",peak.toFixed(1)+" (게임은 손잡이 7.5 / 폰 11 이상이면 1회)")+row("간격",e.interval!=null?e.interval+"ms":"-");});
+setTimeout(function(){if(!n)document.getElementById("mo").innerHTML=row("devicemotion","5초간 이벤트 없음 → 이 브라우저/기기에서 센서가 안 옵니다","bad")+row("DeviceMotionEvent",typeof DeviceMotionEvent)+row("보안 컨텍스트",window.isSecureContext?"https 예":"아니오",window.isSecureContext?"ok":"bad")},5000);})();</script>
 <button onclick="location.reload()">다시 측정</button>
 <script>
 var LOG=[];

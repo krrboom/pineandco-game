@@ -1093,7 +1093,9 @@
   /* ── 손잡이(게임패드) 모드: 커서·글자판·작은 정사각 화면 보정 ── */
   #padCursor{ position:fixed; left:0; top:0; z-index:99999; pointer-events:none; width:0; height:0; display:none; will-change:transform; }
   body.padmode #padCursor{ display:block; }
-  body.padmode #padCursor.off{ display:none; }   /* 선택 화면에서는 커서 대신 포커스 테두리 */
+  body.padmode #padCursor.off{ display:none; }
+  body.padmode #happyHour #hh_siteRow{ display:none !important; }   /* 손잡이: 하단 사이트 줄 숨김(B 가 뒤로) */
+  body.padmode #happyHour #hh_titleGames{ padding-bottom:12px; }   /* 선택 화면에서는 커서 대신 포커스 테두리 */
   body.padmode .padfocus{ outline:3px solid #ffd24a !important; outline-offset:3px; box-shadow:0 0 0 7px rgba(255,210,74,.22) !important; border-radius:6px; position:relative; z-index:5; }
   body.padmode #hh_howto.padfocus, body.padmode #evtModal.padfocus{ outline:none !important; box-shadow:none !important; }
   body.padmode .padfocus.paddown{ transform:translateY(2px) scale(.98); }
@@ -1104,7 +1106,10 @@
   body.padmode #menuList .ck-card, body.padmode #menuList .fd-card{ margin-bottom:0; padding:8px 9px; }
   body.padmode #menuList .ck-quote{ display:none; }
   body.padmode #menuList .ck-ing{ margin-top:5px; font-size:7.5px; line-height:1.5; }
-  body.padmode #menuList .ck-name{ font-size:10px; }
+  body.padmode #menuList .ck-name{ font-size:9.5px; white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25; letter-spacing:.5px; word-break:keep-all; }
+  body.padmode #menuList .ck-head{ flex-wrap:wrap; row-gap:3px; }
+  body.padmode #menuList .ck-card.ck-dual .ck-name{ font-size:9px; }
+  body.padmode #menuList .fd-name{ white-space:normal; overflow:visible; text-overflow:clip; }
   body.padmode #menuScreen .scrollbox{ max-height:none; flex:1 1 auto; min-height:0; }
   #padFs{ display:none; position:fixed; top:6px; right:6px; z-index:99998; font-family:'Press Start 2P',monospace; font-size:9px; letter-spacing:.5px; color:#1a130a;
     background:#e6b450; border:2px solid #000; box-shadow:2px 2px 0 #000; padding:8px 10px; cursor:pointer; touch-action:manipulation; }
@@ -1127,22 +1132,24 @@
   @media (max-height:480px){
     /* 시작화면1을 정사각 손잡이 화면에 통째로 */
     body.padmode #titleScreen{ padding:6px 8px 4px; gap:4px; justify-content:flex-start; }
-    body.padmode #titleScreen .title-logo{ width:60vw; max-width:300px; }   /* 붐: 더 크게 */
+    body.padmode #titleScreen .title-logo{ width:66vw; max-width:330px; }   /* 붐: 더 크게 */
     body.padmode #titleScreen #bookRow{ display:none; }                        /* 붐: 손잡이에서는 예약 줄 없음 */
     body.padmode #titleScreen .title-art img#cricketHop{ width:22px; padding:4px; }             /* max() 못 읽는 크롬 78에서 원본 크기로 커지던 것 */
     body.padmode #titleScreen .about-cue, body.padmode #titleScreen .spotlight, body.padmode .ac-bubble{ display:none; }
-    body.padmode #titleScreen .title-sub-img{ width:30vw; max-width:150px; margin-top:-2px; }
+    body.padmode #titleScreen .title-sub-img{ width:34vw; max-width:170px; margin-top:-2px; }
     body.padmode #titleScreen .title-art{ margin:0; }
-    body.padmode #titleScreen .title-art img{ width:46vh; max-width:60vw; }
-    body.padmode #titleScreen .tagline{ width:34vw; max-width:170px; }
+    body.padmode #titleScreen .title-art img{ width:51vh; max-width:64vw; }
+    body.padmode #titleScreen .tagline{ width:40vw; max-width:200px; }
     body.padmode #titleScreen .btn-row{ gap:14px; }
     body.padmode #titleScreen .imgbtn{ gap:2px; }
-    body.padmode #titleScreen .imgbtn .cap{ width:22vw; max-width:110px; }
-    body.padmode #titleScreen .imgbtn .btnimg{ width:27vw; max-width:140px; }
+    body.padmode #titleScreen .imgbtn .cap{ width:25vw; max-width:125px; }
+    body.padmode #titleScreen .imgbtn .btnimg{ width:31vw; max-width:160px; }
+    body.padmode #titleScreen .btn-row{ gap:18px; }
     body.padmode #titleScreen #bookRow{ gap:0; margin-top:0; padding-bottom:0; }
     body.padmode #titleScreen #bookLine{ width:40vw; max-width:200px; }
     body.padmode #titleScreen #bookBtn img{ width:25vw; max-width:130px; }
-    body.padmode #cricketBtn{ width:32px; height:32px; left:50px; bottom:6px; }
+    body.padmode #cricketBtn{ width:26px; height:26px; left:36px; bottom:4px; padding:3px; }   /* START 버튼과 안 겹치게 구석으로 작게 */
+    body.padmode #gearBtn{ left:6px; bottom:4px; font-size:14px; width:26px; height:26px; padding:0; line-height:26px; }
     body.padmode #happyHour .screen{ padding:12px 10px 10px; gap:8px; }
     body.padmode #happyHour #hh_gameLogo{ max-height:40px; margin-top:2px; }
     body.padmode #happyHour #hh_howto{ gap:8px; padding:10px; justify-content:flex-start; }
@@ -7301,7 +7308,7 @@ function resize(){ const size=Math.min(window.innerWidth,window.innerHeight)-16;
 addEventListener('resize', resize); resize();
 
 /* ===== 히든게임: Joe 입 클릭 → Joe's Dentist (iframe) ===== */
-function goCricket(){ try{ playSelect&&playSelect(); }catch(e){} location.href='https://cricketseoul.com'; }   // 크리켓 서울 (붐 지시 9/29: 도메인으로 바로)
+function goCricket(){ try{ playSelect&&playSelect(); }catch(e){} location.href='https://cricketseoul.com'+(document.body.classList.contains('padmode')?'/?pad=1':''); }   // 크리켓 서울 (붐 지시 9/29: 도메인으로 바로)
 /* 귀뚜라미 이스터에그: 어깨·머리 위 지점 사이를 무작위 방향으로 뛴다 (지점은 듀오 그림의 % 좌표) */
 (function(){
   const SPOTS=[[21,45.6],[43.8,41.2],[54.5,41],[81.3,42.3],[30.4,4.5],[70.5,1.1]];   // Pat 왼어깨·오른어깨, Joe 왼어깨·오른어깨, Pat 머리, Joe 머리 (title_duo.png 픽셀 실측)
@@ -9178,7 +9185,9 @@ function hhClose(){
     // 세게 흔들면 누구나 13초에 196회에서 멈췄다. 흔든 횟수가 아니라 시간 칸을 센 셈이었다.
     // 지금은 세기가 한 번 죽었다가(LO) 다시 살아날 때(HI) 한 번으로 센다. 상한이 없고,
     // 한 번 흔든 것이 여러 번으로 부풀지도 않는다.
-    const SM_HI=11, SM_LO=5.5, SM_DROP=0.45, SM_MIN=25;   // SM_MIN은 센서 잡음만 걸러내는 최소 간격
+    const SM_LO=5.5, SM_DROP=0.45, SM_MIN=25;   // SM_MIN은 센서 잡음만 걸러내는 최소 간격
+    const smHi=()=>document.body.classList.contains('padmode')?7.5:11;   // 손잡이 기기(무겁고 양손)는 더 작은 흔들림도 1회로
+    let smMaxAll=0, motionN=0;   // 화면 표시용: 받은 이벤트 수·최대 세기
     let smArmed=true, smPeak=0, smLX=0, smLY=0, smLZ=0;   // smL*: 마지막으로 센 순간의 방향
     let smGX=0, smGY=0, smGZ=0, smGot=false;              // 중력 성분 추정 (센서가 중력 포함으로 줄 때만)
     function onMotion(e){ let x=null,y=0,z=0;
@@ -9189,15 +9198,15 @@ function hhClose(){
         if(!smGot){ smGX=g.x||0; smGY=g.y||0; smGZ=g.z||0; smGot=true; }
         else { smGX+=((g.x||0)-smGX)*0.12; smGY+=((g.y||0)-smGY)*0.12; smGZ+=((g.z||0)-smGZ)*0.12; }
         x=(g.x||0)-smGX; y=(g.y||0)-smGY; z=(g.z||0)-smGZ; } }
-      if(x==null) return; gotMotion=true;
-      const mag=Math.hypot(x,y,z);
+      if(x==null) return; gotMotion=true; motionN++;
+      const mag=Math.hypot(x,y,z); if(mag>smMaxAll) smMaxAll=mag;
       if(mag>smPeak) smPeak=mag;
       // 다음 한 번을 받을 준비가 되는 두 가지 경우. 어느 쪽도 시간 제한이 아니므로 상한이 없다.
       //  1) 방향이 뒤집혔다 (되돌아오는 동작)
       //  2) 힘이 꺾였다 (직전 최고치 대비. 고정값으로 잡으면 계속 세게 흔드는 사람이 안 세진다)
       if(mag>0&&(x*smLX+y*smLY+z*smLZ)/mag<0) smArmed=true;
       if(mag<Math.max(SM_LO,smPeak*SM_DROP)) smArmed=true;
-      if(mag>SM_HI&&smArmed&&now()-lastShakeT>SM_MIN){
+      if(mag>smHi()&&smArmed&&now()-lastShakeT>SM_MIN){
         smArmed=false; smPeak=mag; smLX=x/mag; smLY=y/mag; smLZ=z/mag; addShake(); } }
     let mash=false;   // 손잡이 기기: 센서가 없으면 A 연타로
     function begin(){ btn.style.display='none'; permMsg=''; ac(); loadShaker(); state='ice'; stT=now();
@@ -9267,9 +9276,10 @@ function hhClose(){
         ctx.fillStyle='#e8e6dd'; ctx.fillText('PRESS START TO ALLOW',200,362); ctx.fillText('THE MOTION SENSOR',200,382);
         if(permMsg){ ctx.font='8px "Press Start 2P"';
           ctx.fillStyle='#000'; ctx.fillText(permMsg,201,411); ctx.fillStyle='#ff7a6a'; ctx.fillText(permMsg,200,410); } }
-      if(state==='play'&&!gotMotion&&t-playT0>2500){ ctx.font='8px "Press Start 2P"';
-        ctx.fillStyle='#000'; ctx.fillText((mash?'MASH THE A BUTTON!':'NO MOTION? CHECK SENSOR PERMISSION'),201,411);
-        ctx.fillStyle='#ff7a6a'; ctx.fillText((mash?'MASH THE A BUTTON!':'NO MOTION? CHECK SENSOR PERMISSION'),200,410); }
+      if(state==='play'&&(mash||(!gotMotion&&t-playT0>2500))){ ctx.font='8px "Press Start 2P"';   // 손잡이: 항상 센서 상태를 보여준다(붐이 사진으로 확인 가능)
+        const msg=mash?('SHAKE OR MASH A | SENSOR '+(gotMotion?('OK PEAK '+smMaxAll.toFixed(0)):(t-playT0>2500?'NONE':'...'))):'NO MOTION? CHECK SENSOR PERMISSION';
+        ctx.fillStyle='#000'; ctx.fillText(msg,201,411);
+        ctx.fillStyle=gotMotion?'#9be37a':'#ff7a6a'; ctx.fillText(msg,200,410); }
       if(state==='hold'){ ctx.font='16px "Press Start 2P"';
         ctx.fillStyle='#000'; ctx.fillText('HOLD YOUR PHONE',203,133); ctx.fillText('WITH BOTH HANDS!',203,163);
         ctx.fillStyle='#ffd977'; ctx.fillText('HOLD YOUR PHONE',200,130); ctx.fillText('WITH BOTH HANDS!',200,160); }
@@ -10706,7 +10716,7 @@ function hhClose(){
   /* ===== 선택 화면: 커서 대신 항목 포커스 (십자키 이동 · A 선택 · B 뒤로). 게임 플레이 중에만 커서. ===== */
   let curVis=true, focusEl=null, focusRoot=null; const navRep={u:0,d:0,l:0,r:0}; const lastFocus=new WeakMap();
   const $id=id=>document.getElementById(id);
-  const SEL='button, a[href], [onclick], input:not([type=range]), .gcard, .ck-card, .fd-card';
+  const SEL='button, a[href], [onclick], input:not([type=range]), .gcard, .ck-card, .fd-card, .imgbtn, .volbtn';   // 해피아워 RANKING/SETTINGS 는 onclick 없는 img.imgbtn
   const SKIP='#joeMouth, #cricketHop, .pineco-hotspot, #padFs, [aria-hidden="true"]';
   const SITE_SCREENS=['titleScreen','menuScreen','selectScreen','worldScreen','introScreen','levelScreen','craftScreen','craftChoiceScreen','noticeScreen','overScreen','highscoreScreen'];
   function rect(el){ const r=el.getBoundingClientRect(); return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2}; }
@@ -10721,7 +10731,7 @@ function hhClose(){
     for(const id of SITE_SCREENS){ const s=$id(id); if(s&&!s.classList.contains('hidden')) return s; } return document.body; }
   function cands(root){ let list=[...root.querySelectorAll(SEL)]; if(root.matches(SEL)) list.unshift(root);
     if(root.id==='hh_howto') return [root];
-    if(root.classList.contains('screen')){ if(hhOn()){ const bb=$id('hh_backBtn'); if(bb) list.push(bb); const sr=$id('hh_siteRow'); if(sr) list.push(...sr.querySelectorAll('button')); } else { const cb=$id('cricketBtn'); if(cb) list.push(cb); } }
+    if(root.classList.contains('screen')&&!hhOn()){ const cb=$id('cricketBtn'); if(cb) list.push(cb); const gb=$id('gearBtn'); if(gb) list.push(gb); }   // 해피아워의 ✕·하단 사이트 줄은 B 로 대신(십자키 후보에서 제외)
     list=list.filter(el=>vis(el)&&!el.matches(SKIP)&&!el.disabled);
     list=list.filter(el=>!list.some(o=>o!==el&&el.contains(o)));   // 안에 더 작은 후보가 있으면 바깥은 뺀다
     return [...new Set(list)]; }
@@ -10737,12 +10747,13 @@ function hhClose(){
     if(sc) sc.scrollTop+=dy; }
   function move(dir){ const root=focusRoot, list=cands(root); if(!focusEl||!list.includes(focusEl)){ setFocus(pickDefault(list,root)); return; }
     const a=rect(focusEl); let best=null, bs=1e9;
-    for(const el of list){ if(el===focusEl) continue; const b=rect(el); let p,s;
-      if(dir==='u'){ if(b.cy>=a.cy-2) continue; p=a.top-b.bottom; s=Math.abs(b.cx-a.cx); }
-      else if(dir==='d'){ if(b.cy<=a.cy+2) continue; p=b.top-a.bottom; s=Math.abs(b.cx-a.cx); }
-      else if(dir==='l'){ if(b.cx>=a.cx-2) continue; p=a.left-b.right; s=Math.abs(b.cy-a.cy); }
-      else { if(b.cx<=a.cx+2) continue; p=b.left-a.right; s=Math.abs(b.cy-a.cy); }
-      if(p<0) p=0; const sc=p+s*2; if(sc<bs){ bs=sc; best=el; } }
+    for(let pass=0; pass<2&&!best; pass++) for(const el of list){ if(el===focusEl) continue; const b=rect(el); let p,s;   // 1차: 그 방향에 '완전히' 있는 것만(옆줄의 BACK 이 가로 이동을 가로채지 않게), 2차: 중심 기준
+      if(dir==='u'){ if(pass?b.cy>=a.cy-2:b.bottom>a.top+4) continue; p=a.top-b.bottom; s=Math.abs(b.cx-a.cx); }
+      else if(dir==='d'){ if(pass?b.cy<=a.cy+2:b.top<a.bottom-4) continue; p=b.top-a.bottom; s=Math.abs(b.cx-a.cx); }
+      else if(dir==='l'){ if(pass?b.cx>=a.cx-2:b.right>a.left+4) continue; p=a.left-b.right; s=Math.abs(b.cy-a.cy); }
+      else { if(pass?b.cx<=a.cx+2:b.left<a.right-4) continue; p=b.left-a.right; s=Math.abs(b.cy-a.cy); }
+      if(p<0) p=0; const ov=(dir==='l'||dir==='r')?(b.top<a.bottom&&b.bottom>a.top):(b.left<a.right&&b.right>a.left); if(ov) s=0; if(!pass&&!ov&&s>80) continue;   // 같은 줄/같은 열이면 옆 어긋남 무시, 1차는 멀리 어긋난 것 제외
+      const sc=p+s*3; if(sc<bs){ bs=sc; best=el; } }
     if(best) setFocus(best); else scrollLayer(dir); }
   function fpress(){ const t=focusEl; if(!t||!vis(t)) return; if(t.tagName==='INPUT'&&t.id==='hh_rrName'){ openPick(t); return; }
     const r=rect(t); cx=r.cx; cy=r.cy; heldT=t; t.classList.add('paddown'); pev('pointerdown',t,true); }
@@ -10820,6 +10831,6 @@ function hhClose(){
   try{ new ResizeObserver(function(){ fitTitle(); }).observe(document.getElementById("titleScreen")||document.body); }catch(e){}
 })();
 </script>
-<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-69</div>
+<div id="__buildTag" style="position:fixed;right:4px;bottom:2px;z-index:99999;font:10px monospace;color:rgba(255,255,255,.35);pointer-events:none">v8-70</div>
 </body>
 </html>

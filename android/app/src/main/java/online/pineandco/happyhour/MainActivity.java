@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
         wv.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
                 Uri u = r.getUrl(); String h = u.getHost() == null ? "" : u.getHost();
-                if (h.endsWith("pineandco.online") || h.endsWith("onrender.com") || h.endsWith("googleapis.com") || h.endsWith("gstatic.com")) return false;
+                if (h.endsWith("pineandco.online") || h.endsWith("cricketseoul.com") || h.endsWith("onrender.com") || h.endsWith("googleapis.com") || h.endsWith("gstatic.com")) return false;
                 try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception e) { }
                 return true;   // 인스타그램 등 바깥 링크는 기기 브라우저로
             }
