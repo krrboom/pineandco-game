@@ -10752,7 +10752,7 @@ function hhClose(){
       else if(dir==='d'){ if(pass?b.cy<=a.cy+2:b.top<a.bottom-4) continue; p=b.top-a.bottom; s=Math.abs(b.cx-a.cx); }
       else if(dir==='l'){ if(pass?b.cx>=a.cx-2:b.right>a.left+4) continue; p=a.left-b.right; s=Math.abs(b.cy-a.cy); }
       else { if(pass?b.cx<=a.cx+2:b.left<a.right-4) continue; p=b.left-a.right; s=Math.abs(b.cy-a.cy); }
-      if(p<0) p=0; const ov=(dir==='l'||dir==='r')?(b.top<a.bottom&&b.bottom>a.top):(b.left<a.right&&b.right>a.left); if(ov) s=0; if(!pass&&!ov&&s>80) continue;   // 같은 줄/같은 열이면 옆 어긋남 무시, 1차는 멀리 어긋난 것 제외
+      if(p<0) p=0; const ov=(dir==='l'||dir==='r')?(b.top<a.bottom&&b.bottom>a.top):(b.left<a.right&&b.right>a.left); if(ov) s=0; if(!pass&&!ov&&s>80) continue; if(!ov&&s>((dir==='l'||dir==='r')?innerHeight*0.6:innerWidth)) continue;   // 화면 반 넘게 어긋난 건 어느 차수에서도 제외   // 같은 줄/같은 열이면 옆 어긋남 무시, 1차는 멀리 어긋난 것 제외
       const sc=p+s*3; if(sc<bs){ bs=sc; best=el; } }
     if(best) setFocus(best); else scrollLayer(dir); }
   function fpress(){ const t=focusEl; if(!t||!vis(t)) return; if(t.tagName==='INPUT'&&t.id==='hh_rrName'){ openPick(t); return; }
